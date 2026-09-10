@@ -1,0 +1,60 @@
+import { NotaPagina } from '../types';
+
+export const INITIAL_NOTAS_PAGINAS: NotaPagina[] = [
+  {
+    id: 'nota-boas-vindas',
+    titulo: 'Bem-vindo às Notas JMT',
+    icone: '📝',
+    favorito: true,
+    autor: 'Jadson Ferreira',
+    criadoEm: '2026-09-01T09:00:00.000Z',
+    atualizadoEm: '2026-09-01T09:00:00.000Z',
+    blocos: [
+      {
+        id: 'b1',
+        tipo: 'callout',
+        texto:
+          'Este é o seu espaço livre de anotações e brainstorm — como um Notion dentro da JMT. Crie quantas páginas quiser, organize em blocos e vincule qualquer nota a um Cliente, Projeto, Colaborador ou operação.',
+      },
+      { id: 'b2', tipo: 'titulo2', texto: 'Como usar' },
+      { id: 'b3', tipo: 'lista', texto: 'Clique em "+ Nova Página" para começar uma anotação em branco.' },
+      { id: 'b4', tipo: 'lista', texto: 'Use o botão "+" abaixo de cada bloco para adicionar títulos, listas, checklists, citações e divisores.' },
+      { id: 'b5', tipo: 'lista', texto: 'Clique em "Vincular a um módulo" para conectar a nota a um cliente, projeto, colaborador ou operação existente.' },
+      { id: 'b6', tipo: 'lista', texto: 'Marque uma página como favorita para fixá-la no topo da lista.' },
+      { id: 'b7', tipo: 'divisor', texto: '' },
+      { id: 'b8', tipo: 'titulo2', texto: 'Ideias de uso' },
+      { id: 'b9', tipo: 'checklist', texto: 'Atas rápidas de reuniões informais (sem precisar abrir a Agenda)', concluido: false },
+      { id: 'b10', tipo: 'checklist', texto: 'Brainstorm de melhorias operacionais por setor', concluido: false },
+      { id: 'b11', tipo: 'checklist', texto: 'Anotações soltas sobre um cliente específico, vinculadas ao cadastro dele', concluido: false },
+      { id: 'b12', tipo: 'checklist', texto: 'Rascunho de ideias antes de virarem um Projeto formal', concluido: true },
+    ],
+  },
+  {
+    id: 'nota-brainstorm-farma-aereo',
+    titulo: 'Brainstorm — Reduzir avarias no Farma Aéreo',
+    icone: '💡',
+    favorito: false,
+    autor: 'Jadson Ferreira',
+    criadoEm: '2026-08-20T14:30:00.000Z',
+    atualizadoEm: '2026-08-25T11:10:00.000Z',
+    blocos: [
+      { id: 'b1', tipo: 'titulo1', texto: '💡 Brainstorm — Reduzir avarias no Farma Aéreo' },
+      {
+        id: 'b2',
+        tipo: 'texto',
+        texto: 'Sessão livre de ideias após o aumento de ocorrências de avaria em embarques refrigerados no TECA. Sem compromisso ainda — só captando tudo antes de priorizar.',
+      },
+      { id: 'b3', tipo: 'titulo3', texto: 'Ideias levantadas' },
+      { id: 'b4', tipo: 'lista_numerada', texto: 'Trocar caixas de isopor por embalagens térmicas reutilizáveis com PCM.' },
+      { id: 'b5', tipo: 'lista_numerada', texto: 'Checklist fotográfico obrigatório na coleta e na entrega (antes/depois).' },
+      { id: 'b6', tipo: 'lista_numerada', texto: 'Treinamento relâmpago com a equipe de TECA sobre manuseio de carga termolábil.' },
+      { id: 'b7', tipo: 'lista_numerada', texto: 'Negociar janela de prioridade de embarque com a companhia aérea para reduzir tempo em pátio.' },
+      { id: 'b8', tipo: 'citacao', texto: '"A maior parte das avarias que vimos em julho foi em escala/conexão, não no trecho direto." — Carlos (Farma Rodoviário, observação cruzada)' },
+      { id: 'b9', tipo: 'divisor', texto: '' },
+      { id: 'b10', tipo: 'titulo3', texto: 'Próximos passos' },
+      { id: 'b11', tipo: 'checklist', texto: 'Levantar dados de avaria por rota nos últimos 3 meses', concluido: true },
+      { id: 'b12', tipo: 'checklist', texto: 'Cotar embalagens térmicas reutilizáveis com 2 fornecedores', concluido: false },
+      { id: 'b13', tipo: 'checklist', texto: 'Se validado, formalizar como Projeto Gerencial', concluido: false },
+    ],
+  },
+];

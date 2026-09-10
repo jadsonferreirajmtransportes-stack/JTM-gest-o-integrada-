@@ -1,0 +1,307 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --jmt-bronze: #B38F4F;
+    --jmt-bronze-dark: #8A6A39;
+    --jmt-grafite: #111111;
+    --jmt-branco: #FFFFFF;
+    --jmt-areia: #F4EEE1;
+    --jmt-nevoa: #6E6A62;
+    --jmt-petroleo: #28464E;
+  }
+
+  body {
+    background-color: #F8FAFC;
+    color: #111111;
+    font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* JMT Brand Decorative Accent Lines (Brand Manual Page 10) */
+.jmt-route-accent {
+  position: relative;
+}
+.jmt-route-accent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 48px;
+  height: 3px;
+  background-color: #B38F4F;
+  border-radius: 9999px;
+}
+
+/* Custom Sleek Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark variant scrollbar for sidebar (Grafite Theme #111111) */
+.custom-scrollbar-dark::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: #B38F4F;
+}
+
+/* ============================================================
+   Diretriz de Elaboração de Documentos em PDF — Padrão JMT
+   (Código: DOC-PDF-001 v1.0). Aplicado a todo conteúdo impresso
+   ou exportado em PDF via window.print(): fichas, relatórios,
+   comunicados e demonstrativos do sistema.
+   ============================================================ */
+@page {
+  size: A4;
+  margin: 16mm 14mm 20mm 14mm;
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Esconde toda a interface do app (sidebar, headers, backdrops, botões)
+     e revela apenas o conteúdo marcado como documento imprimível. */
+  body * {
+    visibility: hidden;
+  }
+  .jmt-print-doc,
+  .jmt-print-doc * {
+    visibility: visible;
+  }
+  .jmt-print-doc {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Normaliza o tema escuro do app (cards em bg-slate-900/950, texto claro)
+     para o padrão claro exigido pela diretriz — bronze/grafite/cinzas sobre
+     fundo branco. Sem isso, cards escuros da tela imprimiriam ilegíveis.
+     O cabeçalho/rodapé/norteadores institucionais (com cores próprias da
+     marca, incluindo a logo) ficam de fora deste reset via :not(). */
+  .jmt-print-doc *:not(.jmt-print-header):not(.jmt-print-header *):not(.jmt-print-footer):not(.jmt-print-footer *):not(.jmt-print-norteadores):not(.jmt-print-norteadores *):not(.jmt-print-styled):not(.jmt-print-styled *) {
+    background-color: transparent !important;
+    background-image: none !important;
+    color: #333333 !important;
+    border-color: #dddddd !important;
+    box-shadow: none !important;
+  }
+  .jmt-print-doc {
+    background-color: #ffffff !important;
+  }
+  .jmt-print-doc .font-bold:not(.jmt-print-header *):not(.jmt-print-styled *),
+  .jmt-print-doc .font-semibold:not(.jmt-print-header *):not(.jmt-print-styled *),
+  .jmt-print-doc h1:not(.jmt-print-header *):not(.jmt-print-styled *),
+  .jmt-print-doc h2:not(.jmt-print-header *):not(.jmt-print-styled *),
+  .jmt-print-doc h3:not(.jmt-print-header *):not(.jmt-print-styled *),
+  .jmt-print-doc h4:not(.jmt-print-header *):not(.jmt-print-styled *) {
+    color: #111111 !important;
+  }
+
+  /* Cabeçalho institucional — logotipo (ou fallback textual), título (H1),
+     subtítulo em bronze e linha de metadados, encerrados por régua bronze 2px.
+     Estas regras só existem em @media print para nunca conflitar com a
+     utilidade `hidden` do Tailwind na tela (mesma especificidade, cascata). */
+  .jmt-print-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+  }
+  .jmt-print-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .jmt-print-title-block {
+    flex: 1;
+    text-align: right;
+  }
+  .jmt-print-h1 {
+    font-weight: 700;
+    font-size: 19px;
+    color: #111111;
+    line-height: 1.25;
+  }
+  .jmt-print-subtitle {
+    font-weight: 600;
+    font-size: 11.5px;
+    color: #b38f4f;
+    margin-top: 2px;
+  }
+  .jmt-print-meta {
+    font-size: 10px;
+    color: #555555;
+    text-align: right;
+  }
+  .jmt-print-divider {
+    height: 2px;
+    background: #b38f4f;
+    margin-top: 8px;
+  }
+
+  /* Rodapé institucional obrigatório — assinatura corporativa centralizada
+     em bronze, separada do conteúdo por linha superior, com numeração de página. */
+  .jmt-print-footer {
+    display: block;
+    position: fixed;
+    bottom: 6mm;
+    left: 14mm;
+    right: 14mm;
+    padding-top: 6px;
+    border-top: 1px solid #dddddd;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 600;
+    color: #b38f4f;
+  }
+  .jmt-print-footer .jmt-print-pageno {
+    color: #555555;
+    font-weight: 400;
+    margin-left: 6px;
+  }
+
+  /* Bloco opcional de Norteadores Institucionais (Missão/Visão/Valores),
+     obrigatório em documentos de caráter institucional/comercial. */
+  .jmt-print-norteadores {
+    display: block;
+    margin: 14px 0;
+    padding: 10px 12px;
+    background: #fdfaf4;
+    border: 1px solid #dddddd;
+    border-radius: 4px;
+  }
+  .jmt-print-norteadores-titulo {
+    font-weight: 700;
+    font-size: 10.5px;
+    color: #b38f4f;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .jmt-print-norteadores-texto {
+    font-size: 10px;
+    color: #333333;
+    line-height: 1.5;
+  }
+}
+
+/* ============================================================
+   Documento estilizado próprio (ex.: Proposta Comercial) — ao
+   contrário do reset acima (que converte telas ESCURAS do app em
+   PDF claro), este conteúdo já nasce com o visual final do
+   documento e deve ficar IDÊNTICO em tela e impressão. Envolva
+   com `.jmt-print-doc jmt-print-styled` — a classe `.jmt-print-styled`
+   está excluída do reset de cores/fundo acima, então dourado,
+   tabelas com cabeçalho escuro e caixas de destaque sobrevivem à
+   impressão normalmente. Fora de @media print de propósito: estas
+   regras valem também na pré-visualização em tela.
+   ============================================================ */
+.jmt-print-styled {
+  background: #ffffff;
+  color: #1e293b;
+}
+.jmt-proposta-info-card {
+  background: #faf6ec;
+  border-left: 3px solid #b38f4f;
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+.jmt-proposta-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #b38f4f;
+}
+.jmt-proposta-section-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #b38f4f;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.jmt-proposta-section-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #b38f4f;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.jmt-proposta-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.jmt-proposta-table th {
+  background: #111111;
+  color: #ffffff;
+  text-align: left;
+  padding: 6px 10px;
+  font-weight: 600;
+}
+.jmt-proposta-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1e293b;
+}
+.jmt-proposta-callout {
+  background: #faf6ec;
+  border: 1px solid #e7dcc4;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 11.5px;
+  color: #1e293b;
+}
+

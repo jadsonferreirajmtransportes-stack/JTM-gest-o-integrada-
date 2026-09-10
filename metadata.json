@@ -1,0 +1,6 @@
+{
+  "name": "JMT Gestão Integrada - Clientes, Farma Aéreo, Rodoviário & DP",
+  "description": "Jobson de Moraes Transportes (JMT) · Segurança, rastreabilidade e pontualidade na logística da saúde em conformidade com a RDC 430/2020. Gestão de Clientes, Farma Aéreo, Farma Rodoviário, DP, Projetos, Agenda e Logins com Permissões de Módulos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
