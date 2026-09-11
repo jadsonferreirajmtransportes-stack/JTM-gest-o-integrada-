@@ -1,0 +1,755 @@
+// ============================================================================
+// Camada de acesso a dados do Departamento Pessoal via Supabase.
+//
+// Espelha, propositalmente, a mesma "forma" das funções que já existiam em
+// storage.ts (getX / saveX / deleteX) para o mesmo conjunto de entidades —
+// a diferença é que aqui os dados vêm/vão para o banco (Supabase), não mais
+// do localStorage do navegador, e por isso todas as funções são assíncronas
+// (retornam Promise).
+//
+// Cada tabela tem Row Level Security exigindo usuário autenticado (ver
+// supabase/migrations/001_departamento_pessoal.sql) — só funciona depois de
+// login feito (AuthGate). Colunas do tipo lista (dependentes, documentos,
+// histórico de fardamento, anotações, anexos, onboarding, fracionamento de
+// férias, setores) são gravadas como JSONB, mantendo as mesmas chaves em
+// camelCase que a aplicação já usa — o Postgres não se importa com a
+// caixa das chaves dentro de um JSONB, só as colunas de verdade viram
+// snake_case.
+// ============================================================================
+
+import { supabase } from './supabaseClient';
+import { buildColaboradorFromPreAdmissao } from './storage';
+import {
+  Empregador,
+  Supervisor,
+  CargoSalario,
+  FeriadoEmpresa,
+  Colaborador,
+  ProgramacaoFerias,
+  Ocorrencia,
+  QuinzenaValeAlimentacao,
+  LancamentoValeAlimentacao,
+  StatusFerias,
+  MotivoDemissao,
+  PreAdmissao,
+} from '../types';
+
+/** '' e undefined viram null — colunas de data/numéricas do Postgres rejeitam string vazia. */
+function n(v: any): any {
+  return v === '' || v === undefined ? null : v;
+}
+/** Para campos JSONB de lista: nunca manda null, manda a lista (vazia se não houver). */
+function j(v: any): any {
+  return v ?? [];
+}
+/** null vindo do banco vira undefined, pra bater com os tipos opcionais (?) da aplicação. */
+function u<T>(v: T | null): T | undefined {
+  return v === null ? undefined : v;
+}
+
+function assertNoError(error: { message: string } | null, contexto: string) {
+  if (error) {
+    throw new Error(`Erro no Supabase (${contexto}): ${error.message}`);
+  }
+}
+
+// ============================================================================
+// EMPREGADORES
+// ============================================================================
+function rowToEmpregador(r: any): Empregador {
+  return {
+    id: r.id,
+    razaoSocial: r.razao_social,
+    nomeFantasia: u(r.nome_fantasia),
+    cnpj: r.cnpj,
+    endereco: u(r.endereco),
+    cidadeUF: u(r.cidade_uf),
+    telefone: u(r.telefone),
+    responsavelLegal: u(r.responsavel_legal),
+    registroAnvisa: u(r.registro_anvisa),
+  };
+}
+function empregadorToRow(e: Empregador) {
+  return {
+    id: e.id,
+    razao_social: e.razaoSocial,
+    nome_fantasia: n(e.nomeFantasia),
+    cnpj: e.cnpj,
+    endereco: n(e.endereco),
+    cidade_uf: n(e.cidadeUF),
+    telefone: n(e.telefone),
+    responsavel_legal: n(e.responsavelLegal),
+    registro_anvisa: n(e.registroAnvisa),
+  };
+}
+export async function getEmpregadores(): Promise<Empregador[]> {
+  const { data, error } = await supabase.from('empregadores').select('*').order('razao_social');
+  assertNoError(error, 'getEmpregadores');
+  return (data ?? []).map(rowToEmpregador);
+}
+export async function saveEmpregador(item: Empregador): Promise<void> {
+  const { error } = await supabase.from('empregadores').upsert(empregadorToRow(item));
+  assertNoError(error, 'saveEmpregador');
+}
+
+// ============================================================================
+// SUPERVISORES
+// ============================================================================
+function rowToSupervisor(r: any): Supervisor {
+  return {
+    id: r.id,
+    nome: r.nome,
+    setor: u(r.setor),
+    setores: u(r.setores),
+    cargo: r.cargo,
+    email: u(r.email),
+    telefone: u(r.telefone),
+    telefoneWhatsapp: u(r.telefone_whatsapp),
+    ativo: u(r.ativo),
+  };
+}
+function supervisorToRow(s: Supervisor) {
+  return {
+    id: s.id,
+    nome: s.nome,
+    setor: n(s.setor),
+    setores: s.setores && s.setores.length > 0 ? s.setores : null,
+    cargo: s.cargo,
+    email: n(s.email),
+    telefone: n(s.telefone),
+    telefone_whatsapp: n(s.telefoneWhatsapp),
+    ativo: s.ativo ?? true,
+  };
+}
+export async function getSupervisores(): Promise<Supervisor[]> {
+  const { data, error } = await supabase.from('supervisores').select('*').order('nome');
+  assertNoError(error, 'getSupervisores');
+  return (data ?? []).map(rowToSupervisor);
+}
+export async function saveSupervisor(item: Supervisor): Promise<void> {
+  const { error } = await supabase.from('supervisores').upsert(supervisorToRow(item));
+  assertNoError(error, 'saveSupervisor');
+}
+
+// ============================================================================
+// CARGOS E SALÁRIOS
+// ============================================================================
+function rowToCargo(r: any): CargoSalario {
+  return {
+    id: r.id,
+    cargo: r.cargo,
+    setor: r.setor,
+    faixaSalarialMinima: Number(r.faixa_salarial_minima),
+    faixaSalarialMaxima: Number(r.faixa_salarial_maxima),
+    pisoConvencaoColetiva: r.piso_convencao_coletiva === null ? undefined : Number(r.piso_convencao_coletiva),
+    cbo: u(r.cbo),
+    descricao: u(r.descricao),
+  };
+}
+function cargoToRow(c: CargoSalario) {
+  return {
+    id: c.id,
+    cargo: c.cargo,
+    setor: c.setor,
+    faixa_salarial_minima: c.faixaSalarialMinima,
+    faixa_salarial_maxima: c.faixaSalarialMaxima,
+    piso_convencao_coletiva: n(c.pisoConvencaoColetiva),
+    cbo: n(c.cbo),
+    descricao: n(c.descricao),
+  };
+}
+export async function getCargos(): Promise<CargoSalario[]> {
+  const { data, error } = await supabase.from('cargos_salarios').select('*').order('cargo');
+  assertNoError(error, 'getCargos');
+  return (data ?? []).map(rowToCargo);
+}
+export async function saveCargo(item: CargoSalario): Promise<void> {
+  const { error } = await supabase.from('cargos_salarios').upsert(cargoToRow(item));
+  assertNoError(error, 'saveCargo');
+}
+
+// ============================================================================
+// FERIADOS DA EMPRESA
+// ============================================================================
+function rowToFeriado(r: any): FeriadoEmpresa {
+  return { id: r.id, data: r.data, descricao: r.descricao, tipo: r.tipo };
+}
+function feriadoToRow(f: FeriadoEmpresa) {
+  return { id: f.id, data: f.data, descricao: f.descricao, tipo: f.tipo };
+}
+export async function getFeriados(): Promise<FeriadoEmpresa[]> {
+  const { data, error } = await supabase.from('feriados_empresa').select('*').order('data');
+  assertNoError(error, 'getFeriados');
+  return (data ?? []).map(rowToFeriado);
+}
+export async function saveFeriado(item: FeriadoEmpresa): Promise<void> {
+  const { error } = await supabase.from('feriados_empresa').upsert(feriadoToRow(item));
+  assertNoError(error, 'saveFeriado');
+}
+
+// ============================================================================
+// COLABORADORES
+// ============================================================================
+function rowToColaborador(r: any): Colaborador {
+  return {
+    id: r.id,
+    codigoMatricula: r.codigo_matricula,
+    nomeCompleto: r.nome_completo,
+    nomePai: u(r.nome_pai),
+    nomeMae: u(r.nome_mae),
+    dataNascimento: u(r.data_nascimento),
+    naturalidade: u(r.naturalidade),
+    nacionalidade: u(r.nacionalidade),
+    estadoCivil: r.estado_civil,
+    racaCor: r.raca_cor,
+    grauInstrucao: r.grau_instrucao,
+    genero: r.genero,
+    enderecoCompleto: u(r.endereco_completo),
+    cidadeUF: u(r.cidade_uf),
+    cep: u(r.cep),
+    telefoneWhatsapp: r.telefone_whatsapp ?? '',
+    email: r.email ?? '',
+    cpf: r.cpf ?? '',
+    rg: u(r.rg),
+    orgaoEmissorUF: u(r.orgao_emissor_uf),
+    portadorDeficiencia: r.portador_deficiencia ?? false,
+    detalheDeficiencia: u(r.detalhe_deficiencia),
+
+    empregadorId: r.empregador_id,
+    status: r.status,
+    funcaoCargo: r.funcao_cargo ?? '',
+    setor: r.setor ?? '',
+    setoresAtuacao: u(r.setores_atuacao),
+    setorPrincipal: u(r.setor_principal),
+    dataAdmissao: r.data_admissao,
+    dataDemissao: u(r.data_demissao),
+    motivoDemissao: u(r.motivo_demissao),
+    supervisorId: u(r.supervisor_id),
+    formaPagamento: r.forma_pagamento,
+    remuneracao: Number(r.remuneracao ?? 0),
+    gratificacao: Number(r.gratificacao ?? 0),
+    valorValeAlimentacaoDia: Number(r.valor_vale_alimentacao_dia ?? 0),
+    jornadaTrabalho: r.jornada_trabalho ?? '',
+
+    pisoCctFuncao: r.piso_cct_funcao === null ? undefined : Number(r.piso_cct_funcao),
+    adicionalInsalubridade: u(r.adicional_insalubridade),
+    percentualInsalubridade: r.percentual_insalubridade === null ? undefined : Number(r.percentual_insalubridade),
+    adicionalPericulosidade: u(r.adicional_periculosidade),
+    adicionalAcumuloFuncao: u(r.adicional_acumulo_funcao),
+    adicionalPenosidade: u(r.adicional_penosidade),
+    filiadoSintrocern: u(r.filiado_sintrocern),
+    possuiQuinquenio: u(r.possui_quinquenio),
+    numeroQuinquenios: r.numero_quinquenios === null ? undefined : Number(r.numero_quinquenios),
+    antecedentesCriminaisEntregue: u(r.antecedentes_criminais_entregue),
+    cnhPontuacaoEntregue: u(r.cnh_pontuacao_entregue),
+    termoVtAssinado: u(r.termo_vt_assinado),
+    termoFardamentoAssinado: u(r.termo_fardamento_assinado),
+
+    pisPasep: u(r.pis_pasep),
+    ctpsNumero: u(r.ctps_numero),
+    ctpsSerie: u(r.ctps_serie),
+    ctpsUF: u(r.ctps_uf),
+    cnhNumero: u(r.cnh_numero),
+    cnhCategoria: u(r.cnh_categoria),
+    cnhValidade: u(r.cnh_validade),
+    tituloEleitorNumero: u(r.titulo_eleitor_numero),
+    reservistaNumero: u(r.reservista_numero),
+
+    banco: u(r.banco),
+    agencia: u(r.agencia),
+    tipoConta: u(r.tipo_conta),
+    numeroConta: u(r.numero_conta),
+    tipoChavePix: u(r.tipo_chave_pix),
+    chavePix: u(r.chave_pix),
+
+    dependentes: j(r.dependentes),
+
+    vtQuantidadeTarifasDia: Number(r.vt_quantidade_tarifas_dia ?? 0),
+    vtValorTarifa: Number(r.vt_valor_tarifa ?? 0),
+    vtIdentificacaoConducao: u(r.vt_identificacao_conducao),
+
+    dataExameAdmissional: u(r.data_exame_admissional),
+    dataUltimoExameOcupacional: u(r.data_ultimo_exame_ocupacional),
+    dataVencimentoExame: u(r.data_vencimento_exame),
+    dataExameDemissional: u(r.data_exame_demissional),
+    clinicaMedica: u(r.clinica_medica),
+    observacaoSaude: u(r.observacao_saude),
+    asoImagemUrl: u(r.aso_imagem_url),
+    asoNomeArquivo: u(r.aso_nome_arquivo),
+    asoMedicoEmitente: u(r.aso_medico_emitente),
+    asoCrmMedico: u(r.aso_crm_medico),
+    asoResultado: u(r.aso_resultado),
+
+    documentos: j(r.documentos),
+
+    tamanhoCamisa: r.tamanho_camisa ?? '',
+    numeroCalca: r.numero_calca ?? '',
+    numeroCalcado: r.numero_calcado ?? '',
+    historicoFardamento: j(r.historico_fardamento),
+
+    anotacoes: j(r.anotacoes),
+    anexos: j(r.anexos),
+    observacoesGerais: u(r.observacoes_gerais),
+
+    onboarding: j(r.onboarding),
+
+    criadoEm: u(r.criado_em),
+    atualizadoEm: u(r.atualizado_em),
+  };
+}
+function colaboradorToRow(c: Colaborador) {
+  return {
+    id: c.id,
+    codigo_matricula: c.codigoMatricula,
+    nome_completo: c.nomeCompleto,
+    nome_pai: n(c.nomePai),
+    nome_mae: n(c.nomeMae),
+    data_nascimento: n(c.dataNascimento),
+    naturalidade: n(c.naturalidade),
+    nacionalidade: n(c.nacionalidade),
+    estado_civil: c.estadoCivil,
+    raca_cor: c.racaCor,
+    grau_instrucao: c.grauInstrucao,
+    genero: c.genero,
+    endereco_completo: n(c.enderecoCompleto),
+    cidade_uf: n(c.cidadeUF),
+    cep: n(c.cep),
+    telefone_whatsapp: c.telefoneWhatsapp ?? '',
+    email: c.email ?? '',
+    cpf: c.cpf ?? '',
+    rg: n(c.rg),
+    orgao_emissor_uf: n(c.orgaoEmissorUF),
+    portador_deficiencia: c.portadorDeficiencia ?? false,
+    detalhe_deficiencia: n(c.detalheDeficiencia),
+
+    empregador_id: n(c.empregadorId),
+    status: c.status,
+    funcao_cargo: c.funcaoCargo ?? '',
+    setor: c.setor ?? '',
+    setores_atuacao: j(c.setoresAtuacao),
+    setor_principal: n(c.setorPrincipal),
+    data_admissao: n(c.dataAdmissao),
+    data_demissao: n(c.dataDemissao),
+    motivo_demissao: n(c.motivoDemissao),
+    supervisor_id: n(c.supervisorId),
+    forma_pagamento: c.formaPagamento,
+    remuneracao: c.remuneracao ?? 0,
+    gratificacao: c.gratificacao ?? 0,
+    valor_vale_alimentacao_dia: c.valorValeAlimentacaoDia ?? 0,
+    jornada_trabalho: n(c.jornadaTrabalho),
+
+    piso_cct_funcao: n(c.pisoCctFuncao),
+    adicional_insalubridade: c.adicionalInsalubridade ?? null,
+    percentual_insalubridade: n(c.percentualInsalubridade),
+    adicional_periculosidade: c.adicionalPericulosidade ?? null,
+    adicional_acumulo_funcao: c.adicionalAcumuloFuncao ?? null,
+    adicional_penosidade: c.adicionalPenosidade ?? null,
+    filiado_sintrocern: c.filiadoSintrocern ?? null,
+    possui_quinquenio: c.possuiQuinquenio ?? null,
+    numero_quinquenios: n(c.numeroQuinquenios),
+    antecedentes_criminais_entregue: c.antecedentesCriminaisEntregue ?? null,
+    cnh_pontuacao_entregue: c.cnhPontuacaoEntregue ?? null,
+    termo_vt_assinado: c.termoVtAssinado ?? null,
+    termo_fardamento_assinado: c.termoFardamentoAssinado ?? null,
+
+    pis_pasep: n(c.pisPasep),
+    ctps_numero: n(c.ctpsNumero),
+    ctps_serie: n(c.ctpsSerie),
+    ctps_uf: n(c.ctpsUF),
+    cnh_numero: n(c.cnhNumero),
+    cnh_categoria: n(c.cnhCategoria),
+    cnh_validade: n(c.cnhValidade),
+    titulo_eleitor_numero: n(c.tituloEleitorNumero),
+    reservista_numero: n(c.reservistaNumero),
+
+    banco: n(c.banco),
+    agencia: n(c.agencia),
+    tipo_conta: n(c.tipoConta),
+    numero_conta: n(c.numeroConta),
+    tipo_chave_pix: n(c.tipoChavePix),
+    chave_pix: n(c.chavePix),
+
+    dependentes: j(c.dependentes),
+
+    vt_quantidade_tarifas_dia: c.vtQuantidadeTarifasDia ?? 0,
+    vt_valor_tarifa: c.vtValorTarifa ?? 0,
+    vt_identificacao_conducao: n(c.vtIdentificacaoConducao),
+
+    data_exame_admissional: n(c.dataExameAdmissional),
+    data_ultimo_exame_ocupacional: n(c.dataUltimoExameOcupacional),
+    data_vencimento_exame: n(c.dataVencimentoExame),
+    data_exame_demissional: n(c.dataExameDemissional),
+    clinica_medica: n(c.clinicaMedica),
+    observacao_saude: n(c.observacaoSaude),
+    aso_imagem_url: n(c.asoImagemUrl),
+    aso_nome_arquivo: n(c.asoNomeArquivo),
+    aso_medico_emitente: n(c.asoMedicoEmitente),
+    aso_crm_medico: n(c.asoCrmMedico),
+    aso_resultado: n(c.asoResultado),
+
+    documentos: j(c.documentos),
+
+    tamanho_camisa: c.tamanhoCamisa ?? '',
+    numero_calca: c.numeroCalca ?? '',
+    numero_calcado: c.numeroCalcado ?? '',
+    historico_fardamento: j(c.historicoFardamento),
+
+    anotacoes: j(c.anotacoes),
+    anexos: j(c.anexos),
+    observacoes_gerais: n(c.observacoesGerais),
+
+    onboarding: j(c.onboarding),
+
+    criado_em: c.criadoEm || new Date().toISOString(),
+    atualizado_em: new Date().toISOString(),
+  };
+}
+export async function getColaboradores(): Promise<Colaborador[]> {
+  const { data, error } = await supabase.from('colaboradores').select('*').order('nome_completo');
+  assertNoError(error, 'getColaboradores');
+  return (data ?? []).map(rowToColaborador);
+}
+export async function saveColaborador(colaborador: Colaborador): Promise<void> {
+  const isNovo = !colaborador.id;
+  const item: Colaborador = isNovo
+    ? { ...colaborador, id: `colab-${Date.now()}` }
+    : colaborador;
+  if (!item.codigoMatricula) {
+    const { count } = await supabase.from('colaboradores').select('*', { count: 'exact', head: true });
+    item.codigoMatricula = `JMT-${String((count ?? 0) + 101).padStart(4, '0')}`;
+  }
+  const { error } = await supabase.from('colaboradores').upsert(colaboradorToRow(item));
+  assertNoError(error, 'saveColaborador');
+}
+export async function deleteColaborador(id: string): Promise<void> {
+  const { error } = await supabase.from('colaboradores').delete().eq('id', id);
+  assertNoError(error, 'deleteColaborador');
+}
+export async function inativarColaborador(
+  id: string,
+  dataDemissao: string,
+  motivoDemissao: MotivoDemissao | string,
+  dataExameDemissional?: string,
+  observacao?: string
+): Promise<void> {
+  const patch: Record<string, any> = {
+    status: 'Inativo',
+    data_demissao: dataDemissao,
+    motivo_demissao: motivoDemissao,
+    atualizado_em: new Date().toISOString(),
+  };
+  if (dataExameDemissional) patch.data_exame_demissional = dataExameDemissional;
+  if (observacao) patch.observacao_saude = observacao;
+  const { error } = await supabase.from('colaboradores').update(patch).eq('id', id);
+  assertNoError(error, 'inativarColaborador');
+}
+
+// ============================================================================
+// PROGRAMAÇÃO DE FÉRIAS
+// ============================================================================
+function rowToFerias(r: any): ProgramacaoFerias {
+  return {
+    id: r.id,
+    colaboradorId: r.colaborador_id,
+    assunto: u(r.assunto),
+    periodoAquisitivoInicio: u(r.periodo_aquisitivo_inicio),
+    periodoAquisitivoFim: u(r.periodo_aquisitivo_fim),
+    prazoLimiteGozo: u(r.prazo_limite_gozo),
+    dataLimiteLegal: u(r.data_limite_legal),
+    dataAdmissaoReferencia: u(r.data_admissao_referencia),
+    diasDireito: r.dias_direito === null ? undefined : Number(r.dias_direito),
+    abonoPecuniario: u(r.abono_pecuniario),
+    vende10Dias: u(r.vende_10_dias),
+    diasAbono: r.dias_abono === null ? undefined : Number(r.dias_abono),
+    diasGozados: r.dias_gozados === null ? undefined : Number(r.dias_gozados),
+    totalDias: r.total_dias === null ? undefined : Number(r.total_dias),
+    mesReferencia: u(r.mes_referencia),
+    dataInicio: u(r.data_inicio),
+    dataTermino: u(r.data_termino),
+    dataRetorno: u(r.data_retorno),
+    dataFim: u(r.data_fim),
+    fracionamento: u(r.fracionamento),
+    status: r.status,
+    emailAvisoGerado: u(r.email_aviso_gerado),
+    avisoEnviadoEm: u(r.aviso_enviado_em),
+    comprovanteAssinadoUrl: u(r.comprovante_assinado_url),
+    comprovanteAssinadoNomeArquivo: u(r.comprovante_assinado_nome_arquivo),
+    observacoes: u(r.observacoes),
+  };
+}
+function feriasToRow(f: ProgramacaoFerias) {
+  return {
+    id: f.id,
+    colaborador_id: f.colaboradorId,
+    assunto: n(f.assunto),
+    periodo_aquisitivo_inicio: n(f.periodoAquisitivoInicio),
+    periodo_aquisitivo_fim: n(f.periodoAquisitivoFim),
+    prazo_limite_gozo: n(f.prazoLimiteGozo),
+    data_limite_legal: n(f.dataLimiteLegal),
+    data_admissao_referencia: n(f.dataAdmissaoReferencia),
+    dias_direito: n(f.diasDireito),
+    abono_pecuniario: f.abonoPecuniario ?? null,
+    vende_10_dias: f.vende10Dias ?? null,
+    dias_abono: n(f.diasAbono),
+    dias_gozados: n(f.diasGozados),
+    total_dias: n(f.totalDias),
+    mes_referencia: n(f.mesReferencia),
+    data_inicio: n(f.dataInicio),
+    data_termino: n(f.dataTermino),
+    data_retorno: n(f.dataRetorno),
+    data_fim: n(f.dataFim),
+    fracionamento: f.fracionamento ?? null,
+    status: f.status,
+    email_aviso_gerado: n(f.emailAvisoGerado),
+    aviso_enviado_em: n(f.avisoEnviadoEm),
+    comprovante_assinado_url: n(f.comprovanteAssinadoUrl),
+    comprovante_assinado_nome_arquivo: n(f.comprovanteAssinadoNomeArquivo),
+    observacoes: n(f.observacoes),
+  };
+}
+export async function getFerias(): Promise<ProgramacaoFerias[]> {
+  const { data, error } = await supabase.from('programacao_ferias').select('*').order('criado_em', { ascending: false });
+  assertNoError(error, 'getFerias');
+  return (data ?? []).map(rowToFerias);
+}
+export async function saveFerias(feriasItem: ProgramacaoFerias): Promise<void> {
+  const item = feriasItem.id ? feriasItem : { ...feriasItem, id: `fer-${Date.now()}` };
+  const { error } = await supabase.from('programacao_ferias').upsert(feriasToRow(item));
+  assertNoError(error, 'saveFerias');
+}
+export async function updateStatusFerias(id: string, newStatus: StatusFerias): Promise<void> {
+  const { error } = await supabase.from('programacao_ferias').update({ status: newStatus }).eq('id', id);
+  assertNoError(error, 'updateStatusFerias');
+}
+export async function deleteFerias(id: string): Promise<void> {
+  const { error } = await supabase.from('programacao_ferias').delete().eq('id', id);
+  assertNoError(error, 'deleteFerias');
+}
+
+// ============================================================================
+// OCORRÊNCIAS
+// ============================================================================
+function rowToOcorrencia(r: any): Ocorrencia {
+  return {
+    id: r.id,
+    colaboradorId: r.colaborador_id,
+    colaboradorNome: u(r.colaborador_nome),
+    setor: u(r.setor),
+    data: u(r.data),
+    dataOcorrencia: u(r.data_ocorrencia),
+    tipo: r.tipo,
+    diasAfastamento: r.dias_afastamento === null ? undefined : Number(r.dias_afastamento),
+    descricao: r.descricao,
+    supervisorId: u(r.supervisor_id),
+    supervisorNome: u(r.supervisor_nome),
+    status: u(r.status),
+    acaoTomada: u(r.acao_tomada),
+    comprovanteAnexo: u(r.comprovante_anexo),
+    registradoPor: u(r.registrado_por),
+    origem: u(r.origem),
+    criadoEm: u(r.criado_em),
+  };
+}
+function ocorrenciaToRow(o: Ocorrencia) {
+  return {
+    id: o.id,
+    colaborador_id: o.colaboradorId,
+    colaborador_nome: n(o.colaboradorNome),
+    setor: n(o.setor),
+    data: n(o.data),
+    data_ocorrencia: n(o.dataOcorrencia),
+    tipo: o.tipo,
+    dias_afastamento: n(o.diasAfastamento),
+    descricao: o.descricao,
+    supervisor_id: n(o.supervisorId),
+    supervisor_nome: n(o.supervisorNome),
+    status: n(o.status),
+    acao_tomada: n(o.acaoTomada),
+    comprovante_anexo: n(o.comprovanteAnexo),
+    registrado_por: n(o.registradoPor),
+    origem: n(o.origem),
+    criado_em: o.criadoEm || new Date().toISOString(),
+  };
+}
+export async function getOcorrencias(): Promise<Ocorrencia[]> {
+  const { data, error } = await supabase.from('ocorrencias').select('*').order('criado_em', { ascending: false });
+  assertNoError(error, 'getOcorrencias');
+  return (data ?? []).map(rowToOcorrencia);
+}
+export async function saveOcorrencia(item: Ocorrencia): Promise<void> {
+  const registro = item.id ? item : { ...item, id: `oco-${Date.now()}` };
+  const { error } = await supabase.from('ocorrencias').upsert(ocorrenciaToRow(registro));
+  assertNoError(error, 'saveOcorrencia');
+}
+export async function deleteOcorrencia(id: string): Promise<void> {
+  const { error } = await supabase.from('ocorrencias').delete().eq('id', id);
+  assertNoError(error, 'deleteOcorrencia');
+}
+
+// ============================================================================
+// VALE ALIMENTAÇÃO — QUINZENAS
+// ============================================================================
+function rowToQuinzena(r: any): QuinzenaValeAlimentacao {
+  return { id: r.id, identificacao: r.identificacao, dataInicio: r.data_inicio, dataTermino: r.data_termino };
+}
+function quinzenaToRow(q: QuinzenaValeAlimentacao) {
+  return { id: q.id, identificacao: q.identificacao, data_inicio: q.dataInicio, data_termino: q.dataTermino };
+}
+export async function getQuinzenasValeAlimentacao(): Promise<QuinzenaValeAlimentacao[]> {
+  const { data, error } = await supabase.from('quinzenas_va').select('*').order('data_inicio');
+  assertNoError(error, 'getQuinzenasValeAlimentacao');
+  return (data ?? []).map(rowToQuinzena);
+}
+export async function saveQuinzenaValeAlimentacao(item: QuinzenaValeAlimentacao): Promise<void> {
+  const registro = item.id ? item : { ...item, id: `quinz-va-${Date.now()}` };
+  const { error } = await supabase.from('quinzenas_va').upsert(quinzenaToRow(registro));
+  assertNoError(error, 'saveQuinzenaValeAlimentacao');
+}
+export async function deleteQuinzenaValeAlimentacao(id: string): Promise<void> {
+  const { error } = await supabase.from('quinzenas_va').delete().eq('id', id);
+  assertNoError(error, 'deleteQuinzenaValeAlimentacao');
+}
+
+// ============================================================================
+// VALE ALIMENTAÇÃO — LANÇAMENTOS
+// ============================================================================
+function rowToLancamentoVA(r: any): LancamentoValeAlimentacao {
+  return {
+    id: r.id,
+    colaboradorId: r.colaborador_id,
+    colaboradorNome: u(r.colaborador_nome),
+    quinzenaId: r.quinzena_id,
+    identificacaoQuinzena: r.identificacao_quinzena,
+    dataInicio: r.data_inicio,
+    dataTermino: r.data_termino,
+    valorDiaria: Number(r.valor_diaria ?? 0),
+    faltas: Number(r.faltas ?? 0),
+    diasFerias: r.dias_ferias === null ? undefined : Number(r.dias_ferias),
+    quantidadeDiarias: Number(r.quantidade_diarias ?? 0),
+    valorDisponibilizado: Number(r.valor_disponibilizado ?? 0),
+    observacoes: u(r.observacoes),
+    criadoEm: r.criado_em,
+    atualizadoEm: u(r.atualizado_em),
+  };
+}
+function lancamentoVAToRow(l: LancamentoValeAlimentacao) {
+  return {
+    id: l.id,
+    colaborador_id: l.colaboradorId,
+    colaborador_nome: n(l.colaboradorNome),
+    quinzena_id: l.quinzenaId,
+    identificacao_quinzena: l.identificacaoQuinzena,
+    data_inicio: l.dataInicio,
+    data_termino: l.dataTermino,
+    valor_diaria: l.valorDiaria ?? 0,
+    faltas: l.faltas ?? 0,
+    dias_ferias: n(l.diasFerias),
+    quantidade_diarias: l.quantidadeDiarias ?? 0,
+    valor_disponibilizado: l.valorDisponibilizado ?? 0,
+    observacoes: n(l.observacoes),
+    criado_em: l.criadoEm || new Date().toISOString(),
+    atualizado_em: new Date().toISOString(),
+  };
+}
+export async function getLancamentosValeAlimentacao(): Promise<LancamentoValeAlimentacao[]> {
+  const { data, error } = await supabase.from('lancamentos_va').select('*').order('criado_em', { ascending: false });
+  assertNoError(error, 'getLancamentosValeAlimentacao');
+  return (data ?? []).map(rowToLancamentoVA);
+}
+/** Grava uma lista inteira de lançamentos de uma vez (upsert em lote) — usado ao gerar/sincronizar
+ *  todos os lançamentos de uma quinzena de uma só vez. */
+export async function saveLancamentosValeAlimentacao(items: LancamentoValeAlimentacao[]): Promise<void> {
+  if (items.length === 0) return;
+  const { error } = await supabase.from('lancamentos_va').upsert(items.map(lancamentoVAToRow));
+  assertNoError(error, 'saveLancamentosValeAlimentacao');
+}
+export async function saveLancamentoValeAlimentacao(item: LancamentoValeAlimentacao): Promise<void> {
+  const registro = item.id ? item : { ...item, id: `lanc-va-${Date.now()}` };
+  const { error } = await supabase.from('lancamentos_va').upsert(lancamentoVAToRow(registro));
+  assertNoError(error, 'saveLancamentoValeAlimentacao');
+}
+export async function deleteLancamentoValeAlimentacao(id: string): Promise<void> {
+  const { error } = await supabase.from('lancamentos_va').delete().eq('id', id);
+  assertNoError(error, 'deleteLancamentoValeAlimentacao');
+}
+
+// ============================================================================
+// OUTRAS OPERAÇÕES SOBRE COLABORADOR (renovação de ASO, onboarding, efetivação
+// de pré-admissão) — equivalentes às de storage.ts, só que gravando no Supabase.
+// ============================================================================
+export async function renovarExameASO(
+  colaboradorId: string,
+  dataUltimoExame: string,
+  dataVencimento: string,
+  clinica?: string,
+  asoImagemUrl?: string,
+  asoNomeArquivo?: string,
+  asoMedicoEmitente?: string,
+  asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições'
+): Promise<void> {
+  const patch: Record<string, any> = {
+    data_ultimo_exame_ocupacional: dataUltimoExame,
+    data_vencimento_exame: dataVencimento,
+    atualizado_em: new Date().toISOString(),
+  };
+  if (clinica !== undefined) patch.clinica_medica = clinica;
+  if (asoImagemUrl !== undefined) patch.aso_imagem_url = asoImagemUrl;
+  if (asoNomeArquivo !== undefined) patch.aso_nome_arquivo = asoNomeArquivo;
+  if (asoMedicoEmitente !== undefined) patch.aso_medico_emitente = asoMedicoEmitente;
+  if (asoResultado !== undefined) patch.aso_resultado = asoResultado;
+  const { error } = await supabase.from('colaboradores').update(patch).eq('id', colaboradorId);
+  assertNoError(error, 'renovarExameASO');
+}
+
+/** Lê o onboarding atual do colaborador, marca/desmarca o item pelo nome da etapa e regrava —
+ *  o Supabase não faz "patch parcial de um item dentro de um JSONB" sozinho, por isso o
+ *  read-modify-write aqui. */
+export async function updateOnboardingItem(
+  colaboradorId: string,
+  itemKey: string,
+  concluido: boolean
+): Promise<void> {
+  const { data, error: getError } = await supabase
+    .from('colaboradores')
+    .select('onboarding')
+    .eq('id', colaboradorId)
+    .single();
+  assertNoError(getError, 'updateOnboardingItem (leitura)');
+  const list: any[] = Array.isArray(data?.onboarding) ? [...data.onboarding] : [];
+  const hoje = new Date().toISOString().slice(0, 10);
+  const itemIdx = list.findIndex((i) => i.item === itemKey);
+  if (itemIdx >= 0) {
+    list[itemIdx] = { ...list[itemIdx], concluido, dataConclusao: concluido ? hoje : undefined };
+  } else {
+    list.push({ item: itemKey, concluido, dataConclusao: concluido ? hoje : undefined });
+  }
+  const { error } = await supabase
+    .from('colaboradores')
+    .update({ onboarding: list, atualizado_em: new Date().toISOString() })
+    .eq('id', colaboradorId);
+  assertNoError(error, 'updateOnboardingItem (escrita)');
+}
+
+/** Efetiva uma pré-admissão como Colaborador ativo, gravando direto no Supabase. A pré-admissão
+ *  em si continua no localStorage (módulo ainda não migrado) — quem chama esta função cuida de
+ *  atualizar o status/vínculo dela separadamente (ver App.tsx). */
+export async function efetivarPreAdmissao(
+  pre: PreAdmissao,
+  config: {
+    empregadorId?: string;
+    funcaoCargo?: string;
+    setor?: string;
+    dataAdmissao?: string;
+    remuneracao?: number;
+    gratificacao?: number;
+    valorValeAlimentacaoDia?: number;
+    jornadaTrabalho?: string;
+    supervisorId?: string;
+  } | undefined
+): Promise<Colaborador> {
+  const { count } = await supabase.from('colaboradores').select('*', { count: 'exact', head: true });
+  const novoColaborador = buildColaboradorFromPreAdmissao(pre, config, count ?? 0);
+  const { error } = await supabase.from('colaboradores').upsert(colaboradorToRow(novoColaborador));
+  assertNoError(error, 'efetivarPreAdmissao');
+  return novoColaborador;
+}

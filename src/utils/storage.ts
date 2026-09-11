@@ -498,7 +498,43 @@ export function efetivarPreAdmissao(
 ): Colaborador | null {
   const pre = getPreAdmissaoById(preAdmissaoId);
   if (!pre) return null;
+  const novoColaborador = buildColaboradorFromPreAdmissao(pre, config, getColaboradores().length);
 
+  // Salva o colaborador
+  saveColaborador(novoColaborador);
+
+  // Atualiza status da pré-admissão para Aprovado
+  updatePreAdmissaoStatus(preAdmissaoId, 'Aprovado', `Efetivado como ${novoColaborador.codigoMatricula} em ${new Date().toLocaleDateString('pt-BR')}`);
+  const preAtualizado = getPreAdmissaoById(preAdmissaoId);
+  if (preAtualizado) {
+    preAtualizado.colaboradorEfetivadoId = novoColaborador.id;
+    savePreAdmissao(preAtualizado);
+  }
+
+  return novoColaborador;
+}
+
+/**
+ * Monta o objeto Colaborador a partir de uma Pré-Admissão aprovada, sem gravar em lugar nenhum —
+ * função pura, reaproveitada tanto por efetivarPreAdmissao() (localStorage) quanto pelo
+ * equivalente em dpApi.ts (Supabase), que decide sozinho onde persistir o resultado.
+ * `colaboradoresExistentes` é só a contagem atual, usada pra gerar o próximo nº de matrícula.
+ */
+export function buildColaboradorFromPreAdmissao(
+  pre: PreAdmissao,
+  config: {
+    empregadorId?: string;
+    funcaoCargo?: string;
+    setor?: string;
+    dataAdmissao?: string;
+    remuneracao?: number;
+    gratificacao?: number;
+    valorValeAlimentacaoDia?: number;
+    jornadaTrabalho?: string;
+    supervisorId?: string;
+  } | undefined,
+  colaboradoresExistentes: number
+): Colaborador {
   const resolvedConfig = {
     empregadorId: config?.empregadorId || pre.empresaPredefinidaId || 'emp-01',
     funcaoCargo: config?.funcaoCargo || pre.cargoPredefinido || 'Operador Logístico Farma',
@@ -511,9 +547,8 @@ export function efetivarPreAdmissao(
     supervisorId: config?.supervisorId || pre.supervisorPredefinidoId || 'sup-01',
   };
 
-  const currentColaboradores = getColaboradores();
   const now = new Date().toISOString();
-  const matriculaNumber = String(currentColaboradores.length + 101).padStart(4, '0');
+  const matriculaNumber = String(colaboradoresExistentes + 101).padStart(4, '0');
   const newColaboradorId = `colab-adm-${Date.now()}`;
 
   // Monta lista de documentos padrão marcando recebidos os que foram enviados
@@ -680,17 +715,6 @@ export function efetivarPreAdmissao(
     criadoEm: now,
     atualizadoEm: now,
   };
-
-  // Salva o colaborador
-  saveColaborador(novoColaborador);
-
-  // Atualiza status da pré-admissão para Aprovado
-  updatePreAdmissaoStatus(preAdmissaoId, 'Aprovado', `Efetivado como ${novoColaborador.codigoMatricula} em ${new Date().toLocaleDateString('pt-BR')}`);
-  const preAtualizado = getPreAdmissaoById(preAdmissaoId);
-  if (preAtualizado) {
-    preAtualizado.colaboradorEfetivadoId = novoColaborador.id;
-    savePreAdmissao(preAtualizado);
-  }
 
   return novoColaborador;
 }

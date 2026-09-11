@@ -32,30 +32,11 @@ import {
   LancamentoValeAlimentacao,
 } from './types';
 import {
-  getColaboradores,
-  saveColaborador,
-  deleteColaborador,
-  inativarColaborador,
-  getEmpregadores,
-  saveEmpregador,
-  getSupervisores,
-  saveSupervisor,
-  getCargos,
-  saveCargo,
-  getFeriados,
-  saveFeriado,
-  getFerias,
-  saveFerias,
-  updateStatusFerias,
-  getOcorrencias,
-  saveOcorrencia,
-  updateOnboardingItem,
-  renovarExameASO,
   getPreAdmissoes,
+  getPreAdmissaoById,
   savePreAdmissao,
   updatePreAdmissaoStatus,
   deletePreAdmissao,
-  efetivarPreAdmissao,
   getClientes,
   saveCliente,
   deleteCliente,
@@ -95,6 +76,31 @@ import {
   exportDatabaseJSON,
   importDatabaseJSON,
   resetDatabaseToDefault,
+  NOTIFICATION_EVENT,
+} from './utils/storage';
+// Departamento Pessoal já migrado para o Supabase (banco em nuvem) — estas 9 entidades não
+// vêm mais do localStorage. Ver src/utils/dpApi.ts.
+import {
+  getColaboradores,
+  saveColaborador,
+  deleteColaborador,
+  inativarColaborador,
+  getEmpregadores,
+  saveEmpregador,
+  getSupervisores,
+  saveSupervisor,
+  getCargos,
+  saveCargo,
+  getFeriados,
+  saveFeriado,
+  getFerias,
+  saveFerias,
+  updateStatusFerias,
+  getOcorrencias,
+  saveOcorrencia,
+  updateOnboardingItem,
+  renovarExameASO,
+  efetivarPreAdmissao,
   getQuinzenasValeAlimentacao,
   saveQuinzenaValeAlimentacao,
   deleteQuinzenaValeAlimentacao,
@@ -102,8 +108,7 @@ import {
   saveLancamentosValeAlimentacao,
   saveLancamentoValeAlimentacao,
   deleteLancamentoValeAlimentacao,
-  NOTIFICATION_EVENT,
-} from './utils/storage';
+} from './utils/dpApi';
 import {
   calcExamStatus,
   calcDaysRemaining,
@@ -478,17 +483,8 @@ export default function App() {
     }
   }, [activeSection, activeGlobalModule]);
 
-  // Load all initial data
+  // Load all initial data (tudo que ainda vem do localStorage)
   const loadData = useCallback(() => {
-    setColaboradores(getColaboradores());
-    setEmpregadores(getEmpregadores());
-    setSupervisores(getSupervisores());
-    setCargos(getCargos());
-    setFeriados(getFeriados());
-    setFeriasList(getFerias());
-    setOcorrencias(getOcorrencias());
-    setQuinzenasVA(getQuinzenasValeAlimentacao());
-    setLancamentosVA(getLancamentosValeAlimentacao());
     setPreAdmissoes(getPreAdmissoes());
     setClientes(getClientes());
     setEmbarquesAereos(getEmbarquesAereos());
@@ -502,8 +498,42 @@ export default function App() {
     setCustosOperacionais(getCustosOperacionais());
   }, []);
 
+  // Departamento Pessoal já mora no Supabase (banco em nuvem) — essas 9 entidades são buscadas
+  // à parte, de forma assíncrona. Erros aqui (ex.: sem internet, sessão expirada) viram um toast
+  // em vez de travar a tela em branco.
+  const loadDpData = useCallback(async () => {
+    try {
+      const [
+        colabs, emps, sups, crgs, ferds, fer, ocos, quinz, lancs,
+      ] = await Promise.all([
+        getColaboradores(),
+        getEmpregadores(),
+        getSupervisores(),
+        getCargos(),
+        getFeriados(),
+        getFerias(),
+        getOcorrencias(),
+        getQuinzenasValeAlimentacao(),
+        getLancamentosValeAlimentacao(),
+      ]);
+      setColaboradores(colabs);
+      setEmpregadores(emps);
+      setSupervisores(sups);
+      setCargos(crgs);
+      setFeriados(ferds);
+      setFeriasList(fer);
+      setOcorrencias(ocos);
+      setQuinzenasVA(quinz);
+      setLancamentosVA(lancs);
+    } catch (err) {
+      console.error('Erro ao carregar dados do Departamento Pessoal (Supabase):', err);
+      showToast('Não foi possível carregar os dados do Departamento Pessoal. Verifique sua conexão.', 'info');
+    }
+  }, []);
+
   useEffect(() => {
     loadData();
+    loadDpData();
 
     // Listen to cross-component storage changes
     const handleStorageUpdate = () => {
@@ -511,7 +541,7 @@ export default function App() {
     };
     window.addEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
     return () => window.removeEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
-  }, [loadData]);
+  }, [loadData, loadDpData]);
 
   // Keep detail view synchronized with updated store
   useEffect(() => {
@@ -770,77 +800,91 @@ export default function App() {
     setIsEmployeeFormOpen(true);
   };
 
-  const handleSaveColaborador = (colab: Colaborador) => {
-    saveColaborador(colab);
-    loadData();
-    setIsEmployeeFormOpen(false);
-    showToast(`Colaborador ${colab.nomeCompleto} salvo com sucesso!`);
-  };
-
-  const handleDeleteColaborador = (id: string) => {
-    deleteColaborador(id);
-    loadData();
-    if (selectedColaboradorDetail?.id === id) {
-      setSelectedColaboradorDetail(null);
+  const handleSaveColaborador = async (colab: Colaborador) => {
+    try {
+      await saveColaborador(colab);
+      await loadDpData();
+      setIsEmployeeFormOpen(false);
+      showToast(`Colaborador ${colab.nomeCompleto} salvo com sucesso!`);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível salvar o colaborador. Tente novamente.', 'info');
     }
-    showToast('Colaborador excluído com sucesso.', 'info');
   };
 
-  const handleConfirmDismissal = (
+  const handleDeleteColaborador = async (id: string) => {
+    try {
+      await deleteColaborador(id);
+      await loadDpData();
+      if (selectedColaboradorDetail?.id === id) {
+        setSelectedColaboradorDetail(null);
+      }
+      showToast('Colaborador excluído com sucesso.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível excluir o colaborador. Tente novamente.', 'info');
+    }
+  };
+
+  const handleConfirmDismissal = async (
     colaboradorId: string,
     motivo: MotivoDemissao,
     observacoes?: string
   ) => {
-    inativarColaborador(colaboradorId, motivo, observacoes);
-    loadData();
-    setDismissalTargetColaborador(null);
-    if (selectedColaboradorDetail?.id === colaboradorId) {
-      setSelectedColaboradorDetail(null);
+    try {
+      await inativarColaborador(colaboradorId, motivo, observacoes);
+      await loadDpData();
+      setDismissalTargetColaborador(null);
+      if (selectedColaboradorDetail?.id === colaboradorId) {
+        setSelectedColaboradorDetail(null);
+      }
+      showToast('Colaborador desligado e transferido para o arquivo inativo.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível concluir o desligamento. Tente novamente.', 'info');
     }
-    showToast('Colaborador desligado e transferido para o arquivo inativo.', 'info');
   };
 
-  const handleSaveFerias = (ferias: ProgramacaoFerias) => {
-    saveFerias(ferias);
-    loadData();
+  const handleSaveFerias = async (ferias: ProgramacaoFerias) => {
+    await saveFerias(ferias);
+    await loadDpData();
     showToast('Programação de férias atualizada com sucesso!');
   };
 
-  const handleUpdateStatusFerias = (feriasId: string, novoStatus: StatusFerias) => {
-    updateStatusFerias(feriasId, novoStatus);
-    loadData();
+  const handleUpdateStatusFerias = async (feriasId: string, novoStatus: StatusFerias) => {
+    await updateStatusFerias(feriasId, novoStatus);
+    await loadDpData();
     showToast(`Status das férias alterado para ${novoStatus}!`);
   };
 
-  const handleSaveOcorrencia = (ocorrencia: Ocorrencia) => {
-    saveOcorrencia(ocorrencia);
-    loadData();
+  const handleSaveOcorrencia = async (ocorrencia: Ocorrencia) => {
+    await saveOcorrencia(ocorrencia);
+    await loadDpData();
     setIsPublicOccurrenceFormOpen(false);
     showToast('Ocorrência registrada com sucesso no prontuário do colaborador!');
   };
 
-  const handleSaveQuinzenaVA = (quinzena: QuinzenaValeAlimentacao) => {
-    saveQuinzenaValeAlimentacao(quinzena);
-    loadData();
+  const handleSaveQuinzenaVA = async (quinzena: QuinzenaValeAlimentacao) => {
+    await saveQuinzenaValeAlimentacao(quinzena);
+    await loadDpData();
     showToast('Quinzena de Vale Alimentação salva com sucesso!');
   };
 
-  const handleDeleteQuinzenaVA = (id: string) => {
+  const handleDeleteQuinzenaVA = async (id: string) => {
     // Remove a quinzena e também os lançamentos que dependiam dela — não faz sentido manter
     // uma movimentação "órfã" sem período de referência.
-    deleteQuinzenaValeAlimentacao(id);
-    const restantes = getLancamentosValeAlimentacao().filter((l) => l.quinzenaId !== id);
-    saveLancamentosValeAlimentacao(restantes);
-    loadData();
+    await deleteQuinzenaValeAlimentacao(id);
+    const restantes = lancamentosVA.filter((l) => l.quinzenaId !== id);
+    await saveLancamentosValeAlimentacao(restantes);
+    await loadDpData();
     showToast('Quinzena excluída.', 'info');
   };
 
-  const handleGerarLancamentosVA = (quinzenaId: string) => {
-    const quinzena = getQuinzenasValeAlimentacao().find((q) => q.id === quinzenaId);
+  const handleGerarLancamentosVA = async (quinzenaId: string) => {
+    const quinzena = quinzenasVA.find((q) => q.id === quinzenaId);
     if (!quinzena) return;
-    const atuais = getLancamentosValeAlimentacao();
     const jaLancados = new Set(
-      atuais.filter((l) => l.quinzenaId === quinzenaId).map((l) => l.colaboradorId)
+      lancamentosVA.filter((l) => l.quinzenaId === quinzenaId).map((l) => l.colaboradorId)
     );
     const ativos = colaboradores.filter((c) => c.status !== 'Inativo' && !jaLancados.has(c.id));
     if (ativos.length === 0) {
@@ -876,44 +920,49 @@ export default function App() {
         criadoEm: new Date().toISOString(),
       };
     });
-    saveLancamentosValeAlimentacao([...novos, ...atuais]);
-    loadData();
+    await saveLancamentosValeAlimentacao(novos);
+    await loadDpData();
     showToast(`${novos.length} lançamento(s) de Vale Alimentação gerado(s)!`);
   };
 
-  const handleSincronizarFaltasVA = (quinzenaId: string) => {
-    const quinzena = getQuinzenasValeAlimentacao().find((q) => q.id === quinzenaId);
+  const handleSincronizarFaltasVA = async (quinzenaId: string) => {
+    const quinzena = quinzenasVA.find((q) => q.id === quinzenaId);
     if (!quinzena) return;
-    const atuais = getLancamentosValeAlimentacao();
     let alterados = 0;
-    const atualizados = atuais.map((l) => {
-      if (l.quinzenaId !== quinzenaId) return l;
-      const faltas = calcFaltasEmPeriodo(ocorrencias, l.colaboradorId, quinzena.dataInicio, quinzena.dataTermino);
-      const diasFerias = calcDiasFeriasEmPeriodo(
-        feriasList,
-        l.colaboradorId,
-        quinzena.dataInicio,
-        quinzena.dataTermino
-      );
-      if (faltas === l.faltas && diasFerias === (l.diasFerias || 0)) return l;
-      alterados++;
-      const quantidadeDiarias = calcQuantidadeDiariasVA(
-        quinzena.dataInicio,
-        quinzena.dataTermino,
-        faltas,
-        diasFerias
-      );
-      return {
-        ...l,
-        faltas,
-        diasFerias,
-        quantidadeDiarias,
-        valorDisponibilizado: calcValorDisponibilizadoVA(quantidadeDiarias, l.valorDiaria),
-        atualizadoEm: new Date().toISOString(),
-      };
-    });
-    saveLancamentosValeAlimentacao(atualizados);
-    loadData();
+    const atualizados = lancamentosVA
+      .filter((l) => l.quinzenaId === quinzenaId)
+      .map((l) => {
+        const faltas = calcFaltasEmPeriodo(ocorrencias, l.colaboradorId, quinzena.dataInicio, quinzena.dataTermino);
+        const diasFerias = calcDiasFeriasEmPeriodo(
+          feriasList,
+          l.colaboradorId,
+          quinzena.dataInicio,
+          quinzena.dataTermino
+        );
+        return { l, faltas, diasFerias };
+      })
+      .filter(({ l, faltas, diasFerias }) => faltas !== l.faltas || diasFerias !== (l.diasFerias || 0))
+      .map(({ l, faltas, diasFerias }) => {
+        alterados++;
+        const quantidadeDiarias = calcQuantidadeDiariasVA(
+          quinzena.dataInicio,
+          quinzena.dataTermino,
+          faltas,
+          diasFerias
+        );
+        return {
+          ...l,
+          faltas,
+          diasFerias,
+          quantidadeDiarias,
+          valorDisponibilizado: calcValorDisponibilizadoVA(quantidadeDiarias, l.valorDiaria),
+          atualizadoEm: new Date().toISOString(),
+        };
+      });
+    if (alterados > 0) {
+      await saveLancamentosValeAlimentacao(atualizados);
+      await loadDpData();
+    }
     showToast(
       alterados > 0
         ? `${alterados} lançamento(s) atualizado(s) com faltas e férias registradas no sistema.`
@@ -922,28 +971,28 @@ export default function App() {
     );
   };
 
-  const handleSaveLancamentoVA = (lancamento: LancamentoValeAlimentacao) => {
-    saveLancamentoValeAlimentacao(lancamento);
-    loadData();
+  const handleSaveLancamentoVA = async (lancamento: LancamentoValeAlimentacao) => {
+    await saveLancamentoValeAlimentacao(lancamento);
+    await loadDpData();
   };
 
-  const handleDeleteLancamentoVA = (id: string) => {
-    deleteLancamentoValeAlimentacao(id);
-    loadData();
+  const handleDeleteLancamentoVA = async (id: string) => {
+    await deleteLancamentoValeAlimentacao(id);
+    await loadDpData();
     showToast('Lançamento de Vale Alimentação excluído.', 'info');
   };
 
-  const handleUpdateOnboardingItem = (
+  const handleUpdateOnboardingItem = async (
     colaboradorId: string,
     itemKey: string,
     checked: boolean
   ) => {
-    updateOnboardingItem(colaboradorId, itemKey, checked);
-    loadData();
+    await updateOnboardingItem(colaboradorId, itemKey, checked);
+    await loadDpData();
     showToast('Item de Onboarding / EPI atualizado.');
   };
 
-  const handleUpdateExame = (
+  const handleUpdateExame = async (
     colaboradorId: string,
     dataUltimoExame: string,
     novoVencimento: string,
@@ -953,7 +1002,7 @@ export default function App() {
     asoMedicoEmitente?: string,
     asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições'
   ) => {
-    renovarExameASO(
+    await renovarExameASO(
       colaboradorId,
       dataUltimoExame,
       novoVencimento,
@@ -963,7 +1012,7 @@ export default function App() {
       asoMedicoEmitente,
       asoResultado
     );
-    loadData();
+    await loadDpData();
     showToast('Exame ASO RDC 430 renovado com sucesso!');
   };
 
@@ -980,12 +1029,28 @@ export default function App() {
     showToast('Ficha de pré-admissão removida.', 'info');
   };
 
-  const handleEfetivarAdmissao = (preAdmissaoId: string) => {
-    const colab = efetivarPreAdmissao(preAdmissaoId);
-    if (colab) {
+  const handleEfetivarAdmissao = async (preAdmissaoId: string) => {
+    const pre = getPreAdmissaoById(preAdmissaoId);
+    if (!pre) return;
+    try {
+      const colab = await efetivarPreAdmissao(pre, {
+        empregadorId: pre.empresaPredefinidaId,
+        funcaoCargo: pre.cargoPredefinido,
+        supervisorId: pre.supervisorPredefinidoId,
+      });
+      // A pré-admissão em si continua no localStorage — só o colaborador foi para o Supabase.
+      updatePreAdmissaoStatus(preAdmissaoId, 'Aprovado', `Efetivado como ${colab.codigoMatricula} em ${new Date().toLocaleDateString('pt-BR')}`);
+      const preAtualizado = getPreAdmissaoById(preAdmissaoId);
+      if (preAtualizado) {
+        savePreAdmissao({ ...preAtualizado, colaboradorEfetivadoId: colab.id });
+      }
+      await loadDpData();
       loadData();
       showToast(`Admissão de ${colab.nomeCompleto} efetivada com sucesso no quadro de ativos!`, 'success');
       setSelectedColaboradorDetail(colab);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível efetivar a admissão. Tente novamente.', 'info');
     }
   };
 
@@ -1084,27 +1149,27 @@ export default function App() {
   };
 
   // Settings Handlers
-  const handleAddEmpregador = (emp: Empregador) => {
-    saveEmpregador(emp);
-    loadData();
+  const handleAddEmpregador = async (emp: Empregador) => {
+    await saveEmpregador(emp);
+    await loadDpData();
     showToast(`Empresa ${emp.razaoSocial} cadastrada!`);
   };
 
-  const handleAddCargo = (cargo: CargoSalario) => {
-    saveCargo(cargo);
-    loadData();
+  const handleAddCargo = async (cargo: CargoSalario) => {
+    await saveCargo(cargo);
+    await loadDpData();
     showToast(`Cargo ${cargo.cargo} cadastrado!`);
   };
 
-  const handleAddSupervisor = (sup: Supervisor) => {
-    saveSupervisor(sup);
-    loadData();
+  const handleAddSupervisor = async (sup: Supervisor) => {
+    await saveSupervisor(sup);
+    await loadDpData();
     showToast(`Supervisor ${sup.nome} cadastrado!`);
   };
 
-  const handleAddFeriado = (feriado: FeriadoEmpresa) => {
-    saveFeriado(feriado);
-    loadData();
+  const handleAddFeriado = async (feriado: FeriadoEmpresa) => {
+    await saveFeriado(feriado);
+    await loadDpData();
     showToast(`Feriado ${feriado.descricao} adicionado!`);
   };
 
