@@ -46,6 +46,7 @@ import {
   calcVaMes,
   calcExamStatus,
   calcDaysRemaining,
+  calcVencimentoExame,
   formatMoney,
   formatDate,
 } from '../../utils/formatters';
@@ -1132,7 +1133,18 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   <input
                     type="date"
                     value={formData.dataExameAdmissional || ''}
-                    onChange={(e) => handleChange('dataExameAdmissional', e.target.value)}
+                    onChange={(e) => {
+                      const novaData = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        dataExameAdmissional: novaData,
+                        // Só recalcula o vencimento a partir do admissional se ainda não houver
+                        // exame periódico registrado — o periódico é a referência mais recente.
+                        dataVencimentoExame: prev.dataUltimoExameOcupacional
+                          ? prev.dataVencimentoExame
+                          : calcVencimentoExame(novaData),
+                      }));
+                    }}
                     className="w-full p-2 border border-slate-200 rounded-lg"
                   />
                 </div>
@@ -1142,7 +1154,17 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   <input
                     type="date"
                     value={formData.dataUltimoExameOcupacional || ''}
-                    onChange={(e) => handleChange('dataUltimoExameOcupacional', e.target.value)}
+                    onChange={(e) => {
+                      const novaData = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        dataUltimoExameOcupacional: novaData,
+                        // Vencimento = 12 meses após o último exame periódico (periodicidade
+                        // padrão do PCMSO). Continua editável manualmente depois, caso o médico
+                        // do trabalho indique uma periodicidade diferente.
+                        dataVencimentoExame: calcVencimentoExame(novaData),
+                      }));
+                    }}
                     className="w-full p-2 border border-slate-200 rounded-lg"
                   />
                 </div>
@@ -1150,6 +1172,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                 <div>
                   <label className="font-semibold text-slate-700 block mb-1">
                     Data de Vencimento do Exame *
+                    <span className="font-normal text-slate-400"> (calculado, editável)</span>
                   </label>
                   <input
                     type="date"

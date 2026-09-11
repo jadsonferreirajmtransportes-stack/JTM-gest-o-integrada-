@@ -181,6 +181,24 @@ export function calcPeriodoAquisitivo(dataAdmissao: string, ciclo = 0): { inicio
 }
 
 /**
+ * Calculate ASO (exame ocupacional) due date: 12 meses após a data do exame informado
+ * (periodicidade padrão do PCMSO — anual). Usado pra pré-preencher "Data de Vencimento do
+ * Exame" a partir do "Último Exame Periódico" (ou do Admissional, se ainda não houver periódico).
+ */
+export function calcVencimentoExame(dataExame: string): string {
+  if (!dataExame) return '';
+  const d = new Date(dataExame + 'T00:00:00');
+  if (isNaN(d.getTime())) return '';
+
+  d.setFullYear(d.getFullYear() + 1);
+
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/**
  * Calculate CLT Vacation Legal Limit (Prazo Limite Gozo - 11 meses após término do aquisitivo)
  * Art. 134 CLT: As férias devem ser concedidas nos 11 meses subsequentes à conclusão do período aquisitivo
  */
