@@ -154,6 +154,8 @@ export const FichaCadastralPublicView: React.FC<FichaCadastralPublicViewProps> =
               <Campo label="Nome do Pai" valor={dados.nomePai} />
               <Campo label="Nome da Mãe" valor={dados.nomeMae} />
               <Campo label="Estado Civil" valor={dados.estadoCivil} />
+              <Campo label="Cor/Raça" valor={dados.racaCor} />
+              <Campo label="Grau de Instrução" valor={dados.grauInstrucao} />
               <Campo label="Naturalidade" valor={dados.naturalidade} />
               <Campo label="Endereço" valor={dados.enderecoCompleto} extra={dados.cidadeUF} />
               <Campo label="CEP" valor={dados.cep} />

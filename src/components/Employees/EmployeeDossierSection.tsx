@@ -14,6 +14,8 @@ import {
   Upload,
   CheckCircle2,
   AlertTriangle,
+  Pencil,
+  Check,
 } from 'lucide-react';
 import { AnotacaoColaborador, AnexoColaborador } from '../../types';
 import { formatDate } from '../../utils/formatters';
@@ -154,6 +156,25 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
 
   const handleRemoveAnexo = (id: string) => {
     onUpdateAnexos(anexos.filter((a) => a.id !== id));
+  };
+
+  // Edição da descrição de um anexo já existente — antes só dava pra definir a descrição
+  // no momento do upload; se o usuário digitasse algo no campo "Descrição Opcional" depois
+  // de o arquivo já estar na lista, aquele texto não tinha efeito nenhum sobre o anexo já
+  // anexado (só valeria pro PRÓXIMO upload) — parecia que "a descrição não fica salva".
+  const [editandoAnexoId, setEditandoAnexoId] = useState<string | null>(null);
+  const [descricaoEmEdicao, setDescricaoEmEdicao] = useState('');
+
+  const handleIniciarEdicaoDescricao = (anexo: AnexoColaborador) => {
+    setEditandoAnexoId(anexo.id);
+    setDescricaoEmEdicao(anexo.descricao || '');
+  };
+
+  const handleConfirmarEdicaoDescricao = (id: string) => {
+    onUpdateAnexos(
+      anexos.map((a) => (a.id === id ? { ...a, descricao: descricaoEmEdicao.trim() || undefined } : a))
+    );
+    setEditandoAnexoId(null);
   };
 
   const getCategoryColor = (cat: AnotacaoColaborador['categoria']) => {
@@ -446,10 +467,30 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
                         <span className="text-[10px] text-slate-400 font-mono">{anexo.tamanho}</span>
                       )}
                     </div>
-                    {anexo.descricao && (
-                      <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">
-                        {anexo.descricao}
-                      </p>
+                    {editandoAnexoId === anexo.id ? (
+                      <div className="flex items-center gap-1 mt-1">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={descricaoEmEdicao}
+                          onChange={(e) => setDescricaoEmEdicao(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleConfirmarEdicaoDescricao(anexo.id)}
+                          placeholder="Descrição do anexo"
+                          className="flex-1 text-[11px] p-1 border border-amber-300 rounded-md bg-white min-w-0"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmarEdicaoDescricao(anexo.id)}
+                          className="p-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-md shrink-0"
+                          title="Confirmar descrição"
+                        >
+                          <Check className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      anexo.descricao && (
+                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{anexo.descricao}</p>
+                      )
                     )}
                     <div className="text-[10px] text-slate-400 mt-1">
                       Data: {formatDate(anexo.dataUpload)}
@@ -472,6 +513,16 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
                         title="Visualizar documento"
                       >
                         <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => handleIniciarEdicaoDescricao(anexo)}
+                        className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md transition-colors"
+                        title="Editar descrição"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
                       </button>
                     )}
                     {!readOnly && (

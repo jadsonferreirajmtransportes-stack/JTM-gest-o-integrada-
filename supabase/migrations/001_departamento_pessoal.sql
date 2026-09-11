@@ -117,7 +117,7 @@ create table if not exists colaboradores (
   data_admissao date not null,
   data_demissao date,
   motivo_demissao text,
-  supervisor_id text references colaboradores(id) on delete set null,
+  supervisor_id text references colaboradores(id) on delete set null, -- BUG: deveria referenciar supervisores(id) — corrigido em 008_fix_colaboradores_supervisor_fkey.sql
   forma_pagamento text not null default 'Mensal',
   remuneracao numeric not null default 0,
   gratificacao numeric not null default 0,
@@ -215,7 +215,7 @@ create table if not exists ocorrencias (
   tipo text not null,
   dias_afastamento numeric,
   descricao text not null,
-  supervisor_id text references colaboradores(id) on delete set null,
+  supervisor_id text references colaboradores(id) on delete set null, -- BUG: deveria referenciar supervisores(id) — corrigido em 008_fix_colaboradores_supervisor_fkey.sql
   supervisor_nome text,
   status text,
   acao_tomada text,
