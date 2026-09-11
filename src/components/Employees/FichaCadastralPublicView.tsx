@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ShieldCheck, ArrowLeft, AlertTriangle, Printer, Loader2 } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, AlertTriangle, Printer, Loader2, Download, FileCheck } from 'lucide-react';
 import { JmtLogo } from '../Brand/JmtLogo';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
 import { obterFichaCompartilhadaPublica } from '../../utils/dpApi';
@@ -217,10 +217,30 @@ export const FichaCadastralPublicView: React.FC<FichaCadastralPublicViewProps> =
               <Campo label="Médico Emitente" valor={dados.asoMedicoEmitente} extra={dados.asoCrmMedico ? `CRM ${dados.asoCrmMedico}` : undefined} />
             </Secao>
 
+            {dados.asoImagemUrl && (
+              <DocumentoDownload
+                nome={dados.asoNomeArquivo || 'ASO.pdf'}
+                url={dados.asoImagemUrl}
+                titulo="Atestado de Saúde Ocupacional (ASO) — arquivo digitalizado"
+              />
+            )}
+
             {Array.isArray(dados.documentos) && dados.documentos.length > 0 && (
               <Secao titulo="Checklist de Documentação">
                 {dados.documentos.map((d: any, idx: number) => (
-                  <Campo key={idx} label={d.tipo} valor={d.status} />
+                  <div key={idx} className="flex items-center justify-between gap-2 py-1">
+                    <Campo label={d.tipo} valor={d.status} />
+                    {d.arquivoUrl && (
+                      <a
+                        href={d.arquivoUrl}
+                        download={d.nomeArquivo || d.tipo}
+                        className="shrink-0 text-[11px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5 print:hidden"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Baixar
+                      </a>
+                    )}
+                  </div>
                 ))}
               </Secao>
             )}
@@ -254,3 +274,25 @@ const Campo: React.FC<{ label: string; valor?: string | null; extra?: string }> 
     </div>
   );
 };
+
+/** Link de download de um arquivo anexado (ASO digitalizado, documentos do checklist) — usa
+ *  o atributo `download` do navegador diretamente sobre a Data URL em base64, sem precisar de
+ *  nenhum servidor de arquivos: funciona igual a um link de download comum. */
+const DocumentoDownload: React.FC<{ nome: string; url: string; titulo: string }> = ({ nome, url, titulo }) => (
+  <div className="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3 print:hidden">
+    <div className="flex items-center gap-2 min-w-0">
+      <FileCheck className="w-4 h-4 text-amber-700 shrink-0" />
+      <span className="text-xs font-semibold text-slate-700 truncate" title={titulo}>
+        {titulo}
+      </span>
+    </div>
+    <a
+      href={url}
+      download={nome}
+      className="shrink-0 text-[11px] font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg px-3 py-1.5 flex items-center gap-1.5"
+    >
+      <Download className="w-3.5 h-3.5" />
+      Baixar
+    </a>
+  </div>
+);
