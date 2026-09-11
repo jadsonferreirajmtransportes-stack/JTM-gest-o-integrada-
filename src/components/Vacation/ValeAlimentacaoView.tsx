@@ -272,10 +272,10 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                 onClick={() => onSincronizarFaltas(quinzenaAtual.id)}
                 disabled={lancamentosDaQuinzena.length === 0}
                 className="px-3 py-1.5 bg-white hover:bg-slate-50 disabled:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed text-slate-600 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5"
-                title="Recalcula faltas e dias de férias de todos os lançamentos desta quinzena a partir das Ocorrências e da Programação de Férias registradas no período"
+                title="Recalcula faltas, dias de férias e o valor da diária de todos os lançamentos desta quinzena, a partir das Ocorrências, da Programação de Férias e do cadastro atual de cada colaborador"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                Sincronizar Faltas &amp; Férias
+                Sincronizar Faltas, Férias &amp; Valores
               </button>
               <button
                 type="button"

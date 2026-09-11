@@ -959,10 +959,18 @@ export default function App() {
           quinzena.dataInicio,
           quinzena.dataTermino
         );
-        return { l, faltas, diasFerias };
+        // O valor da diária vem "congelado" do cadastro do colaborador no momento em que o
+        // lançamento foi gerado — se a cota foi editada depois, sincronizar aqui também traz
+        // o valor atual, em vez de deixar o lançamento preso no valor antigo pra sempre.
+        const colaborador = colaboradores.find((c) => c.id === l.colaboradorId);
+        const valorDiaria = colaborador?.valorValeAlimentacaoDia ?? l.valorDiaria;
+        return { l, faltas, diasFerias, valorDiaria };
       })
-      .filter(({ l, faltas, diasFerias }) => faltas !== l.faltas || diasFerias !== (l.diasFerias || 0))
-      .map(({ l, faltas, diasFerias }) => {
+      .filter(
+        ({ l, faltas, diasFerias, valorDiaria }) =>
+          faltas !== l.faltas || diasFerias !== (l.diasFerias || 0) || valorDiaria !== l.valorDiaria
+      )
+      .map(({ l, faltas, diasFerias, valorDiaria }) => {
         alterados++;
         const quantidadeDiarias = calcQuantidadeDiariasVA(
           quinzena.dataInicio,
@@ -974,8 +982,9 @@ export default function App() {
           ...l,
           faltas,
           diasFerias,
+          valorDiaria,
           quantidadeDiarias,
-          valorDisponibilizado: calcValorDisponibilizadoVA(quantidadeDiarias, l.valorDiaria),
+          valorDisponibilizado: calcValorDisponibilizadoVA(quantidadeDiarias, valorDiaria),
           atualizadoEm: new Date().toISOString(),
         };
       });
@@ -985,8 +994,8 @@ export default function App() {
     }
     showToast(
       alterados > 0
-        ? `${alterados} lançamento(s) atualizado(s) com faltas e férias registradas no sistema.`
-        : 'Nenhuma mudança — os dados já batem com Ocorrências e Férias.',
+        ? `${alterados} lançamento(s) atualizado(s) com faltas, férias e/ou valor da cota registrados no sistema.`
+        : 'Nenhuma mudança — os dados já batem com Ocorrências, Férias e o cadastro do colaborador.',
       alterados > 0 ? 'success' : 'info'
     );
   };
