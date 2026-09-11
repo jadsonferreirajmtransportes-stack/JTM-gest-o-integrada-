@@ -586,6 +586,18 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   </select>
                 </div>
 
+                {/* Naturalidade */}
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Naturalidade</label>
+                  <input
+                    type="text"
+                    value={formData.naturalidade || ''}
+                    onChange={(e) => handleChange('naturalidade', e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                    placeholder="Ex: Natal/RN"
+                  />
+                </div>
+
                 {/* Telefone / WhatsApp */}
                 <div>
                   <label className="font-semibold text-slate-700 block mb-1">Telefone (WhatsApp) *</label>
@@ -885,6 +897,43 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                     onChange={(e) => handleChange('jornadaTrabalho', e.target.value)}
                     className="w-full p-2 border border-slate-200 rounded-lg"
                     placeholder="Ex: das 08:00 às 17:00, segunda a sexta (44h semanais)"
+                  />
+                </div>
+
+                {/* Nº da CTPS */}
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Nº da CTPS</label>
+                  <input
+                    type="text"
+                    value={formData.ctpsNumero || ''}
+                    onChange={(e) => handleChange('ctpsNumero', e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                    placeholder="Ex: 1234567"
+                  />
+                </div>
+
+                {/* Série da CTPS */}
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Série da CTPS</label>
+                  <input
+                    type="text"
+                    value={formData.ctpsSerie || ''}
+                    onChange={(e) => handleChange('ctpsSerie', e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                    placeholder="Ex: 00123"
+                  />
+                </div>
+
+                {/* UF da CTPS */}
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">UF da CTPS</label>
+                  <input
+                    type="text"
+                    value={formData.ctpsUF || ''}
+                    onChange={(e) => handleChange('ctpsUF', e.target.value.toUpperCase().slice(0, 2))}
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                    placeholder="Ex: RN"
+                    maxLength={2}
                   />
                 </div>
               </div>
