@@ -86,6 +86,11 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // true depois de uma tentativa de salvar que falhou por validação — controla o aviso
+  // no rodapé (sem isso, um campo inválido bloqueia o salvamento sem nenhum aviso visível
+  // se o usuário não notar o texto vermelho embaixo do campo, numa aba que pode nem estar
+  // à vista no momento).
+  const [tentouSalvarComErro, setTentouSalvarComErro] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<Partial<Colaborador>>({
@@ -151,6 +156,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     }
     setActiveTab(0);
     setErrors({});
+    setTentouSalvarComErro(false);
   }, [initialData, isOpen, empregadores, supervisores]);
 
   if (!isOpen) return null;
@@ -217,7 +223,11 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   };
 
   const handleSave = () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      setTentouSalvarComErro(true);
+      return;
+    }
+    setTentouSalvarComErro(false);
     onSave(formData as Colaborador);
     onClose();
   };
@@ -1436,6 +1446,16 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
             </div>
           )}
         </div>
+
+        {/* Aviso de validação — some sozinho quando o usuário corrige os campos listados */}
+        {tentouSalvarComErro && Object.keys(errors).length > 0 && (
+          <div className="px-4 py-2.5 bg-rose-50 border-t border-rose-200 text-rose-700 text-xs font-semibold shrink-0 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              Não foi possível salvar — corrija: {Object.values(errors).join('; ')}.
+            </span>
+          </div>
+        )}
 
         {/* Modal Footer */}
         <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
