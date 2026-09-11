@@ -16,6 +16,7 @@ import {
   Trash2,
   Upload,
   StickyNote,
+  Loader2,
 } from 'lucide-react';
 import {
   Colaborador,
@@ -56,7 +57,12 @@ import { EmployeeDossierSection } from './EmployeeDossierSection';
 interface EmployeeFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (colaborador: Colaborador) => void;
+  /** Pode ser assíncrona (é, no fluxo real — grava no Supabase). O modal espera essa
+   *  Promise terminar antes de qualquer coisa: só fecha quando quem chama decidir (via
+   *  `isOpen`), nunca por conta própria — assim, se a gravação falhar (ex.: sem conexão,
+   *  anexo grande demais), o formulário continua aberto com os dados preenchidos, em vez
+   *  de fechar e deixar o erro aparecer "do nada" depois. */
+  onSave: (colaborador: Colaborador) => void | Promise<void>;
   initialData?: Colaborador | null;
   empregadores: Empregador[];
   supervisores: Supervisor[];
@@ -91,6 +97,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   // se o usuário não notar o texto vermelho embaixo do campo, numa aba que pode nem estar
   // à vista no momento).
   const [tentouSalvarComErro, setTentouSalvarComErro] = useState(false);
+  const [salvando, setSalvando] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<Partial<Colaborador>>({
@@ -157,6 +164,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     setActiveTab(0);
     setErrors({});
     setTentouSalvarComErro(false);
+    setSalvando(false);
   }, [initialData, isOpen, empregadores, supervisores]);
 
   if (!isOpen) return null;
@@ -222,14 +230,23 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     return true;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateForm()) {
       setTentouSalvarComErro(true);
       return;
     }
     setTentouSalvarComErro(false);
-    onSave(formData as Colaborador);
-    onClose();
+    setSalvando(true);
+    try {
+      // Espera a gravação terminar de verdade (pode levar vários segundos com anexos
+      // grandes) antes de soltar o botão — NÃO fecha o modal aqui: quem chama (App.tsx)
+      // é quem decide fechar, e só fecha se salvar com sucesso. Assim, se der erro no
+      // meio do caminho, o formulário continua aberto com tudo preenchido, em vez de
+      // fechar cedo demais e deixar o erro aparecer desconectado do que o usuário fez.
+      await onSave(formData as Colaborador);
+    } finally {
+      setSalvando(false);
+    }
   };
 
   // Dependents helpers
@@ -1462,7 +1479,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-xl text-xs font-semibold transition-colors"
+            disabled={salvando}
+            className="px-4 py-2 text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-xs font-semibold transition-colors"
           >
             Cancelar
           </button>
@@ -1490,10 +1508,20 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               <button
                 type="button"
                 onClick={handleSave}
-                className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                disabled={salvando}
+                className="px-5 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
               >
-                <Save className="w-4 h-4" />
-                <span>Salvar Cadastro</span>
+                {salvando ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Salvando... (pode levar um pouco se houver anexos grandes)</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Salvar Cadastro</span>
+                  </>
+                )}
               </button>
             )}
           </div>

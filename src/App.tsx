@@ -866,7 +866,12 @@ export default function App() {
       showToast(`Colaborador ${colab.nomeCompleto} salvo com sucesso!`);
     } catch (err) {
       console.error(err);
-      showToast('Não foi possível salvar o colaborador. Tente novamente.', 'info');
+      // Deixa o formulário aberto (não fecha em caso de erro) — o EmployeeFormModal
+      // só fecha quando isEmployeeFormOpen vira false, o que só acontece no sucesso acima.
+      showToast(
+        'Não foi possível salvar o colaborador — verifique sua conexão (anexos grandes podem demorar ou falhar em conexões lentas) e tente novamente.',
+        'error'
+      );
     }
   };
 
