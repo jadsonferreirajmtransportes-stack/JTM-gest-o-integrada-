@@ -22,6 +22,7 @@ import {
   Eye,
   StickyNote,
   Utensils,
+  Link2,
 } from 'lucide-react';
 import {
   Colaborador,
@@ -45,6 +46,7 @@ import {
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
 import { EmployeeDossierSection } from './EmployeeDossierSection';
+import { CompartilharFichaModal } from './CompartilharFichaModal';
 
 interface EmployeeDetailModalProps {
   isOpen: boolean;
@@ -59,6 +61,9 @@ interface EmployeeDetailModalProps {
   onDemitir: (c: Colaborador) => void;
   onUpdateColaborador?: (c: Colaborador) => void;
   lancamentosValeAlimentacao?: LancamentoValeAlimentacao[];
+  /** Nome de quem está logado — vai gravado no link de compartilhamento gerado, pra
+   *  rastreabilidade (quem enviou a ficha pra fora). */
+  criadoPor?: string;
 }
 
 export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
@@ -74,8 +79,10 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
   onDemitir,
   onUpdateColaborador,
   lancamentosValeAlimentacao = [],
+  criadoPor,
 }) => {
   const [printMode, setPrintMode] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAsoViewerOpen, setIsAsoViewerOpen] = useState(false);
 
   if (!isOpen || !colaborador) return null;
@@ -165,6 +172,16 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
             >
               <Printer className="w-4 h-4 text-amber-400" />
               <span>Imprimir Ficha</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsShareModalOpen(true)}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700"
+              title="Compartilhar Ficha Cadastral por link (terceiro externo, sem login)"
+            >
+              <Link2 className="w-4 h-4 text-amber-400" />
+              <span>Compartilhar</span>
             </button>
 
             {userRole === 'admin' && (
@@ -676,6 +693,14 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
             fileName={colaborador.asoNomeArquivo || 'ASO_Digitalizado.png'}
           />
         )}
+
+        {/* Compartilhar Ficha Cadastral por link (terceiro externo, sem login) */}
+        <CompartilharFichaModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          colaborador={colaborador}
+          criadoPor={criadoPor}
+        />
 
         {/* Modal Footer Actions */}
         <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0 print:hidden">

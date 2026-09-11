@@ -159,6 +159,7 @@ import { OccurrencesView } from './components/Occurrences/OccurrencesView';
 import { PublicOccurrenceForm } from './components/Occurrences/PublicOccurrenceForm';
 import { PublicOccurrencePortal } from './components/Occurrences/PublicOccurrencePortal';
 import { PublicInstrucaoForm } from './components/Instrucoes/PublicInstrucaoForm';
+import { FichaCadastralPublicView } from './components/Employees/FichaCadastralPublicView';
 import { OccurrenceLinkModal } from './components/Occurrences/OccurrenceLinkModal';
 import { AnvisaExamsView } from './components/Health/AnvisaExamsView';
 import { OnboardingView } from './components/Onboarding/OnboardingView';
@@ -287,6 +288,10 @@ export default function App() {
   // Public work-instruction (Instrução de Trabalho) filling portal — via ?form=instrucao&id=...
   const [isInstrucaoPortalView, setIsInstrucaoPortalView] = useState<boolean>(false);
   const [instrucaoUrlParams, setInstrucaoUrlParams] = useState<{ id?: string }>({});
+
+  // Public shared Ficha Cadastral view (read-only, sem login) — via ?form=ficha&token=...
+  const [isFichaCadastralPublicaView, setIsFichaCadastralPublicaView] = useState<boolean>(false);
+  const [fichaCadastralPublicaToken, setFichaCadastralPublicaToken] = useState<string | undefined>(undefined);
 
   // Modals State
   const [isEmployeeFormOpen, setIsEmployeeFormOpen] = useState<boolean>(false);
@@ -481,6 +486,9 @@ export default function App() {
         setInstrucaoUrlParams({
           id: searchParams.get('id') || undefined,
         });
+      } else if (formParam === 'ficha' || hash === '#ficha') {
+        setIsFichaCadastralPublicaView(true);
+        setFichaCadastralPublicaToken(searchParams.get('token') || undefined);
       }
     }
   }, []);
@@ -1399,6 +1407,20 @@ export default function App() {
     );
   }
 
+  // IF Public shared Ficha Cadastral view is active (via direct link, terceiro externo)
+  if (isFichaCadastralPublicaView) {
+    return (
+      <FichaCadastralPublicView
+        token={fichaCadastralPublicaToken}
+        onAdminBack={() => {
+          setIsFichaCadastralPublicaView(false);
+          setActiveGlobalModule('dp');
+          setActiveSection('colaboradores');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen w-full bg-[#F8FAFC] text-slate-800 font-sans overflow-hidden">
       {/* Sidebar Navigation */}
@@ -1931,6 +1953,7 @@ export default function App() {
           setSelectedColaboradorDetail(null);
           setDismissalTargetColaborador(c);
         }}
+        criadoPor={currentUser?.nome}
       />
 
       {/* 3. Dismissal / Inactivation Modal */}

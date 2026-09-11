@@ -846,3 +846,120 @@ export async function deletePreAdmissao(id: string): Promise<void> {
   const { error } = await supabase.from('pre_admissoes').delete().eq('id', id);
   assertNoError(error, 'deletePreAdmissao');
 }
+
+// ============================================================================
+// LINKS DE COMPARTILHAMENTO DA FICHA CADASTRAL (pra terceiro externo: contador,
+// fiscalização, RH de outra empresa — sem login). Ver
+// supabase/migrations/007_fichas_cadastrais_compartilhadas.sql.
+// ============================================================================
+
+export interface FichaCompartilhada {
+  token: string;
+  colaboradorId: string;
+  colaboradorNome: string;
+  dados: Record<string, any>;
+  criadoEm: string;
+  criadoPor?: string;
+  expiraEm: string;
+  revogado: boolean;
+}
+
+/** Campos do Colaborador que NUNCA entram no link — são de uso interno do RH e
+ *  não fazem parte do que se chama de "ficha cadastral" pra fins externos. */
+const CAMPOS_INTERNOS_EXCLUIDOS_DA_FICHA = [
+  'anotacoes',
+  'anexos',
+  'observacoesGerais',
+  'historicoFardamento',
+];
+
+/** Token de 256 bits (32 bytes aleatórios em hex) — imprevisível, funciona como
+ *  a própria "senha" de acesso ao link. */
+function gerarTokenFichaCompartilhada(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function rowToFichaCompartilhada(r: any): FichaCompartilhada {
+  return {
+    token: r.token,
+    colaboradorId: r.colaborador_id,
+    colaboradorNome: r.colaborador_nome,
+    dados: r.dados,
+    criadoEm: r.criado_em,
+    criadoPor: u(r.criado_por),
+    expiraEm: r.expira_em,
+    revogado: !!r.revogado,
+  };
+}
+
+/** Gera um novo link de compartilhamento da ficha cadastral do colaborador — tira
+ *  uma "foto" dos dados agora (não reflete edições futuras no cadastro) e expira
+ *  em `validadeDias` dias (padrão 7). Retorna o registro já com o token pra montar
+ *  a URL. */
+export async function gerarLinkFichaCompartilhada(
+  colaborador: Colaborador,
+  criadoPor?: string,
+  validadeDias = 7
+): Promise<FichaCompartilhada> {
+  const token = gerarTokenFichaCompartilhada();
+  const dados = Object.fromEntries(
+    Object.entries(colaborador).filter(([campo]) => !CAMPOS_INTERNOS_EXCLUIDOS_DA_FICHA.includes(campo))
+  );
+  const expiraEm = new Date(Date.now() + validadeDias * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error } = await supabase.from('fichas_cadastrais_compartilhadas').insert({
+    token,
+    colaborador_id: colaborador.id,
+    colaborador_nome: colaborador.nomeCompleto,
+    dados,
+    criado_por: n(criadoPor),
+    expira_em: expiraEm,
+  });
+  assertNoError(error, 'gerarLinkFichaCompartilhada');
+
+  return {
+    token,
+    colaboradorId: colaborador.id,
+    colaboradorNome: colaborador.nomeCompleto,
+    dados,
+    criadoEm: new Date().toISOString(),
+    criadoPor,
+    expiraEm,
+    revogado: false,
+  };
+}
+
+/** Lista os links já gerados pra um colaborador (mais recente primeiro) — usado
+ *  pra mostrar/gerenciar/revogar os links ativos na tela de RH. */
+export async function listarLinksFichaCompartilhada(colaboradorId: string): Promise<FichaCompartilhada[]> {
+  const { data, error } = await supabase
+    .from('fichas_cadastrais_compartilhadas')
+    .select('*')
+    .eq('colaborador_id', colaboradorId)
+    .order('criado_em', { ascending: false });
+  assertNoError(error, 'listarLinksFichaCompartilhada');
+  return (data ?? []).map(rowToFichaCompartilhada);
+}
+
+/** Revoga um link antes do prazo — a partir daqui, o token nunca mais é aceito. */
+export async function revogarLinkFichaCompartilhada(token: string): Promise<void> {
+  const { error } = await supabase
+    .from('fichas_cadastrais_compartilhadas')
+    .update({ revogado: true })
+    .eq('token', token);
+  assertNoError(error, 'revogarLinkFichaCompartilhada');
+}
+
+/** Usada pela tela pública (sem login, papel "anon"): chama a função do banco
+ *  obter_ficha_compartilhada, que só devolve algo se o token bater exatamente
+ *  com um link válido, não revogado e ainda não expirado. Retorna null se o
+ *  link for inválido/expirado/revogado — a tela decide o que mostrar. */
+export async function obterFichaCompartilhadaPublica(token: string): Promise<Record<string, any> | null> {
+  const { data, error } = await supabase.rpc('obter_ficha_compartilhada', { p_token: token });
+  assertNoError(error, 'obterFichaCompartilhadaPublica');
+  return (data as Record<string, any> | null) ?? null;
+}

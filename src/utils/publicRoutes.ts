@@ -1,6 +1,7 @@
 // Detecta se a URL atual é uma das telas públicas do sistema — formulário de admissão de
-// candidato, formulário de ocorrência, ou visualização de instrução de trabalho — acessadas
-// por link direto, SEM login (candidato, motorista, fiscal etc. não têm conta no sistema).
+// candidato, formulário de ocorrência, visualização de instrução de trabalho, ou visualização
+// de uma ficha cadastral compartilhada — acessadas por link direto, SEM login (candidato,
+// motorista, fiscal, contador externo etc. não têm conta no sistema).
 //
 // Usado em dois lugares que precisam concordar exatamente:
 //  - AuthGate.tsx: decide se deixa passar sem pedir login.
@@ -21,6 +22,8 @@ export function isRotaPublica(): boolean {
     hash === '#ocorrencias' ||
     hash === '#formulario_publico' ||
     formParam === 'instrucao' ||
-    hash === '#instrucao'
+    hash === '#instrucao' ||
+    formParam === 'ficha' ||
+    hash === '#ficha'
   );
 }
