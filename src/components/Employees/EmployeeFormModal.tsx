@@ -683,9 +683,14 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       handleChange('funcaoCargo', cargo);
                       if (selectedObj) {
                         handleChange('setor', selectedObj.setor);
-                        if (!formData.remuneracao || formData.remuneracao < selectedObj.faixaSalarialMinima) {
-                          handleChange('remuneracao', selectedObj.faixaSalarialMinima);
-                        }
+                        // Preenche com o piso da Convenção Coletiva do cargo (ou a faixa mínima,
+                        // se não houver piso cadastrado) — sempre que a função muda, não só
+                        // quando o valor atual está zerado ou abaixo do mínimo. O usuário pode
+                        // ajustar o valor na sequência se o salário real for diferente do piso.
+                        handleChange(
+                          'remuneracao',
+                          selectedObj.pisoConvencaoColetiva ?? selectedObj.faixaSalarialMinima
+                        );
                       }
                     }}
                     className={`w-full p-2 border rounded-lg ${
