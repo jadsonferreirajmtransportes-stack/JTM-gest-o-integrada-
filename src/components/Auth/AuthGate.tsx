@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { Loader2, LogOut } from 'lucide-react';
 import { supabase, supabaseConfigurado } from '../../utils/supabaseClient';
+import { isRotaPublica } from '../../utils/publicRoutes';
 import { LoginScreen } from './LoginScreen';
 
 /** Porta de entrada do sistema: só renderiza o app (children) quando existe uma sessão válida
@@ -10,7 +11,12 @@ import { LoginScreen } from './LoginScreen';
  *
  *  Isso é independente do "trocar de usuário" que já existe dentro do app (currentUser/
  *  userRole em App.tsx) — aquilo continua controlando o que cada pessoa vê DEPOIS de entrar;
- *  isso aqui controla se a pessoa entra ou não. */
+ *  isso aqui controla se a pessoa entra ou não.
+ *
+ *  Exceção: os formulários públicos (link de admissão de candidato, de ocorrência, ou de
+ *  instrução de trabalho) passam direto, sem pedir login — quem preenche esses formulários
+ *  (candidato a vaga, motorista, fiscal) nunca tem conta no sistema. O App.tsx já sabia
+ *  renderizar só esse formulário isolado nesses casos; aqui só deixamos ele chegar até lá. */
 export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null | undefined>(undefined); // undefined = ainda carregando
   const [saindo, setSaindo] = useState(false);
@@ -22,6 +28,10 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
     });
     return () => subscription.subscription.unsubscribe();
   }, []);
+
+  if (isRotaPublica()) {
+    return <>{children}</>;
+  }
 
   if (!supabaseConfigurado) {
     return (
