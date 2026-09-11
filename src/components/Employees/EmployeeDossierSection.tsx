@@ -13,6 +13,7 @@ import {
   Tag,
   Upload,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import { AnotacaoColaborador, AnexoColaborador } from '../../types';
 import { formatDate } from '../../utils/formatters';
@@ -66,6 +67,7 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
   // New Attachment state
   const [anexoCategoria, setAnexoCategoria] = useState<AnexoColaborador['categoria']>('Documento Pessoal');
   const [anexoDescricao, setAnexoDescricao] = useState('');
+  const [erroAnexo, setErroAnexo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Lightbox state
@@ -93,9 +95,37 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
   };
 
   // Attachment Handlers
+  //
+  // Limites de tamanho: os anexos são gravados como base64 dentro de uma coluna JSONB no
+  // Postgres (não em um storage de arquivos separado) — um payload grande demais na mesma
+  // gravação estoura o tempo limite da instrução SQL no banco (testado: 25MB já falha com
+  // "canceling statement due to statement timeout"; 15MB passa mas demora ~20s mesmo numa
+  // boa conexão). Os limites abaixo dão uma margem confortável pra conexões mais lentas.
+  const LIMITE_ANEXO_MB = 8;
+  const LIMITE_TOTAL_ANEXOS_MB = 20;
+
   const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setErroAnexo(null);
+
+    const tamanhoMB = file.size / (1024 * 1024);
+    if (tamanhoMB > LIMITE_ANEXO_MB) {
+      setErroAnexo(
+        `"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite por arquivo é ${LIMITE_ANEXO_MB}MB. Comprima a imagem/PDF ou tire uma foto em resolução menor antes de anexar.`
+      );
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const tamanhoAtualAnexosMB = anexos.reduce((soma, a) => soma + (a.arquivoUrl?.length || 0), 0) / (1024 * 1024);
+    if (tamanhoAtualAnexosMB + tamanhoMB > LIMITE_TOTAL_ANEXOS_MB) {
+      setErroAnexo(
+        `O total de anexos deste colaborador passaria de ${LIMITE_TOTAL_ANEXOS_MB}MB, o que pode falhar ao salvar. Remova algum anexo antigo antes de adicionar este.`
+      );
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -339,7 +369,7 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
                 className="w-full py-2 px-3 border-2 border-dashed border-slate-300 hover:border-amber-500 hover:bg-amber-50/30 rounded-lg flex items-center justify-center gap-2 text-slate-700 font-bold transition-all bg-white"
               >
                 <Upload className="w-4 h-4 text-amber-600" />
-                <span>Clique para selecionar e anexar foto, laudo ou documento (PDF/PNG/JPG)</span>
+                <span>Clique para selecionar e anexar foto, laudo ou documento (PDF/PNG/JPG — até {LIMITE_ANEXO_MB}MB)</span>
               </button>
               <input
                 ref={fileInputRef}
@@ -347,6 +377,12 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
                 className="hidden"
                 onChange={handleFileSelected}
               />
+              {erroAnexo && (
+                <div className="mt-2 p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-[11px] text-rose-700 font-semibold flex items-start gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>{erroAnexo}</span>
+                </div>
+              )}
             </div>
           </div>
         )}

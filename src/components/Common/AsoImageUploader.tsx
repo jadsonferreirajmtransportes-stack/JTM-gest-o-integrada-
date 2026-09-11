@@ -28,17 +28,33 @@ export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
   readOnly = false,
 }) => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [erroUpload, setErroUpload] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // O ASO fica gravado como base64 numa coluna do próprio cadastro do colaborador (não num
+  // storage de arquivos separado) — um arquivo grande demais nessa mesma gravação estoura o
+  // tempo limite da instrução SQL no banco. Ver mesmo limite em EmployeeDossierSection.tsx.
+  const LIMITE_MB = 8;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        onImageChange(reader.result as string, file.name);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    setErroUpload(null);
+
+    const tamanhoMB = file.size / (1024 * 1024);
+    if (tamanhoMB > LIMITE_MB) {
+      setErroUpload(
+        `"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite é ${LIMITE_MB}MB. Comprima a imagem/PDF ou tire uma foto em resolução menor.`
+      );
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      onImageChange(reader.result as string, file.name);
+    };
+    reader.readAsDataURL(file);
   };
 
   const isPdf = asoNomeArquivo?.toLowerCase().endsWith('.pdf') || asoImagemUrl?.startsWith('data:application/pdf');
@@ -135,8 +151,15 @@ export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
             Clique para carregar a foto ou PDF do ASO
           </span>
           <span className="text-[11px] text-slate-500 mt-0.5 block">
-            Formatos suportados: PNG, JPG, JPEG ou PDF (até 15MB)
+            Formatos suportados: PNG, JPG, JPEG ou PDF (até {LIMITE_MB}MB)
           </span>
+        </div>
+      )}
+
+      {erroUpload && (
+        <div className="mt-2 p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-[11px] text-rose-700 font-semibold flex items-start gap-2">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>{erroUpload}</span>
         </div>
       )}
 
