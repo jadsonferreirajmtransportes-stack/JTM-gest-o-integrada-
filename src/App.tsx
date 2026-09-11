@@ -861,32 +861,48 @@ export default function App() {
   const handleSaveColaborador = async (colab: Colaborador) => {
     try {
       await saveColaborador(colab);
-      await loadDpData();
-      setIsEmployeeFormOpen(false);
-      showToast(`Colaborador ${colab.nomeCompleto} salvo com sucesso!`);
     } catch (err) {
       console.error(err);
       // Deixa o formulário aberto (não fecha em caso de erro) — o EmployeeFormModal
-      // só fecha quando isEmployeeFormOpen vira false, o que só acontece no sucesso acima.
+      // só fecha quando isEmployeeFormOpen vira false, o que só acontece no sucesso abaixo.
       showToast(
         'Não foi possível salvar o colaborador — verifique sua conexão (anexos grandes podem demorar ou falhar em conexões lentas) e tente novamente.',
         'error'
       );
+      return;
     }
+
+    // A gravação já está confirmada no banco a partir daqui — fecha o modal, avisa o
+    // sucesso e atualiza SÓ este registro direto no estado local (salvar um colaborador
+    // não muda nenhuma das outras 9 entidades de DP, então não há por que buscar tudo de
+    // novo). Antes, um `loadDpData()` era chamado aqui: se essa busca falhasse (ex.:
+    // instabilidade momentânea de rede logo após a gravação), aparecia um toast azul de
+    // "não foi possível carregar" por cima do de sucesso — mesmo com o cadastro já salvo,
+    // e a lista continuava com os dados antigos em memória, dando a falsa impressão de
+    // que a edição tinha se perdido.
+    setColaboradores((prev) =>
+      prev.some((c) => c.id === colab.id) ? prev.map((c) => (c.id === colab.id ? colab : c)) : [colab, ...prev]
+    );
+    setIsEmployeeFormOpen(false);
+    showToast(`Colaborador ${colab.nomeCompleto} salvo com sucesso!`);
   };
 
   const handleDeleteColaborador = async (id: string) => {
     try {
       await deleteColaborador(id);
-      await loadDpData();
-      if (selectedColaboradorDetail?.id === id) {
-        setSelectedColaboradorDetail(null);
-      }
-      showToast('Colaborador excluído com sucesso.', 'info');
     } catch (err) {
       console.error(err);
-      showToast('Não foi possível excluir o colaborador. Tente novamente.', 'info');
+      showToast('Não foi possível excluir o colaborador. Tente novamente.', 'error');
+      return;
     }
+    // Mesmo raciocínio do salvar (ver handleSaveColaborador): atualiza só a lista local
+    // em vez de depender de um loadDpData() que busca as outras 9 entidades de DP à toa
+    // e pode mascarar a confirmação de sucesso com seu próprio toast de erro de rede.
+    setColaboradores((prev) => prev.filter((c) => c.id !== id));
+    if (selectedColaboradorDetail?.id === id) {
+      setSelectedColaboradorDetail(null);
+    }
+    showToast('Colaborador excluído com sucesso.');
   };
 
   const handleConfirmDismissal = async (
