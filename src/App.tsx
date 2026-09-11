@@ -32,9 +32,6 @@ import {
   LancamentoValeAlimentacao,
 } from './types';
 import {
-  getViagensRodoviarias,
-  saveViagemRodoviaria,
-  deleteViagemRodoviaria,
   getStoredGlobalModule,
   saveStoredGlobalModule,
   exportDatabaseJSON,
@@ -117,6 +114,13 @@ import {
   saveInstrucaoTrabalho,
   deleteInstrucaoTrabalho,
 } from './utils/gestaoApi';
+// Farma Rodoviário (viagens/telemetria) também já migrado para o Supabase — ver
+// src/utils/viagensApi.ts.
+import {
+  getViagensRodoviarias,
+  saveViagemRodoviaria,
+  deleteViagemRodoviaria,
+} from './utils/viagensApi';
 import {
   calcExamStatus,
   calcDaysRemaining,
@@ -492,28 +496,33 @@ export default function App() {
   }, [activeSection, activeGlobalModule]);
 
   // Load all initial data (tudo que ainda vem do localStorage)
-  const loadData = useCallback(() => {
-    setViagensRodoviarias(getViagensRodoviarias());
-  }, []);
+  // Não resta mais nenhuma entidade de negócio pra recarregar aqui — o último módulo
+  // (Farma Rodoviário/viagens) migrou pro Supabase junto com todo o resto. Mantida como
+  // no-op só porque o recurso de Backup/Importar ainda chama isso (ver task_3a1a9699 —
+  // esse recurso precisa ser refeito pra buscar do Supabase, não é só recarregar daqui).
+  const loadData = useCallback(() => {}, []);
 
-  // Custos Operacionais, Projetos Gerenciais, Agenda da Gestão, Notas & Ideias e Instruções de
-  // Trabalho também já moram no Supabase — buscados à parte, de forma assíncrona.
+  // Custos Operacionais, Projetos Gerenciais, Agenda da Gestão, Notas & Ideias, Instruções de
+  // Trabalho e Farma Rodoviário (viagens) também já moram no Supabase — buscados à parte, de
+  // forma assíncrona.
   const loadGestaoData = useCallback(async () => {
     try {
-      const [custos, projetos, atividades, notas, instrucoes] = await Promise.all([
+      const [custos, projetos, atividades, notas, instrucoes, viagens] = await Promise.all([
         getCustosOperacionais(),
         getProjetosGerenciais(),
         getAtividadesGestao(),
         getNotasPaginas(),
         getInstrucoesTrabalho(),
+        getViagensRodoviarias(),
       ]);
       setCustosOperacionais(custos);
       setProjetos(projetos);
       setAtividadesGestao(atividades);
       setNotasPaginas(notas);
       setInstrucoesTrabalho(instrucoes);
+      setViagensRodoviarias(viagens);
     } catch (err) {
-      console.error('Erro ao carregar Custos/Projetos/Agenda/Notas/Instruções (Supabase):', err);
+      console.error('Erro ao carregar Custos/Projetos/Agenda/Notas/Instruções/Viagens (Supabase):', err);
       showToast('Não foi possível carregar alguns dados de gestão. Verifique sua conexão.', 'info');
     }
   }, []);
@@ -1236,16 +1245,26 @@ export default function App() {
   };
 
   // Farma Rodoviário Handlers (Module 3)
-  const handleSaveViagemRodoviaria = (viagem: ViagemRodoviaria) => {
-    saveViagemRodoviaria(viagem);
-    loadData();
-    showToast(`Viagem rodoviária placa ${viagem.veiculoPlaca} salva com sucesso!`, 'success');
+  const handleSaveViagemRodoviaria = async (viagem: ViagemRodoviaria) => {
+    try {
+      await saveViagemRodoviaria(viagem);
+      await loadGestaoData();
+      showToast(`Viagem rodoviária placa ${viagem.veiculoPlaca} salva com sucesso!`, 'success');
+    } catch (err) {
+      console.error('Erro ao salvar viagem rodoviária (Supabase):', err);
+      showToast('Não foi possível salvar a viagem. Verifique sua conexão.', 'error');
+    }
   };
 
-  const handleDeleteViagemRodoviaria = (id: string) => {
-    deleteViagemRodoviaria(id);
-    loadData();
-    showToast('Viagem rodoviária removida.', 'info');
+  const handleDeleteViagemRodoviaria = async (id: string) => {
+    try {
+      await deleteViagemRodoviaria(id);
+      await loadGestaoData();
+      showToast('Viagem rodoviária removida.', 'info');
+    } catch (err) {
+      console.error('Erro ao remover viagem rodoviária (Supabase):', err);
+      showToast('Não foi possível remover a viagem. Verifique sua conexão.', 'error');
+    }
   };
 
   // Custos Operacionais Handlers
