@@ -13,6 +13,14 @@ interface ImportFaturamentoAereoModalProps {
   onClose: () => void;
   clientes: Cliente[];
   onConfirmImport: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[]) => void;
+  /** Título/legenda exibidos no cabeçalho — deixa o modal genérico entre Farma Aéreo e
+   *  Farma Rodoviário (mesma estrutura de importação, só muda o setor). */
+  titulo?: string;
+  subtitulo?: string;
+  /** Setor aplicado a toda linha importada que não trouxer sua própria coluna "Modal" na
+   *  planilha (ver mapRowsToFaturamentoAereo). Rodoviário passa 'Rodoviário' aqui; Aéreo
+   *  deixa em branco, preservando o comportamento de sempre. */
+  modalPadrao?: string;
 }
 
 export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalProps> = ({
@@ -20,6 +28,9 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
   onClose,
   clientes,
   onConfirmImport,
+  titulo = 'Importar Faturamento (Excel/XLS)',
+  subtitulo = 'Controle Financeiro — Farma Aéreo: lançamentos de CT-e e faturas',
+  modalPadrao,
 }) => {
   const [fileName, setFileName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -47,7 +58,7 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
         setErro('A planilha está vazia ou não foi possível identificar linhas de dados.');
         return;
       }
-      const mapped = mapRowsToFaturamentoAereo(rows, clientes);
+      const mapped = mapRowsToFaturamentoAereo(rows, clientes, modalPadrao);
       if (mapped.lancamentos.length === 0) {
         setErro(
           'Nenhuma linha reconhecida. Verifique se a planilha tem uma coluna de cliente/empresa (ex: "EMPRESA" ou "CLIENTE") e uma coluna de Nota Fiscal ou CT-e preenchidas.'
@@ -84,10 +95,8 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Importar Faturamento (Excel/XLS)</h2>
-              <p className="text-xs text-slate-400">
-                Controle Financeiro — Farma Aéreo: lançamentos de CT-e e faturas
-              </p>
+              <h2 className="text-base font-bold text-white">{titulo}</h2>
+              <p className="text-xs text-slate-400">{subtitulo}</p>
             </div>
           </div>
           <button
@@ -119,6 +128,12 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
                   Se "Valor a Cobrar do Cliente" não vier preenchido, o sistema soma automaticamente
                   Valor da Prestação + Custo Extra. Lançamentos com o mesmo Cliente + Fatura Atrelada
                   são agrupados automaticamente em uma única Fatura.
+                </p>
+                <p className="text-slate-500">
+                  Quando o cliente já tem um tarifário cadastrado (tabela por cidade/peso ou % Ad
+                  Valorem sobre a Nota Fiscal), o Valor a Cobrar é recalculado automaticamente por
+                  esse tarifário, mesmo que a planilha já traga um valor — ajuste em Cadastro de
+                  Clientes se o valor final não bater com o esperado.
                 </p>
               </div>
 

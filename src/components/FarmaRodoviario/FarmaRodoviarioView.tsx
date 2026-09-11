@@ -11,6 +11,7 @@ import {
   PieChart,
   FileSpreadsheet,
   ShieldCheck,
+  Wallet,
 } from 'lucide-react';
 import {
   ViagemRodoviaria,
@@ -19,6 +20,8 @@ import {
   UserRole,
   CustoOperacional,
   StatusCustoOperacional,
+  LancamentoFaturamentoAereo,
+  FaturaAereo,
 } from '../../types';
 import { SectorClientsTab } from '../Common/SectorClientsTab';
 import { SectorEmployeesTab } from '../Common/SectorEmployeesTab';
@@ -27,8 +30,11 @@ import { SectorManagerialDashboard } from '../Common/SectorManagerialDashboard';
 import { SectorRevenueTab } from '../Common/SectorRevenueTab';
 import { SectorCostsTab } from '../Common/SectorCostsTab';
 import { CustoOperacionalFormModal } from '../Cost/CustoOperacionalFormModal';
+import { FaturamentoAereoView } from '../FarmaAereo/FaturamentoAereoView';
+import { ehModalRodoviario } from '../FarmaAereo/faturamentoAereoUtils';
 import {
   calcFinancialsSetor,
+  computeFaturamentoRealAereo,
   isClienteFarmaRodoviario,
   isColaboradorFarmaRodoviario,
   vincularClienteAoSetor,
@@ -52,6 +58,16 @@ interface FarmaRodoviarioViewProps {
   onSelectClienteDetail?: (cliente: Cliente) => void;
   onSelectColaboradorDetail?: (colaborador: Colaborador) => void;
   userRole?: UserRole;
+  // Controle Financeiro — mesma tabela de lançamentos/faturas do Farma Aéreo
+  // (LancamentoFaturamentoAereo/FaturaAereo), separada pelo campo `modal`.
+  lancamentosFaturamentoAereo?: LancamentoFaturamentoAereo[];
+  faturasAereo?: FaturaAereo[];
+  onImportFaturamentoAereo?: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[]) => void;
+  onCreateFaturaAereo?: (fatura: FaturaAereo) => void;
+  onUpdateFaturaAereo?: (fatura: FaturaAereo) => void;
+  onDeleteFaturaAereo?: (id: string) => void;
+  onUpdateLancamentoFaturamentoAereo?: (lancamento: LancamentoFaturamentoAereo) => void;
+  onDeleteLancamentoFaturamentoAereo?: (id: string) => void;
 }
 
 export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
@@ -68,11 +84,34 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
   onSelectClienteDetail,
   onSelectColaboradorDetail,
   userRole = 'admin',
+  lancamentosFaturamentoAereo = [],
+  faturasAereo = [],
+  onImportFaturamentoAereo = () => {},
+  onCreateFaturaAereo = () => {},
+  onUpdateFaturaAereo = () => {},
+  onDeleteFaturaAereo = () => {},
+  onUpdateLancamentoFaturamentoAereo = () => {},
+  onDeleteLancamentoFaturamentoAereo = () => {},
 }) => {
   // Managerial sub-tabs
   const [activeSubTab, setActiveSubTab] = useState<
-    'visao_geral' | 'empresas' | 'equipe' | 'faturamento' | 'custos'
+    'visao_geral' | 'empresas' | 'equipe' | 'faturamento' | 'controle_financeiro' | 'custos'
   >('visao_geral');
+
+  // Farma Aéreo e Farma Rodoviário compartilham a mesma tabela de lançamentos/faturas — o
+  // campo `modal` separa quem é de quem (ver ehModalRodoviario).
+  const lancamentosDoSetor = useMemo(
+    () => lancamentosFaturamentoAereo.filter((l) => ehModalRodoviario(l.modal)),
+    [lancamentosFaturamentoAereo]
+  );
+  const faturasDoSetor = useMemo(
+    () => faturasAereo.filter((f) => ehModalRodoviario(f.modal)),
+    [faturasAereo]
+  );
+  const faturamentoReal = useMemo(
+    () => computeFaturamentoRealAereo(lancamentosDoSetor),
+    [lancamentosDoSetor]
+  );
 
   // Sector Link Modal
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -84,8 +123,8 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
 
   // Financial and operational calculations
   const metrics = useMemo(() => {
-    return calcFinancialsSetor('farma_rodoviario', clientes, colaboradores, custosOperacionais);
-  }, [clientes, colaboradores, custosOperacionais]);
+    return calcFinancialsSetor('farma_rodoviario', clientes, colaboradores, custosOperacionais, faturamentoReal);
+  }, [clientes, colaboradores, custosOperacionais, faturamentoReal]);
 
   // Clients and Collaborators of this sector
   const sectorClientes = useMemo(() => {
@@ -241,6 +280,18 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveSubTab('controle_financeiro')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
+            activeSubTab === 'controle_financeiro'
+              ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Wallet className="w-4 h-4" />
+          <span>Controle Financeiro ({lancamentosDoSetor.length} NFs/CT-es)</span>
+        </button>
+
+        <button
           onClick={() => setActiveSubTab('custos')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
             activeSubTab === 'custos'
@@ -300,6 +351,27 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
           onOpenNovoCliente={onOpenNovoCliente}
           onOpenLinkModal={() => handleOpenLinkModal('clientes')}
           onSelectClienteDetail={onSelectClienteDetail}
+        />
+      )}
+
+      {/* TAB: CONTROLE FINANCEIRO — FATURAMENTO (NFs / CT-es, precificação Ad Valorem ou por
+          tabela de peso/cidade, conforme cadastrado no tarifário de cada cliente) */}
+      {activeSubTab === 'controle_financeiro' && (
+        <FaturamentoAereoView
+          lancamentos={lancamentosDoSetor}
+          faturas={faturasDoSetor}
+          // Clientes: lista completa (não filtrada por setor) — o cálculo do Valor a Cobrar
+          // depende do tarifário do cliente vinculado ao lançamento, independente de o
+          // cadastro já ter sido explicitamente atrelado ao setor Farma Rodoviário ou não.
+          clientes={clientes}
+          onImport={onImportFaturamentoAereo}
+          onCreateFatura={onCreateFaturaAereo}
+          onUpdateFatura={onUpdateFaturaAereo}
+          onDeleteFatura={onDeleteFaturaAereo}
+          onUpdateLancamento={onUpdateLancamentoFaturamentoAereo}
+          onDeleteLancamento={onDeleteLancamentoFaturamentoAereo}
+          tituloSetor="Farma Rodoviário"
+          modalPadrao="Rodoviário"
         />
       )}
 

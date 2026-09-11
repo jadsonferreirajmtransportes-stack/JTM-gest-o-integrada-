@@ -1553,6 +1553,14 @@ export default function App() {
               }}
               onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
               userRole={userRole}
+              lancamentosFaturamentoAereo={lancamentosFaturamentoAereo}
+              faturasAereo={faturasAereo}
+              onImportFaturamentoAereo={handleImportFaturamentoAereo}
+              onCreateFaturaAereo={handleCreateFaturaAereo}
+              onUpdateFaturaAereo={handleUpdateFaturaAereo}
+              onDeleteFaturaAereo={handleDeleteFaturaAereo}
+              onUpdateLancamentoFaturamentoAereo={handleUpdateLancamentoFaturamentoAereo}
+              onDeleteLancamentoFaturamentoAereo={handleDeleteLancamentoFaturamentoAereo}
             />
           )}
 

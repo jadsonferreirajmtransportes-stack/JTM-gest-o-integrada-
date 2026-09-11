@@ -45,6 +45,12 @@ interface FaturamentoAereoViewProps {
   onDeleteFatura: (id: string) => void;
   onUpdateLancamento: (lancamento: LancamentoFaturamentoAereo) => void;
   onDeleteLancamento: (id: string) => void;
+  /** "Farma Aéreo" (padrão) ou "Farma Rodoviário" — deixa essa tela (e o modal de importação)
+   *  genéricos entre os dois setores, que compartilham a mesma estrutura de Controle Financeiro. */
+  tituloSetor?: string;
+  /** Setor aplicado às faturas/lançamentos criados aqui (manual ou importação) quando não
+   *  vier um "Modal" explícito na planilha — ver ehModalRodoviario/mapRowsToFaturamentoAereo. */
+  modalPadrao?: string;
 }
 
 const KpiCard: React.FC<{
@@ -291,6 +297,8 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   onDeleteFatura,
   onUpdateLancamento,
   onDeleteLancamento,
+  tituloSetor = 'Farma Aéreo',
+  modalPadrao,
 }) => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isNovaFaturaOpen, setIsNovaFaturaOpen] = useState(false);
@@ -512,6 +520,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       clienteNome: cliente?.nomeFantasia || cliente?.razaoSocial || novaFaturaCliente,
       periodo: novaFaturaPeriodo.trim() || '—',
       numeroFatura: novaFaturaNumero.trim(),
+      modal: modalPadrao,
       criadoEm: new Date().toISOString(),
     });
     // Se a fatura foi criada a partir de uma seleção de CT-es, já vincula todos a ela.
@@ -578,7 +587,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
         <div>
           <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
             <Wallet className="w-4 h-4 text-emerald-600" />
-            Controle Financeiro — Faturamento Farma Aéreo
+            Controle Financeiro — Faturamento {tituloSetor}
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
             Lançamentos de CT-e agrupados em faturas, com status de cobrança e pagamento.
@@ -1383,6 +1392,9 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
         onClose={() => setIsImportModalOpen(false)}
         clientes={clientes}
         onConfirmImport={onImport}
+        titulo={`Importar Faturamento — ${tituloSetor} (Excel/XLS)`}
+        subtitulo={`Controle Financeiro — ${tituloSetor}: lançamentos de CT-e e faturas`}
+        modalPadrao={modalPadrao}
       />
     </div>
   );

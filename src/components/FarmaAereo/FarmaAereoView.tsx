@@ -39,6 +39,7 @@ import {
   vincularClienteAoSetor,
   vincularColaboradorAoSetor,
 } from '../../utils/sectorUtils';
+import { ehModalRodoviario } from './faturamentoAereoUtils';
 import { formatCurrency } from '../../utils/formatters';
 
 interface FarmaAereoViewProps {
@@ -103,12 +104,25 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
   const [isCustoModalOpen, setIsCustoModalOpen] = useState(false);
   const [selectedCustoEdit, setSelectedCustoEdit] = useState<CustoOperacional | null>(null);
 
+  // Farma Aéreo e Farma Rodoviário compartilham a mesma tabela de lançamentos/faturas
+  // (LancamentoFaturamentoAereo/FaturaAereo) — o campo `modal` separa quem é de quem. Sem
+  // `modal` preenchido conta como Aéreo (compatibilidade com tudo que já existia antes do
+  // Rodoviário ter Controle Financeiro próprio).
+  const lancamentosDoSetor = useMemo(
+    () => lancamentosFaturamentoAereo.filter((l) => !ehModalRodoviario(l.modal)),
+    [lancamentosFaturamentoAereo]
+  );
+  const faturasDoSetor = useMemo(
+    () => faturasAereo.filter((f) => !ehModalRodoviario(f.modal)),
+    [faturasAereo]
+  );
+
   // Faturamento real (Controle Financeiro) — substitui o campo "estimado" por cliente
   // sempre que houver lançamento lançado, para a Visão Geral & DRE refletir o que foi
   // realmente cobrado em vez de uma meta manual que ninguém mantém atualizada.
   const faturamentoReal = useMemo(
-    () => computeFaturamentoRealAereo(lancamentosFaturamentoAereo),
-    [lancamentosFaturamentoAereo]
+    () => computeFaturamentoRealAereo(lancamentosDoSetor),
+    [lancamentosDoSetor]
   );
 
   // Financial and operational calculations
@@ -278,7 +292,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           }`}
         >
           <Wallet className="w-4 h-4" />
-          <span>Controle Financeiro ({lancamentosFaturamentoAereo.length} CT-Es)</span>
+          <span>Controle Financeiro ({lancamentosDoSetor.length} CT-Es)</span>
         </button>
 
         <button
@@ -347,11 +361,11 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
       {/* TAB: CONTROLE FINANCEIRO — FATURAMENTO (CT-Es / Faturas) */}
       {activeSubTab === 'controle_financeiro' && (
         <FaturamentoAereoView
-          lancamentos={lancamentosFaturamentoAereo}
-          faturas={faturasAereo}
-          // Lista completa (não filtrada por setor): o cálculo do Valor a Cobrar depende do
-          // tarifário do cliente vinculado ao lançamento, independente de o cadastro do
-          // cliente já ter sido explicitamente atrelado ao setor Farma Aéreo ou não.
+          lancamentos={lancamentosDoSetor}
+          faturas={faturasDoSetor}
+          // Clientes: lista completa (não filtrada por setor) — o cálculo do Valor a Cobrar
+          // depende do tarifário do cliente vinculado ao lançamento, independente de o
+          // cadastro já ter sido explicitamente atrelado ao setor Farma Aéreo ou não.
           clientes={clientes}
           onImport={onImportFaturamentoAereo}
           onCreateFatura={onCreateFaturaAereo}
@@ -359,6 +373,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           onDeleteFatura={onDeleteFaturaAereo}
           onUpdateLancamento={onUpdateLancamentoFaturamentoAereo}
           onDeleteLancamento={onDeleteLancamentoFaturamentoAereo}
+          tituloSetor="Farma Aéreo"
         />
       )}
 

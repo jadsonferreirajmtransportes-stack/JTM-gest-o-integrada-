@@ -1021,6 +1021,15 @@ function normalizeCidade(text: string): string {
   return normalizeKey(text).replace(/[-/]/g, ' ').replace(/\s+/g, ' ');
 }
 
+/** true quando o campo `modal` (de um lançamento OU de uma fatura) indica Farma Rodoviário —
+ *  mesmo critério usado em `tabelaFreteParaModal` para escolher o tarifário certo do cliente.
+ *  Usado pelas telas de Controle Financeiro pra separar os lançamentos/faturas de cada setor
+ *  (aéreo e rodoviário compartilham a mesma tabela/tipo). `modal` vazio conta como Aéreo —
+ *  mantém o comportamento de antes da existência do Rodoviário, quando não havia esse campo. */
+export function ehModalRodoviario(modal?: string): boolean {
+  return normalizeKey(modal || '').includes('rodoviari');
+}
+
 /** Constrói o mapa "coluna normalizada -> campo do sistema" a partir dos aliases. */
 function buildReverseAliasMap(): Record<string, string> {
   const map: Record<string, string> = {};
@@ -1147,10 +1156,15 @@ export interface ImportacaoFaturamentoAereoResultado {
   totalLinhasIgnoradas: number;
 }
 
-/** Converte as linhas brutas da planilha em Lançamentos + Faturas prontos para importar. */
+/** Converte as linhas brutas da planilha em Lançamentos + Faturas prontos para importar.
+ *  `modalPadrao` é usado quando a planilha não tem uma coluna "Modal" preenchida na linha —
+ *  a importação do Farma Rodoviário passa 'Rodoviário' aqui pra marcar tudo corretamente
+ *  mesmo sem o usuário precisar adicionar essa coluna manualmente; a do Farma Aéreo não passa
+ *  nada, preservando o comportamento de sempre (modal só vem se a planilha trouxer). */
 export function mapRowsToFaturamentoAereo(
   rows: Record<string, any>[],
-  clientesConhecidos: Cliente[]
+  clientesConhecidos: Cliente[],
+  modalPadrao?: string
 ): ImportacaoFaturamentoAereoResultado {
   const reverseAliasMap = buildReverseAliasMap();
   const avisos: string[] = [];
@@ -1215,6 +1229,7 @@ export function mapRowsToFaturamentoAereo(
           clienteNome: clienteEncontrado?.nomeFantasia || clienteEncontrado?.razaoSocial || clienteNomeBruto,
           numeroFatura,
           periodo: periodo || '—',
+          modal: row.modal ? String(row.modal) : modalPadrao,
           criadoEm: now,
         };
         faturasPorChave.set(chave, fatura);
@@ -1241,7 +1256,7 @@ export function mapRowsToFaturamentoAereo(
       dataEmissao: parseDateish(row.dataEmissao),
       numeroCte: row.numeroCte ? String(row.numeroCte) : undefined,
       ctrc: row.ctrc ? String(row.ctrc) : undefined,
-      modal: row.modal ? String(row.modal) : undefined,
+      modal: row.modal ? String(row.modal) : modalPadrao,
       pesoKg: parseNumberish(row.pesoKg),
       pesoTaxado: parseNumberish(row.pesoTaxado),
       volumes: parseNumberish(row.volumes),

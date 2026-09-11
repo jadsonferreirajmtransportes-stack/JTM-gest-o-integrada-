@@ -901,6 +901,10 @@ export interface FaturaAereo {
   dataEnvio?: string;
   numeroNF?: string;
   observacao?: string;
+  /** 'Aéreo' | 'Rodoviário' — mesmo campo livre de LancamentoFaturamentoAereo.modal, usado pra
+   *  separar o Controle Financeiro de cada setor (ver faturamentoAereoUtils.ehModalRodoviario).
+   *  Ausente = trata como Aéreo (compatibilidade com faturas já existentes, todas aéreas). */
+  modal?: string;
   criadoEm: string;
   atualizadoEm?: string;
 }
