@@ -40,23 +40,6 @@ import {
   getViagensRodoviarias,
   saveViagemRodoviaria,
   deleteViagemRodoviaria,
-  getCustosOperacionais,
-  saveCustoOperacional,
-  deleteCustoOperacional,
-  getProjetosGerenciais,
-  saveProjetoGerencial,
-  deleteProjetoGerencial,
-  updateProjetoStatus,
-  getAtividadesGestao,
-  saveAtividadeGestao,
-  deleteAtividadeGestao,
-  updateAtividadeStatus,
-  getNotasPaginas,
-  saveNotaPagina,
-  deleteNotaPagina,
-  getInstrucoesTrabalho,
-  saveInstrucaoTrabalho,
-  deleteInstrucaoTrabalho,
   getStoredGlobalModule,
   saveStoredGlobalModule,
   exportDatabaseJSON,
@@ -113,6 +96,27 @@ import {
   deleteFaturaAereo,
   importFaturasAereo,
 } from './utils/farmaAereoApi';
+// Custos Operacionais, Projetos Gerenciais, Agenda da Gestão, Notas & Ideias e Instruções de
+// Trabalho também já migrados para o Supabase — ver src/utils/gestaoApi.ts.
+import {
+  getCustosOperacionais,
+  saveCustoOperacional,
+  deleteCustoOperacional,
+  getProjetosGerenciais,
+  saveProjetoGerencial,
+  deleteProjetoGerencial,
+  updateProjetoStatus,
+  getAtividadesGestao,
+  saveAtividadeGestao,
+  deleteAtividadeGestao,
+  updateAtividadeStatus,
+  getNotasPaginas,
+  saveNotaPagina,
+  deleteNotaPagina,
+  getInstrucoesTrabalho,
+  saveInstrucaoTrabalho,
+  deleteInstrucaoTrabalho,
+} from './utils/gestaoApi';
 import {
   calcExamStatus,
   calcDaysRemaining,
@@ -491,11 +495,28 @@ export default function App() {
   const loadData = useCallback(() => {
     setPreAdmissoes(getPreAdmissoes());
     setViagensRodoviarias(getViagensRodoviarias());
-    setProjetos(getProjetosGerenciais());
-    setAtividadesGestao(getAtividadesGestao());
-    setNotasPaginas(getNotasPaginas());
-    setInstrucoesTrabalho(getInstrucoesTrabalho());
-    setCustosOperacionais(getCustosOperacionais());
+  }, []);
+
+  // Custos Operacionais, Projetos Gerenciais, Agenda da Gestão, Notas & Ideias e Instruções de
+  // Trabalho também já moram no Supabase — buscados à parte, de forma assíncrona.
+  const loadGestaoData = useCallback(async () => {
+    try {
+      const [custos, projetos, atividades, notas, instrucoes] = await Promise.all([
+        getCustosOperacionais(),
+        getProjetosGerenciais(),
+        getAtividadesGestao(),
+        getNotasPaginas(),
+        getInstrucoesTrabalho(),
+      ]);
+      setCustosOperacionais(custos);
+      setProjetos(projetos);
+      setAtividadesGestao(atividades);
+      setNotasPaginas(notas);
+      setInstrucoesTrabalho(instrucoes);
+    } catch (err) {
+      console.error('Erro ao carregar Custos/Projetos/Agenda/Notas/Instruções (Supabase):', err);
+      showToast('Não foi possível carregar alguns dados de gestão. Verifique sua conexão.', 'info');
+    }
   }, []);
 
   // Departamento Pessoal já mora no Supabase (banco em nuvem) — essas 9 entidades são buscadas
@@ -554,6 +575,7 @@ export default function App() {
     loadData();
     loadDpData();
     loadFarmaAereoData();
+    loadGestaoData();
 
     // Listen to cross-component storage changes
     const handleStorageUpdate = () => {
@@ -561,7 +583,7 @@ export default function App() {
     };
     window.addEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
     return () => window.removeEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
-  }, [loadData, loadDpData, loadFarmaAereoData]);
+  }, [loadData, loadDpData, loadFarmaAereoData, loadGestaoData]);
 
   // Keep detail view synchronized with updated store
   useEffect(() => {
@@ -738,74 +760,72 @@ export default function App() {
   }, [sidebarCounts, alertas]);
 
   // HANDLERS FOR ENTITY OPERATIONS
-  const handleSaveProjeto = (proj: ProjetoGerencial) => {
-    saveProjetoGerencial(proj);
-    loadData();
+  const handleSaveProjeto = async (proj: ProjetoGerencial) => {
+    await saveProjetoGerencial(proj);
+    await loadGestaoData();
     showToast(`Projeto "${proj.titulo}" salvo com sucesso!`, 'success');
   };
 
-  const handleDeleteProjeto = (id: string) => {
-    deleteProjetoGerencial(id);
-    loadData();
+  const handleDeleteProjeto = async (id: string) => {
+    await deleteProjetoGerencial(id);
+    await loadGestaoData();
     showToast('Projeto removido do portfólio.', 'info');
   };
 
-  const handleUpdateProjetoStatus = (id: string, newStatus: StatusProjeto) => {
-    updateProjetoStatus(id, newStatus);
-    loadData();
+  const handleUpdateProjetoStatus = async (id: string, newStatus: StatusProjeto) => {
+    await updateProjetoStatus(id, newStatus);
+    await loadGestaoData();
     showToast(`Status do projeto atualizado para "${newStatus}".`, 'success');
   };
 
   // Agenda Gestão Handlers
-  const handleSaveAtividadeGestao = (item: AtividadeGestao) => {
-    saveAtividadeGestao(item);
-    loadData();
+  const handleSaveAtividadeGestao = async (item: AtividadeGestao) => {
+    await saveAtividadeGestao(item);
+    await loadGestaoData();
     showToast(`Atividade "${item.titulo}" salva na agenda da gestão!`, 'success');
   };
 
-  const handleDeleteAtividadeGestao = (id: string) => {
-    deleteAtividadeGestao(id);
-    loadData();
+  const handleDeleteAtividadeGestao = async (id: string) => {
+    await deleteAtividadeGestao(id);
+    await loadGestaoData();
     showToast('Atividade removida da agenda.', 'info');
   };
 
-  const handleUpdateAtividadeStatus = (id: string, newStatus: StatusAtividadeGestao) => {
-    updateAtividadeStatus(id, newStatus);
-    loadData();
+  const handleUpdateAtividadeStatus = async (id: string, newStatus: StatusAtividadeGestao) => {
+    await updateAtividadeStatus(id, newStatus);
+    await loadGestaoData();
     showToast(`Status da atividade atualizado para "${newStatus}".`, 'success');
   };
 
   // Notas & Ideias Handlers
-  const handleSaveNotaPagina = (pagina: NotaPagina) => {
-    saveNotaPagina(pagina);
-    loadData();
+  const handleSaveNotaPagina = async (pagina: NotaPagina) => {
+    await saveNotaPagina(pagina);
+    await loadGestaoData();
   };
 
-  const handleDeleteNotaPagina = (id: string) => {
-    deleteNotaPagina(id);
-    loadData();
+  const handleDeleteNotaPagina = async (id: string) => {
+    await deleteNotaPagina(id);
+    await loadGestaoData();
     showToast('Página removida das Notas.', 'info');
   };
 
   // Instruções de Trabalho Handlers
-  const handleSaveInstrucaoTrabalho = (instrucao: InstrucaoTrabalho) => {
-    saveInstrucaoTrabalho(instrucao);
-    loadData();
+  const handleSaveInstrucaoTrabalho = async (instrucao: InstrucaoTrabalho) => {
+    await saveInstrucaoTrabalho(instrucao);
+    await loadGestaoData();
   };
 
-  const handleDeleteInstrucaoTrabalho = (id: string) => {
-    deleteInstrucaoTrabalho(id);
-    loadData();
+  const handleDeleteInstrucaoTrabalho = async (id: string) => {
+    await deleteInstrucaoTrabalho(id);
+    await loadGestaoData();
     showToast('Instrução de trabalho removida.', 'info');
   };
 
-  const handleUpdateDeliberacoes = (id: string, deliberacoes: ItemDeliberacaoAta[]) => {
-    const list = getAtividadesGestao();
-    const target = list.find((a) => a.id === id);
+  const handleUpdateDeliberacoes = async (id: string, deliberacoes: ItemDeliberacaoAta[]) => {
+    const target = atividadesGestao.find((a) => a.id === id);
     if (target) {
-      target.deliberacoes = deliberacoes;
-      saveAtividadeGestao(target);
-      loadData();
+      await saveAtividadeGestao({ ...target, deliberacoes });
+      await loadGestaoData();
       showToast('Deliberações e ata da reunião atualizadas com sucesso!', 'success');
     }
   };
@@ -1230,15 +1250,15 @@ export default function App() {
   };
 
   // Custos Operacionais Handlers
-  const handleSaveCustoOperacional = (custo: CustoOperacional) => {
-    saveCustoOperacional(custo);
-    loadData();
+  const handleSaveCustoOperacional = async (custo: CustoOperacional) => {
+    await saveCustoOperacional(custo);
+    await loadGestaoData();
     showToast(`Custo operacional "${custo.descricao}" salvo com sucesso!`, 'success');
   };
 
-  const handleDeleteCustoOperacional = (id: string) => {
-    deleteCustoOperacional(id);
-    loadData();
+  const handleDeleteCustoOperacional = async (id: string) => {
+    await deleteCustoOperacional(id);
+    await loadGestaoData();
     showToast('Custo operacional removido com sucesso.', 'info');
   };
 
