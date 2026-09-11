@@ -98,6 +98,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   // à vista no momento).
   const [tentouSalvarComErro, setTentouSalvarComErro] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [erroUploadDocumento, setErroUploadDocumento] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<Partial<Colaborador>>({
@@ -286,9 +287,30 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     }));
   };
 
+  // Antes chamada "Simulated" com razão: só gravava o nome do arquivo e marcava
+  // "Recebido", sem nunca ler o conteúdo — o documento aparecia como recebido em
+  // todo lugar, mas não existia arquivo nenhum pra baixar depois (nem aqui, nem na
+  // Ficha Cadastral compartilhada). Agora lê de verdade, com o mesmo limite de
+  // tamanho dos outros uploads (ver EmployeeDossierSection.tsx/AsoImageUploader.tsx —
+  // anexos grandes na mesma gravação estouram o tempo limite do banco).
+  const LIMITE_DOCUMENTO_MB = 8;
+
   const handleDocUploadSimulated = (docId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+    setErroUploadDocumento(null);
+
+    const tamanhoMB = file.size / (1024 * 1024);
+    if (tamanhoMB > LIMITE_DOCUMENTO_MB) {
+      setErroUploadDocumento(
+        `"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite é ${LIMITE_DOCUMENTO_MB}MB. Comprima o arquivo ou tire uma foto em resolução menor.`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
       setFormData((prev) => ({
         ...prev,
         documentos: prev.documentos?.map((d) =>
@@ -297,12 +319,14 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                 ...d,
                 status: 'Recebido',
                 nomeArquivo: file.name,
+                arquivoUrl: reader.result as string,
                 dataUpload: new Date().toISOString().slice(0, 10),
               }
             : d
         ),
       }));
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
   // Fardamento history helper
@@ -1288,8 +1312,16 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                 2.8 Documentação Obrigatória — Checklist de Anexos
               </h3>
               <p className="text-xs text-slate-500">
-                Acompanhe o status e anexe os arquivos digitalizados de cada documento exigido pela ANVISA e CLT.
+                Acompanhe o status e anexe os arquivos digitalizados de cada documento exigido pela ANVISA e CLT
+                (até {LIMITE_DOCUMENTO_MB}MB por arquivo).
               </p>
+
+              {erroUploadDocumento && (
+                <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-[11px] text-rose-700 font-semibold flex items-start gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>{erroUploadDocumento}</span>
+                </div>
+              )}
 
               <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden text-xs">
                 {formData.documentos?.map((doc) => (
@@ -1308,6 +1340,11 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       </div>
                       {doc.observacao && (
                         <div className="text-[11px] text-amber-700 mt-0.5">{doc.observacao}</div>
+                      )}
+                      {doc.status === 'Recebido' && !doc.arquivoUrl && (
+                        <div className="text-[11px] text-amber-700 mt-0.5 font-semibold">
+                          Marcado como recebido, mas sem arquivo anexado — clique em "Alterar" pra anexar de verdade.
+                        </div>
                       )}
                     </div>
 
