@@ -81,6 +81,8 @@ interface SidebarProps {
     clientesAtivos?: number;
     embarquesAereosAtivos?: number;
     viagensRodoviariasAtivas?: number;
+    clientesFarmaAereo?: number;
+    clientesFarmaRodoviario?: number;
     projetosAtivos?: number;
     atividadesHoje?: number;
     totalLogins?: number;
@@ -138,7 +140,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'Farma Aéreo',
       short: 'AWB & TECA',
       icon: Plane,
-      badge: counts.embarquesAereosAtivos,
+      // Empresas vinculadas ao setor (mesmo número mostrado em "Empresas Atreladas" dentro
+      // do próprio painel do Aéreo) — não a contagem de embarques em trânsito, que hoje é
+      // sempre 0 (recurso de rastreamento de embarques ainda não tem dado real) e por isso
+      // nunca aparecia nenhum número aqui.
+      badge: counts.clientesFarmaAereo,
       color: 'from-sky-600 to-blue-800',
       activeBorder: 'border-sky-500',
     },
@@ -148,7 +154,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'Farma Rodoviário',
       short: 'Frota & MDF-e',
       icon: Truck,
-      badge: counts.viagensRodoviariasAtivas,
+      // Mesmo raciocínio do Aéreo acima: empresas vinculadas ao setor, não viagens ativas
+      // (hoje sempre 0 — módulo de viagens/telemetria ainda sem dado real).
+      badge: counts.clientesFarmaRodoviario,
       color: 'from-emerald-600 to-teal-800',
       activeBorder: 'border-emerald-500',
     },

@@ -129,6 +129,7 @@ import {
   calcFaltasEmPeriodo,
   calcDiasFeriasEmPeriodo,
 } from './utils/formatters';
+import { isClienteFarmaAereo, isClienteFarmaRodoviario } from './utils/sectorUtils';
 
 // Layout & Core Navigation
 import { Sidebar, NavSection } from './components/Sidebar';
@@ -725,6 +726,11 @@ export default function App() {
     const clientesAtivos = clientes.filter((cl) => cl.status === 'Ativo').length;
     const embarquesAereosAtivos = embarquesAereos.filter((e) => e.status !== 'Entregue / Concluído').length;
     const viagensRodoviariasAtivas = viagensRodoviarias.filter((v) => v.status !== 'Viagem Concluída').length;
+    // Empresas vinculadas a cada setor — mesmo número mostrado como "Empresas Atreladas"
+    // dentro dos próprios painéis do Aéreo/Rodoviário. Usado no badge do menu lateral em
+    // vez de embarques/viagens ativas (que hoje são sempre 0, sem dado real).
+    const clientesFarmaAereo = clientes.filter(isClienteFarmaAereo).length;
+    const clientesFarmaRodoviario = clientes.filter(isClienteFarmaRodoviario).length;
     const projetosAtivos = projetos.length;
     const todayIso = new Date().toISOString().split('T')[0];
     const atividadesHoje = atividadesGestao.filter(
@@ -742,6 +748,8 @@ export default function App() {
       clientesAtivos,
       embarquesAereosAtivos,
       viagensRodoviariasAtivas,
+      clientesFarmaAereo,
+      clientesFarmaRodoviario,
       projetosAtivos,
       atividadesHoje,
       totalLogins: users.length,
