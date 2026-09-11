@@ -37,20 +37,6 @@ import {
   savePreAdmissao,
   updatePreAdmissaoStatus,
   deletePreAdmissao,
-  getClientes,
-  saveCliente,
-  deleteCliente,
-  getEmbarquesAereos,
-  saveEmbarqueAereo,
-  deleteEmbarqueAereo,
-  getLancamentosFaturamentoAereo,
-  saveLancamentoFaturamentoAereo,
-  deleteLancamentoFaturamentoAereo,
-  importLancamentosFaturamentoAereo,
-  getFaturasAereo,
-  saveFaturaAereo,
-  deleteFaturaAereo,
-  importFaturasAereo,
   getViagensRodoviarias,
   saveViagemRodoviaria,
   deleteViagemRodoviaria,
@@ -109,6 +95,24 @@ import {
   saveLancamentoValeAlimentacao,
   deleteLancamentoValeAlimentacao,
 } from './utils/dpApi';
+// Carteira de Clientes + Farma Aéreo também já migrados para o Supabase — ver
+// src/utils/farmaAereoApi.ts.
+import {
+  getClientes,
+  saveCliente,
+  deleteCliente,
+  getEmbarquesAereos,
+  saveEmbarqueAereo,
+  deleteEmbarqueAereo,
+  getLancamentosFaturamentoAereo,
+  saveLancamentoFaturamentoAereo,
+  deleteLancamentoFaturamentoAereo,
+  importLancamentosFaturamentoAereo,
+  getFaturasAereo,
+  saveFaturaAereo,
+  deleteFaturaAereo,
+  importFaturasAereo,
+} from './utils/farmaAereoApi';
 import {
   calcExamStatus,
   calcDaysRemaining,
@@ -486,10 +490,6 @@ export default function App() {
   // Load all initial data (tudo que ainda vem do localStorage)
   const loadData = useCallback(() => {
     setPreAdmissoes(getPreAdmissoes());
-    setClientes(getClientes());
-    setEmbarquesAereos(getEmbarquesAereos());
-    setLancamentosFaturamentoAereo(getLancamentosFaturamentoAereo());
-    setFaturasAereo(getFaturasAereo());
     setViagensRodoviarias(getViagensRodoviarias());
     setProjetos(getProjetosGerenciais());
     setAtividadesGestao(getAtividadesGestao());
@@ -531,9 +531,29 @@ export default function App() {
     }
   }, []);
 
+  // Clientes (carteira) + Farma Aéreo também já moram no Supabase. A tabela de lançamentos
+  // tem milhares de linhas — por isso as ações do dia a dia (editar/excluir 1 lançamento,
+  // cadastrar 1 cliente etc.) atualizam só o item certo no estado local em vez de chamar esta
+  // função de novo; ela é usada no carregamento inicial e depois de uma importação em lote.
+  const loadFarmaAereoData = useCallback(async () => {
+    try {
+      const [clis, embs, lancs, faturas] = await Promise.all([
+        getClientes(), getEmbarquesAereos(), getLancamentosFaturamentoAereo(), getFaturasAereo(),
+      ]);
+      setClientes(clis);
+      setEmbarquesAereos(embs);
+      setLancamentosFaturamentoAereo(lancs);
+      setFaturasAereo(faturas);
+    } catch (err) {
+      console.error('Erro ao carregar dados de Clientes/Farma Aéreo (Supabase):', err);
+      showToast('Não foi possível carregar os dados de Clientes/Farma Aéreo. Verifique sua conexão.', 'info');
+    }
+  }, []);
+
   useEffect(() => {
     loadData();
     loadDpData();
+    loadFarmaAereoData();
 
     // Listen to cross-component storage changes
     const handleStorageUpdate = () => {
@@ -541,7 +561,7 @@ export default function App() {
     };
     window.addEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
     return () => window.removeEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
-  }, [loadData, loadDpData]);
+  }, [loadData, loadDpData, loadFarmaAereoData]);
 
   // Keep detail view synchronized with updated store
   useEffect(() => {
@@ -1054,72 +1074,137 @@ export default function App() {
     }
   };
 
-  // Clientes Handlers (Module 1)
-  const handleSaveCliente = (cliente: Cliente) => {
-    saveCliente(cliente);
-    loadData();
-    showToast(`Cliente ${cliente.razaoSocial} salvo com sucesso!`, 'success');
+  // Clientes Handlers (Module 1) — atualiza só o item certo no estado local (sem recarregar
+  // tudo de novo) já que a tabela de lançamentos aqui do lado é grande.
+  const handleSaveCliente = async (cliente: Cliente) => {
+    try {
+      const item = cliente.id ? cliente : { ...cliente, id: `cli-${Date.now()}` };
+      await saveCliente(item);
+      setClientes((prev) => {
+        const idx = prev.findIndex((c) => c.id === item.id);
+        return idx >= 0 ? prev.map((c) => (c.id === item.id ? item : c)) : [item, ...prev];
+      });
+      showToast(`Cliente ${cliente.razaoSocial} salvo com sucesso!`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível salvar o cliente. Tente novamente.', 'info');
+    }
   };
 
-  const handleDeleteCliente = (id: string) => {
-    deleteCliente(id);
-    loadData();
-    showToast('Cliente removido com sucesso.', 'info');
+  const handleDeleteCliente = async (id: string) => {
+    try {
+      await deleteCliente(id);
+      setClientes((prev) => prev.filter((c) => c.id !== id));
+      showToast('Cliente removido com sucesso.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível remover o cliente. Tente novamente.', 'info');
+    }
   };
 
   // Farma Aéreo Handlers (Module 2)
-  const handleSaveEmbarqueAereo = (embarque: EmbarqueAereo) => {
-    saveEmbarqueAereo(embarque);
-    loadData();
-    showToast(`Embarque Aéreo AWB ${embarque.codigoAWB || embarque.numeroAwb} salvo com sucesso!`, 'success');
+  const handleSaveEmbarqueAereo = async (embarque: EmbarqueAereo) => {
+    try {
+      const item = embarque.id ? embarque : { ...embarque, id: `emb-air-${Date.now()}` };
+      await saveEmbarqueAereo(item);
+      setEmbarquesAereos((prev) => {
+        const idx = prev.findIndex((e) => e.id === item.id);
+        return idx >= 0 ? prev.map((e) => (e.id === item.id ? item : e)) : [item, ...prev];
+      });
+      showToast(`Embarque Aéreo AWB ${embarque.codigoAWB || embarque.numeroAwb} salvo com sucesso!`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível salvar o embarque. Tente novamente.', 'info');
+    }
   };
 
-  const handleDeleteEmbarqueAereo = (id: string) => {
-    deleteEmbarqueAereo(id);
-    loadData();
-    showToast('Embarque aéreo removido.', 'info');
+  const handleDeleteEmbarqueAereo = async (id: string) => {
+    try {
+      await deleteEmbarqueAereo(id);
+      setEmbarquesAereos((prev) => prev.filter((e) => e.id !== id));
+      showToast('Embarque aéreo removido.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível remover o embarque. Tente novamente.', 'info');
+    }
   };
 
   // Controle Financeiro — Faturamento Farma Aéreo
-  const handleImportFaturamentoAereo = (
+  const handleImportFaturamentoAereo = async (
     lancamentos: LancamentoFaturamentoAereo[],
     faturas: FaturaAereo[]
   ) => {
-    importFaturasAereo(faturas);
-    importLancamentosFaturamentoAereo(lancamentos);
-    loadData();
-    showToast(
-      `Importação concluída: ${lancamentos.length} lançamento(s) e ${faturas.length} fatura(s) novas.`,
-      'success'
-    );
+    try {
+      await importFaturasAereo(faturas);
+      await importLancamentosFaturamentoAereo(lancamentos);
+      await loadFarmaAereoData();
+      showToast(
+        `Importação concluída: ${lancamentos.length} lançamento(s) e ${faturas.length} fatura(s) novas.`,
+        'success'
+      );
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível concluir a importação. Tente novamente.', 'info');
+    }
   };
 
-  const handleCreateFaturaAereo = (fatura: FaturaAereo) => {
-    saveFaturaAereo(fatura);
-    loadData();
-    showToast(`Fatura ${fatura.numeroFatura} criada com sucesso!`, 'success');
+  const handleCreateFaturaAereo = async (fatura: FaturaAereo) => {
+    try {
+      const item = fatura.id ? fatura : { ...fatura, id: `fatura-aereo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+      await saveFaturaAereo(item);
+      setFaturasAereo((prev) => [item, ...prev]);
+      showToast(`Fatura ${fatura.numeroFatura} criada com sucesso!`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível criar a fatura. Tente novamente.', 'info');
+    }
   };
 
-  const handleUpdateFaturaAereo = (fatura: FaturaAereo) => {
-    saveFaturaAereo(fatura);
-    loadData();
+  const handleUpdateFaturaAereo = async (fatura: FaturaAereo) => {
+    try {
+      await saveFaturaAereo(fatura);
+      setFaturasAereo((prev) => prev.map((f) => (f.id === fatura.id ? fatura : f)));
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível atualizar a fatura. Tente novamente.', 'info');
+    }
   };
 
-  const handleDeleteFaturaAereo = (id: string) => {
-    deleteFaturaAereo(id);
-    loadData();
-    showToast('Fatura removida.', 'info');
+  const handleDeleteFaturaAereo = async (id: string) => {
+    try {
+      await deleteFaturaAereo(id);
+      setFaturasAereo((prev) => prev.filter((f) => f.id !== id));
+      // O banco já desvincula (fatura_id -> null) os lançamentos que apontavam pra essa fatura —
+      // reflete a mesma coisa aqui no estado local, sem precisar recarregar tudo.
+      setLancamentosFaturamentoAereo((prev) =>
+        prev.map((l) => (l.faturaId === id ? { ...l, faturaId: undefined } : l))
+      );
+      showToast('Fatura removida.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível remover a fatura. Tente novamente.', 'info');
+    }
   };
 
-  const handleUpdateLancamentoFaturamentoAereo = (lancamento: LancamentoFaturamentoAereo) => {
-    saveLancamentoFaturamentoAereo(lancamento);
-    loadData();
+  const handleUpdateLancamentoFaturamentoAereo = async (lancamento: LancamentoFaturamentoAereo) => {
+    try {
+      await saveLancamentoFaturamentoAereo(lancamento);
+      setLancamentosFaturamentoAereo((prev) => prev.map((l) => (l.id === lancamento.id ? lancamento : l)));
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível salvar o lançamento. Tente novamente.', 'info');
+    }
   };
 
-  const handleDeleteLancamentoFaturamentoAereo = (id: string) => {
-    deleteLancamentoFaturamentoAereo(id);
-    loadData();
-    showToast('Lançamento removido.', 'info');
+  const handleDeleteLancamentoFaturamentoAereo = async (id: string) => {
+    try {
+      await deleteLancamentoFaturamentoAereo(id);
+      setLancamentosFaturamentoAereo((prev) => prev.filter((l) => l.id !== id));
+      showToast('Lançamento removido.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível remover o lançamento. Tente novamente.', 'info');
+    }
   };
 
   // Farma Rodoviário Handlers (Module 3)

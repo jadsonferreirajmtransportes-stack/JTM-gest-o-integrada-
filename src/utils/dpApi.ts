@@ -69,7 +69,7 @@ function rowToEmpregador(r: any): Empregador {
     registroAnvisa: u(r.registro_anvisa),
   };
 }
-function empregadorToRow(e: Empregador) {
+export function empregadorToRow(e: Empregador) {
   return {
     id: e.id,
     razao_social: e.razaoSocial,
@@ -108,7 +108,7 @@ function rowToSupervisor(r: any): Supervisor {
     ativo: u(r.ativo),
   };
 }
-function supervisorToRow(s: Supervisor) {
+export function supervisorToRow(s: Supervisor) {
   return {
     id: s.id,
     nome: s.nome,
@@ -146,7 +146,7 @@ function rowToCargo(r: any): CargoSalario {
     descricao: u(r.descricao),
   };
 }
-function cargoToRow(c: CargoSalario) {
+export function cargoToRow(c: CargoSalario) {
   return {
     id: c.id,
     cargo: c.cargo,
@@ -174,7 +174,7 @@ export async function saveCargo(item: CargoSalario): Promise<void> {
 function rowToFeriado(r: any): FeriadoEmpresa {
   return { id: r.id, data: r.data, descricao: r.descricao, tipo: r.tipo };
 }
-function feriadoToRow(f: FeriadoEmpresa) {
+export function feriadoToRow(f: FeriadoEmpresa) {
   return { id: f.id, data: f.data, descricao: f.descricao, tipo: f.tipo };
 }
 export async function getFeriados(): Promise<FeriadoEmpresa[]> {
@@ -297,7 +297,7 @@ function rowToColaborador(r: any): Colaborador {
     atualizadoEm: u(r.atualizado_em),
   };
 }
-function colaboradorToRow(c: Colaborador) {
+export function colaboradorToRow(c: Colaborador) {
   return {
     id: c.id,
     codigo_matricula: c.codigoMatricula,
@@ -477,7 +477,7 @@ function rowToFerias(r: any): ProgramacaoFerias {
     observacoes: u(r.observacoes),
   };
 }
-function feriasToRow(f: ProgramacaoFerias) {
+export function feriasToRow(f: ProgramacaoFerias) {
   return {
     id: f.id,
     colaborador_id: f.colaboradorId,
@@ -550,7 +550,7 @@ function rowToOcorrencia(r: any): Ocorrencia {
     criadoEm: u(r.criado_em),
   };
 }
-function ocorrenciaToRow(o: Ocorrencia) {
+export function ocorrenciaToRow(o: Ocorrencia) {
   return {
     id: o.id,
     colaborador_id: o.colaboradorId,
@@ -592,7 +592,7 @@ export async function deleteOcorrencia(id: string): Promise<void> {
 function rowToQuinzena(r: any): QuinzenaValeAlimentacao {
   return { id: r.id, identificacao: r.identificacao, dataInicio: r.data_inicio, dataTermino: r.data_termino };
 }
-function quinzenaToRow(q: QuinzenaValeAlimentacao) {
+export function quinzenaToRow(q: QuinzenaValeAlimentacao) {
   return { id: q.id, identificacao: q.identificacao, data_inicio: q.dataInicio, data_termino: q.dataTermino };
 }
 export async function getQuinzenasValeAlimentacao(): Promise<QuinzenaValeAlimentacao[]> {
@@ -632,7 +632,7 @@ function rowToLancamentoVA(r: any): LancamentoValeAlimentacao {
     atualizadoEm: u(r.atualizado_em),
   };
 }
-function lancamentoVAToRow(l: LancamentoValeAlimentacao) {
+export function lancamentoVAToRow(l: LancamentoValeAlimentacao) {
   return {
     id: l.id,
     colaborador_id: l.colaboradorId,

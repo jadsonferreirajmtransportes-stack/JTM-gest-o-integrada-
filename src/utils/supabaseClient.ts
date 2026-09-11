@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+export { createClient };
 
 // Cliente do Supabase — usado para migrar módulos do sistema do localStorage (um Chrome só)
 // para um banco compartilhado (acessível de qualquer máquina). Migração feita módulo por
