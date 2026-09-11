@@ -864,11 +864,13 @@ export interface FichaCompartilhada {
   revogado: boolean;
 }
 
-/** Campos do Colaborador que NUNCA entram no link — são de uso interno do RH e
- *  não fazem parte do que se chama de "ficha cadastral" pra fins externos. */
+/** Campos do Colaborador que NUNCA entram no link — são anotações de uso interno do RH
+ *  (texto livre, não documentos) e não fazem parte do que se chama de "ficha cadastral"
+ *  pra fins externos. `anexos` (o Dossiê de Anexos — arquivos de verdade, não notas) fica
+ *  DE FORA dessa lista de propósito: o usuário pediu que os arquivos anexados também
+ *  fiquem disponíveis pra baixar no link, junto com o ASO e o checklist de documentos. */
 const CAMPOS_INTERNOS_EXCLUIDOS_DA_FICHA = [
   'anotacoes',
-  'anexos',
   'observacoesGerais',
   'historicoFardamento',
 ];

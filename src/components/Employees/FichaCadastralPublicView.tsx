@@ -245,6 +245,44 @@ export const FichaCadastralPublicView: React.FC<FichaCadastralPublicViewProps> =
               </Secao>
             )}
 
+            {Array.isArray(dados.anexos) && dados.anexos.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-xs font-bold text-slate-900 border-b border-slate-100 pb-1 uppercase tracking-wide">
+                  Outros Arquivos Anexados
+                </h3>
+                <div className="space-y-2">
+                  {dados.anexos.map((a: any, idx: number) =>
+                    a.arquivoUrl ? (
+                      <div
+                        key={a.id || idx}
+                        className="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3 print:hidden"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileCheck className="w-4 h-4 text-amber-700 shrink-0" />
+                          <div className="min-w-0">
+                            <span className="block text-xs font-semibold text-slate-700 truncate" title={a.nome}>
+                              {a.nome} <span className="text-slate-400 font-normal">({a.categoria})</span>
+                            </span>
+                            {a.descricao && (
+                              <span className="block text-[11px] text-slate-500 truncate">{a.descricao}</span>
+                            )}
+                          </div>
+                        </div>
+                        <a
+                          href={a.arquivoUrl}
+                          download={a.nome}
+                          className="shrink-0 text-[11px] font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg px-3 py-1.5 flex items-center gap-1.5"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Baixar
+                        </a>
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              </div>
+            )}
+
             <PrintDocumentFooter />
           </div>
         )}
