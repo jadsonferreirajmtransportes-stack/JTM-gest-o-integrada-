@@ -32,6 +32,7 @@ import {
   StatusFerias,
   MotivoDemissao,
   PreAdmissao,
+  StatusPreAdmissao,
 } from '../types';
 
 /** '' e undefined viram null — colunas de data/numéricas do Postgres rejeitam string vazia. */
@@ -730,9 +731,9 @@ export async function updateOnboardingItem(
   assertNoError(error, 'updateOnboardingItem (escrita)');
 }
 
-/** Efetiva uma pré-admissão como Colaborador ativo, gravando direto no Supabase. A pré-admissão
- *  em si continua no localStorage (módulo ainda não migrado) — quem chama esta função cuida de
- *  atualizar o status/vínculo dela separadamente (ver App.tsx). */
+/** Efetiva uma pré-admissão como Colaborador ativo, gravando direto no Supabase. Quem chama
+ *  esta função cuida de atualizar o status/vínculo da pré-admissão em si separadamente
+ *  (ver App.tsx e updatePreAdmissaoStatus/savePreAdmissao abaixo). */
 export async function efetivarPreAdmissao(
   pre: PreAdmissao,
   config: {
@@ -752,4 +753,96 @@ export async function efetivarPreAdmissao(
   const { error } = await supabase.from('colaboradores').upsert(colaboradorToRow(novoColaborador));
   assertNoError(error, 'efetivarPreAdmissao');
   return novoColaborador;
+}
+
+// ============================================================================
+// PRÉ-ADMISSÕES (formulário público de admissão digital)
+// ============================================================================
+// Tabela com RLS diferente de todas as outras: o candidato preenche o formulário
+// SEM login (papel "anon" da chave pública), então só pode INSERIR o próprio
+// registro — nunca ler, editar ou apagar (ver supabase/migrations/005_pre_admissoes.sql).
+// Só o Departamento Pessoal (logado, "authenticated") lê/edita/aprova/apaga.
+function rowToPreAdmissao(r: any): PreAdmissao {
+  return {
+    id: r.id,
+    token: r.token,
+    criadoEm: r.criado_em,
+    atualizadoEm: u(r.atualizado_em),
+    status: r.status,
+    empresaPredefinidaId: u(r.empresa_predefinida_id),
+    cargoPredefinido: u(r.cargo_predefinido),
+    supervisorPredefinidoId: u(r.supervisor_predefinido_id),
+    observacoesDP: u(r.observacoes_dp),
+    colaboradorEfetivadoId: u(r.colaborador_efetivado_id),
+    dadosPessoais: r.dados_pessoais ?? {},
+    contatoEndereco: r.contato_endereco ?? {},
+    dadosBancarios: r.dados_bancarios ?? {},
+    transporte: r.transporte ?? {},
+    filiacaoSindical: u(r.filiacao_sindical),
+    termosCCT: u(r.termos_cct),
+    dependentes: j(r.dependentes),
+    fardamento: r.fardamento ?? {},
+    documentosEnviados: j(r.documentos_enviados),
+    declaracaoVeracidade: r.declaracao_veracidade ?? false,
+    aceiteLgpd: u(r.aceite_lgpd),
+    dataEnvio: u(r.data_envio),
+  };
+}
+function preAdmissaoToRow(p: PreAdmissao) {
+  return {
+    id: p.id,
+    token: p.token,
+    criado_em: p.criadoEm || new Date().toISOString(),
+    atualizado_em: new Date().toISOString(),
+    status: p.status,
+    empresa_predefinida_id: n(p.empresaPredefinidaId),
+    cargo_predefinido: n(p.cargoPredefinido),
+    supervisor_predefinido_id: n(p.supervisorPredefinidoId),
+    observacoes_dp: n(p.observacoesDP),
+    colaborador_efetivado_id: n(p.colaboradorEfetivadoId),
+    dados_pessoais: p.dadosPessoais ?? {},
+    contato_endereco: p.contatoEndereco ?? {},
+    dados_bancarios: p.dadosBancarios ?? {},
+    transporte: p.transporte ?? {},
+    filiacao_sindical: p.filiacaoSindical ?? null,
+    termos_cct: p.termosCCT ?? null,
+    dependentes: j(p.dependentes),
+    fardamento: p.fardamento ?? {},
+    documentos_enviados: j(p.documentosEnviados),
+    declaracao_veracidade: p.declaracaoVeracidade ?? false,
+    aceite_lgpd: p.aceiteLgpd ?? null,
+    data_envio: n(p.dataEnvio),
+  };
+}
+export async function getPreAdmissoes(): Promise<PreAdmissao[]> {
+  const { data, error } = await supabase.from('pre_admissoes').select('*').order('criado_em', { ascending: false });
+  assertNoError(error, 'getPreAdmissoes');
+  return (data ?? []).map(rowToPreAdmissao);
+}
+export async function getPreAdmissaoById(id: string): Promise<PreAdmissao | undefined> {
+  const { data, error } = await supabase.from('pre_admissoes').select('*').eq('id', id).maybeSingle();
+  assertNoError(error, 'getPreAdmissaoById');
+  return data ? rowToPreAdmissao(data) : undefined;
+}
+/** Cria a pré-admissão (usado pelo formulário público — candidato sem login, papel "anon"). O
+ *  candidato nunca faz upsert por token (não tem permissão de leitura): cada envio gera um
+ *  registro novo, com um id sempre novo mesmo que reutilize um token de convite já existente. */
+export async function savePreAdmissao(item: PreAdmissao): Promise<void> {
+  const registro = item.id ? item : { ...item, id: `preadm-${Date.now()}` };
+  const { error } = await supabase.from('pre_admissoes').upsert(preAdmissaoToRow(registro));
+  assertNoError(error, 'savePreAdmissao');
+}
+export async function updatePreAdmissaoStatus(
+  id: string,
+  status: StatusPreAdmissao,
+  observacoesDP?: string
+): Promise<void> {
+  const patch: Record<string, any> = { status, atualizado_em: new Date().toISOString() };
+  if (observacoesDP !== undefined) patch.observacoes_dp = observacoesDP;
+  const { error } = await supabase.from('pre_admissoes').update(patch).eq('id', id);
+  assertNoError(error, 'updatePreAdmissaoStatus');
+}
+export async function deletePreAdmissao(id: string): Promise<void> {
+  const { error } = await supabase.from('pre_admissoes').delete().eq('id', id);
+  assertNoError(error, 'deletePreAdmissao');
 }

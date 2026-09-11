@@ -32,11 +32,6 @@ import {
   LancamentoValeAlimentacao,
 } from './types';
 import {
-  getPreAdmissoes,
-  getPreAdmissaoById,
-  savePreAdmissao,
-  updatePreAdmissaoStatus,
-  deletePreAdmissao,
   getViagensRodoviarias,
   saveViagemRodoviaria,
   deleteViagemRodoviaria,
@@ -70,6 +65,11 @@ import {
   updateOnboardingItem,
   renovarExameASO,
   efetivarPreAdmissao,
+  getPreAdmissoes,
+  getPreAdmissaoById,
+  savePreAdmissao,
+  updatePreAdmissaoStatus,
+  deletePreAdmissao,
   getQuinzenasValeAlimentacao,
   saveQuinzenaValeAlimentacao,
   deleteQuinzenaValeAlimentacao,
@@ -493,7 +493,6 @@ export default function App() {
 
   // Load all initial data (tudo que ainda vem do localStorage)
   const loadData = useCallback(() => {
-    setPreAdmissoes(getPreAdmissoes());
     setViagensRodoviarias(getViagensRodoviarias());
   }, []);
 
@@ -525,7 +524,7 @@ export default function App() {
   const loadDpData = useCallback(async () => {
     try {
       const [
-        colabs, emps, sups, crgs, ferds, fer, ocos, quinz, lancs,
+        colabs, emps, sups, crgs, ferds, fer, ocos, quinz, lancs, preAdm,
       ] = await Promise.all([
         getColaboradores(),
         getEmpregadores(),
@@ -536,6 +535,7 @@ export default function App() {
         getOcorrencias(),
         getQuinzenasValeAlimentacao(),
         getLancamentosValeAlimentacao(),
+        getPreAdmissoes(),
       ]);
       setColaboradores(colabs);
       setEmpregadores(emps);
@@ -546,6 +546,7 @@ export default function App() {
       setOcorrencias(ocos);
       setQuinzenasVA(quinz);
       setLancamentosVA(lancs);
+      setPreAdmissoes(preAdm);
     } catch (err) {
       console.error('Erro ao carregar dados do Departamento Pessoal (Supabase):', err);
       showToast('Não foi possível carregar os dados do Departamento Pessoal. Verifique sua conexão.', 'info');
@@ -1066,20 +1067,20 @@ export default function App() {
   };
 
   // Pre-admission handlers
-  const handleUpdatePreAdmissaoStatus = (id: string, status: StatusPreAdmissao, motivoRecusa?: string) => {
-    updatePreAdmissaoStatus(id, status, motivoRecusa);
-    loadData();
+  const handleUpdatePreAdmissaoStatus = async (id: string, status: StatusPreAdmissao, motivoRecusa?: string) => {
+    await updatePreAdmissaoStatus(id, status, motivoRecusa);
+    await loadDpData();
     showToast(`Status da pré-admissão atualizado para: ${status}`);
   };
 
-  const handleDeletePreAdmissao = (id: string) => {
-    deletePreAdmissao(id);
-    loadData();
+  const handleDeletePreAdmissao = async (id: string) => {
+    await deletePreAdmissao(id);
+    await loadDpData();
     showToast('Ficha de pré-admissão removida.', 'info');
   };
 
   const handleEfetivarAdmissao = async (preAdmissaoId: string) => {
-    const pre = getPreAdmissaoById(preAdmissaoId);
+    const pre = await getPreAdmissaoById(preAdmissaoId);
     if (!pre) return;
     try {
       const colab = await efetivarPreAdmissao(pre, {
@@ -1087,14 +1088,12 @@ export default function App() {
         funcaoCargo: pre.cargoPredefinido,
         supervisorId: pre.supervisorPredefinidoId,
       });
-      // A pré-admissão em si continua no localStorage — só o colaborador foi para o Supabase.
-      updatePreAdmissaoStatus(preAdmissaoId, 'Aprovado', `Efetivado como ${colab.codigoMatricula} em ${new Date().toLocaleDateString('pt-BR')}`);
-      const preAtualizado = getPreAdmissaoById(preAdmissaoId);
+      await updatePreAdmissaoStatus(preAdmissaoId, 'Aprovado', `Efetivado como ${colab.codigoMatricula} em ${new Date().toLocaleDateString('pt-BR')}`);
+      const preAtualizado = await getPreAdmissaoById(preAdmissaoId);
       if (preAtualizado) {
-        savePreAdmissao({ ...preAtualizado, colaboradorEfetivadoId: colab.id });
+        await savePreAdmissao({ ...preAtualizado, colaboradorEfetivadoId: colab.id });
       }
       await loadDpData();
-      loadData();
       showToast(`Admissão de ${colab.nomeCompleto} efetivada com sucesso no quadro de ativos!`, 'success');
       setSelectedColaboradorDetail(colab);
     } catch (err) {

@@ -46,7 +46,9 @@ import {
   formatMoney,
   formatDate,
 } from '../../utils/formatters';
-import { savePreAdmissao, getPreAdmissoes } from '../../utils/storage';
+// Envio direto pro Supabase (formulário público, sem login — papel "anon" só pode inserir,
+// nunca ler/editar; ver supabase/migrations/005_pre_admissoes.sql e src/utils/dpApi.ts).
+import { savePreAdmissao } from '../../utils/dpApi';
 import { useBotGuard } from '../../utils/botProtection';
 import { HumanVerificationField } from '../Common/HumanVerificationField';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
@@ -83,6 +85,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submittedProtocol, setSubmittedProtocol] = useState<string | null>(null);
   const [submittedData, setSubmittedData] = useState<PreAdmissao | null>(null);
+  const [erroEnvio, setErroEnvio] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isCepLoading, setIsCepLoading] = useState<boolean>(false);
 
@@ -346,7 +349,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
   };
 
   // Final Submit
-  const handleSubmitForm = (e: React.FormEvent) => {
+  const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (botGuard.isLikelyBot()) {
       // Automated submission detected (honeypot filled or submitted too fast) — drop silently.
@@ -355,6 +358,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
     }
     if (!validateStep(7)) return;
 
+    setErroEnvio(null);
     setIsSubmitting(true);
 
     const protocol = `JMT-ADM-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -379,14 +383,20 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
       declaracaoVeracidade: true,
     };
 
-    savePreAdmissao(payload);
-    setSubmittedProtocol(protocol);
-    setSubmittedData(payload);
-
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await savePreAdmissao(payload);
+      setSubmittedProtocol(protocol);
+      setSubmittedData(payload);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 800);
+    } catch (err) {
+      console.error(err);
+      setErroEnvio(
+        'Não foi possível enviar seu cadastro agora — verifique sua conexão com a internet e tente novamente. Se o problema continuar, avise quem te enviou o link.'
+      );
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // SUCCESS SCREEN
@@ -1672,6 +1682,13 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
               </div>
 
               <HumanVerificationField onValidChange={setHumanCheckValid} error={errors.humanCheck} />
+            </div>
+          )}
+
+          {erroEnvio && (
+            <div className="flex items-start gap-2 bg-rose-950/40 border border-rose-800 text-rose-300 text-xs rounded-xl p-3 mt-6">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{erroEnvio}</span>
             </div>
           )}
 
