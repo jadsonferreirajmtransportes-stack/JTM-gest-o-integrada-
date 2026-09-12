@@ -1,5 +1,5 @@
 // Utilities for formatting, masking, validations, and CLT / ANVISA business rules calculations
-import { StatusExame, StatusFerias, Ocorrencia, ProgramacaoFerias } from '../types';
+import { StatusExame, StatusFerias, Ocorrencia, ProgramacaoFerias, FeriadoEmpresa } from '../types';
 
 /**
  * Format currency to BRL (R$ 1.234,56)
@@ -313,37 +313,46 @@ export function calcVaMes(valorDia: number, diasUteis = 22): number {
 }
 
 /**
- * Conta os dias úteis (segunda a sexta) entre duas datas, ambas inclusive — réplica da fórmula
- * da tabela "PROGRAMAÇÃO DO VALE ALIMENTAÇÃO" no Coda:
- * Sequence(0, (fim-inicio)/Days(1)).Filter(Weekday!=1).Filter(Weekday!=7).Count()
+ * Conta os dias úteis (segunda a sexta, excluindo feriados cadastrados em 2.18) entre duas
+ * datas, ambas inclusive — réplica da fórmula da tabela "PROGRAMAÇÃO DO VALE ALIMENTAÇÃO" no
+ * Coda (Sequence(0, (fim-inicio)/Days(1)).Filter(Weekday!=1).Filter(Weekday!=7).Count()), com o
+ * ajuste de também tirar os feriados — sem isso, um feriado em dia de semana virava "dia útil"
+ * de VA como qualquer outro, gerando diária num dia que ninguém trabalhou.
  */
-export function calcDiasUteisPeriodo(dataInicio: string, dataTermino: string): number {
+export function calcDiasUteisPeriodo(
+  dataInicio: string,
+  dataTermino: string,
+  feriados: FeriadoEmpresa[] = []
+): number {
   const inicio = new Date(dataInicio + 'T00:00:00');
   const termino = new Date(dataTermino + 'T00:00:00');
   if (isNaN(inicio.getTime()) || isNaN(termino.getTime()) || termino < inicio) return 0;
+  const datasFeriados = new Set(feriados.map((f) => f.data));
   let count = 0;
   const cursor = new Date(inicio);
   while (cursor <= termino) {
     const dia = cursor.getDay(); // 0 = domingo, 6 = sábado
-    if (dia !== 0 && dia !== 6) count++;
+    const iso = cursor.toISOString().slice(0, 10);
+    if (dia !== 0 && dia !== 6 && !datasFeriados.has(iso)) count++;
     cursor.setDate(cursor.getDate() + 1);
   }
   return count;
 }
 
 /**
- * Quantidade de diárias de VA a disponibilizar numa quinzena: dias úteis do período menos as
- * faltas e os dias de férias informados (nunca abaixo de zero — ausências a mais que os dias
- * úteis não geram diária negativa). Colaborador de férias não gera diária de VA no período, do
- * mesmo jeito que uma falta.
+ * Quantidade de diárias de VA a disponibilizar numa quinzena: dias úteis do período (já sem
+ * fins de semana e feriados) menos as faltas e os dias de férias informados (nunca abaixo de
+ * zero — ausências a mais que os dias úteis não geram diária negativa). Colaborador de férias
+ * não gera diária de VA no período, do mesmo jeito que uma falta.
  */
 export function calcQuantidadeDiariasVA(
   dataInicio: string,
   dataTermino: string,
   faltas: number,
-  diasFerias = 0
+  diasFerias = 0,
+  feriados: FeriadoEmpresa[] = []
 ): number {
-  const diasUteis = calcDiasUteisPeriodo(dataInicio, dataTermino);
+  const diasUteis = calcDiasUteisPeriodo(dataInicio, dataTermino, feriados);
   return Math.max(0, diasUteis - (faltas || 0) - (diasFerias || 0));
 }
 
@@ -379,11 +388,22 @@ export function calcValorDisponibilizadoVA(quantidadeDiarias: number, valorDiari
   return Number((Math.max(0, quantidadeDiarias) * (valorDiaria || 0)).toFixed(2));
 }
 
-const TIPOS_OCORRENCIA_FALTA = new Set(['Falta', 'Falta justificada', 'Falta injustificada']);
+// Tipos de Ocorrência que representam um dia inteiro sem trabalhar — por isso reduzem a
+// quantidade de diárias de VA. "Atestado médico" e "Suspensão disciplinar" entram aqui pelo
+// mesmo motivo que "Falta*": o colaborador não trabalhou aquele dia, mesmo tendo uma causa
+// registrada/justificada. Ficam de fora "Atraso" e "Saída antecipada" (dia parcial, não falta
+// inteira) e "Advertência"/"Elogio"/"Comparecimento"/"Acidente" (não indicam ausência do dia).
+const TIPOS_OCORRENCIA_FALTA = new Set([
+  'Falta',
+  'Falta justificada',
+  'Falta injustificada',
+  'Atestado médico',
+  'Suspensão disciplinar',
+]);
 
 /**
- * Conta quantos dias úteis de falta (Ocorrências do tipo Falta/Falta justificada/Falta
- * injustificada) de um colaborador caem dentro de um período — usado para puxar
+ * Conta quantos dias úteis de falta (ver TIPOS_OCORRENCIA_FALTA acima) de um colaborador
+ * caem dentro de um período — usado para puxar
  * automaticamente o campo "Faltas" da Programação do Vale Alimentação a partir do que já foi
  * registrado em Ocorrências & Advertências, em vez de digitar de novo manualmente.
  * Cada ocorrência conta 1 dia a partir de `dataOcorrencia`, ou os dias de `diasAfastamento`

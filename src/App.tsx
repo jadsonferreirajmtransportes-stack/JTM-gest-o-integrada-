@@ -988,7 +988,8 @@ export default function App() {
         quinzena.dataInicio,
         quinzena.dataTermino,
         faltas,
-        diasFerias
+        diasFerias,
+        feriados
       );
       const valorDiaria = c.valorValeAlimentacaoDia || 0;
       return {
@@ -1031,20 +1032,27 @@ export default function App() {
         // o valor atual, em vez de deixar o lançamento preso no valor antigo pra sempre.
         const colaborador = colaboradores.find((c) => c.id === l.colaboradorId);
         const valorDiaria = colaborador?.valorValeAlimentacaoDia ?? l.valorDiaria;
-        return { l, faltas, diasFerias, valorDiaria };
-      })
-      .filter(
-        ({ l, faltas, diasFerias, valorDiaria }) =>
-          faltas !== l.faltas || diasFerias !== (l.diasFerias || 0) || valorDiaria !== l.valorDiaria
-      )
-      .map(({ l, faltas, diasFerias, valorDiaria }) => {
-        alterados++;
+        // Recalcula já aqui (não só no map seguinte) — precisa entrar na comparação de "mudou
+        // algo?" abaixo, senão um feriado cadastrado depois do lançamento existir nunca reflete
+        // no "Sincronizar" quando faltas/diasFerias/valorDiaria continuam iguais.
         const quantidadeDiarias = calcQuantidadeDiariasVA(
           quinzena.dataInicio,
           quinzena.dataTermino,
           faltas,
-          diasFerias
+          diasFerias,
+          feriados
         );
+        return { l, faltas, diasFerias, valorDiaria, quantidadeDiarias };
+      })
+      .filter(
+        ({ l, faltas, diasFerias, valorDiaria, quantidadeDiarias }) =>
+          faltas !== l.faltas ||
+          diasFerias !== (l.diasFerias || 0) ||
+          valorDiaria !== l.valorDiaria ||
+          quantidadeDiarias !== l.quantidadeDiarias
+      )
+      .map(({ l, faltas, diasFerias, valorDiaria, quantidadeDiarias }) => {
+        alterados++;
         return {
           ...l,
           faltas,
