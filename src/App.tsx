@@ -1864,11 +1864,10 @@ export default function App() {
             <UsuariosView
               users={users}
               currentUser={currentUser}
-              onOpenCreateUser={handleOpenCreateUser}
-              onOpenEditUser={handleOpenEditUser}
+              onSaveUser={handleSaveUser}
               onDeleteUser={handleDeleteUser}
-              onToggleModuleAccess={handleToggleUserModuleAccess}
-              onSwitchSessionUser={handleSelectUserSession}
+              onSelectUserSession={handleSelectUserSession}
+              onToggleUserModuleAccess={handleToggleUserModuleAccess}
             />
           )}
 
@@ -2190,9 +2189,9 @@ export default function App() {
           setIsUserFormModalOpen(false);
           setEditingUser(null);
         }}
-        onSaveUser={handleSaveUser}
-        existingUser={editingUser}
-        allUsers={users}
+        onSave={handleSaveUser}
+        usuarioToEdit={editingUser}
+        existingUsers={users}
       />
 
       {/* 10. Aviso de Abertura (compromissos de hoje + prazos de projetos) */}
