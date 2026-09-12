@@ -26,6 +26,16 @@ interface PublicOccurrenceFormProps {
   onSuccessSubmit: (ocorrencia: Ocorrencia) => void;
 }
 
+// Tipos que podem durar mais de um dia — mesmo conjunto usado em PublicOccurrencePortal.tsx e
+// em calcFaltasEmPeriodo (src/utils/formatters.ts), que reduz diárias de VA por esses tipos.
+const TIPOS_COM_DURACAO = new Set<TipoOcorrencia>([
+  'Atestado médico',
+  'Falta justificada',
+  'Falta injustificada',
+  'Suspensão disciplinar',
+  'Acidente de trabalho (CAT)',
+]);
+
 export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
   isOpen,
   onClose,
@@ -39,7 +49,9 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
   const [dataOcorrencia, setDataOcorrencia] = useState(
     new Date().toISOString().slice(0, 10)
   );
-  const [diasAfastamento, setDiasAfastamento] = useState(1);
+  const [dataTermino, setDataTermino] = useState(
+    new Date().toISOString().slice(0, 10)
+  );
   const [descricao, setDescricao] = useState('');
   const [arquivoNome, setArquivoNome] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -48,6 +60,15 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
   if (!isOpen) return null;
 
   const activeColaboradores = colaboradores.filter((c) => c.status !== 'Inativo');
+
+  const calcularDiasAfastamento = (): number => {
+    if (!dataOcorrencia || !dataTermino) return 1;
+    const inicio = new Date(dataOcorrencia + 'T00:00:00');
+    const termino = new Date(dataTermino + 'T00:00:00');
+    if (isNaN(inicio.getTime()) || isNaN(termino.getTime()) || termino < inicio) return 1;
+    const diffDias = Math.round((termino.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDias + 1;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +89,7 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
       colaboradorId,
       tipo,
       dataOcorrencia,
-      diasAfastamento: tipo === 'Atestado médico' ? diasAfastamento : undefined,
+      diasAfastamento: TIPOS_COM_DURACAO.has(tipo) ? calcularDiasAfastamento() : undefined,
       descricao,
       comprovanteAnexo: arquivoNome || undefined,
       registradoPor: sup ? `${sup.nome} (${sup.cargo})` : 'Supervisor de Campo',
@@ -181,7 +202,13 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
                 <label className="font-semibold text-slate-700 block mb-1">Tipo de Evento *</label>
                 <select
                   value={tipo}
-                  onChange={(e) => setTipo(e.target.value as TipoOcorrencia)}
+                  onChange={(e) => {
+                    const novoTipo = e.target.value as TipoOcorrencia;
+                    setTipo(novoTipo);
+                    // Reseta o término pro mesmo dia do início ao trocar de tipo — evita herdar
+                    // um término de vários dias escolhido antes num outro tipo.
+                    setDataTermino(dataOcorrencia);
+                  }}
                   className="w-full p-2 border border-slate-200 rounded-lg text-slate-800 font-medium"
                 >
                   <option value="Atestado médico">Atestado médico</option>
@@ -199,31 +226,38 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">Data da Ocorrência *</label>
+                <label className="font-semibold text-slate-700 block mb-1">
+                  {TIPOS_COM_DURACAO.has(tipo) ? 'Data de Início *' : 'Data da Ocorrência *'}
+                </label>
                 <input
                   type="date"
                   required
                   value={dataOcorrencia}
-                  onChange={(e) => setDataOcorrencia(e.target.value)}
+                  onChange={(e) => {
+                    const novaData = e.target.value;
+                    setDataOcorrencia(novaData);
+                    if (dataTermino && novaData > dataTermino) setDataTermino(novaData);
+                  }}
                   className="w-full p-2 border border-slate-200 rounded-lg text-slate-800 font-bold"
                 />
               </div>
             </div>
 
-            {/* Dias Afastamento se Atestado */}
-            {tipo === 'Atestado médico' && (
+            {/* Data de Término se o tipo puder durar mais de um dia */}
+            {TIPOS_COM_DURACAO.has(tipo) && (
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">
-                  Dias de Afastamento Solicitados no Atestado
-                </label>
+                <label className="font-semibold text-slate-700 block mb-1">Data de Término *</label>
                 <input
-                  type="number"
-                  min={1}
-                  max={60}
-                  value={diasAfastamento}
-                  onChange={(e) => setDiasAfastamento(parseInt(e.target.value, 10) || 1)}
+                  type="date"
+                  required
+                  min={dataOcorrencia}
+                  value={dataTermino}
+                  onChange={(e) => setDataTermino(e.target.value)}
                   className="w-full p-2 border border-slate-200 rounded-lg font-bold"
                 />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  {calcularDiasAfastamento()} dia(s) de afastamento
+                </p>
               </div>
             )}
 

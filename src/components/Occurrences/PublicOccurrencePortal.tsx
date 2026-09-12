@@ -46,6 +46,17 @@ interface PublicOccurrencePortalProps {
   onAdminBack?: () => void;
 }
 
+// Tipos que podem durar mais de um dia — mesmo conjunto (mais CAT) que reduz diárias de VA em
+// calcFaltasEmPeriodo (src/utils/formatters.ts). Atraso, Advertência, Elogio etc. são pontuais,
+// não fazem sentido com uma "data de término" separada.
+const TIPOS_COM_DURACAO = new Set<TipoOcorrencia>([
+  'Atestado médico',
+  'Falta justificada',
+  'Falta injustificada',
+  'Suspensão disciplinar',
+  'Acidente de trabalho (CAT)',
+]);
+
 const TIPO_OPTS: {
   tipo: TipoOcorrencia;
   icon: React.ElementType;
@@ -136,7 +147,16 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
   const [dataOcorrencia, setDataOcorrencia] = useState<string>(
     new Date().toISOString().slice(0, 10)
   );
-  const [diasAfastamento, setDiasAfastamento] = useState<number>(1);
+  // Antes só existia "Dias de Afastamento" (número) e só pra Atestado médico — o supervisor
+  // tinha que fazer conta de cabeça, e Falta/Suspensão (que também podem durar mais de um dia,
+  // e reduzem diárias de VA — ver TIPOS_OCORRENCIA_FALTA em formatters.ts) não tinham nenhum
+  // jeito de registrar mais de 1 dia. Agora é uma Data de Término de verdade, disponível pros
+  // tipos que representam ausência (não faz sentido pra Atraso/Elogio/Advertência, que são
+  // pontuais). diasAfastamento continua existindo nos dados — só é calculado a partir das duas
+  // datas em vez de digitado à parte.
+  const [dataTermino, setDataTermino] = useState<string>(
+    new Date().toISOString().slice(0, 10)
+  );
   const [cidCodigo, setCidCodigo] = useState<string>('');
   const [crmMedico, setCrmMedico] = useState<string>('');
   const [clinicaHospital, setClinicaHospital] = useState<string>('');
@@ -181,11 +201,22 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
     }
   };
 
+  // Quantidade de dias entre Início e Término, ambos inclusive (ex.: início e término no mesmo
+  // dia = 1 dia de afastamento) — é o valor gravado em Ocorrencia.diasAfastamento.
+  const calcularDiasAfastamento = (): number => {
+    if (!dataOcorrencia || !dataTermino) return 1;
+    const inicio = new Date(dataOcorrencia + 'T00:00:00');
+    const termino = new Date(dataTermino + 'T00:00:00');
+    if (isNaN(inicio.getTime()) || isNaN(termino.getTime()) || termino < inicio) return 1;
+    const diffDias = Math.round((termino.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDias + 1;
+  };
+
   const calculateReturnDate = () => {
-    if (!dataOcorrencia || !diasAfastamento) return '';
+    if (!dataTermino) return '';
     try {
-      const d = new Date(dataOcorrencia);
-      d.setDate(d.getDate() + Number(diasAfastamento));
+      const d = new Date(dataTermino + 'T00:00:00');
+      d.setDate(d.getDate() + 1);
       return d.toISOString().slice(0, 10);
     } catch {
       return '';
@@ -236,7 +267,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
       colaboradorId,
       tipo,
       dataOcorrencia,
-      diasAfastamento: tipo === 'Atestado médico' ? diasAfastamento : undefined,
+      diasAfastamento: TIPOS_COM_DURACAO.has(tipo) ? calcularDiasAfastamento() : undefined,
       descricao: fullDescricao,
       comprovanteAnexo: arquivoNome || undefined,
       registradoPor: fullSupervisor,
@@ -255,8 +286,9 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
     setColaboradorId('');
     setEmployeeSearch('');
     setTipo('Atestado médico');
-    setDataOcorrencia(new Date().toISOString().slice(0, 10));
-    setDiasAfastamento(1);
+    const hoje = new Date().toISOString().slice(0, 10);
+    setDataOcorrencia(hoje);
+    setDataTermino(hoje);
     setCidCodigo('');
     setCrmMedico('');
     setClinicaHospital('');
@@ -550,7 +582,12 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
                     <button
                       key={opt.tipo}
                       type="button"
-                      onClick={() => setTipo(opt.tipo)}
+                      onClick={() => {
+                        setTipo(opt.tipo);
+                        // Reseta a Data de Término pro mesmo dia do início ao trocar de tipo —
+                        // evita herdar um término de vários dias escolhido antes num outro tipo.
+                        setDataTermino(dataOcorrencia);
+                      }}
                       className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
                         isSelected
                           ? 'bg-[#1e1a14] border-[#B38F4F] text-white shadow-md ring-1 ring-[#B38F4F]'
@@ -581,36 +618,42 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Data do Fato / Início do Atestado *
+                    {TIPOS_COM_DURACAO.has(tipo) ? 'Data de Início *' : 'Data do Fato *'}
                   </label>
                   <input
                     type="date"
                     required
                     value={dataOcorrencia}
-                    onChange={(e) => setDataOcorrencia(e.target.value)}
+                    onChange={(e) => {
+                      const novaData = e.target.value;
+                      setDataOcorrencia(novaData);
+                      // Término nunca pode ficar antes do início — se o usuário atrasar a data
+                      // de início pra depois do término já escolhido, empurra o término junto.
+                      if (dataTermino && novaData > dataTermino) setDataTermino(novaData);
+                    }}
                     className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-bold focus:outline-hidden focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
 
-                {tipo === 'Atestado médico' && (
+                {TIPOS_COM_DURACAO.has(tipo) && (
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                      Dias de Afastamento Solicitados no Atestado *
+                      Data de Término *
                     </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min={1}
-                        max={120}
-                        required
-                        value={diasAfastamento}
-                        onChange={(e) => setDiasAfastamento(parseInt(e.target.value, 10) || 1)}
-                        className="w-24 p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-amber-400 font-bold text-center"
-                      />
-                      <span className="text-xs text-slate-400">
-                        Retorno previsto: <strong>{calculateReturnDate() ? formatDate(calculateReturnDate()) : '-'}</strong>
-                      </span>
-                    </div>
+                    <input
+                      type="date"
+                      required
+                      min={dataOcorrencia}
+                      value={dataTermino}
+                      onChange={(e) => setDataTermino(e.target.value)}
+                      className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-bold focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      {calcularDiasAfastamento()} dia(s) de afastamento — retorno previsto:{' '}
+                      <strong className="text-amber-400">
+                        {calculateReturnDate() ? formatDate(calculateReturnDate()) : '-'}
+                      </strong>
+                    </p>
                   </div>
                 )}
               </div>
