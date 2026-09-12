@@ -38,6 +38,13 @@ interface EmployeeListProps {
   empregadores: Empregador[];
   supervisores: Supervisor[];
   userRole: UserRole;
+  // Esta tela (Departamento Pessoal > Colaboradores) só recebe colaboradores ATIVOS/Férias/Afastado
+  // do App.tsx — quem já foi desligado mora em "Arquivo / Demitidos", uma tela separada. Sem essa
+  // flag, o filtro de Status abaixo oferecia "Inativo (Demitidos)" nas duas telas, mas como cada
+  // uma só recebe uma fatia dos colaboradores, escolher a opção errada sempre dava 0 resultados —
+  // era exatamente o que o usuário reportou ("não está aparecendo os inativos"). Com a flag, cada
+  // tela só oferece as opções de status que ela de fato pode mostrar.
+  apenasInativos?: boolean;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onOpenNovo: () => void;
@@ -54,6 +61,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   empregadores,
   supervisores,
   userRole,
+  apenasInativos = false,
   searchQuery,
   onSearchChange,
   onOpenNovo,
@@ -134,18 +142,29 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             ))}
           </select>
 
-          {/* Status Filter */}
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-amber-500/20"
-          >
-            <option value="todos">Todos os Status</option>
-            <option value="Ativo">Ativo</option>
-            <option value="Férias">Férias</option>
-            <option value="Afastado">Afastado</option>
-            <option value="Inativo">Inativo (Demitidos)</option>
-          </select>
+          {/* Status Filter — só oferece as opções que esta tela de fato pode mostrar (ver
+              comentário de apenasInativos na interface acima) */}
+          {apenasInativos ? (
+            <select
+              value="Inativo"
+              disabled
+              title="Esta tela (Arquivo / Demitidos) já mostra só os colaboradores inativos."
+              className="px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-500 cursor-not-allowed"
+            >
+              <option value="Inativo">Inativo (Demitidos)</option>
+            </select>
+          ) : (
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-amber-500/20"
+            >
+              <option value="todos">Todos os Status</option>
+              <option value="Ativo">Ativo</option>
+              <option value="Férias">Férias</option>
+              <option value="Afastado">Afastado</option>
+            </select>
+          )}
 
           {/* Employer Filter */}
           {empregadores.length > 1 && (

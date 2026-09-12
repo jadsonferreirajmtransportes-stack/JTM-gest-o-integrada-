@@ -1916,6 +1916,7 @@ export default function App() {
           {activeGlobalModule === 'dp' && activeSection === 'arquivo' && (
             <EmployeeList
               colaboradores={colaboradores.filter((c) => c.status === 'Inativo')}
+              apenasInativos
               empregadores={empregadores}
               supervisores={supervisores}
               userRole={userRole}
