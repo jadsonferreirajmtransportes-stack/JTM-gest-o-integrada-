@@ -220,6 +220,7 @@ export const Header: React.FC<HeaderProps> = ({
           <input
             id="global-search-input"
             type="text"
+            data-no-uppercase="true"
             placeholder="Buscar colaborador..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
