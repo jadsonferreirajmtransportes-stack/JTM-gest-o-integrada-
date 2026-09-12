@@ -53,6 +53,7 @@ import {
 } from '../../utils/formatters';
 import { AsoImageUploader } from '../Common/AsoImageUploader';
 import { EmployeeDossierSection } from './EmployeeDossierSection';
+import { vincularColaboradorAoSetor } from '../../utils/sectorUtils';
 
 interface EmployeeFormModalProps {
   isOpen: boolean;
@@ -783,6 +784,56 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                     className="w-full p-2 border border-slate-200 rounded-lg"
                     placeholder="Ex: Transportes, Armazenagem, Garantia da Qualidade"
                   />
+                </div>
+
+                {/* Operação vinculada (Aéreo/Rodoviário/DP) — antes só existia o campo de texto
+                    livre "Setor" acima, que podia ficar dessincronizado do que realmente conta
+                    pra headcount/carteira de cada setor nos painéis gerenciais (Equipe do Setor,
+                    badges do menu etc.). Esses botões gravam direto em setoresAtuacao, o campo
+                    que essas contagens de verdade usam. */}
+                <div className="sm:col-span-2">
+                  <label className="font-semibold text-slate-700 block mb-1">
+                    Operação Vinculada (Equipe do Setor)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
+                        { id: 'farma_aereo', label: 'Farma Aéreo' },
+                        { id: 'farma_rodoviario', label: 'Farma Rodoviário' },
+                      ] as const
+                    ).map((opt) => {
+                      const ativo = (formData.setoresAtuacao || []).includes(opt.id);
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => {
+                            const atualizado = vincularColaboradorAoSetor(
+                              formData as Colaborador,
+                              opt.id,
+                              !ativo
+                            );
+                            setFormData((prev) => ({
+                              ...prev,
+                              setoresAtuacao: atualizado.setoresAtuacao,
+                              setorPrincipal: atualizado.setorPrincipal,
+                            }));
+                          }}
+                          className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors ${
+                            ativo
+                              ? 'bg-amber-600 border-amber-600 text-white'
+                              : 'bg-white border-slate-300 text-slate-600 hover:border-amber-400'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Pode marcar mais de um — usado pra contar a equipe alocada em cada setor nos
+                    painéis gerenciais.
+                  </p>
                 </div>
 
                 {/* Supervisor Direto */}
