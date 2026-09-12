@@ -14,6 +14,7 @@ import {
   StatusAtividadeGestao,
   NotaPagina,
   InstrucaoTrabalho,
+  OrcamentoItem,
 } from '../types';
 
 function n(v: any): any {
@@ -418,4 +419,48 @@ export async function saveInstrucaoTrabalho(item: InstrucaoTrabalho): Promise<vo
 export async function deleteInstrucaoTrabalho(id: string): Promise<void> {
   const { error } = await supabase.from('instrucoes_trabalho').delete().eq('id', id);
   assertNoError(error, 'deleteInstrucaoTrabalho');
+}
+
+// ============================================================================
+// CONTROLADORIA — ORÇAMENTO (a DRE Gerencial é calculada, não gravada; ver
+// src/utils/controladoriaUtils.ts)
+// ============================================================================
+function rowToOrcamento(r: any): OrcamentoItem {
+  return {
+    id: r.id,
+    setor: r.setor,
+    tipoLinha: r.tipo_linha,
+    competencia: r.competencia,
+    valorPlanejado: Number(r.valor_planejado ?? 0),
+    observacoes: u(r.observacoes),
+    criadoPor: u(r.criado_por),
+    criadoEm: r.criado_em,
+    atualizadoEm: u(r.atualizado_em),
+  };
+}
+function orcamentoToRow(o: OrcamentoItem) {
+  return {
+    id: o.id,
+    setor: o.setor,
+    tipo_linha: o.tipoLinha,
+    competencia: o.competencia,
+    valor_planejado: o.valorPlanejado ?? 0,
+    observacoes: n(o.observacoes),
+    criado_por: n(o.criadoPor),
+    criado_em: o.criadoEm || new Date().toISOString(),
+    atualizado_em: new Date().toISOString(),
+  };
+}
+export async function getOrcamentos(): Promise<OrcamentoItem[]> {
+  const { data, error } = await supabase.from('orcamentos_controladoria').select('*').order('competencia', { ascending: false });
+  assertNoError(error, 'getOrcamentos');
+  return (data ?? []).map(rowToOrcamento);
+}
+export async function saveOrcamentoItem(item: OrcamentoItem): Promise<void> {
+  const { error } = await supabase.from('orcamentos_controladoria').upsert(orcamentoToRow(item));
+  assertNoError(error, 'saveOrcamentoItem');
+}
+export async function deleteOrcamentoItem(id: string): Promise<void> {
+  const { error } = await supabase.from('orcamentos_controladoria').delete().eq('id', id);
+  assertNoError(error, 'deleteOrcamentoItem');
 }

@@ -29,6 +29,7 @@ import {
   ArrowRightLeft,
   NotebookPen,
   FileCheck2,
+  Calculator,
 } from 'lucide-react';
 import { UserRole, GlobalModuleId, UsuarioLogin } from '../types';
 import { JmtLogo } from './Brand/JmtLogo';
@@ -44,6 +45,7 @@ export type NavSection =
   | 'projetos'
   | 'usuarios'
   | 'agenda_gestao'
+  | 'controladoria'
   | 'notas'
   | 'instrucoes'
   | 'preadmissoes'
@@ -191,8 +193,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       activeBorder: 'border-indigo-500',
     },
     {
-      id: 'notas' as GlobalModuleId,
+      id: 'controladoria' as GlobalModuleId,
       number: '7',
+      title: 'Controladoria',
+      short: 'DRE & Orçado x Realizado',
+      icon: Calculator,
+      badge: undefined,
+      color: 'from-slate-700 to-slate-900',
+      activeBorder: 'border-slate-500',
+    },
+    {
+      id: 'notas' as GlobalModuleId,
+      number: '8',
       title: 'Notas & Ideias',
       short: 'Anotações & Brainstorm',
       icon: NotebookPen,
@@ -202,7 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'instrucoes' as GlobalModuleId,
-      number: '8',
+      number: '9',
       title: 'Instruções de Trabalho',
       short: 'Procedimentos & Checklists',
       icon: FileCheck2,
@@ -212,7 +224,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'usuarios' as GlobalModuleId,
-      number: '9',
+      number: '10',
       title: 'Logins & Acessos',
       short: 'Usuários & Permissões',
       icon: ShieldCheck,

@@ -73,6 +73,10 @@ const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = 
     title: 'Agenda de Atividades da Gestão',
     subtitle: 'Reuniões executivas, comitês operacionais, auditorias RDC 430, fechamentos e prazos estratégicos',
   },
+  controladoria: {
+    title: 'Controladoria',
+    subtitle: 'DRE Gerencial, margem de contribuição, ponto de equilíbrio e Orçado x Realizado por setor',
+  },
   notas: {
     title: 'Notas & Ideias',
     subtitle: 'Páginas livres de anotações e brainstorm, estilo Notion, com vínculo a outros módulos da JMT',

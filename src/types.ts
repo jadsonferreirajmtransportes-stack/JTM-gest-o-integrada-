@@ -8,6 +8,7 @@ export type GlobalModuleId =
   | 'dp'
   | 'projetos'
   | 'agenda'
+  | 'controladoria'
   | 'notas'
   | 'instrucoes'
   | 'usuarios';
@@ -1354,6 +1355,33 @@ export interface CustoOperacional {
   clienteRelacionadoId?: string;
   criadoPor?: string;
   observacoes?: string;
+  criadoEm: string;
+  atualizadoEm?: string;
+}
+
+// ==========================================
+// MÓDULO CONTROLADORIA (DRE GERENCIAL & ORÇADO x REALIZADO)
+// Ver src/utils/controladoriaUtils.ts para os cálculos.
+// ==========================================
+
+/** Cada linha corresponde a um bloco da DRE Gerencial calculada em controladoriaUtils.ts —
+ *  orçamento é lançado no nível de linha (não por categoria individual de custo), pra manter o
+ *  Orçado x Realizado direto e comparável com o resultado do setor. */
+export type TipoLinhaOrcamento =
+  | 'Receita'
+  | 'Custos Variáveis'
+  | 'Custos Fixos'
+  | 'Folha de Pagamento'
+  | 'Investimentos (CAPEX)';
+
+export interface OrcamentoItem {
+  id: string;
+  setor: SetorCustoOperacional; // 'farma_aereo' | 'farma_rodoviario' | 'geral'
+  tipoLinha: TipoLinhaOrcamento;
+  competencia: string; // 'YYYY-MM'
+  valorPlanejado: number;
+  observacoes?: string;
+  criadoPor?: string;
   criadoEm: string;
   atualizadoEm?: string;
 }

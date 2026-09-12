@@ -83,6 +83,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     categoria: 'Corporativo',
   },
   {
+    id: 'controladoria',
+    nome: 'Controladoria',
+    sigla: 'CTR',
+    descricao: 'DRE Gerencial (receita, custos, margem de contribuição, resultado) e Orçado x Realizado por setor.',
+    corBadge: 'bg-slate-200 text-slate-900 border-slate-400',
+    corBorda: 'border-slate-500',
+    iconeNome: 'Calculator',
+    categoria: 'Administração',
+  },
+  {
     id: 'notas',
     nome: 'Notas & Ideias',
     sigla: 'NOT',

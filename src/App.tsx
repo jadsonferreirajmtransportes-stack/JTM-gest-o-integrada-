@@ -30,6 +30,7 @@ import {
   FaturaAereo,
   QuinzenaValeAlimentacao,
   LancamentoValeAlimentacao,
+  OrcamentoItem,
 } from './types';
 import {
   getStoredGlobalModule,
@@ -113,6 +114,8 @@ import {
   getInstrucoesTrabalho,
   saveInstrucaoTrabalho,
   deleteInstrucaoTrabalho,
+  getOrcamentos,
+  saveOrcamentoItem,
 } from './utils/gestaoApi';
 // Farma Rodoviário (viagens/telemetria) também já migrado para o Supabase — ver
 // src/utils/viagensApi.ts.
@@ -147,6 +150,7 @@ import { FarmaRodoviarioView } from './components/FarmaRodoviario/FarmaRodoviari
 
 // Module 5: Projetos Gerenciais
 import { ProjetosView } from './components/Projetos/ProjetosView';
+import { ControladoriaView } from './components/Controladoria/ControladoriaView';
 
 // Module 4: Departamento Pessoal
 import { EmployeeList } from './components/Employees/EmployeeList';
@@ -268,6 +272,7 @@ export default function App() {
   const [viagensRodoviarias, setViagensRodoviarias] = useState<ViagemRodoviaria[]>([]);
   const [projetos, setProjetos] = useState<ProjetoGerencial[]>([]);
   const [atividadesGestao, setAtividadesGestao] = useState<AtividadeGestao[]>([]);
+  const [orcamentos, setOrcamentos] = useState<OrcamentoItem[]>([]);
   const [notasPaginas, setNotasPaginas] = useState<NotaPagina[]>([]);
   const [instrucoesTrabalho, setInstrucoesTrabalho] = useState<InstrucaoTrabalho[]>([]);
   const [custosOperacionais, setCustosOperacionais] = useState<CustoOperacional[]>([]);
@@ -333,6 +338,8 @@ export default function App() {
       setActiveSection('projetos');
     } else if (modId === 'agenda') {
       setActiveSection('agenda_gestao');
+    } else if (modId === 'controladoria') {
+      setActiveSection('controladoria');
     } else if (modId === 'notas') {
       setActiveSection('notas');
     } else if (modId === 'usuarios') {
@@ -519,13 +526,14 @@ export default function App() {
   // forma assíncrona.
   const loadGestaoData = useCallback(async () => {
     try {
-      const [custos, projetos, atividades, notas, instrucoes, viagens] = await Promise.all([
+      const [custos, projetos, atividades, notas, instrucoes, viagens, orcamentosCarregados] = await Promise.all([
         getCustosOperacionais(),
         getProjetosGerenciais(),
         getAtividadesGestao(),
         getNotasPaginas(),
         getInstrucoesTrabalho(),
         getViagensRodoviarias(),
+        getOrcamentos(),
       ]);
       setCustosOperacionais(custos);
       setProjetos(projetos);
@@ -533,8 +541,9 @@ export default function App() {
       setNotasPaginas(notas);
       setInstrucoesTrabalho(instrucoes);
       setViagensRodoviarias(viagens);
+      setOrcamentos(orcamentosCarregados);
     } catch (err) {
-      console.error('Erro ao carregar Custos/Projetos/Agenda/Notas/Instruções/Viagens (Supabase):', err);
+      console.error('Erro ao carregar Custos/Projetos/Agenda/Notas/Instruções/Viagens/Orçamentos (Supabase):', err);
       showToast('Não foi possível carregar alguns dados de gestão. Verifique sua conexão.', 'info');
     }
   }, []);
@@ -842,6 +851,25 @@ export default function App() {
     await saveProjetoGerencial(proj);
     await loadGestaoData();
     showToast(`Projeto "${proj.titulo}" salvo com sucesso!`, 'success');
+  };
+
+  // Salva direto no state local em vez de recarregar tudo (loadGestaoData) — evita o mesmo
+  // problema já corrigido em handleSaveColaborador/handleSaveLancamentoVA: como o campo de
+  // orçamento salva no onBlur (potencialmente vários seguidos ao editar linha por linha), um
+  // reload no meio do caminho podia mostrar um toast de erro por cima de um salvamento que na
+  // verdade deu certo.
+  const handleSaveOrcamento = async (item: OrcamentoItem) => {
+    try {
+      await saveOrcamentoItem(item);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível salvar o orçamento. Verifique sua conexão.', 'error');
+      return;
+    }
+    setOrcamentos((prev) =>
+      prev.some((o) => o.id === item.id) ? prev.map((o) => (o.id === item.id ? item : o)) : [...prev, item]
+    );
+    showToast('Orçamento atualizado.', 'success');
   };
 
   const handleDeleteProjeto = async (id: string) => {
@@ -1547,6 +1575,7 @@ export default function App() {
           else if (sec === 'farma_rodoviario') setActiveGlobalModule('farma_rodoviario');
           else if (sec === 'projetos') setActiveGlobalModule('projetos');
           else if (sec === 'agenda_gestao') setActiveGlobalModule('agenda');
+          else if (sec === 'controladoria') setActiveGlobalModule('controladoria');
           else if (sec === 'notas') setActiveGlobalModule('notas');
           else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
           else setActiveGlobalModule('dp');
@@ -1585,6 +1614,7 @@ export default function App() {
             else if (sec === 'farma_rodoviario') setActiveGlobalModule('farma_rodoviario');
             else if (sec === 'projetos') setActiveGlobalModule('projetos');
             else if (sec === 'agenda_gestao') setActiveGlobalModule('agenda');
+            else if (sec === 'controladoria') setActiveGlobalModule('controladoria');
             else if (sec === 'notas') setActiveGlobalModule('notas');
             else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
             else setActiveGlobalModule('dp');
@@ -1771,6 +1801,21 @@ export default function App() {
               onDeleteAtividade={handleDeleteAtividadeGestao}
               onStatusChange={handleUpdateAtividadeStatus}
               onUpdateDeliberacoes={handleUpdateDeliberacoes}
+            />
+          )}
+
+          {/* ========================================================================= */}
+          {/* MODULE: CONTROLADORIA (DRE GERENCIAL & ORÇADO x REALIZADO) */}
+          {/* ========================================================================= */}
+          {(activeGlobalModule === 'controladoria' || activeSection === 'controladoria') && (
+            <ControladoriaView
+              custosOperacionais={custosOperacionais}
+              colaboradores={colaboradores}
+              lancamentosFaturamentoAereo={lancamentosFaturamentoAereo}
+              projetos={projetos}
+              orcamentos={orcamentos}
+              userRole={userRole}
+              onSaveOrcamento={handleSaveOrcamento}
             />
           )}
 
