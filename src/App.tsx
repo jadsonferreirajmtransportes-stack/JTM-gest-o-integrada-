@@ -1075,14 +1075,36 @@ export default function App() {
     );
   };
 
+  // Os campos de Faltas/Dias de Férias na tela de Vale Alimentação salvam a cada tecla digitada
+  // (ver handleFaltasChange/handleDiasFeriasChange em ValeAlimentacaoView.tsx) — chamar
+  // loadDpData() (recarrega as 10 entidades de DP) a cada uma dessas gravações deixava a tela
+  // instável: o campo controlado (value={l.faltas}) ficava sendo substituído por uma resposta
+  // de rede toda hora, no meio de o usuário ainda estar digitando o número, dando a impressão de
+  // "digito e não aparece". Agora atualiza só este lançamento no estado local.
   const handleSaveLancamentoVA = async (lancamento: LancamentoValeAlimentacao) => {
-    await saveLancamentoValeAlimentacao(lancamento);
-    await loadDpData();
+    try {
+      await saveLancamentoValeAlimentacao(lancamento);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível salvar o lançamento. Verifique sua conexão.', 'error');
+      return;
+    }
+    setLancamentosVA((prev) =>
+      prev.some((l) => l.id === lancamento.id)
+        ? prev.map((l) => (l.id === lancamento.id ? lancamento : l))
+        : [...prev, lancamento]
+    );
   };
 
   const handleDeleteLancamentoVA = async (id: string) => {
-    await deleteLancamentoValeAlimentacao(id);
-    await loadDpData();
+    try {
+      await deleteLancamentoValeAlimentacao(id);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível excluir o lançamento. Tente novamente.', 'error');
+      return;
+    }
+    setLancamentosVA((prev) => prev.filter((l) => l.id !== id));
     showToast('Lançamento de Vale Alimentação excluído.', 'info');
   };
 
