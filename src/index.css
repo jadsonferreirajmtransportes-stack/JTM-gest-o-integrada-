@@ -17,6 +17,17 @@
     font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
+  /* Padrão de CAIXA ALTA em todo o sistema (junto com o maiúsculo automático dos campos de
+     texto em src/utils/autoUppercase.ts): aqui é só APARÊNCIA, não muda o valor de fato — as
+     opções de <select> são valores fixos do código (ex.: "Ativo", "Masculino") usados em
+     comparações e já gravados assim no banco, então convertê-los de verdade quebraria filtros,
+     telas e dados já salvos. Ficam de fora os seletores que exibem código/sigla (ex.: UF), que
+     já nascem em maiúsculo, e não há efeito nesses casos. */
+  select,
+  select option {
+    text-transform: uppercase;
+  }
 }
 
 /* JMT Brand Decorative Accent Lines (Brand Manual Page 10) */
