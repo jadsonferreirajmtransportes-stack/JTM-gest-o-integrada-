@@ -151,6 +151,7 @@ import { ProjetosView } from './components/Projetos/ProjetosView';
 // Module 4: Departamento Pessoal
 import { EmployeeList } from './components/Employees/EmployeeList';
 import { EmployeeFormModal } from './components/Employees/EmployeeFormModal';
+import { AvisoAberturaModal } from './components/Common/AvisoAberturaModal';
 import { EmployeeDetailModal } from './components/Employees/EmployeeDetailModal';
 import { DismissalModal } from './components/Employees/DismissalModal';
 import { MonthlyCostView } from './components/Cost/MonthlyCostView';
@@ -295,6 +296,8 @@ export default function App() {
   const [fichaCadastralPublicaToken, setFichaCadastralPublicaToken] = useState<string | undefined>(undefined);
 
   // Modals State
+  const [isAvisoAberturaOpen, setIsAvisoAberturaOpen] = useState<boolean>(false);
+  const [dadosIniciaisCarregados, setDadosIniciaisCarregados] = useState<boolean>(false);
   const [isEmployeeFormOpen, setIsEmployeeFormOpen] = useState<boolean>(false);
   const [editingColaborador, setEditingColaborador] = useState<Colaborador | null>(null);
   const [selectedColaboradorDetail, setSelectedColaboradorDetail] = useState<Colaborador | null>(null);
@@ -592,9 +595,12 @@ export default function App() {
 
   useEffect(() => {
     loadData();
-    loadDpData();
-    loadFarmaAereoData();
-    loadGestaoData();
+    // Só libera o aviso de abertura (compromissos/prazos) depois que os dados de
+    // Agenda da Gestão e Projetos (e o resto) já terminaram de chegar — evita disparar
+    // o aviso com as listas ainda vazias por causa da requisição em andamento.
+    Promise.all([loadDpData(), loadFarmaAereoData(), loadGestaoData()]).then(() => {
+      setDadosIniciaisCarregados(true);
+    });
 
     // Listen to cross-component storage changes
     const handleStorageUpdate = () => {
@@ -770,6 +776,52 @@ export default function App() {
     instrucoesTrabalho,
     users,
   ]);
+
+  // Dados do "Aviso de Abertura" (compromissos de hoje + prazos de projetos) — mesmo critério de
+  // "hoje" usado no badge da Agenda acima, e projetos ativos (não Concluído/Cancelado) vencidos ou
+  // com prazo dentro dos próximos 3 dias.
+  const avisoAberturaData = useMemo(() => {
+    const hojeIso = new Date().toISOString().split('T')[0];
+    const atividadesHoje = atividadesGestao.filter(
+      (a) => atividadeOcorreEm(a, hojeIso) && a.status !== 'Concluída' && a.status !== 'Cancelada'
+    );
+
+    const projetosAtivos = projetos.filter((p) => p.status !== 'Concluído' && p.status !== 'Cancelado');
+    const limite = new Date();
+    limite.setDate(limite.getDate() + 3);
+    const limiteIso = limite.toISOString().split('T')[0];
+    const projetosAtrasados = projetosAtivos.filter((p) => p.dataPrevisaoFim && p.dataPrevisaoFim < hojeIso);
+    const projetosProximos = projetosAtivos.filter(
+      (p) => p.dataPrevisaoFim && p.dataPrevisaoFim >= hojeIso && p.dataPrevisaoFim <= limiteIso
+    );
+
+    return { atividadesHoje, projetosAtrasados, projetosProximos };
+  }, [atividadesGestao, projetos]);
+
+  // Dispara o aviso automaticamente uma vez por dia, assim que os dados terminam de carregar —
+  // só o aviso dentro do sistema (sem e-mail/WhatsApp automático, por escolha explícita do usuário).
+  useEffect(() => {
+    if (!dadosIniciaisCarregados) return;
+    const hojeIso = new Date().toISOString().split('T')[0];
+    let ultimaVisualizacao: string | null = null;
+    try {
+      ultimaVisualizacao = localStorage.getItem('jmt_aviso_abertura_ultima_data');
+    } catch {
+      // localStorage indisponível — sem persistência, mostra a cada abertura.
+    }
+    if (ultimaVisualizacao === hojeIso) return;
+
+    const { atividadesHoje, projetosAtrasados, projetosProximos } = avisoAberturaData;
+    if (atividadesHoje.length > 0 || projetosAtrasados.length > 0 || projetosProximos.length > 0) {
+      setIsAvisoAberturaOpen(true);
+    }
+    try {
+      localStorage.setItem('jmt_aviso_abertura_ultima_data', hojeIso);
+    } catch {
+      // ignora — não é crítico
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dadosIniciaisCarregados]);
 
   // Global Counts for Switcher
   const moduleCounts = useMemo(() => {
@@ -2095,6 +2147,25 @@ export default function App() {
         onSaveUser={handleSaveUser}
         existingUser={editingUser}
         allUsers={users}
+      />
+
+      {/* 10. Aviso de Abertura (compromissos de hoje + prazos de projetos) */}
+      <AvisoAberturaModal
+        isOpen={isAvisoAberturaOpen}
+        onClose={() => setIsAvisoAberturaOpen(false)}
+        atividadesHoje={avisoAberturaData.atividadesHoje}
+        projetosAtrasados={avisoAberturaData.projetosAtrasados}
+        projetosProximos={avisoAberturaData.projetosProximos}
+        onIrParaAgenda={() => {
+          setIsAvisoAberturaOpen(false);
+          setActiveGlobalModule('agenda');
+          setActiveSection('agenda_gestao');
+        }}
+        onIrParaProjetos={() => {
+          setIsAvisoAberturaOpen(false);
+          setActiveGlobalModule('projetos');
+          setActiveSection('projetos');
+        }}
       />
     </div>
   );
