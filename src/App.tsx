@@ -31,6 +31,7 @@ import {
   QuinzenaValeAlimentacao,
   LancamentoValeAlimentacao,
   OrcamentoItem,
+  ConversaChat,
 } from './types';
 import {
   getStoredGlobalModule,
@@ -195,6 +196,18 @@ import {
 } from './utils/usuariosApi';
 import { ShieldAlert } from 'lucide-react';
 
+// Module: Chat Interno (conversas diretas e em grupo entre Logins & Acessos)
+import { ChatView } from './components/Chat/ChatView';
+import {
+  getConversasDoUsuario,
+  getUltimasLeituras,
+  marcarConversaComoLida,
+  obterOuCriarConversaDireta,
+  criarConversaGrupo,
+  enviarMensagem,
+  assinarMensagensNovas,
+} from './utils/chatApi';
+
 export default function App() {
   // Primary Pages / Modules State
   const [activeGlobalModule, setActiveGlobalModule] = useState<GlobalModuleId>(() => getStoredGlobalModule());
@@ -251,7 +264,7 @@ export default function App() {
   // vez de só no localStorage deste — ver migração 012 e usuariosApi.ts. Os useState acima
   // continuam lendo do localStorage só pra ter algo pra mostrar instantaneamente antes dessa
   // busca terminar; loadUsuarios() abaixo substitui esse valor pelo dado real assim que chega.
-  const loadUsuarios = useCallback(async () => {
+  const loadUsuarios = useCallback(async (): Promise<UsuarioLogin | null> => {
     try {
       let lista = await getUsuarios();
       if (lista.length === 0) {
@@ -272,6 +285,7 @@ export default function App() {
       // isso continua pela troca manual ("Alternar Usuário") até a fase seguinte.
       lista = await vincularContaAutenticadaSeNecessario(lista);
       setUsers(lista);
+      let usuarioEscolhido: UsuarioLogin | null = null;
       setCurrentUser((prev) => {
         let savedId: string | null = null;
         try {
@@ -279,11 +293,30 @@ export default function App() {
         } catch {
           // ignora
         }
-        return lista.find((u) => u.id === (savedId || prev?.id)) || lista[0] || prev;
+        usuarioEscolhido = lista.find((u) => u.id === (savedId || prev?.id)) || lista[0] || prev;
+        return usuarioEscolhido;
       });
+      return usuarioEscolhido;
     } catch (err) {
       console.error('Erro ao carregar Logins & Acessos (Supabase):', err);
       showToast('Não foi possível carregar os logins do Supabase — usando os dados salvos neste navegador.', 'info');
+      return null;
+    }
+  }, []);
+
+  // Chat Interno — carrega as conversas e as últimas leituras do usuário informado. Separado de
+  // loadGestaoData porque é dado POR PESSOA (muda ao trocar de usuário), não global.
+  const loadChatData = useCallback(async (usuarioId: string) => {
+    try {
+      const [conversas, leituras] = await Promise.all([
+        getConversasDoUsuario(usuarioId),
+        getUltimasLeituras(usuarioId),
+      ]);
+      setConversasChat(conversas);
+      setUltimasLeiturasChat(leituras);
+    } catch (err) {
+      console.error('Erro ao carregar Chat Interno (Supabase):', err);
+      showToast('Não foi possível carregar as conversas do Chat Interno.', 'info');
     }
   }, []);
 
@@ -311,6 +344,10 @@ export default function App() {
   const [projetos, setProjetos] = useState<ProjetoGerencial[]>([]);
   const [atividadesGestao, setAtividadesGestao] = useState<AtividadeGestao[]>([]);
   const [orcamentos, setOrcamentos] = useState<OrcamentoItem[]>([]);
+  // Chat Interno — só as conversas do usuário atual e a última leitura de cada uma (pro badge de
+  // não lidas); as mensagens de uma conversa aberta ficam no estado local do ChatView.
+  const [conversasChat, setConversasChat] = useState<ConversaChat[]>([]);
+  const [ultimasLeiturasChat, setUltimasLeiturasChat] = useState<Record<string, string | null>>({});
   const [notasPaginas, setNotasPaginas] = useState<NotaPagina[]>([]);
   const [instrucoesTrabalho, setInstrucoesTrabalho] = useState<InstrucaoTrabalho[]>([]);
   const [custosOperacionais, setCustosOperacionais] = useState<CustoOperacional[]>([]);
@@ -378,6 +415,8 @@ export default function App() {
       setActiveSection('agenda_gestao');
     } else if (modId === 'controladoria') {
       setActiveSection('controladoria');
+    } else if (modId === 'chat') {
+      setActiveSection('chat');
     } else if (modId === 'notas') {
       setActiveSection('notas');
     } else if (modId === 'usuarios') {
@@ -405,6 +444,8 @@ export default function App() {
       const fallbackModule = user.modulosPermitidos[0] || 'visao_geral';
       handleSelectGlobalModule(fallbackModule);
     }
+    // Chat Interno é dado POR PESSOA — recarrega as conversas de quem acabou de "entrar".
+    loadChatData(user.id);
     showToast(`Conectado como ${user.nome} (@${user.login})`, 'success');
   };
 
@@ -442,6 +483,55 @@ export default function App() {
       console.error(err);
       const msg = err instanceof Error ? err.message : 'Erro desconhecido.';
       showToast(`Não foi possível enviar o convite: ${msg}`, 'error');
+    }
+  };
+
+  // ============================================================================
+  // CHAT INTERNO
+  // ============================================================================
+  const handleAbrirConversaChat = async (conversaId: string) => {
+    if (!currentUser) return;
+    try {
+      await marcarConversaComoLida(conversaId, currentUser.id);
+      setUltimasLeiturasChat((prev) => ({ ...prev, [conversaId]: new Date().toISOString() }));
+    } catch (err) {
+      console.error('Erro ao marcar conversa como lida:', err);
+    }
+  };
+
+  const handleEnviarMensagemChat = async (conversaId: string, texto: string) => {
+    if (!currentUser) return;
+    try {
+      await enviarMensagem(conversaId, currentUser.id, texto);
+      const agora = new Date().toISOString();
+      setConversasChat((prev) => prev.map((c) => (c.id === conversaId ? { ...c, atualizadoEm: agora } : c)));
+      setUltimasLeiturasChat((prev) => ({ ...prev, [conversaId]: agora }));
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível enviar a mensagem. Verifique sua conexão.', 'error');
+    }
+  };
+
+  const handleCriarConversaDiretaChat = async (outroUsuarioId: string) => {
+    if (!currentUser) return;
+    try {
+      await obterOuCriarConversaDireta(currentUser.id, outroUsuarioId);
+      await loadChatData(currentUser.id);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível iniciar a conversa.', 'error');
+    }
+  };
+
+  const handleCriarConversaGrupoChat = async (nome: string, participantesIds: string[]) => {
+    if (!currentUser) return;
+    try {
+      await criarConversaGrupo(nome, currentUser.id, participantesIds);
+      await loadChatData(currentUser.id);
+      showToast(`Grupo "${nome}" criado!`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível criar o grupo.', 'error');
     }
   };
 
@@ -680,9 +770,14 @@ export default function App() {
     // Só libera o aviso de abertura (compromissos/prazos) depois que os dados de
     // Agenda da Gestão e Projetos (e o resto) já terminaram de chegar — evita disparar
     // o aviso com as listas ainda vazias por causa da requisição em andamento.
-    Promise.all([loadDpData(), loadFarmaAereoData(), loadGestaoData(), loadUsuarios()]).then(() => {
-      setDadosIniciaisCarregados(true);
-    });
+    Promise.all([loadDpData(), loadFarmaAereoData(), loadGestaoData(), loadUsuarios()]).then(
+      ([, , , usuarioAtual]) => {
+        setDadosIniciaisCarregados(true);
+        // Só depois de saber quem é o usuário de verdade (loadUsuarios já resolveu o vínculo
+        // salvo/local) — currentUser do state ainda não teria atualizado a tempo aqui.
+        if (usuarioAtual) loadChatData(usuarioAtual.id);
+      }
+    );
 
     // Listen to cross-component storage changes
     const handleStorageUpdate = () => {
@@ -690,7 +785,22 @@ export default function App() {
     };
     window.addEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
     return () => window.removeEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
-  }, [loadData, loadDpData, loadFarmaAereoData, loadGestaoData, loadUsuarios]);
+  }, [loadData, loadDpData, loadFarmaAereoData, loadGestaoData, loadUsuarios, loadChatData]);
+
+  // Chat Interno em tempo real: uma mensagem nova em qualquer conversa (mesmo com a tela em
+  // outro módulo) atualiza a data da conversa na lista — é o que faz ela subir no topo e o selo
+  // de não lida aparecer, mesmo sem a Chat estar aberta. Assina uma vez só; usa a forma funcional
+  // do setState pra nunca trabalhar com uma lista de conversas desatualizada.
+  useEffect(() => {
+    const cancelarInscricao = assinarMensagensNovas((msg) => {
+      setConversasChat((prev) => {
+        const pertence = prev.some((c) => c.id === msg.conversaId);
+        if (!pertence) return prev;
+        return prev.map((c) => (c.id === msg.conversaId ? { ...c, atualizadoEm: msg.criadoEm } : c));
+      });
+    });
+    return cancelarInscricao;
+  }, []);
 
   // Keep detail view synchronized with updated store
   useEffect(() => {
@@ -833,6 +943,11 @@ export default function App() {
       (a) => atividadeOcorreEm(a, todayIso) && a.status !== 'Concluída' && a.status !== 'Cancelada'
     ).length;
 
+    const conversasChatNaoLidas = conversasChat.filter((c) => {
+      const ultima = ultimasLeiturasChat[c.id];
+      return !ultima || c.atualizadoEm > ultima;
+    }).length;
+
     return {
       ativos,
       examesVencendo,
@@ -848,6 +963,7 @@ export default function App() {
       clientesFarmaRodoviario,
       projetosAtivos,
       atividadesHoje,
+      conversasChatNaoLidas,
       totalLogins: users.length,
       notasCount: notasPaginas.filter((n) => !n.arquivada).length,
       instrucoesCount: instrucoesTrabalho.filter((i) => !i.arquivada).length,
@@ -865,6 +981,8 @@ export default function App() {
     notasPaginas,
     instrucoesTrabalho,
     users,
+    conversasChat,
+    ultimasLeiturasChat,
   ]);
 
   // Dados do "Aviso de Abertura" (compromissos de hoje + prazos de projetos) — mesmo critério de
@@ -1664,6 +1782,7 @@ export default function App() {
           else if (sec === 'projetos') setActiveGlobalModule('projetos');
           else if (sec === 'agenda_gestao') setActiveGlobalModule('agenda');
           else if (sec === 'controladoria') setActiveGlobalModule('controladoria');
+          else if (sec === 'chat') setActiveGlobalModule('chat');
           else if (sec === 'notas') setActiveGlobalModule('notas');
           else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
           else setActiveGlobalModule('dp');
@@ -1703,6 +1822,7 @@ export default function App() {
             else if (sec === 'projetos') setActiveGlobalModule('projetos');
             else if (sec === 'agenda_gestao') setActiveGlobalModule('agenda');
             else if (sec === 'controladoria') setActiveGlobalModule('controladoria');
+            else if (sec === 'chat') setActiveGlobalModule('chat');
             else if (sec === 'notas') setActiveGlobalModule('notas');
             else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
             else setActiveGlobalModule('dp');
@@ -1905,6 +2025,22 @@ export default function App() {
               orcamentos={orcamentos}
               userRole={userRole}
               onSaveOrcamento={handleSaveOrcamento}
+            />
+          )}
+
+          {/* ========================================================================= */}
+          {/* MODULE: CHAT INTERNO */}
+          {/* ========================================================================= */}
+          {(activeGlobalModule === 'chat' || activeSection === 'chat') && currentUser && (
+            <ChatView
+              usuarios={users}
+              currentUserId={currentUser.id}
+              conversas={conversasChat}
+              ultimasLeituras={ultimasLeiturasChat}
+              onAbrirConversa={handleAbrirConversaChat}
+              onEnviarMensagem={handleEnviarMensagemChat}
+              onCriarConversaDireta={handleCriarConversaDiretaChat}
+              onCriarConversaGrupo={handleCriarConversaGrupoChat}
             />
           )}
 

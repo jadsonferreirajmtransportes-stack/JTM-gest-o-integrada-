@@ -9,6 +9,7 @@ export type GlobalModuleId =
   | 'projetos'
   | 'agenda'
   | 'controladoria'
+  | 'chat'
   | 'notas'
   | 'instrucoes'
   | 'usuarios';
@@ -1400,6 +1401,35 @@ export interface OrcamentoItem {
   criadoPor?: string;
   criadoEm: string;
   atualizadoEm?: string;
+}
+
+// ==========================================
+// MÓDULO CHAT INTERNO (conversas diretas e em grupo entre Logins & Acessos)
+// Ver src/utils/chatApi.ts para as funções de acesso e o realtime.
+// ==========================================
+
+export type TipoConversaChat = 'direta' | 'grupo';
+
+export interface ConversaChat {
+  id: string;
+  tipo: TipoConversaChat;
+  /** Só preenchido em conversas do tipo 'grupo' — direta usa o nome do outro participante. */
+  nome?: string;
+  criadoPor?: string;
+  criadoEm: string;
+  /** Carimbado a cada mensagem nova — usado pra ordenar a lista de conversas por atividade
+   *  recente, sem precisar de outra consulta pra descobrir a última mensagem de cada uma. */
+  atualizadoEm: string;
+  /** Ids (UsuarioLogin.id) de quem participa — carregado junto ao buscar as conversas. */
+  participantesIds: string[];
+}
+
+export interface MensagemChat {
+  id: string;
+  conversaId: string;
+  autorId: string;
+  texto: string;
+  criadoEm: string;
 }
 
 // ==========================================

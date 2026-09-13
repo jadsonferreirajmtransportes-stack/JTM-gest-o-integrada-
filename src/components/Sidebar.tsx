@@ -30,6 +30,7 @@ import {
   NotebookPen,
   FileCheck2,
   Calculator,
+  MessageSquare,
 } from 'lucide-react';
 import { UserRole, GlobalModuleId, UsuarioLogin } from '../types';
 import { JmtLogo } from './Brand/JmtLogo';
@@ -46,6 +47,7 @@ export type NavSection =
   | 'usuarios'
   | 'agenda_gestao'
   | 'controladoria'
+  | 'chat'
   | 'notas'
   | 'instrucoes'
   | 'preadmissoes'
@@ -90,6 +92,7 @@ interface SidebarProps {
     totalLogins?: number;
     notasCount?: number;
     instrucoesCount?: number;
+    conversasChatNaoLidas?: number;
   };
   isMobileOpen: boolean;
   onCloseMobile: () => void;
@@ -203,8 +206,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       activeBorder: 'border-slate-500',
     },
     {
-      id: 'notas' as GlobalModuleId,
+      id: 'chat' as GlobalModuleId,
       number: '8',
+      title: 'Chat Interno',
+      short: 'Conversas Diretas & Grupos',
+      icon: MessageSquare,
+      badge: counts.conversasChatNaoLidas,
+      color: 'from-sky-600 to-sky-900',
+      activeBorder: 'border-sky-500',
+    },
+    {
+      id: 'notas' as GlobalModuleId,
+      number: '9',
       title: 'Notas & Ideias',
       short: 'Anotações & Brainstorm',
       icon: NotebookPen,
@@ -214,7 +227,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'instrucoes' as GlobalModuleId,
-      number: '9',
+      number: '10',
       title: 'Instruções de Trabalho',
       short: 'Procedimentos & Checklists',
       icon: FileCheck2,
@@ -224,7 +237,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'usuarios' as GlobalModuleId,
-      number: '10',
+      number: '11',
       title: 'Logins & Acessos',
       short: 'Usuários & Permissões',
       icon: ShieldCheck,

@@ -93,6 +93,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     categoria: 'Administração',
   },
   {
+    id: 'chat',
+    nome: 'Chat Interno',
+    sigla: 'CHAT',
+    descricao: 'Conversas diretas e em grupo entre os logins cadastrados no sistema.',
+    corBadge: 'bg-sky-100 text-sky-900 border-sky-300',
+    corBorda: 'border-sky-500',
+    iconeNome: 'MessageSquare',
+    categoria: 'Corporativo',
+  },
+  {
     id: 'notas',
     nome: 'Notas & Ideias',
     sigla: 'NOT',

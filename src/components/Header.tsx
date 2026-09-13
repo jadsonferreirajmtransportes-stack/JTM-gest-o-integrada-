@@ -77,6 +77,10 @@ const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = 
     title: 'Controladoria',
     subtitle: 'DRE Gerencial, margem de contribuição, ponto de equilíbrio e Orçado x Realizado por setor',
   },
+  chat: {
+    title: 'Chat Interno',
+    subtitle: 'Conversas diretas e em grupo entre os logins cadastrados no sistema',
+  },
   notas: {
     title: 'Notas & Ideias',
     subtitle: 'Páginas livres de anotações e brainstorm, estilo Notion, com vínculo a outros módulos da JMT',
