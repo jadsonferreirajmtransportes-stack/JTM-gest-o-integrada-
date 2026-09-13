@@ -31,6 +31,7 @@ import {
   FileCheck2,
   Calculator,
   MessageSquare,
+  Download,
 } from 'lucide-react';
 import { UserRole, GlobalModuleId, UsuarioLogin } from '../types';
 import { JmtLogo } from './Brand/JmtLogo';
@@ -87,6 +88,8 @@ interface SidebarProps {
     viagensRodoviariasAtivas?: number;
     clientesFarmaAereo?: number;
     clientesFarmaRodoviario?: number;
+    headcountFarmaAereo?: number;
+    headcountFarmaRodoviario?: number;
     projetosAtivos?: number;
     atividadesHoje?: number;
     totalLogins?: number;
@@ -98,6 +101,11 @@ interface SidebarProps {
   onCloseMobile: () => void;
   onOpenAdmissionLinkModal?: () => void;
   onOpenOccurrenceLinkModal?: () => void;
+  /** Abre o modal de "Vincular Empresas"/"Alocar Equipe" do Farma Aéreo ou Farma Rodoviário —
+   *  atalho suspenso abaixo do botão do módulo, o modal em si vive no App.tsx. */
+  onOpenSectorLinkModal?: (setor: 'farma_aereo' | 'farma_rodoviario', mode: 'clientes' | 'colaboradores') => void;
+  /** Baixa o CSV do relatório gerencial do setor — mesmo atalho suspenso abaixo do botão do módulo. */
+  onExportSectorReport?: (setor: 'farma_aereo' | 'farma_rodoviario') => void;
 }
 
 interface NavItemDef {
@@ -124,6 +132,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
   onOpenAdmissionLinkModal,
   onOpenOccurrenceLinkModal,
+  onOpenSectorLinkModal,
+  onExportSectorReport,
 }) => {
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
@@ -579,22 +589,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return (
         <div className="p-2 space-y-2">
           <div className="text-slate-700 text-xs font-bold px-1">
-            Operações Farma Aéreo
+            Farma Aéreo — Gestão Executiva
           </div>
           <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-            Rastreamento AWB em tempo real, monitoramento de cadeias 2°C a 8°C e gelo seco, liberação em TECA e plantão UTI 24h.
+            Visão Geral & DRE, empresas atreladas, equipe do setor, faturamento e custos operacionais (Cias Aéreas, TECA e RDC 430).
           </p>
-          <div className="pt-2">
+          <div className="pt-2 space-y-1.5">
             <button
               onClick={() => {
                 onSelectSection('farma_aereo');
                 onCloseMobile();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600 text-white shadow-xs"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition-colors"
             >
               <Plane className="w-4 h-4" />
-              Painel de Voos & AWB
+              Abrir Painel Gerencial
             </button>
+            {onOpenSectorLinkModal && (
+              <button
+                onClick={() => {
+                  onOpenSectorLinkModal('farma_aereo', 'clientes');
+                  onCloseMobile();
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-sky-600" />
+                  <span>Vincular Empresas</span>
+                </div>
+                {counts.clientesFarmaAereo !== undefined && (
+                  <span className="text-[10px] text-slate-400 font-bold">{counts.clientesFarmaAereo}</span>
+                )}
+              </button>
+            )}
+            {onOpenSectorLinkModal && (
+              <button
+                onClick={() => {
+                  onOpenSectorLinkModal('farma_aereo', 'colaboradores');
+                  onCloseMobile();
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-sky-600" />
+                  <span>Alocar Equipe</span>
+                </div>
+                {counts.headcountFarmaAereo !== undefined && (
+                  <span className="text-[10px] text-slate-400 font-bold">{counts.headcountFarmaAereo}</span>
+                )}
+              </button>
+            )}
+            {onExportSectorReport && (
+              <button
+                onClick={() => {
+                  onExportSectorReport('farma_aereo');
+                  onCloseMobile();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
+              >
+                <Download className="w-4 h-4 text-sky-600" />
+                <span>Relatório Gerencial</span>
+              </button>
+            )}
           </div>
         </div>
       );
@@ -604,22 +660,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return (
         <div className="p-2 space-y-2">
           <div className="text-slate-700 text-xs font-bold px-1">
-            Operações Farma Rodoviário
+            Farma Rodoviário — Gestão Executiva
           </div>
           <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-            Gestão de frota com telemetria contínua do baú refrigerado, MDF-e, pontos de parada e baixa de entregas.
+            Visão Geral & DRE, empresas atreladas, equipe do setor, faturamento e custos operacionais (Diesel S10, manutenção de refrigeração e pedágios).
           </p>
-          <div className="pt-2">
+          <div className="pt-2 space-y-1.5">
             <button
               onClick={() => {
                 onSelectSection('farma_rodoviario');
                 onCloseMobile();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-xs"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors"
             >
               <Truck className="w-4 h-4" />
-              Painel de Viagens & Frotas
+              Abrir Painel Gerencial
             </button>
+            {onOpenSectorLinkModal && (
+              <button
+                onClick={() => {
+                  onOpenSectorLinkModal('farma_rodoviario', 'clientes');
+                  onCloseMobile();
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-emerald-600" />
+                  <span>Vincular Empresas</span>
+                </div>
+                {counts.clientesFarmaRodoviario !== undefined && (
+                  <span className="text-[10px] text-slate-400 font-bold">{counts.clientesFarmaRodoviario}</span>
+                )}
+              </button>
+            )}
+            {onOpenSectorLinkModal && (
+              <button
+                onClick={() => {
+                  onOpenSectorLinkModal('farma_rodoviario', 'colaboradores');
+                  onCloseMobile();
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-emerald-600" />
+                  <span>Alocar Equipe</span>
+                </div>
+                {counts.headcountFarmaRodoviario !== undefined && (
+                  <span className="text-[10px] text-slate-400 font-bold">{counts.headcountFarmaRodoviario}</span>
+                )}
+              </button>
+            )}
+            {onExportSectorReport && (
+              <button
+                onClick={() => {
+                  onExportSectorReport('farma_rodoviario');
+                  onCloseMobile();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
+              >
+                <Download className="w-4 h-4 text-emerald-600" />
+                <span>Relatório Gerencial</span>
+              </button>
+            )}
           </div>
         </div>
       );

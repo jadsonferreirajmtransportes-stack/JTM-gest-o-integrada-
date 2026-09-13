@@ -606,3 +606,57 @@ export function calcFinancialsSetor(
     margemPercentual,
   };
 }
+
+// ==========================================
+// RELATÓRIO GERENCIAL (CSV) — usado tanto pelo botão dentro do painel do setor
+// quanto pelo atalho "Relatório Gerencial" suspenso no menu lateral, abaixo do
+// botão do próprio módulo (Farma Aéreo / Farma Rodoviário).
+// ==========================================
+
+const RELATORIO_GERENCIAL_LABELS: Record<
+  SetorModuloId,
+  { identificacao: string; custosDiretosObservacao: string; arquivo: string }
+> = {
+  farma_aereo: {
+    identificacao: 'Farma Aéreo & TECA RDC 430',
+    custosDiretosObservacao: 'Cias aéreas, TECA, embalagens VIP',
+    arquivo: 'relatorio_gerencial_farma_aereo',
+  },
+  farma_rodoviario: {
+    identificacao: 'Farma Rodoviário — Frotas & Rotas RDC 430',
+    custosDiretosObservacao: 'Diesel S10, manutenção, pedágios, frio',
+    arquivo: 'relatorio_gerencial_farma_rodoviario',
+  },
+};
+
+/** Gera e baixa o CSV do relatório gerencial (DRE resumido) de um setor, a partir das
+ *  métricas já calculadas por `calcFinancialsSetor`. Compartilhado entre o painel do
+ *  setor e o atalho do menu lateral para não duplicar as mesmas linhas em dois lugares. */
+export function gerarRelatorioGerencialSetorCSV(metrics: SectorManagerialMetrics): void {
+  const labels = RELATORIO_GERENCIAL_LABELS[metrics.setor];
+  const headers = ['Métrica Gerencial / Conta', 'Categoria', 'Valor / Quantidade', 'Observação'];
+  const rows = [
+    ['Setor', 'Identificação', labels.identificacao, 'Gestão Gerencial JMT'],
+    ['Faturamento Mensal Bruto', 'Receita', `R$ ${metrics.faturamentoMensalTotal.toFixed(2)}`, 'Contratos vigentes'],
+    ['Faturamento Anual Projetado', 'Receita', `R$ ${metrics.faturamentoAnualizado.toFixed(2)}`, '12 meses'],
+    ['Impostos s/ Faturamento (6%)', 'Deduções', `R$ ${metrics.impostosSobreFaturamento.toFixed(2)}`, 'Simples/Presumido'],
+    ['Receita Operacional Líquida', 'Receita', `R$ ${metrics.receitaLiquida.toFixed(2)}`, 'Líquido de tributos'],
+    ['Folha de Pagamento & Encargos RH', 'Custos', `R$ ${metrics.custoTotalFolhaPatronal.toFixed(2)}`, `${metrics.headcountEquipe} colaboradores`],
+    ['Custos Operacionais Diretos', 'Custos', `R$ ${metrics.custoTotalOperacionalDireto.toFixed(2)}`, labels.custosDiretosObservacao],
+    ['Custo Total do Setor', 'Custos', `R$ ${metrics.custoTotalSetor.toFixed(2)}`, 'Folha + Diretos'],
+    ['Margem de Contribuição / Lucro', 'Resultado', `R$ ${metrics.margemContribuicao.toFixed(2)}`, `${metrics.margemPercentual.toFixed(2)}% margem`],
+    ['Total de Empresas Vinculadas', 'Carteira', metrics.totalClientesVinculados.toString(), `${metrics.totalClientesAtivos} ativas`],
+    ['Ticket Médio por Empresa', 'Carteira', `R$ ${metrics.ticketMedioCliente.toFixed(2)}`, 'Média mensal'],
+    ['Equipe Total Alocada', 'RH', metrics.headcountEquipe.toString(), `Custo médio R$ ${metrics.custoMedioPorColaborador.toFixed(2)}/colab`],
+  ];
+
+  const csvContent = [headers.join(';'), ...rows.map((r) => r.map((cell) => `"${cell}"`).join(';'))].join('\n');
+  const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${labels.arquivo}_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}

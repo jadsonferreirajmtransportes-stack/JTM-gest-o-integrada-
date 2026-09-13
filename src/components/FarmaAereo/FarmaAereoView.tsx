@@ -5,7 +5,6 @@ import {
   Users,
   DollarSign,
   TrendingUp,
-  Download,
   Plus,
   Layers,
   PieChart,
@@ -26,7 +25,6 @@ import {
 import { FaturamentoAereoView } from './FaturamentoAereoView';
 import { SectorClientsTab } from '../Common/SectorClientsTab';
 import { SectorEmployeesTab } from '../Common/SectorEmployeesTab';
-import { SectorLinkModal } from '../Common/SectorLinkModal';
 import { SectorManagerialDashboard } from '../Common/SectorManagerialDashboard';
 import { SectorRevenueTab } from '../Common/SectorRevenueTab';
 import { SectorCostsTab } from '../Common/SectorCostsTab';
@@ -36,8 +34,6 @@ import {
   computeFaturamentoRealAereo,
   isClienteFarmaAereo,
   isColaboradorFarmaAereo,
-  vincularClienteAoSetor,
-  vincularColaboradorAoSetor,
 } from '../../utils/sectorUtils';
 import { ehModalRodoviario } from './faturamentoAereoUtils';
 import { formatCurrency } from '../../utils/formatters';
@@ -57,6 +53,10 @@ interface FarmaAereoViewProps {
   onOpenNovoColaborador?: () => void;
   onSelectClienteDetail?: (cliente: Cliente) => void;
   onSelectColaboradorDetail?: (colaborador: Colaborador) => void;
+  /** Abre o modal de vincular Empresas/Equipe ao setor — o modal em si vive no App (é
+   *  compartilhado com o Farma Rodoviário) para poder ser acionado tanto pelas abas
+   *  internas quanto pelo atalho suspenso no menu lateral, abaixo do botão do módulo. */
+  onOpenLinkModal: (mode: 'clientes' | 'colaboradores') => void;
   userRole?: UserRole;
   lancamentosFaturamentoAereo?: LancamentoFaturamentoAereo[];
   faturasAereo?: FaturaAereo[];
@@ -81,6 +81,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
   onOpenNovoColaborador,
   onSelectClienteDetail,
   onSelectColaboradorDetail,
+  onOpenLinkModal,
   userRole = 'admin',
   lancamentosFaturamentoAereo = [],
   faturasAereo = [],
@@ -95,10 +96,6 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<
     'visao_geral' | 'empresas' | 'equipe' | 'faturamento' | 'controle_financeiro' | 'custos'
   >('visao_geral');
-
-  // Sector Link Modal
-  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-  const [linkModalMode, setLinkModalMode] = useState<'clientes' | 'colaboradores'>('clientes');
 
   // Custo Operacional Modal state
   const [isCustoModalOpen, setIsCustoModalOpen] = useState(false);
@@ -139,97 +136,27 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
     return colaboradores.filter((c) => c.status !== 'Inativo' && isColaboradorFarmaAereo(c));
   }, [colaboradores]);
 
-  const handleOpenLinkModal = (mode: 'clientes' | 'colaboradores') => {
-    setLinkModalMode(mode);
-    setIsLinkModalOpen(true);
-  };
-
-  const handleToggleClienteLink = (cliente: Cliente, vincular: boolean) => {
-    const updated = vincularClienteAoSetor(cliente, 'farma_aereo', vincular);
-    onSaveCliente(updated);
-  };
-
-  const handleToggleColaboradorLink = (colaborador: Colaborador, vincular: boolean) => {
-    const updated = vincularColaboradorAoSetor(colaborador, 'farma_aereo', vincular);
-    onSaveColaborador(updated);
-  };
-
-  const handleExportManagerialReport = () => {
-    const headers = ['Métrica Gerencial / Conta', 'Categoria', 'Valor / Quantidade', 'Observação'];
-    const rows = [
-      ['Setor', 'Identificação', 'Farma Aéreo & TECA RDC 430', 'Gestão Gerencial JMT'],
-      ['Faturamento Mensal Bruto', 'Receita', `R$ ${metrics.faturamentoMensalTotal.toFixed(2)}`, 'Contratos vigentes'],
-      ['Faturamento Anual Projetado', 'Receita', `R$ ${metrics.faturamentoAnualizado.toFixed(2)}`, '12 meses'],
-      ['Impostos s/ Faturamento (6%)', 'Deduções', `R$ ${metrics.impostosSobreFaturamento.toFixed(2)}`, 'Simples/Presumido'],
-      ['Receita Operacional Líquida', 'Receita', `R$ ${metrics.receitaLiquida.toFixed(2)}`, 'Líquido de tributos'],
-      ['Folha de Pagamento & Encargos RH', 'Custos', `R$ ${metrics.custoTotalFolhaPatronal.toFixed(2)}`, `${metrics.headcountEquipe} colaboradores`],
-      ['Custos Operacionais Diretos', 'Custos', `R$ ${metrics.custoTotalOperacionalDireto.toFixed(2)}`, 'Cias aéreas, TECA, embalagens VIP'],
-      ['Custo Total do Setor', 'Custos', `R$ ${metrics.custoTotalSetor.toFixed(2)}`, 'Folha + Diretos'],
-      ['Margem de Contribuição / Lucro', 'Resultado', `R$ ${metrics.margemContribuicao.toFixed(2)}`, `${metrics.margemPercentual.toFixed(2)}% margem`],
-      ['Total de Empresas Vinculadas', 'Carteira', metrics.totalClientesVinculados.toString(), `${metrics.totalClientesAtivos} ativas`],
-      ['Ticket Médio por Empresa', 'Carteira', `R$ ${metrics.ticketMedioCliente.toFixed(2)}`, 'Média mensal'],
-      ['Equipe Total Alocada', 'RH', metrics.headcountEquipe.toString(), `Custo médio R$ ${metrics.custoMedioPorColaborador.toFixed(2)}/colab`],
-    ];
-
-    const csvContent = [headers.join(';'), ...rows.map((r) => r.map((cell) => `"${cell}"`).join(';'))].join('\n');
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `relatorio_gerencial_farma_aereo_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
     <div className="space-y-6">
-      {/* Executive Header */}
-      <div className="bg-linear-to-r from-sky-900 via-sky-800 to-indigo-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 opacity-10 pointer-events-none flex items-center pr-8">
-          <Plane className="w-80 h-80 text-white" />
+      {/* Executive Header — as ações rápidas (Vincular Empresas, Alocar Equipe, Relatório
+          Gerencial) agora ficam suspensas no menu lateral, abaixo do botão do próprio
+          módulo, em vez de duplicadas aqui no topo. */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+        <div className="absolute right-0 top-0 bottom-0 opacity-100 pointer-events-none flex items-center pr-8">
+          <Plane className="w-64 h-64 text-sky-50" />
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 text-sky-200 border border-sky-400/30 text-xs font-semibold backdrop-blur-xs">
-              <Plane className="w-3.5 h-3.5" />
-              <span>Painel Gerencial do Setor • Centro de Custo Aéreo</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Gestão Executiva — Farma Aéreo
-            </h1>
-            <p className="text-sm text-sky-100/90 max-w-2xl font-normal leading-relaxed">
-              Governança gerencial do setor aéreo: controle de carteira de empresas atreladas, headcount e folha de equipe, faturamento de contratos e custos operacionais específicos (Cias Aéreas, TECA e RDC 430).
-            </p>
+        <div className="relative z-10 space-y-2 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold">
+            <Plane className="w-3.5 h-3.5" />
+            <span>Painel Gerencial do Setor • Centro de Custo Aéreo</span>
           </div>
-
-          {/* Quick Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              onClick={() => handleOpenLinkModal('clientes')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors shadow-xs"
-            >
-              <Building2 className="w-3.5 h-3.5 text-sky-300" />
-              <span>Vincular Empresas ({metrics.totalClientesVinculados})</span>
-            </button>
-
-            <button
-              onClick={() => handleOpenLinkModal('colaboradores')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors shadow-xs"
-            >
-              <Users className="w-3.5 h-3.5 text-indigo-300" />
-              <span>Alocar Equipe ({metrics.headcountEquipe})</span>
-            </button>
-
-            <button
-              onClick={handleExportManagerialReport}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white shadow-md transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Relatório Gerencial</span>
-            </button>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+            Gestão Executiva — Farma Aéreo
+          </h1>
+          <p className="text-sm text-slate-500 font-normal leading-relaxed">
+            Governança gerencial do setor aéreo: controle de carteira de empresas atreladas, headcount e folha de equipe, faturamento de contratos e custos operacionais específicos (Cias Aéreas, TECA e RDC 430).
+          </p>
         </div>
       </div>
 
@@ -315,7 +242,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           metrics={metrics}
           clientes={sectorClientes}
           colaboradores={sectorColaboradores}
-          onOpenLinkModal={handleOpenLinkModal}
+          onOpenLinkModal={onOpenLinkModal}
           onSwitchTab={(t) => setActiveSubTab(t as any)}
         />
       )}
@@ -327,7 +254,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           allClientes={clientes}
           onSaveCliente={onSaveCliente}
           onOpenNovoCliente={onOpenNovoCliente}
-          onOpenLinkModal={() => handleOpenLinkModal('clientes')}
+          onOpenLinkModal={() => onOpenLinkModal('clientes')}
           onSelectClienteDetail={onSelectClienteDetail}
           userRole={userRole}
         />
@@ -340,7 +267,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           allColaboradores={colaboradores}
           onSaveColaborador={onSaveColaborador}
           onOpenNovoColaborador={onOpenNovoColaborador}
-          onOpenLinkModal={() => handleOpenLinkModal('colaboradores')}
+          onOpenLinkModal={() => onOpenLinkModal('colaboradores')}
           onSelectColaboradorDetail={onSelectColaboradorDetail}
           userRole={userRole}
         />
@@ -353,7 +280,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           metrics={metrics}
           clientes={sectorClientes}
           onOpenNovoCliente={onOpenNovoCliente}
-          onOpenLinkModal={() => handleOpenLinkModal('clientes')}
+          onOpenLinkModal={() => onOpenLinkModal('clientes')}
           onSelectClienteDetail={onSelectClienteDetail}
         />
       )}
@@ -399,24 +326,13 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
               onSaveCusto({ ...item, status: newStatus });
             }
           }}
-          onOpenLinkModal={() => handleOpenLinkModal('colaboradores')}
+          onOpenLinkModal={() => onOpenLinkModal('colaboradores')}
           onOpenNovoColaborador={onOpenNovoColaborador}
         />
       )}
 
-      {/* Sector Link Modal for Farma Aéreo */}
-      <SectorLinkModal
-        isOpen={isLinkModalOpen}
-        onClose={() => setIsLinkModalOpen(false)}
-        setor="farma_aereo"
-        mode={linkModalMode}
-        allClientes={clientes}
-        allColaboradores={colaboradores}
-        onToggleClienteLink={handleToggleClienteLink}
-        onToggleColaboradorLink={handleToggleColaboradorLink}
-        onOpenNovoCliente={onOpenNovoCliente}
-        onOpenNovoColaborador={onOpenNovoColaborador}
-      />
+      {/* Sector Link Modal for Farma Aéreo — vive no App.tsx (compartilhado com o Rodoviário
+          e com o atalho suspenso no menu lateral), não é mais renderizado aqui. */}
 
       {/* Custo Operacional Form Modal */}
       <CustoOperacionalFormModal

@@ -133,7 +133,20 @@ import {
   calcFaltasEmPeriodo,
   calcDiasFeriasEmPeriodo,
 } from './utils/formatters';
-import { isClienteFarmaAereo, isClienteFarmaRodoviario } from './utils/sectorUtils';
+import {
+  isClienteFarmaAereo,
+  isClienteFarmaRodoviario,
+  isColaboradorFarmaAereo,
+  isColaboradorFarmaRodoviario,
+  calcFinancialsSetor,
+  computeFaturamentoRealAereo,
+  vincularClienteAoSetor,
+  vincularColaboradorAoSetor,
+  gerarRelatorioGerencialSetorCSV,
+  SetorModuloId,
+} from './utils/sectorUtils';
+import { ehModalRodoviario } from './components/FarmaAereo/faturamentoAereoUtils';
+import { SectorLinkModal } from './components/Common/SectorLinkModal';
 
 // Layout & Core Navigation
 import { Sidebar, NavSection } from './components/Sidebar';
@@ -386,6 +399,13 @@ export default function App() {
   const [isPublicOccurrenceFormOpen, setIsPublicOccurrenceFormOpen] = useState<boolean>(false);
   const [isAdmissionLinkModalOpen, setIsAdmissionLinkModalOpen] = useState<boolean>(false);
   const [isOccurrenceLinkModalOpen, setIsOccurrenceLinkModalOpen] = useState<boolean>(false);
+  // Modal de "Vincular Empresas / Alocar Equipe" do Farma Aéreo e Farma Rodoviário — vive aqui
+  // (em vez de local a cada painel) pra poder ser acionado tanto pelas abas internas de cada
+  // setor quanto pelo atalho suspenso no menu lateral, abaixo do botão do módulo.
+  const [sectorLinkModal, setSectorLinkModal] = useState<{
+    setor: SetorModuloId;
+    mode: 'clientes' | 'colaboradores';
+  } | null>(null);
   const [isCustoOperacionalModalOpen, setIsCustoOperacionalModalOpen] = useState<boolean>(false);
   const [selectedCustoEdit, setSelectedCustoEdit] = useState<CustoOperacional | null>(null);
 
@@ -948,6 +968,59 @@ export default function App() {
     [instrucoesTrabalho, currentUser, userRole]
   );
 
+  // Métricas gerenciais do Farma Aéreo e Farma Rodoviário — mesmo cálculo usado dentro de
+  // cada painel (SectorManagerialDashboard), recalculado aqui pra alimentar tanto os badges
+  // de "Vincular Empresas"/"Alocar Equipe" quanto o "Relatório Gerencial" suspensos no menu
+  // lateral, abaixo do botão de cada módulo.
+  const lancamentosFarmaAereo = useMemo(
+    () => lancamentosFaturamentoAereo.filter((l) => !ehModalRodoviario(l.modal)),
+    [lancamentosFaturamentoAereo]
+  );
+  const lancamentosFarmaRodoviario = useMemo(
+    () => lancamentosFaturamentoAereo.filter((l) => ehModalRodoviario(l.modal)),
+    [lancamentosFaturamentoAereo]
+  );
+  const farmaAereoMetrics = useMemo(
+    () =>
+      calcFinancialsSetor(
+        'farma_aereo',
+        clientes,
+        colaboradores,
+        custosOperacionais,
+        computeFaturamentoRealAereo(lancamentosFarmaAereo)
+      ),
+    [clientes, colaboradores, custosOperacionais, lancamentosFarmaAereo]
+  );
+  const farmaRodoviarioMetrics = useMemo(
+    () =>
+      calcFinancialsSetor(
+        'farma_rodoviario',
+        clientes,
+        colaboradores,
+        custosOperacionais,
+        computeFaturamentoRealAereo(lancamentosFarmaRodoviario)
+      ),
+    [clientes, colaboradores, custosOperacionais, lancamentosFarmaRodoviario]
+  );
+
+  const handleOpenSectorLinkModal = (setor: SetorModuloId, mode: 'clientes' | 'colaboradores') => {
+    setSectorLinkModal({ setor, mode });
+  };
+
+  const handleToggleClienteLinkSetor = (cliente: Cliente, vincular: boolean) => {
+    if (!sectorLinkModal) return;
+    handleSaveCliente(vincularClienteAoSetor(cliente, sectorLinkModal.setor, vincular));
+  };
+
+  const handleToggleColaboradorLinkSetor = (colaborador: Colaborador, vincular: boolean) => {
+    if (!sectorLinkModal) return;
+    handleSaveColaborador(vincularColaboradorAoSetor(colaborador, sectorLinkModal.setor, vincular));
+  };
+
+  const handleExportSectorReport = (setor: SetorModuloId) => {
+    gerarRelatorioGerencialSetorCSV(setor === 'farma_aereo' ? farmaAereoMetrics : farmaRodoviarioMetrics);
+  };
+
   // Sidebar badge counters
   const sidebarCounts = useMemo(() => {
     const ativos = colaboradores.filter((c) => c.status !== 'Inativo').length;
@@ -985,6 +1058,11 @@ export default function App() {
     // vez de embarques/viagens ativas (que hoje são sempre 0, sem dado real).
     const clientesFarmaAereo = clientes.filter(isClienteFarmaAereo).length;
     const clientesFarmaRodoviario = clientes.filter(isClienteFarmaRodoviario).length;
+    // Equipe alocada em cada setor — junto com clientesFarmaAereo/clientesFarmaRodoviario
+    // acima, alimenta os atalhos "Vincular Empresas"/"Alocar Equipe" suspensos no menu
+    // lateral, abaixo do botão do módulo (antes ficavam soltos no topo de cada painel).
+    const headcountFarmaAereo = colaboradores.filter((c) => c.status !== 'Inativo' && isColaboradorFarmaAereo(c)).length;
+    const headcountFarmaRodoviario = colaboradores.filter((c) => c.status !== 'Inativo' && isColaboradorFarmaRodoviario(c)).length;
     const projetosAtivos = projetosVisiveis.length;
     const todayIso = new Date().toISOString().split('T')[0];
     const atividadesHoje = atividadesVisiveis.filter(
@@ -1009,6 +1087,8 @@ export default function App() {
       viagensRodoviariasAtivas,
       clientesFarmaAereo,
       clientesFarmaRodoviario,
+      headcountFarmaAereo,
+      headcountFarmaRodoviario,
       projetosAtivos,
       atividadesHoje,
       conversasChatNaoLidas,
@@ -1862,6 +1942,8 @@ export default function App() {
         onCloseMobile={() => setIsMobileMenuOpen(false)}
         onOpenAdmissionLinkModal={() => setIsAdmissionLinkModalOpen(true)}
         onOpenOccurrenceLinkModal={() => setIsOccurrenceLinkModalOpen(true)}
+        onOpenSectorLinkModal={handleOpenSectorLinkModal}
+        onExportSectorReport={handleExportSectorReport}
       />
 
       {/* Main Content Area */}
@@ -1998,6 +2080,7 @@ export default function App() {
                 setActiveSection('clientes');
               }}
               onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
+              onOpenLinkModal={(mode) => handleOpenSectorLinkModal('farma_aereo', mode)}
               userRole={userRole}
               lancamentosFaturamentoAereo={lancamentosFaturamentoAereo}
               faturasAereo={faturasAereo}
@@ -2035,6 +2118,7 @@ export default function App() {
                 setActiveSection('clientes');
               }}
               onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
+              onOpenLinkModal={(mode) => handleOpenSectorLinkModal('farma_rodoviario', mode)}
               userRole={userRole}
               lancamentosFaturamentoAereo={lancamentosFaturamentoAereo}
               faturasAereo={faturasAereo}
@@ -2434,6 +2518,24 @@ export default function App() {
         cargos={cargos}
         supervisores={supervisores}
         onOpenCandidateView={() => setIsCandidatePortalView(true)}
+      />
+
+      {/* 5b. "Vincular Empresas / Alocar Equipe" — Farma Aéreo & Farma Rodoviário. Compartilhado
+          entre os dois painéis e o atalho suspenso no menu lateral, abaixo do botão do módulo. */}
+      <SectorLinkModal
+        isOpen={!!sectorLinkModal}
+        onClose={() => setSectorLinkModal(null)}
+        setor={sectorLinkModal?.setor ?? 'farma_aereo'}
+        mode={sectorLinkModal?.mode ?? 'clientes'}
+        allClientes={clientes}
+        allColaboradores={colaboradores}
+        onToggleClienteLink={handleToggleClienteLinkSetor}
+        onToggleColaboradorLink={handleToggleColaboradorLinkSetor}
+        onOpenNovoCliente={() => {
+          setActiveGlobalModule('clientes');
+          setActiveSection('clientes');
+        }}
+        onOpenNovoColaborador={handleOpenNovoColaborador}
       />
 
       {/* 6. Occurrence Link Generator & WhatsApp Sender Modal */}
