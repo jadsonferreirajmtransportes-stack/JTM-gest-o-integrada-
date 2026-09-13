@@ -463,18 +463,18 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#B38F4F]/15 border border-[#B38F4F]/30 flex items-center justify-center text-[#B38F4F]">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#8A6A39]">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-white">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">
                 {initialData ? 'Editar Cliente / Contrato' : 'Cadastrar Novo Cliente da Carteira'}
               </h2>
-              <p className="text-xs text-slate-400 font-mono">
+              <p className="text-xs text-slate-500 font-mono">
                 {initialData ? `${initialData.nomeFantasia} (${initialData.codigoCliente})` : 'JMT Transportes & Logística Farmacêutica'}
               </p>
             </div>
@@ -482,21 +482,21 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-800 bg-slate-950/40 px-6 gap-2 overflow-x-auto custom-scrollbar">
+        <div className="flex border-b border-slate-100 bg-slate-50 px-6 gap-2 overflow-x-auto custom-scrollbar">
           <button
             type="button"
             onClick={() => setActiveTab('cadastral')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'cadastral'
-                ? 'border-[#B38F4F] text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#B38F4F] text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
             <Building2 className="w-4 h-4 text-[#B38F4F]" />
@@ -508,11 +508,11 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             onClick={() => setActiveTab('operacao')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'operacao'
-                ? 'border-[#B38F4F] text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#B38F4F] text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            <ShieldCheck className="w-4 h-4 text-cyan-400" />
+            <ShieldCheck className="w-4 h-4 text-cyan-600" />
             <span>2. Operação & ANVISA (RDC 430)</span>
           </button>
 
@@ -521,11 +521,11 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             onClick={() => setActiveTab('contrato')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'contrato'
-                ? 'border-[#B38F4F] text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#B38F4F] text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <DollarSign className="w-4 h-4 text-emerald-600" />
             <span>3. Contrato & Tabela de Fretes</span>
           </button>
 
@@ -534,11 +534,11 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             onClick={() => setActiveTab('contatos_pracas')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'contatos_pracas'
-                ? 'border-[#B38F4F] text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#B38F4F] text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            <MapPin className="w-4 h-4 text-amber-400" />
+            <MapPin className="w-4 h-4 text-amber-600" />
             <span>4. Contatos & Praças</span>
           </button>
         </div>
@@ -550,7 +550,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Código do Cliente *
                   </label>
                   <input
@@ -558,18 +558,18 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     required
                     value={codigoCliente}
                     onChange={(e) => setCodigoCliente(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-mono focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Status na Carteira *
                   </label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as StatusCliente)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   >
                     <option value="Ativo">Ativo (Contrato Vigente)</option>
                     <option value="Em Negociação">Em Negociação</option>
@@ -580,13 +580,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Segmento de Atuação *
                   </label>
                   <select
                     value={segmento}
                     onChange={(e) => setSegmento(e.target.value as SegmentoCliente)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   >
                     {SEGMENTOS_OPTIONS.map((seg) => (
                       <option key={seg} value={seg}>
@@ -599,7 +599,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Razão Social Completa *
                   </label>
                   <input
@@ -608,12 +608,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={razaoSocial}
                     onChange={(e) => setRazaoSocial(e.target.value)}
                     placeholder="Ex: Profarma Distribuidora de Produtos Farmacêuticos S/A"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Nome Fantasia / Divisão
                   </label>
                   <input
@@ -621,14 +621,14 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={nomeFantasia}
                     onChange={(e) => setNomeFantasia(e.target.value)}
                     placeholder="Ex: Profarma Medicamentos Nordeste"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     CNPJ *
                   </label>
                   <input
@@ -636,12 +636,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={cnpj}
                     onChange={(e) => setCnpj(e.target.value)}
                     placeholder="00.000.000/0000-00"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-mono focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Inscrição Estadual (IE)
                   </label>
                   <input
@@ -649,18 +649,18 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={inscricaoEstadual}
                     onChange={(e) => setInscricaoEstadual(e.target.value)}
                     placeholder="Ex: 20.123.456-7"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-mono focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Filial JMT Emissora / Faturamento
                   </label>
                   <select
                     value={empresaFaturamentoId}
                     onChange={(e) => setEmpresaFaturamentoId(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   >
                     {empregadores.map((emp) => (
                       <option key={emp.id} value={emp.id}>
@@ -673,13 +673,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Gestor de Contas Responsável (JMT)
                   </label>
                   <select
                     value={gerenteContaResponsavel}
                     onChange={(e) => setGerenteContaResponsavel(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   >
                     {supervisores.map((s) => (
                       <option key={s.id} value={s.nome}>
@@ -692,7 +692,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Nota de Satisfação NPS (1 a 10)
                   </label>
                   <input
@@ -701,15 +701,15 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     max={10}
                     value={satisfacaoNPS}
                     onChange={(e) => setSatisfacaoNPS(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
               </div>
 
               {/* Endereço e Contatos Gerais */}
-              <div className="pt-2 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="pt-2 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Endereço Completo (CD / Matriz)
                   </label>
                   <input
@@ -717,12 +717,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={enderecoCompleto}
                     onChange={(e) => setEnderecoCompleto(e.target.value)}
                     placeholder="Av. Industrial, 2500 - Distrito Industrial"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Cidade / UF
                   </label>
                   <input
@@ -730,14 +730,14 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={cidadeUF}
                     onChange={(e) => setCidadeUF(e.target.value)}
                     placeholder="Natal/RN"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Telefone Geral / PABX
                   </label>
                   <input
@@ -745,12 +745,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={telefonePrincipal}
                     onChange={(e) => setTelefonePrincipal(e.target.value)}
                     placeholder="(84) 3210-0000"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     E-mail Principal de Contato
                   </label>
                   <input
@@ -758,12 +758,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={emailPrincipal}
                     onChange={(e) => setEmailPrincipal(e.target.value)}
                     placeholder="logistica@cliente.com.br"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Website / Portal
                   </label>
                   <input
@@ -771,7 +771,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
                     placeholder="www.cliente.com.br"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
               </div>
@@ -782,7 +782,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
           {activeTab === 'operacao' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-2">
+                <label className="block text-xs font-semibold text-slate-600 mb-2">
                   Modalidades Operacionais Contratadas
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -795,8 +795,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                         onClick={() => toggleTipoOperacao(tipo)}
                         className={`p-2.5 rounded-lg border text-left text-xs font-medium flex items-center justify-between transition-colors ${
                           isSelected
-                            ? 'bg-[#B38F4F]/15 border-[#B38F4F] text-white'
-                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                            ? 'bg-amber-50 border-[#B38F4F] text-amber-900'
+                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                         }`}
                       >
                         <span>{tipo}</span>
@@ -809,13 +809,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Faixa Térmica Exigida *
                   </label>
                   <select
                     value={faixaTemperatura}
                     onChange={(e) => setFaixaTemperatura(e.target.value as FaixaTemperaturaExigida)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   >
                     {TEMPERATURA_OPTIONS.map((t) => (
                       <option key={t} value={t}>
@@ -826,7 +826,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Frota & Veículos Alocados
                   </label>
                   <input
@@ -834,35 +834,35 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={veiculosAlocados}
                     onChange={(e) => setVeiculosAlocados(e.target.value)}
                     placeholder="Ex: 2x Vans Refrigeradas Master 2°C a 8°C + 1x VUC"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
               </div>
 
               {/* Parâmetros Regulatórios ANVISA */}
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-                <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <h4 className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4" />
                   Conformidade Sanitária & ANVISA (RDC 430/2020)
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={exigeRDC430}
                       onChange={(e) => setExigeRDC430(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-700 text-[#B38F4F] focus:ring-0 bg-slate-900"
+                      className="w-4 h-4 rounded border-slate-300 text-[#B38F4F] focus:ring-0 bg-white"
                     />
                     <span>Exige Boas Práticas de Transporte RDC 430</span>
                   </label>
 
-                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={exigeRegistroAnvisa}
                       onChange={(e) => setExigeRegistroAnvisa(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-700 text-[#B38F4F] focus:ring-0 bg-slate-900"
+                      className="w-4 h-4 rounded border-slate-300 text-[#B38F4F] focus:ring-0 bg-white"
                     />
                     <span>Exige AFE ANVISA & RT Farmacêutico</span>
                   </label>
@@ -870,7 +870,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">
                       Nº da Licença Sanitária / AFE
                     </label>
                     <input
@@ -878,25 +878,25 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       value={numeroLicencaSanitaria}
                       onChange={(e) => setNumeroLicencaSanitaria(e.target.value)}
                       placeholder="Ex: SUVISA/RN Nº 4589/2025"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">
                       Validade da Licença Sanitária
                     </label>
                     <input
                       type="date"
                       value={validadeLicencaSanitaria}
                       onChange={(e) => setValidadeLicencaSanitaria(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Janelas de Carga & Restrições Operacionais
                   </label>
                   <textarea
@@ -904,7 +904,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={restricoesHorarioCarga}
                     onChange={(e) => setRestricoesHorarioCarga(e.target.value)}
                     placeholder="Ex: Recebimento das 05h às 08h. Saída de rota até 08h30. Conferência por código de barras."
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
               </div>
@@ -916,7 +916,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Número do Contrato
                   </label>
                   <input
@@ -924,38 +924,38 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={numeroContrato}
                     onChange={(e) => setNumeroContrato(e.target.value)}
                     placeholder="Ex: CT-JMT-PRO-2025/08"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-mono focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Início da Vigência
                   </label>
                   <input
                     type="date"
                     value={dataInicioContrato}
                     onChange={(e) => setDataInicioContrato(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Renovação / Término
                   </label>
                   <input
                     type="date"
                     value={dataRenovacaoContrato}
                     onChange={(e) => setDataRenovacaoContrato(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Faturamento Mensal Estimado (R$)
                   </label>
                   <input
@@ -964,12 +964,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={faturamentoMensalEstimado}
                     onChange={(e) => setFaturamentoMensalEstimado(Number(e.target.value))}
                     placeholder="0.00"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-emerald-400 font-bold focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-emerald-600 font-bold focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Volume de Entregas / Mês (Estimado)
                   </label>
                   <input
@@ -977,13 +977,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={volumeEntregasMesEstimado}
                     onChange={(e) => setVolumeEntregasMesEstimado(Number(e.target.value))}
                     placeholder="0"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
               </div>
 
               {/* Parâmetros de Tarifa / Tabela de Preço */}
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                 <h4 className="text-xs font-bold text-[#B38F4F] uppercase tracking-wider flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />
                   Condições Comerciais & Tabela de Frete
@@ -991,7 +991,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
                 {/* Toggle: Modelo de Precificação */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                     Modelo de Precificação *
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -1003,8 +1003,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       }}
                       className={`text-left p-2.5 rounded-lg border transition-colors ${
                         tabelaModeloPrecificacao === 'tarifa_base'
-                          ? 'bg-[#B38F4F]/15 border-[#B38F4F] text-white'
-                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                          ? 'bg-amber-50 border-[#B38F4F] text-amber-900'
+                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                       }`}
                     >
                       <span className="text-xs font-bold block">Tarifa Base</span>
@@ -1019,8 +1019,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       }}
                       className={`text-left p-2.5 rounded-lg border transition-colors ${
                         tabelaModeloPrecificacao === 'ad_valorem'
-                          ? 'bg-[#B38F4F]/15 border-[#B38F4F] text-white'
-                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                          ? 'bg-amber-50 border-[#B38F4F] text-amber-900'
+                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                       }`}
                     >
                       <span className="text-xs font-bold block">% Ad Valorem</span>
@@ -1032,8 +1032,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       onClick={() => setTabelaModeloPrecificacao('outro')}
                       className={`text-left p-2.5 rounded-lg border transition-colors ${
                         tabelaModeloPrecificacao === 'outro'
-                          ? 'bg-[#B38F4F]/15 border-[#B38F4F] text-white'
-                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                          ? 'bg-amber-50 border-[#B38F4F] text-amber-900'
+                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                       }`}
                     >
                       <span className="text-xs font-bold block">Outro Modelo</span>
@@ -1046,7 +1046,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 {tabelaModeloPrecificacao === 'tarifa_base' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">
                         Taxa de Entrega (R$)
                       </label>
                       <input
@@ -1055,13 +1055,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                         value={tabelaValorBase}
                         onChange={(e) => setTabelaValorBase(Number(e.target.value))}
                         placeholder="0.00"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white font-bold focus:outline-hidden focus:border-[#B38F4F]"
+                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#B38F4F]"
                       />
                       <p className="text-[10px] text-slate-500 mt-1">Valor cobrado até o peso-base da faixa (ex: até 10kg).</p>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">
                         Valor por Kg Excedente (R$)
                       </label>
                       <input
@@ -1070,7 +1070,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                         value={tabelaKgExcedente}
                         onChange={(e) => setTabelaKgExcedente(Number(e.target.value))}
                         placeholder="0.00"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white font-bold focus:outline-hidden focus:border-[#B38F4F]"
+                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#B38F4F]"
                       />
                       <p className="text-[10px] text-slate-500 mt-1">Cobrado por kg que ultrapassar o peso-base.</p>
                     </div>
@@ -1079,10 +1079,10 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
                 {/* Tabela Detalhada por Cidade / Praça (opcional, só na Tarifa Base) */}
                 {tabelaModeloPrecificacao === 'tarifa_base' && (
-                  <div className="pt-2 border-t border-slate-800/80">
+                  <div className="pt-2 border-t border-slate-200">
                     <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                       <div>
-                        <span className="block text-xs font-semibold text-slate-300">
+                        <span className="block text-xs font-semibold text-slate-600">
                           Tabela Detalhada por Cidade / Praça{' '}
                           <span className="text-slate-500 font-normal">(opcional)</span>
                         </span>
@@ -1093,7 +1093,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       <button
                         type="button"
                         onClick={handleAddTarifaCidade}
-                        className="text-[11px] bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium shrink-0"
+                        className="text-[11px] bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium shrink-0"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Adicionar Cidade</span>
@@ -1105,7 +1105,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                         {tarifasPorCidade.map((tarifa, idx) => (
                           <div
                             key={tarifa.id}
-                            className="bg-slate-900 p-2 rounded-lg border border-slate-800 space-y-1.5"
+                            className="bg-slate-50 p-2 rounded-lg border border-slate-200 space-y-1.5"
                           >
                             <div className="grid grid-cols-2 gap-1.5">
                               <input
@@ -1113,14 +1113,14 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                                 value={tarifa.cidade}
                                 onChange={(e) => handleUpdateTarifaCidade(idx, 'cidade', e.target.value)}
                                 placeholder="Cidade"
-                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-[11px] text-white"
+                                className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
                               />
                               <input
                                 type="text"
                                 value={tarifa.raio}
                                 onChange={(e) => handleUpdateTarifaCidade(idx, 'raio', e.target.value)}
                                 placeholder="Raio / Faixa (Ex: Capital, Até 300km)"
-                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-[11px] text-white"
+                                className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
                               />
                             </div>
                             <div className="grid grid-cols-4 gap-1.5 items-center">
@@ -1130,7 +1130,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                                 value={tarifa.valorAte10Kg}
                                 onChange={(e) => handleUpdateTarifaCidade(idx, 'valorAte10Kg', Number(e.target.value))}
                                 placeholder="Até 10kg (R$)"
-                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-[11px] text-white"
+                                className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
                               />
                               <input
                                 type="number"
@@ -1138,7 +1138,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                                 value={tarifa.valorKgExcedente}
                                 onChange={(e) => handleUpdateTarifaCidade(idx, 'valorKgExcedente', Number(e.target.value))}
                                 placeholder="Kg exc. (R$)"
-                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-[11px] text-white"
+                                className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
                               />
                               <input
                                 type="number"
@@ -1147,12 +1147,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                                   handleUpdateTarifaCidade(idx, 'distanciaKm', e.target.value ? Number(e.target.value) : undefined)
                                 }
                                 placeholder="Km"
-                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-[11px] text-white"
+                                className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
                               />
                               <button
                                 type="button"
                                 onClick={() => handleRemoveTarifaCidade(idx)}
-                                className="p-1.5 text-slate-500 hover:text-rose-400 rounded transition-colors justify-self-end"
+                                className="p-1.5 text-slate-500 hover:text-rose-600 rounded transition-colors justify-self-end"
                                 title="Remover Cidade"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1168,7 +1168,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 {/* Campo: % Ad Valorem sobre a NF do Serviço */}
                 {tabelaModeloPrecificacao === 'ad_valorem' && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">
                       % Ad Valorem sobre a NF do Serviço
                     </label>
                     <input
@@ -1177,7 +1177,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       value={tabelaAdValoremNF}
                       onChange={(e) => setTabelaAdValoremNF(Number(e.target.value))}
                       placeholder="0.30"
-                      className="w-full sm:w-1/2 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white font-bold focus:outline-hidden focus:border-[#B38F4F]"
+                      className="w-full sm:w-1/2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#B38F4F]"
                     />
                     <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
                       Percentual cobrado sobre o valor declarado na Nota Fiscal do serviço/mercadoria transportada — modelo usado tanto no Farma Aéreo quanto no Farma Rodoviário.
@@ -1189,13 +1189,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 {tabelaModeloPrecificacao === 'outro' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">
                         Modelo / Tipo de Cobrança
                       </label>
                       <select
                         value={tabelaTipoCobranca}
                         onChange={(e) => setTabelaTipoCobranca(e.target.value as any)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                       >
                         <option value="Valor por Ponto/Entrega">Valor por Ponto / Entrega</option>
                         <option value="Valor por Km Rodado">Valor por Km Rodado</option>
@@ -1206,7 +1206,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">
                         Valor Base / Tarifa (R$)
                       </label>
                       <input
@@ -1215,17 +1215,17 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                         value={tabelaValorBase}
                         onChange={(e) => setTabelaValorBase(Number(e.target.value))}
                         placeholder="0.00"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white font-bold focus:outline-hidden focus:border-[#B38F4F]"
+                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#B38F4F]"
                       />
                     </div>
                   </div>
                 )}
 
                 {/* Custos Extras / Encargos Avulsos (opcional, qualquer modelo) */}
-                <div className="pt-2 border-t border-slate-800/80">
+                <div className="pt-2 border-t border-slate-200">
                   <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                     <div>
-                      <span className="block text-xs font-semibold text-slate-300">
+                      <span className="block text-xs font-semibold text-slate-600">
                         Custos Extras / Encargos Avulsos <span className="text-slate-500 font-normal">(opcional)</span>
                       </span>
                       <p className="text-[10px] text-slate-500">
@@ -1235,7 +1235,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     <button
                       type="button"
                       onClick={handleAddCustoExtra}
-                      className="text-[11px] bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium shrink-0"
+                      className="text-[11px] bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium shrink-0"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Adicionar Encargo</span>
@@ -1245,21 +1245,21 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   {custosExtras.length > 0 && (
                     <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
                       {custosExtras.map((custo, idx) => (
-                        <div key={custo.id} className="bg-slate-900 p-2 rounded-lg border border-slate-800 space-y-1.5">
+                        <div key={custo.id} className="bg-slate-50 p-2 rounded-lg border border-slate-200 space-y-1.5">
                           <div className="grid grid-cols-2 gap-1.5">
                             <input
                               type="text"
                               value={custo.categoria}
                               onChange={(e) => handleUpdateCustoExtra(idx, 'categoria', e.target.value)}
                               placeholder="Categoria (Ex: TDE / VEÍCULO)"
-                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-[11px] text-white"
+                              className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
                             />
                             <input
                               type="text"
                               value={custo.grupoDestinatario || ''}
                               onChange={(e) => handleUpdateCustoExtra(idx, 'grupoDestinatario', e.target.value)}
                               placeholder="Grupo / Destinatário"
-                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-[11px] text-white"
+                              className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
                             />
                           </div>
                           <div className="grid grid-cols-4 gap-1.5 items-center">
@@ -1268,12 +1268,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                               value={custo.itemDescricao || ''}
                               onChange={(e) => handleUpdateCustoExtra(idx, 'itemDescricao', e.target.value)}
                               placeholder="Item / Descrição"
-                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-[11px] text-white"
+                              className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
                             />
                             <select
                               value={custo.tipoCobranca}
                               onChange={(e) => handleUpdateCustoExtra(idx, 'tipoCobranca', e.target.value)}
-                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-[11px] text-white"
+                              className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
                             >
                               <option value="Valor fechado">Valor fechado</option>
                               <option value="Valor/KM">Valor/KM</option>
@@ -1285,12 +1285,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                               value={custo.valor}
                               onChange={(e) => handleUpdateCustoExtra(idx, 'valor', Number(e.target.value))}
                               placeholder="Valor (R$)"
-                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-[11px] text-white"
+                              className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
                             />
                             <button
                               type="button"
                               onClick={() => handleRemoveCustoExtra(idx)}
-                              className="p-1.5 text-slate-500 hover:text-rose-400 rounded transition-colors justify-self-end"
+                              className="p-1.5 text-slate-500 hover:text-rose-600 rounded transition-colors justify-self-end"
                               title="Remover Encargo"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1302,9 +1302,9 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800/80">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">
                       Frete Mínimo (R$)
                     </label>
                     <input
@@ -1313,12 +1313,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       value={tabelaFreteMinimo}
                       onChange={(e) => setTabelaFreteMinimo(Number(e.target.value))}
                       placeholder="0.00"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">
                       Taxa de Descarga / Ajudante CCT (R$)
                     </label>
                     <input
@@ -1327,12 +1327,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       value={tabelaTaxaDescarga}
                       onChange={(e) => setTabelaTaxaDescarga(Number(e.target.value))}
                       placeholder="0.00"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">
                       % GRIS & Pedágio
                     </label>
                     <input
@@ -1341,14 +1341,14 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       value={tabelaGrisPedagio}
                       onChange={(e) => setTabelaGrisPedagio(Number(e.target.value))}
                       placeholder="0.8"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">
                       Condição de Pagamento
                     </label>
                     <input
@@ -1356,12 +1356,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       value={tabelaCondicaoPagamento}
                       onChange={(e) => setTabelaCondicaoPagamento(e.target.value)}
                       placeholder="Ex: Faturamento Quinzenal (15 dias)"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">
                       Dia de Fechamento da Fatura
                     </label>
                     <input
@@ -1370,13 +1370,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       max={31}
                       value={tabelaDiaFechamento}
                       onChange={(e) => setTabelaDiaFechamento(Number(e.target.value))}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Regras Especiais / Observações de Tarifa
                   </label>
                   <textarea
@@ -1384,7 +1384,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     value={tabelaObservacoes}
                     onChange={(e) => setTabelaObservacoes(e.target.value)}
                     placeholder="Ex: Adicional de R$ 14,00 por volume termolábil com datalogger calibrado."
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-[#B38F4F]"
+                    className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
               </div>
@@ -1398,7 +1398,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                       <User className="w-4 h-4 text-[#B38F4F]" />
                       Contatos Chave (Logística / Compras / Financeiro)
                     </h4>
@@ -1409,7 +1409,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   <button
                     type="button"
                     onClick={handleAddContact}
-                    className="text-xs bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium"
+                    className="text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Adicionar Contato</span>
@@ -1420,7 +1420,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   {contatos.map((cont, idx) => (
                     <div
                       key={cont.id || idx}
-                      className="bg-slate-950 p-3 rounded-xl border border-slate-800 grid grid-cols-1 sm:grid-cols-4 gap-2 items-end"
+                      className="bg-slate-50 p-3 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2 items-end"
                     >
                       <div>
                         <label className="block text-[11px] text-slate-400 mb-0.5">Nome</label>
@@ -1429,7 +1429,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                           value={cont.nome}
                           onChange={(e) => handleUpdateContact(idx, 'nome', e.target.value)}
                           placeholder="Nome do contato"
-                          className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white"
+                          className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900"
                         />
                       </div>
 
@@ -1440,7 +1440,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                           value={cont.cargoSetor}
                           onChange={(e) => handleUpdateContact(idx, 'cargoSetor', e.target.value)}
                           placeholder="Ex: Coordenador Logística"
-                          className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white"
+                          className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900"
                         />
                       </div>
 
@@ -1451,7 +1451,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                           value={cont.telefoneWhatsapp}
                           onChange={(e) => handleUpdateContact(idx, 'telefoneWhatsapp', e.target.value)}
                           placeholder="(84) 99999-0000"
-                          className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white"
+                          className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900"
                         />
                       </div>
 
@@ -1463,13 +1463,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                             value={cont.email}
                             onChange={(e) => handleUpdateContact(idx, 'email', e.target.value)}
                             placeholder="contato@cliente.com"
-                            className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white"
+                            className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900"
                           />
                         </div>
                         <button
                           type="button"
                           onClick={() => handleRemoveContact(idx)}
-                          className="p-1.5 text-slate-500 hover:text-rose-400 rounded transition-colors"
+                          className="p-1.5 text-slate-500 hover:text-rose-600 rounded transition-colors"
                           title="Remover Contato"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1478,7 +1478,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     </div>
                   ))}
                   {contatos.length === 0 && (
-                    <p className="text-xs text-slate-500 italic p-3 bg-slate-950/50 rounded-xl border border-slate-800 text-center">
+                    <p className="text-xs text-slate-400 italic p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
                       Nenhum contato cadastrado. Clique no botão acima para adicionar.
                     </p>
                   )}
@@ -1486,11 +1486,11 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               </div>
 
               {/* Praças & Rotas */}
-              <div className="pt-4 border-t border-slate-800">
+              <div className="pt-4 border-t border-slate-100">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-emerald-400" />
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-emerald-600" />
                       Praças de Atendimento & Rotas Contratadas
                     </h4>
                     <p className="text-[11px] text-slate-400">
@@ -1500,7 +1500,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   <button
                     type="button"
                     onClick={handleAddRegiao}
-                    className="text-xs bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium"
+                    className="text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Adicionar Praça</span>
@@ -1511,7 +1511,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   {regioesAtendidas.map((reg, idx) => (
                     <div
                       key={idx}
-                      className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 grid grid-cols-1 sm:grid-cols-4 gap-2 items-center"
+                      className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2 items-center"
                     >
                       <div className="sm:col-span-2">
                         <input
@@ -1519,7 +1519,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                           value={reg.cidadeUF}
                           onChange={(e) => handleUpdateRegiao(idx, 'cidadeUF', e.target.value)}
                           placeholder="Cidade / Região (Ex: Mossoró & Oeste Potiguar)"
-                          className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white"
+                          className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900"
                         />
                       </div>
 
@@ -1527,7 +1527,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                         <select
                           value={reg.frequencia}
                           onChange={(e) => handleUpdateRegiao(idx, 'frequencia', e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white"
+                          className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900"
                         >
                           <option value="Diária">Diária</option>
                           <option value="Segunda/Quarta/Sexta">Seg / Qua / Sex</option>
@@ -1543,12 +1543,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                           value={reg.prazoLeadTime}
                           onChange={(e) => handleUpdateRegiao(idx, 'prazoLeadTime', e.target.value)}
                           placeholder="Lead Time (Ex: 24h)"
-                          className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white"
+                          className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-900"
                         />
                         <button
                           type="button"
                           onClick={() => handleRemoveRegiao(idx)}
-                          className="p-1.5 text-slate-500 hover:text-rose-400 rounded transition-colors"
+                          className="p-1.5 text-slate-500 hover:text-rose-600 rounded transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1556,7 +1556,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     </div>
                   ))}
                   {regioesAtendidas.length === 0 && (
-                    <p className="text-xs text-slate-500 italic p-3 bg-slate-950/50 rounded-xl border border-slate-800 text-center">
+                    <p className="text-xs text-slate-400 italic p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
                       Nenhuma rota configurada. Clique no botão acima para adicionar praças.
                     </p>
                   )}
@@ -1565,7 +1565,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
               {/* Observações Gerais */}
               <div className="pt-2">
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
                   Observações Operacionais & Notas Gerais
                 </label>
                 <textarea
@@ -1573,14 +1573,14 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   value={observacoesOperacionais}
                   onChange={(e) => setObservacoesOperacionais(e.target.value)}
                   placeholder="Informações adicionais, particularidades de entrega, diretrizes de segurança..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-[#B38F4F]"
+                  className="w-full bg-white border border-slate-200 rounded-lg p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
                 />
               </div>
             </div>
           )}
 
           {/* Footer Save Actions */}
-          <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
             <div className="text-xs text-slate-500">
               * Campos obrigatórios para validação cadastral
             </div>
@@ -1589,7 +1589,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
               >
                 Cancelar
               </button>
