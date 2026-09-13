@@ -118,12 +118,12 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header do modal (não imprime) */}
-        <div className="print:hidden px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 shrink-0">
+        <div className="print:hidden px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-white">Proposta Comercial — {nomeExibicao}</h2>
-            <p className="text-xs text-slate-400">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">Proposta Comercial — {nomeExibicao}</h2>
+            <p className="text-xs text-slate-500">
               Gerada automaticamente a partir do cadastro do cliente. Revise antes de enviar.
             </p>
           </div>
@@ -139,7 +139,7 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -147,9 +147,9 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
         </div>
 
         {/* Campos editáveis rápidos (não imprime) */}
-        <div className="print:hidden px-6 py-3 border-b border-slate-800 bg-slate-950/40 shrink-0 space-y-2">
+        <div className="print:hidden px-6 py-3 border-b border-slate-100 bg-slate-50 shrink-0 space-y-2">
           {tarifaSemInfo && (
-            <div className="flex items-start gap-2 text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+            <div className="flex items-start gap-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
               <span>
                 A Tabela de Frete deste cliente ainda não está preenchida — a seção "Estrutura de Custos" vai sair
@@ -159,36 +159,36 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
           )}
           <div className="flex flex-wrap items-end gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1">A/C (contato na proposta)</label>
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1">A/C (contato na proposta)</label>
               <input
                 type="text"
                 value={contatoAC}
                 onChange={(e) => setContatoAC(e.target.value)}
                 placeholder="Representante Legal"
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white w-56 focus:outline-hidden focus:border-[#B38F4F]"
+                className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 w-56 focus:outline-hidden focus:border-[#B38F4F]"
               />
             </div>
-            <label className="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer pb-1.5">
+            <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer pb-1.5">
               <input
                 type="checkbox"
                 checked={incluirFracionada}
                 onChange={(e) => setIncluirFracionada(e.target.checked)}
-                className="rounded border-slate-700 text-[#B38F4F] focus:ring-0 bg-slate-900"
+                className="rounded border-slate-300 text-[#B38F4F] focus:ring-0 bg-white"
               />
               Modalidade Fracionada
             </label>
-            <label className="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer pb-1.5">
+            <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer pb-1.5">
               <input
                 type="checkbox"
                 checked={incluirDedicada}
                 onChange={(e) => setIncluirDedicada(e.target.checked)}
-                className="rounded border-slate-700 text-[#B38F4F] focus:ring-0 bg-slate-900"
+                className="rounded border-slate-300 text-[#B38F4F] focus:ring-0 bg-white"
               />
               Modalidade Dedicada
             </label>
           </div>
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+            <label className="block text-[11px] font-semibold text-slate-500 mb-1">
               Observações adicionais (opcional — entram antes das considerações finais)
             </label>
             <textarea
@@ -196,7 +196,7 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
               value={observacoesAdicionais}
               onChange={(e) => setObservacoesAdicionais(e.target.value)}
               placeholder="Ex: condições especiais combinadas nesta negociação..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
             />
           </div>
         </div>
