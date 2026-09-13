@@ -125,7 +125,21 @@ export async function convidarUsuarioPorEmail(email: string): Promise<void> {
     body: { email, redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
   });
   if (error) {
-    throw new Error(error.message || 'Erro ao enviar convite.');
+    // Quando a função responde com status != 2xx, o SDK do Supabase só dá uma mensagem
+    // genérica ("Edge Function returned a non-2xx status code") em `error.message` — o motivo
+    // de verdade (ex.: "Só administradores podem convidar...") vem no corpo da resposta, em
+    // `error.context` (a Response crua). Sem isso, todo erro parecia a mesma coisa na tela.
+    let mensagem = error.message || 'Erro ao enviar convite.';
+    try {
+      const contexto = (error as { context?: Response }).context;
+      if (contexto && typeof contexto.json === 'function') {
+        const corpo = await contexto.json();
+        if (corpo?.error) mensagem = corpo.error;
+      }
+    } catch {
+      // mantém a mensagem genérica se não der pra ler o corpo da resposta
+    }
+    throw new Error(mensagem);
   }
   if (data?.error) {
     throw new Error(data.error);
