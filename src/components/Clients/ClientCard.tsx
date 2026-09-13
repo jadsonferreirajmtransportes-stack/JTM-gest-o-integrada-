@@ -44,31 +44,31 @@ export const ClientCard: React.FC<ClientCardProps> = ({
   const getStatusBadge = (status: Cliente['status']) => {
     switch (status) {
       case 'Ativo':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'Em Negociação':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+        return 'bg-amber-50 text-amber-700 border-amber-200';
       case 'Prospecção':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'Suspenso':
-        return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+        return 'bg-rose-50 text-rose-700 border-rose-200';
       case 'Inativo':
       default:
-        return 'bg-slate-700/50 text-slate-400 border-slate-600/30';
+        return 'bg-slate-100 text-slate-500 border-slate-200';
     }
   };
 
   const getTempBadge = (temp: Cliente['faixaTemperatura']) => {
     switch (temp) {
       case 'Refrigerado / Termolábil (2°C a 8°C)':
-        return 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
+        return 'bg-cyan-50 text-cyan-700 border-cyan-200';
       case 'Climatizado (15°C a 25°C)':
-        return 'bg-teal-500/15 text-teal-300 border-teal-500/30';
+        return 'bg-teal-50 text-teal-700 border-teal-200';
       case 'Múltiplas Faixas Térmicas':
-        return 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30';
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
       case 'Congelado (-20°C)':
-        return 'bg-sky-500/15 text-sky-300 border-sky-500/30';
+        return 'bg-sky-50 text-sky-700 border-sky-200';
       default:
-        return 'bg-slate-700/40 text-slate-300 border-slate-600/30';
+        return 'bg-slate-100 text-slate-600 border-slate-200';
     }
   };
 
@@ -83,13 +83,13 @@ export const ClientCard: React.FC<ClientCardProps> = ({
   return (
     <div
       id={`client-card-${cliente.id}`}
-      className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-all duration-200 shadow-sm hover:shadow-md flex flex-col justify-between group"
+      className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group"
     >
       {/* Top Bar: Code, Segment & Status */}
       <div>
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-xs font-mono font-semibold border border-slate-700">
+            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-mono font-semibold border border-slate-200">
               {cliente.codigoCliente}
             </span>
             <span
@@ -100,8 +100,8 @@ export const ClientCard: React.FC<ClientCardProps> = ({
               {cliente.status}
             </span>
             {cliente.exigeRDC430 && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 font-medium flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-amber-400" />
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-amber-600" />
                 RDC 430
               </span>
             )}
@@ -116,7 +116,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({
                   e.stopPropagation();
                   onEdit(cliente);
                 }}
-                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
                 title="Editar Cliente"
               >
                 <Edit2 className="w-4 h-4" />
@@ -132,7 +132,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({
                     onDelete(cliente.id);
                   }
                 }}
-                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                 title="Excluir Cliente"
               >
                 <Trash2 className="w-4 h-4" />
@@ -143,14 +143,14 @@ export const ClientCard: React.FC<ClientCardProps> = ({
 
         {/* Client Name & Segment */}
         <div className="cursor-pointer" onClick={() => onSelect(cliente)}>
-          <h3 className="text-base font-bold text-white group-hover:text-[#B38F4F] transition-colors line-clamp-1">
+          <h3 className="text-base font-bold text-slate-900 group-hover:text-[#B38F4F] transition-colors line-clamp-1">
             {cliente.nomeFantasia || cliente.razaoSocial}
           </h3>
           <p className="text-xs text-slate-400 font-mono mt-0.5 line-clamp-1">
             {cliente.razaoSocial}
           </p>
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-[11px] text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
+            <span className="text-[11px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
               {cliente.segmento}
             </span>
             <span className={`text-[11px] px-2 py-0.5 rounded border font-medium flex items-center gap-1 ${getTempBadge(cliente.faixaTemperatura)}`}>
@@ -161,12 +161,12 @@ export const ClientCard: React.FC<ClientCardProps> = ({
         </div>
 
         {/* Operational & Financial Highlights */}
-        <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800/80">
-          <div className="bg-slate-950/60 rounded-lg p-2.5 border border-slate-800/50">
+        <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100">
+          <div className="bg-slate-50/70 rounded-2xl p-3">
             <span className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider block">
               Faturamento / Mês
             </span>
-            <span className="text-sm font-bold text-emerald-400 mt-0.5 block">
+            <span className="text-sm font-bold text-emerald-600 mt-0.5 block">
               {formatCurrency(cliente.faturamentoMensalEstimado || 0)}
             </span>
             <span className="text-[10px] text-slate-400">
@@ -174,14 +174,14 @@ export const ClientCard: React.FC<ClientCardProps> = ({
             </span>
           </div>
 
-          <div className="bg-slate-950/60 rounded-lg p-2.5 border border-slate-800/50">
+          <div className="bg-slate-50/70 rounded-2xl p-3">
             <span className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider block">
               Modelo de Frete
             </span>
-            <span className="text-xs font-semibold text-slate-200 mt-0.5 block truncate">
+            <span className="text-xs font-semibold text-slate-700 mt-0.5 block truncate">
               {cliente.tabelaFrete?.tipoCobranca || 'Valor por Ponto'}
             </span>
-            <span className="text-[10px] text-[#B38F4F] font-medium">
+            <span className="text-[10px] text-[#8A6A39] font-medium">
               {cliente.tabelaFrete?.tipoCobranca === '% sobre Nota Fiscal (Ad Valorem)'
                 ? `${cliente.tabelaFrete?.percentualAdValoremNF ?? cliente.tabelaFrete?.valorBase ?? 0}% sobre NF`
                 : cliente.tabelaFrete?.valorKgExcedente
@@ -194,23 +194,23 @@ export const ClientCard: React.FC<ClientCardProps> = ({
         </div>
 
         {/* Location & Account Manager */}
-        <div className="mt-3 space-y-1.5 text-xs text-slate-400">
+        <div className="mt-3 space-y-1.5 text-xs text-slate-500">
           <div className="flex items-center gap-2">
-            <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span className="truncate">{cliente.cidadeUF || 'Não informada'}</span>
           </div>
           <div className="flex items-center gap-2">
-            <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-            <span className="truncate">Gestor JMT: <strong className="text-slate-300 font-medium">{cliente.gerenteContaResponsavel || 'Geral'}</strong></span>
+            <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="truncate">Gestor JMT: <strong className="text-slate-600 font-medium">{cliente.gerenteContaResponsavel || 'Geral'}</strong></span>
           </div>
         </div>
 
         {/* Principal Contact & WhatsApp action */}
         {principalContact && (
-          <div className="mt-3 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs">
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
             <div className="min-w-0 pr-2">
-              <p className="text-slate-200 font-medium truncate">{principalContact.nome}</p>
-              <p className="text-slate-500 text-[11px] truncate">{principalContact.cargoSetor}</p>
+              <p className="text-slate-700 font-medium truncate">{principalContact.nome}</p>
+              <p className="text-slate-400 text-[11px] truncate">{principalContact.cargoSetor}</p>
             </div>
             {principalContact.telefoneWhatsapp && (
               <a
@@ -221,7 +221,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({
                 target="_blank"
                 rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 transition-colors shrink-0 flex items-center gap-1 font-medium text-[11px]"
+                className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors shrink-0 flex items-center gap-1 font-medium text-[11px]"
                 title="Conversar no WhatsApp"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
@@ -233,20 +233,20 @@ export const ClientCard: React.FC<ClientCardProps> = ({
 
         {/* Last CRM Interaction Preview */}
         {lastInteraction && (
-          <div className="mt-2.5 px-2.5 py-1.5 rounded bg-slate-800/40 border border-slate-800 text-[11px] text-slate-400">
-            <span className="text-slate-300 font-medium">Última Interação ({lastInteraction.data}):</span>{' '}
+          <div className="mt-2.5 px-2.5 py-1.5 rounded-lg bg-slate-50 text-[11px] text-slate-500">
+            <span className="text-slate-700 font-medium">Última Interação ({lastInteraction.data}):</span>{' '}
             <span className="italic line-clamp-1">{lastInteraction.resumo}</span>
           </div>
         )}
       </div>
 
       {/* Footer Action Bar */}
-      <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
+      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
         <button
           id={`btn-add-interaction-${cliente.id}`}
           type="button"
           onClick={() => onAddInteraction(cliente)}
-          className="text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 px-2.5 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1"
+          className="text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 px-2.5 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1"
         >
           <Clock className="w-3.5 h-3.5 text-[#B38F4F]" />
           <span>+ Interação</span>
@@ -256,7 +256,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({
           id={`btn-view-dossier-${cliente.id}`}
           type="button"
           onClick={() => onSelect(cliente)}
-          className="text-xs text-[#B38F4F] hover:text-[#8A6A39] hover:bg-[#B38F4F]/10 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1"
+          className="text-xs text-[#8A6A39] hover:text-[#B38F4F] hover:bg-[#B38F4F]/10 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1"
         >
           <span>Ficha Completa</span>
           <ChevronRight className="w-3.5 h-3.5" />

@@ -268,7 +268,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Colaboradores Ativos',
       icon: Users,
       badge: counts.ativos,
-      badgeColor: 'bg-slate-700 text-slate-300',
+      badgeColor: 'bg-slate-100 text-slate-600',
       roles: ['admin', 'supervisor'],
       group: 'principal',
     },
@@ -277,7 +277,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Pré-Admissões (Link)',
       icon: UserCheck,
       badge: counts.preAdmissoesPendentes !== undefined && counts.preAdmissoesPendentes > 0 ? counts.preAdmissoesPendentes : undefined,
-      badgeColor: 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 animate-pulse',
+      badgeColor: 'bg-amber-100 text-amber-800 font-bold border border-amber-300 animate-pulse',
       roles: ['admin', 'supervisor'],
       group: 'principal',
     },
@@ -309,7 +309,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Férias & Ausências CLT',
       icon: Calendar,
       badge: counts.feriasCriticas > 0 ? counts.feriasCriticas : undefined,
-      badgeColor: 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30',
+      badgeColor: 'bg-amber-100 text-amber-800 font-bold border border-amber-300',
       roles: ['admin', 'supervisor', 'colaborador'],
       group: 'operacional',
     },
@@ -318,7 +318,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Exames ASO (RDC 430)',
       icon: Stethoscope,
       badge: counts.examesVencendo > 0 ? counts.examesVencendo : undefined,
-      badgeColor: 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30 animate-pulse',
+      badgeColor: 'bg-rose-100 text-rose-700 font-bold border border-rose-300 animate-pulse',
       roles: ['admin', 'supervisor'],
       group: 'operacional',
     },
@@ -327,7 +327,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'EPI & Checklist Admissão',
       icon: ClipboardList,
       badge: counts.onboardingPendente > 0 ? counts.onboardingPendente : undefined,
-      badgeColor: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+      badgeColor: 'bg-blue-100 text-blue-700 border border-blue-300',
       roles: ['admin', 'supervisor'],
       group: 'operacional',
     },
@@ -336,7 +336,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Ocorrências & Advertências',
       icon: AlertTriangle,
       badge: counts.ocorrenciasAbertas > 0 ? counts.ocorrenciasAbertas : undefined,
-      badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+      badgeColor: 'bg-amber-100 text-amber-800 border border-amber-300',
       roles: ['admin', 'supervisor'],
       group: 'operacional',
     },
@@ -392,17 +392,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left group ${
           isActive
             ? 'bg-[#B38F4F]/15 text-[#B38F4F] font-bold border border-[#B38F4F]/35 shadow-xs'
-            : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-[#B38F4F]' : 'text-slate-400 group-hover:text-slate-200'}`} />
+          <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-[#B38F4F]' : 'text-slate-400 group-hover:text-slate-600'}`} />
           <span className="truncate min-w-0">{item.label}</span>
         </div>
         {item.badge !== undefined && (
           <span
             className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ml-1.5 ${
-              item.badgeColor || 'bg-slate-800 text-slate-300'
+              item.badgeColor || 'bg-slate-100 text-slate-600'
             }`}
           >
             {item.badge}
@@ -424,21 +424,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <aside
         id="jmt-main-sidebar"
-        className={`fixed top-0 left-0 bottom-0 z-50 w-72 bg-[#111111] text-slate-200 flex flex-col border-r border-[#262626] transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 left-0 bottom-0 z-50 w-72 bg-white text-slate-700 flex flex-col border-r border-slate-200 transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Brand Header with Official JMT Logo */}
-        <div className="p-4 border-b border-[#262626] bg-[#0c0c0c] relative overflow-hidden shrink-0">
+        <div className="p-4 border-b border-slate-100 bg-white relative overflow-hidden shrink-0">
           {/* Subtle brand diagonal accent light */}
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#B38F4F]/5 rounded-full blur-2xl pointer-events-none" />
           
           <div className="flex items-center justify-between">
-            <JmtLogo variant="full" theme="dark" iconSize={34} />
+            <JmtLogo variant="full" theme="light" iconSize={34} />
           </div>
 
           {/* Slogan & Official Strategic Signature */}
-          <div className="mt-2.5 pt-2 border-t border-[#262626] space-y-1">
+          <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-[9px] font-bold tracking-[0.16em] text-[#B38F4F] uppercase">
                 Logística da Saúde
@@ -458,9 +458,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Unified Scrollable Container: Ensures all navigation, modules, and dashboard buttons scroll smoothly without overlapping or covering text */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar-dark flex flex-col min-h-0 divide-y divide-[#262626]">
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0 divide-y divide-slate-100">
           {/* PRIMARY MODULE SELECTORS + DASHBOARD GERAL */}
-          <div className="p-3 bg-[#141414] space-y-2 shrink-0">
+          <div className="p-3 bg-slate-50 space-y-2 shrink-0">
             {/* Main Integrated Dashboard Button (only if allowed) */}
             {canAccessVisaoGeral && (
               <button
@@ -474,15 +474,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all duration-150 border ${
                   activeGlobalModule === 'visao_geral' || currentSection === 'visao_geral'
                     ? 'bg-gradient-to-r from-[#B38F4F]/25 to-[#8A6A39]/20 border-[#B38F4F] text-white shadow-md ring-1 ring-[#B38F4F]/50 font-bold'
-                    : 'bg-[#181818] border-[#2a2a2a] hover:bg-[#202020] hover:border-[#383838] text-slate-200'
+                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-700'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className={`p-1.5 rounded-lg shrink-0 ${activeGlobalModule === 'visao_geral' ? 'bg-[#B38F4F] text-white' : 'bg-[#262626] text-[#B38F4F]'}`}>
+                  <div className={`p-1.5 rounded-lg shrink-0 ${activeGlobalModule === 'visao_geral' ? 'bg-[#B38F4F] text-white' : 'bg-slate-100 text-[#B38F4F]'}`}>
                     <LayoutDashboard className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+                    <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                       <span className="leading-tight">Dashboard Geral</span>
                       <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#B38F4F]/25 text-[#D8B97E] border border-[#B38F4F]/40 font-extrabold uppercase shrink-0">Geral</span>
                     </div>
@@ -527,8 +527,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     }}
                     className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition-all duration-150 border ${
                       isModActive
-                        ? 'bg-[#1e1a14] border-[#B38F4F] text-white shadow-sm ring-1 ring-[#B38F4F]/40'
-                        : 'bg-[#181818] border-[#2a2a2a] hover:bg-[#202020] hover:border-[#383838] text-slate-300'
+                        ? 'bg-amber-50 border-[#B38F4F] text-slate-900 shadow-sm ring-1 ring-[#B38F4F]/40'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-600'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -536,7 +536,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         className={`w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-extrabold shrink-0 ${
                           isModActive
                             ? 'bg-[#B38F4F] text-white shadow-xs'
-                            : 'bg-[#262626] text-slate-400'
+                            : 'bg-slate-100 text-slate-500'
                         }`}
                       >
                         {mod.number}
@@ -546,7 +546,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           isModActive ? 'text-[#B38F4F]' : 'text-slate-400'
                         }`}
                       />
-                      <span className="font-semibold text-xs text-slate-100 min-w-0 leading-tight">
+                      <span className="font-semibold text-xs text-slate-900 min-w-0 leading-tight">
                         {mod.title}
                       </span>
                     </div>
@@ -556,7 +556,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         className={`text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0 ml-1.5 ${
                           isModActive
                             ? 'bg-[#B38F4F]/25 text-[#F4EEE1] border border-[#B38F4F]/40'
-                            : 'bg-[#262626] text-slate-400'
+                            : 'bg-slate-100 text-slate-500'
                         }`}
                       >
                         {mod.badge}
@@ -570,14 +570,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* User Session & Login Box (Replaces old Perfil de Acesso switcher) */}
           {currentUser && (
-            <div className="px-3.5 py-2.5 bg-[#141414] border-t border-b border-[#242424] shrink-0">
+            <div className="px-3.5 py-2.5 bg-slate-50 border-t border-b border-slate-200 shrink-0">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#B38F4F] to-[#8A6A39] text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs">
                     {currentUser.nome.substring(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-100 truncate">
+                    <div className="text-xs font-bold text-slate-900 truncate">
                       {currentUser.nome}
                     </div>
                     <div className="text-[10px] text-slate-400 truncate flex items-center gap-1 font-mono">
@@ -594,7 +594,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     type="button"
                     onClick={onOpenSwitchUserModal}
-                    className="px-2.5 py-1 bg-[#222222] hover:bg-[#B38F4F] hover:text-white text-slate-300 text-[10px] font-bold rounded-lg border border-[#333333] transition-all shrink-0 flex items-center gap-1"
+                    className="px-2.5 py-1 bg-slate-100 hover:bg-[#B38F4F] hover:text-white text-slate-600 text-[10px] font-bold rounded-lg border border-slate-200 transition-all shrink-0 flex items-center gap-1"
                     title="Alternar entre contas cadastradas"
                   >
                     <ArrowRightLeft className="w-3 h-3" />
@@ -606,7 +606,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
 
           {/* CONTEXTUAL SUB-NAV ITEMS BASED ON ACTIVE MODULE */}
-          <div className="flex-1 px-3 py-3 space-y-1 bg-[#111111]">
+          <div className="flex-1 px-3 py-3 space-y-1 bg-white">
             {activeGlobalModule === 'visao_geral' ? (
               <div className="p-1 space-y-2.5">
                 <div className="flex items-center justify-between text-slate-400 text-[10px] uppercase font-bold px-1">
@@ -628,7 +628,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-left transition-all ${
                       currentSection === 'visao_geral'
                         ? 'bg-[#B38F4F]/20 text-[#D8B97E] border border-[#B38F4F]/40 font-bold'
-                        : 'bg-[#181818] text-slate-300 hover:text-white hover:bg-[#202020]'
+                        : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -646,7 +646,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       onSelectSection('agenda_gestao');
                       onCloseMobile();
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-[#181818] hover:bg-[#202020] text-indigo-300 border border-indigo-500/30 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors text-left"
                   >
                     <div className="flex items-center gap-2">
                       <CalendarDays className="w-4 h-4 text-indigo-400" />
@@ -661,7 +661,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
 
                 {/* Direct Module Panels Quick Navigation */}
-                <div className="pt-2 border-t border-[#262626]">
+                <div className="pt-2 border-t border-slate-100">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-1.5">
                     Acesso Direto aos Painéis
                   </div>
@@ -673,7 +673,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectSection('clientes');
                         onCloseMobile();
                       }}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-[#181818] text-left transition-colors"
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-left transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         <Building2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
@@ -689,7 +689,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectSection('farma_aereo');
                         onCloseMobile();
                       }}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-[#181818] text-left transition-colors"
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-left transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         <Plane className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -705,7 +705,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectSection('farma_rodoviario');
                         onCloseMobile();
                       }}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-[#181818] text-left transition-colors"
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-left transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         <Truck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -721,7 +721,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectSection('dashboard');
                         onCloseMobile();
                       }}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-[#181818] text-left transition-colors"
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-left transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         <Users className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -737,7 +737,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectSection('projetos');
                         onCloseMobile();
                       }}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-[#181818] text-left transition-colors"
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-left transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         <FolderKanban className="w-3.5 h-3.5 text-purple-400 shrink-0" />
@@ -753,7 +753,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectSection('agenda_gestao');
                         onCloseMobile();
                       }}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-[#181818] text-left transition-colors"
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-left transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         <CalendarDays className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
@@ -769,7 +769,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectSection('notas');
                         onCloseMobile();
                       }}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-[#181818] text-left transition-colors"
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-left transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         <NotebookPen className="w-3.5 h-3.5 text-teal-400 shrink-0" />
@@ -785,7 +785,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectSection('instrucoes');
                         onCloseMobile();
                       }}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-[#181818] text-left transition-colors"
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-left transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         <FileCheck2 className="w-3.5 h-3.5 text-[#B38F4F] shrink-0" />
@@ -835,8 +835,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left border ${
                     currentSection === 'formulario_publico'
-                      ? 'bg-slate-800 text-amber-300 border-amber-500/50'
-                      : 'bg-slate-950/40 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                      ? 'bg-amber-100 text-amber-800 border-amber-300'
+                      : 'bg-slate-50 text-slate-500 border-slate-200 hover:text-slate-900 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
@@ -871,7 +871,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </>
           ) : activeGlobalModule === 'clientes' ? (
             <div className="p-2 space-y-2">
-              <div className="text-slate-300 text-xs font-bold px-1">
+              <div className="text-slate-700 text-xs font-bold px-1">
                 Carteira de Clientes
               </div>
               <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
@@ -892,7 +892,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : activeGlobalModule === 'farma_aereo' ? (
             <div className="p-2 space-y-2">
-              <div className="text-slate-300 text-xs font-bold px-1">
+              <div className="text-slate-700 text-xs font-bold px-1">
                 Operações Farma Aéreo
               </div>
               <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
@@ -913,7 +913,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : activeGlobalModule === 'farma_rodoviario' ? (
             <div className="p-2 space-y-2">
-              <div className="text-slate-300 text-xs font-bold px-1">
+              <div className="text-slate-700 text-xs font-bold px-1">
                 Operações Farma Rodoviário
               </div>
               <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
@@ -934,7 +934,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : activeGlobalModule === 'usuarios' ? (
             <div className="p-2 space-y-2">
-              <div className="flex items-center justify-between text-slate-300 text-xs font-bold px-1">
+              <div className="flex items-center justify-between text-slate-700 text-xs font-bold px-1">
                 <span>Controle de Acessos</span>
                 <span className="text-[#B38F4F] text-[10px]">Segurança</span>
               </div>
@@ -958,7 +958,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       onOpenSwitchUserModal();
                       onCloseMobile();
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shadow-xs transition-colors"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <ArrowRightLeft className="w-4 h-4 text-[#B38F4F]" />
@@ -970,7 +970,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : activeGlobalModule === 'agenda' ? (
             <div className="p-2 space-y-2">
-              <div className="text-slate-300 text-xs font-bold px-1">
+              <div className="text-slate-700 text-xs font-bold px-1">
                 Agenda da Gestão
               </div>
               <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
@@ -998,7 +998,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : activeGlobalModule === 'notas' ? (
             <div className="p-2 space-y-2">
-              <div className="text-slate-300 text-xs font-bold px-1">
+              <div className="text-slate-700 text-xs font-bold px-1">
                 Notas & Ideias
               </div>
               <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
@@ -1026,7 +1026,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : activeGlobalModule === 'instrucoes' ? (
             <div className="p-2 space-y-2">
-              <div className="text-slate-300 text-xs font-bold px-1">
+              <div className="text-slate-700 text-xs font-bold px-1">
                 Instruções de Trabalho
               </div>
               <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
@@ -1055,7 +1055,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : (
             <div className="p-2 space-y-2">
-              <div className="text-slate-300 text-xs font-bold px-1">
+              <div className="text-slate-700 text-xs font-bold px-1">
                 Projetos Gerenciais & OKRs
               </div>
               <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
@@ -1079,12 +1079,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Strategic Guidelines Shortcut */}
-        <div className="px-3 pt-2.5 pb-1 bg-[#101010] border-t border-[#262626] shrink-0">
+        <div className="px-3 pt-2.5 pb-1 bg-slate-50 border-t border-slate-100 shrink-0">
           <button
             id="btn-sidebar-norteadores"
             type="button"
             onClick={() => setIsGuidelinesOpen(true)}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white bg-[#181818] hover:bg-[#222222] border border-[#2a2a2a] hover:border-[#B38F4F]/40 transition-colors"
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-[#B38F4F]/40 transition-colors"
             title="Ver Missão, Visão e Valores da JMT"
           >
             <div className="flex items-center gap-2">
@@ -1096,17 +1096,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* User Profile Footer */}
-        <div className="p-3.5 border-t border-[#262626] bg-[#0c0c0c] shrink-0">
+        <div className="p-3.5 border-t border-slate-100 bg-white shrink-0">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-[#181818] border border-[#B38F4F]/40 flex items-center justify-center font-bold text-xs text-[#B38F4F] shadow-xs shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-amber-50 border border-[#B38F4F]/40 flex items-center justify-center font-bold text-xs text-[#B38F4F] shadow-xs shrink-0">
                 {currentUser ? currentUser.nome.substring(0, 2).toUpperCase() : 'JM'}
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-white font-bold leading-tight truncate">
+                <p className="text-xs text-slate-900 font-bold leading-tight truncate">
                   {currentUser ? currentUser.nome : 'Jadson Moraes'}
                 </p>
-                <p className="text-[10px] text-slate-400 truncate">
+                <p className="text-[10px] text-slate-500 truncate">
                   {currentUser ? currentUser.cargo : 'Diretoria Executiva'}
                 </p>
               </div>

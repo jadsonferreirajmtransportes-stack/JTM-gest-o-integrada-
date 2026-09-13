@@ -223,21 +223,21 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Executive Header Banner */}
-      <div className="bg-linear-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-slate-800">
-        <div className="absolute right-0 top-0 bottom-0 opacity-10 pointer-events-none flex items-center pr-8">
-          <Building2 className="w-80 h-80 text-blue-300" />
+      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+        <div className="absolute right-0 top-0 bottom-0 opacity-[0.04] pointer-events-none flex items-center pr-8">
+          <Building2 className="w-80 h-80 text-blue-900" />
         </div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#B38F4F]/20 text-[#E5C178] border border-[#B38F4F]/40 text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
-              <Building2 className="w-3.5 h-3.5 text-[#E5C178]" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-[#8A6A39] border border-amber-200 text-xs font-bold uppercase tracking-wider">
+              <Building2 className="w-3.5 h-3.5 text-[#B38F4F]" />
               <span>Gestão Comercial & Operações Farmacêuticas</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
               Carteira de Clientes & Contratos
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl font-normal leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl font-normal leading-relaxed">
               Gestão de contratos de frete, distribuição farmacêutica RDC 430, tabelas de tarifas e histórico de atendimento.
             </p>
           </div>
@@ -247,10 +247,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               id="btn-export-clients-csv"
               type="button"
               onClick={handleExportCSV}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-colors shadow-xs"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors shadow-xs"
               title="Exportar Carteira em Planilha CSV"
             >
-              <Download className="w-4 h-4 text-emerald-400" />
+              <Download className="w-4 h-4 text-emerald-600" />
               <span>Exportar CSV</span>
             </button>
 
@@ -271,53 +271,53 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-slate-900 rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
+        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider">Carteira de Clientes</span>
             <Building2 className="w-4 h-4 text-[#B38F4F]" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-white">{metrics.total}</span>
-            <span className="text-xs text-emerald-400 font-semibold font-mono">
+            <span className="font-display text-2xl font-bold text-slate-900">{metrics.total}</span>
+            <span className="text-xs text-emerald-600 font-semibold font-mono">
               ({metrics.ativos} Ativos)
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">Parceiros contratados JMT</p>
         </div>
 
-        <div className="bg-slate-900 rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
+        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider">Faturamento / Mês Estimado</span>
-            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <DollarSign className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="mt-2">
-            <span className="text-xl sm:text-2xl font-black text-emerald-400">
+            <span className="font-display text-xl sm:text-2xl font-bold text-emerald-600">
               {formatCurrency(metrics.faturamentoTotal)}
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">Receita estimada da carteira ativa</p>
         </div>
 
-        <div className="bg-slate-900 rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
+        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider">Volume de Entregas / Mês</span>
-            <Truck className="w-4 h-4 text-cyan-400" />
+            <Truck className="w-4 h-4 text-cyan-600" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-white">{metrics.volumeTotal}</span>
-            <span className="text-xs text-cyan-400 font-semibold font-mono">pontos/mês</span>
+            <span className="font-display text-2xl font-bold text-slate-900">{metrics.volumeTotal}</span>
+            <span className="text-xs text-cyan-600 font-semibold font-mono">pontos/mês</span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">Last mile e transferências</p>
         </div>
 
-        <div className="bg-slate-900 rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
+        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider">Cadeia Fria & RDC 430</span>
-            <ShieldCheck className="w-4 h-4 text-amber-400" />
+            <ShieldCheck className="w-4 h-4 text-amber-600" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-amber-300">{metrics.rdc430Count}</span>
-            <span className="text-xs text-slate-400">
+            <span className="font-display text-2xl font-bold text-amber-600">{metrics.rdc430Count}</span>
+            <span className="text-xs text-slate-500">
               ({metrics.total > 0 ? Math.round((metrics.rdc430Count / metrics.total) * 100) : 0}%)
             </span>
           </div>
@@ -326,7 +326,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-slate-900 rounded-3xl p-6 space-y-3 shadow-md">
+      <div className="bg-white rounded-3xl p-6 space-y-3 shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
           {/* Search Box */}
           <div className="sm:col-span-4 relative">
@@ -337,7 +337,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por cliente, CNPJ, código ou cidade..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:bg-white focus:border-[#B38F4F]"
             />
           </div>
 
@@ -347,7 +347,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               id="select-filter-client-status"
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-hidden focus:bg-white focus:border-[#B38F4F]"
             >
               <option value="all">Todos os Status</option>
               <option value="Ativo">Ativo</option>
@@ -364,7 +364,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               id="select-filter-client-segment"
               value={selectedSegmento}
               onChange={(e) => setSelectedSegmento(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-hidden focus:bg-white focus:border-[#B38F4F]"
             >
               <option value="all">Todos os Segmentos</option>
               <option value="Distribuidora de Medicamentos">Distribuidora Medicamentos</option>
@@ -383,7 +383,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               id="select-filter-client-temp"
               value={selectedTemperatura}
               onChange={(e) => setSelectedTemperatura(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-hidden focus:bg-white focus:border-[#B38F4F]"
             >
               <option value="all">Todas as Temperaturas</option>
               <option value="Climatizado">Climatizado (15° a 25°)</option>
@@ -401,7 +401,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               className={`p-2 rounded-lg transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-[#B38F4F]/15 text-[#B38F4F] border border-[#B38F4F]/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'
               }`}
               title="Visualização em Grade"
             >
@@ -413,7 +413,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               className={`p-2 rounded-lg transition-colors ${
                 viewMode === 'table'
                   ? 'bg-[#B38F4F]/15 text-[#B38F4F] border border-[#B38F4F]/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'
               }`}
               title="Visualização em Lista / Tabela"
             >
@@ -439,10 +439,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
           ))}
 
           {filteredClientes.length === 0 && (
-            <div className="col-span-full bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
-              <Building2 className="w-10 h-10 text-slate-600 mx-auto" />
-              <h3 className="text-base font-bold text-white">Nenhum cliente encontrado</h3>
-              <p className="text-xs text-slate-400 max-w-md mx-auto">
+            <div className="col-span-full bg-white rounded-3xl p-12 text-center space-y-3 shadow-sm">
+              <Building2 className="w-10 h-10 text-slate-300 mx-auto" />
+              <h3 className="text-base font-bold text-slate-900">Nenhum cliente encontrado</h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
                 Tente ajustar os filtros de busca ou cadastre um novo parceiro comercial para a carteira da JMT.
               </p>
               {userRole === 'admin' && (
@@ -460,10 +460,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
         </div>
       ) : (
         /* Table View */
-        <div className="bg-slate-900 rounded-3xl overflow-hidden shadow-md">
+        <div className="bg-white rounded-3xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+              <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-100">
                 <tr>
                   <th className="px-4 py-3">Código / Cliente</th>
                   <th className="px-4 py-3">Segmento</th>
@@ -475,20 +475,20 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   <th className="px-4 py-3 text-center">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100">
                 {filteredClientes.map((cli) => (
                   <tr
                     key={cli.id}
                     onClick={() => handleSelectDetail(cli)}
-                    className="hover:bg-slate-800/50 cursor-pointer transition-colors"
+                    className="hover:bg-slate-50 cursor-pointer transition-colors"
                   >
                     <td className="px-4 py-3">
-                      <div className="font-bold text-white">{cli.nomeFantasia || cli.razaoSocial}</div>
+                      <div className="font-bold text-slate-900">{cli.nomeFantasia || cli.razaoSocial}</div>
                       <div className="text-[11px] text-slate-400 font-mono">
                         {cli.codigoCliente} • {cli.cidadeUF || 'RN'}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate-300">{cli.segmento}</td>
+                    <td className="px-4 py-3 text-slate-600">{cli.segmento}</td>
                     <td className="px-4 py-3">
                       <span className="text-[11px] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-medium">
                         {cli.faixaTemperatura}
@@ -510,10 +510,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     <td className="px-4 py-3 text-right font-bold text-emerald-400">
                       {formatCurrency(cli.faturamentoMensalEstimado || 0)}
                     </td>
-                    <td className="px-4 py-3 text-slate-300">
+                    <td className="px-4 py-3 text-slate-600">
                       {cli.tabelaFrete?.tipoCobranca || 'Valor por Ponto'}
                     </td>
-                    <td className="px-4 py-3 text-slate-300">
+                    <td className="px-4 py-3 text-slate-600">
                       {cli.gerenteContaResponsavel || 'Jadson Ferreira'}
                     </td>
                     <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -521,7 +521,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenAddInteraction(cli)}
-                          className="p-1.5 text-slate-400 hover:text-[#B38F4F] hover:bg-slate-800 rounded transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-[#B38F4F] hover:bg-slate-100 rounded transition-colors"
                           title="Registrar Interação"
                         >
                           <Clock className="w-3.5 h-3.5" />
@@ -530,7 +530,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(cli)}
-                            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
                             title="Editar"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -544,7 +544,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                                 onDeleteCliente(cli.id);
                               }
                             }}
-                            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
                             title="Excluir"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
