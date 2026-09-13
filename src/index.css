@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Redefine as próprias variáveis de tema do Tailwind (v4), em vez de só sobrescrever
+   `body{font-family}` — a classe utilitária `.font-sans` do Tailwind (aplicada em dezenas de
+   lugares no app, inclusive no <div> raiz de App.tsx) vive na camada `utilities`, que sempre
+   vence qualquer regra em `@layer base` na cascata do Tailwind v4, não importa a
+   especificidade do seletor. Era por isso que o corpo do texto (tudo fora de h1/h2/h3) nunca
+   usava de fato a fonte customizada — só os títulos, que não disputam com nenhuma classe
+   utilitária. Redefinindo `--font-sans` aqui, a própria utilidade `.font-sans` passa a
+   resolver pra fonte certa em todo lugar que já a usa. `--font-display` gera automaticamente
+   a utilidade `.font-display`, usada nos números grandes de indicador. */
+@theme {
+  --font-sans: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Bricolage Grotesque", "Hanken Grotesk", sans-serif;
+}
+
 @layer base {
   :root {
     --jmt-bronze: #B38F4F;
@@ -14,32 +28,49 @@
   body {
     background-color: #F8FAFC;
     color: #111111;
-    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    font-family: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Fonte de destaque — números grandes, títulos de tela, valores de indicador. Carregada desde
-     sempre no index.html mas nunca usada de fato; passa a ser a assinatura tipográfica do
-     redesenho (ver também a classe utilitária .font-display, pra usar fora de h1/h2/h3). */
+  /* Fonte de destaque — números grandes, títulos de tela, valores de indicador (ver também a
+     classe utilitária .font-display, pra usar fora de h1/h2/h3). Bricolage Grotesque no lugar
+     do Space Grotesk/Plus Jakarta Sans anteriores: o detector de qualidade visual do próprio
+     processo de design apontou os dois como fontes "batidas" (usadas em excesso por interfaces
+     geradas por IA, sem trazer identidade própria) — Bricolage tem o mesmo espírito geométrico
+     moderno, mas com um caráter mais autoral nas formas das letras.
+     Caixa alta + leve espaçamento entre letras: títulos costumam ser curtos no sistema (nomes
+     de tela, cabeçalhos de card, seções de formulário), e caixa alta com tracking é o que dá o
+     acabamento "confiante" de dashboard moderno — texto longo direto em <h1-3> (raro) fica mais
+     pesado de ler, então prefira frases curtas como título e deixe o complemento numa tag de
+     texto normal (<p>), não dentro do heading. */
   h1, h2, h3 {
-    font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+    font-family: "Bricolage Grotesque", "Hanken Grotesk", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  /* Mesmo raciocínio acima, aplicado aos botões: rótulo curto + caixa alta + tracking é o
+     padrão de botão de dashboard moderno (Linear, Vercel, Stripe etc.). Ícone e contadores
+     numéricos dentro do botão não são afetados (caixa alta só muda letras). */
+  button {
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
 
   /* Padrão de CAIXA ALTA em todo o sistema (junto com o maiúsculo automático dos campos de
-     texto em src/utils/autoUppercase.ts): aqui é só APARÊNCIA, não muda o valor de fato — as
-     opções de <select> são valores fixos do código (ex.: "Ativo", "Masculino") usados em
-     comparações e já gravados assim no banco, então convertê-los de verdade quebraria filtros,
-     telas e dados já salvos. Ficam de fora os seletores que exibem código/sigla (ex.: UF), que
-     já nascem em maiúsculo, e não há efeito nesses casos. */
+     texto em src/utils/autoUppercase.ts, e com os títulos/botões acima): aqui é só APARÊNCIA,
+     não muda o valor de fato — as opções de <select> são valores fixos do código (ex.: "Ativo",
+     "Masculino") usados em comparações e já gravados assim no banco, então convertê-los de
+     verdade quebraria filtros, telas e dados já salvos. Ficam de fora os seletores que exibem
+     código/sigla (ex.: UF), que já nascem em maiúsculo, e não há efeito nesses casos. */
   select,
   select option {
     text-transform: uppercase;
   }
 }
 
-.font-display {
-  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
-}
+/* .font-display é gerada automaticamente pelo Tailwind a partir de --font-display no @theme
+   acima (v4 cria uma utilidade `.font-<nome>` pra cada variável `--font-*` do tema). */
 
 /* JMT Brand Decorative Accent Lines (Brand Manual Page 10) */
 .jmt-route-accent {
