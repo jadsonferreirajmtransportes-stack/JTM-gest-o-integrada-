@@ -845,7 +845,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-slate-900 tracking-tight">
+            <div className="font-display text-3xl font-bold text-slate-900 tracking-tight">
               {formatMoney(financialResult.faturamentoBruto)}
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600">
@@ -871,13 +871,27 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-slate-900 tracking-tight">
+            <div className="font-display text-3xl font-bold text-slate-900 tracking-tight">
               {formatMoney(financialResult.custoGlobalMensal)}
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600">
               <span>Folha: {formatMoney(payrollSummary.custoTotalFolhaMensal)}</span>
               <span>•</span>
               <span>OPEX: {formatMoney(opCostsSummary.totalCustosOperacionais)}</span>
+            </div>
+            <div className="mt-2.5 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
+              <div
+                className="h-full bg-rose-500"
+                style={{
+                  width: `${financialResult.custoGlobalMensal > 0 ? (payrollSummary.custoTotalFolhaMensal / financialResult.custoGlobalMensal) * 100 : 50}%`,
+                }}
+              />
+              <div
+                className="h-full bg-rose-200"
+                style={{
+                  width: `${financialResult.custoGlobalMensal > 0 ? (opCostsSummary.totalCustosOperacionais / financialResult.custoGlobalMensal) * 100 : 50}%`,
+                }}
+              />
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
@@ -901,7 +915,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
             </div>
           </div>
           <div className="mt-3">
-            <div className={`text-2xl font-black tracking-tight ${financialResult.ebitda >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+            <div className={`font-display text-3xl font-bold tracking-tight ${financialResult.ebitda >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
               {formatMoney(financialResult.ebitda)}
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600">
@@ -910,6 +924,12 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
               </span>
               <span>•</span>
               <span className="text-slate-500">Rentabilidade {financialResult.margemLiquidaPercent >= 20 ? 'Excelente' : financialResult.margemLiquidaPercent >= 10 ? 'Saudável' : 'Atenção'}</span>
+            </div>
+            <div className="mt-2.5 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${financialResult.ebitda >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                style={{ width: `${Math.min(100, Math.max(4, Math.abs(financialResult.margemLiquidaPercent)))}%` }}
+              />
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
@@ -929,7 +949,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-slate-900 tracking-tight">
+            <div className="font-display text-3xl font-bold text-slate-900 tracking-tight">
               {opsSummary.totalOperacoesAtivas} em andamento
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600">

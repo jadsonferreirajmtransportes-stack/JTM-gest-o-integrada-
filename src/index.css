@@ -14,8 +14,15 @@
   body {
     background-color: #F8FAFC;
     color: #111111;
-    font-family: "Helvetica Neue", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Fonte de destaque — números grandes, títulos de tela, valores de indicador. Carregada desde
+     sempre no index.html mas nunca usada de fato; passa a ser a assinatura tipográfica do
+     redesenho (ver também a classe utilitária .font-display, pra usar fora de h1/h2/h3). */
+  h1, h2, h3 {
+    font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
   }
 
   /* Padrão de CAIXA ALTA em todo o sistema (junto com o maiúsculo automático dos campos de
@@ -28,6 +35,10 @@
   select option {
     text-transform: uppercase;
   }
+}
+
+.font-display {
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
 }
 
 /* JMT Brand Decorative Accent Lines (Brand Manual Page 10) */
