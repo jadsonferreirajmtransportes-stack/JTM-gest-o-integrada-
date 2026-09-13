@@ -35,10 +35,10 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
         {/* Modal Header */}
-        <div className="bg-linear-to-r from-slate-950 via-slate-900 to-[#191612] text-white p-6 sm:p-7 relative border-b border-[#B38F4F]/30 shrink-0">
+        <div className="bg-white p-6 sm:p-7 relative border-b border-slate-100 shrink-0">
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
             title="Fechar modal"
           >
             <X className="w-5 h-5" />
@@ -46,27 +46,27 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pr-8">
             <div className="flex items-center gap-3.5">
-              <div className="p-2.5 rounded-2xl bg-[#B38F4F]/20 border border-[#B38F4F]/40 text-[#D8B97E] shrink-0">
+              <div className="p-2.5 rounded-2xl bg-amber-50 border border-amber-200 text-[#8A6A39] shrink-0">
                 <Compass className="w-6 h-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#B38F4F]">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A6A39]">
                     Norteadores Estratégicos Institucionais
                   </span>
                   <span className="text-[10px] text-slate-400 font-mono">04/09/2026</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
                   Missão, Visão e Valores — JMT
                 </h2>
-                <p className="text-xs text-slate-300 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Jobson de Moraes Transportes Ltda • Pilares que orientam decisões, cultura e práticas operacionais.
                 </p>
               </div>
             </div>
 
             <div className="hidden md:block">
-              <JmtLogo variant="compact" theme="dark" iconSize={32} />
+              <JmtLogo variant="compact" theme="light" iconSize={32} />
             </div>
           </div>
         </div>

@@ -161,7 +161,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
       {/* Top Header Card */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-900 to-[#111111] flex items-center justify-center text-[#B38F4F] shadow-md border border-[#B38F4F]/30 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-[#B38F4F] flex items-center justify-center text-white shadow-md shrink-0">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
@@ -243,18 +243,18 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
         </div>
 
         {/* Card 3: Current User Session */}
-        <div className="bg-gradient-to-br from-slate-900 to-[#111111] p-4 rounded-2xl border border-slate-800 text-white shadow-xs flex items-center justify-between sm:col-span-2">
+        <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 shadow-xs flex items-center justify-between sm:col-span-2">
           <div className="min-w-0 flex-1 pr-3">
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#B38F4F]/20 text-[#D8B97E] border border-[#B38F4F]/40">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white text-[#8A6A39] border border-[#B38F4F]/40">
                 Sua Sessão Ativa
               </span>
-              <span className="text-[10px] text-slate-400 font-mono">@{currentUser.login}</span>
+              <span className="text-[10px] text-slate-500 font-mono">@{currentUser.login}</span>
             </div>
-            <div className="text-base font-extrabold text-white mt-1 truncate">
+            <div className="text-base font-extrabold text-slate-900 mt-1 truncate">
               {currentUser.nome}
             </div>
-            <div className="text-xs text-slate-300 truncate">
+            <div className="text-xs text-slate-600 truncate">
               {currentUser.cargo} • {currentUser.modulosPermitidos.length} módulos liberados
             </div>
           </div>
@@ -262,7 +262,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
           <button
             type="button"
             onClick={() => setIsSwitchModalOpen(true)}
-            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
+            className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
           >
             <ArrowRightLeft className="w-3.5 h-3.5 text-[#B38F4F]" />
             <span>Alternar</span>

@@ -50,16 +50,16 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-150">
       <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[88vh]">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-slate-900 to-[#111111] text-white flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#B38F4F] flex items-center justify-center text-white shrink-0 shadow-sm">
               <UserCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-base tracking-tight">
+              <h3 className="font-extrabold text-base tracking-tight text-slate-900">
                 Trocar de Login / Simular Sessão
               </h3>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs text-slate-500">
                 Selecione um usuário cadastrado para operar o sistema com suas permissões específicas
               </p>
             </div>
@@ -67,7 +67,7 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

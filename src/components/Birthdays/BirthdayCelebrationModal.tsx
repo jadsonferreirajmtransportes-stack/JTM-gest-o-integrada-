@@ -127,22 +127,22 @@ export const BirthdayCelebrationModal: React.FC<BirthdayCelebrationModalProps> =
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white flex items-center justify-between shrink-0">
+        <div className="p-4 sm:p-5 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
               <Cake className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-bold text-base text-white">
+                <h2 className="font-bold text-base text-slate-900">
                   Central de Felicitações & Homenagem
                 </h2>
-                <span className="text-[10px] bg-amber-400/20 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
+                <span className="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full border border-amber-200">
                   {birthdayInfo.dataFormatada}
                 </span>
               </div>
-              <p className="text-xs text-slate-300">
-                Parabenize <span className="text-amber-200 font-bold">{colaborador.nomeCompleto}</span> ({colaborador.funcaoCargo})
+              <p className="text-xs text-slate-500">
+                Parabenize <span className="text-amber-700 font-bold">{colaborador.nomeCompleto}</span> ({colaborador.funcaoCargo})
               </p>
             </div>
           </div>
@@ -150,7 +150,7 @@ export const BirthdayCelebrationModal: React.FC<BirthdayCelebrationModalProps> =
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

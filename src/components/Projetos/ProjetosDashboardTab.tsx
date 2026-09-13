@@ -71,21 +71,21 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Welcome / Strategy Banner */}
-      <div className="p-6 bg-gradient-to-r from-slate-900 via-purple-950 to-indigo-950 rounded-2xl text-white shadow-xl border border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="p-6 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/30 text-purple-300 border border-purple-400/30 uppercase tracking-wider">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wider">
               Governança Corporativa JMT
             </span>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider flex items-center gap-1">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider flex items-center gap-1">
               <ShieldCheck className="w-3 h-3" />
               RDC 430/2020 ANVISA
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Painel Executivo de Projetos & Planejamento Estratégico
           </h2>
-          <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+          <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
             Acompanhamento centralizado de CAPEX, expansão de hubs, digitalização de telemetria,
             qualificação de rotas térmicas e conformidade sanitária em toda a malha logística.
           </p>

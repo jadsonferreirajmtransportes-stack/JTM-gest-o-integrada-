@@ -167,14 +167,14 @@ export const NotasView: React.FC<NotasViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Hero */}
-      <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-md border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-teal-500/20 text-teal-300 text-xs font-semibold border border-teal-500/30">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200">
             <NotebookPen className="w-3.5 h-3.5" />
             <span>Notas & Ideias JMT</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight">Anotações e Brainstorm</h1>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Anotações e Brainstorm</h1>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
             Um espaço livre para registrar ideias, atas rápidas e rascunhos — vincule qualquer página a um
             Cliente, Projeto, Colaborador ou operação existente.
           </p>

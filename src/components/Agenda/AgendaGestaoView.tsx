@@ -163,16 +163,16 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Top Banner / Hero */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-md border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-500/30">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-200">
             <CalendarDays className="w-3.5 h-3.5" />
             <span>Governança & Rotinas de Gestão JMT</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Agenda de Atividades da Gestão
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
             Painel executivo para programação e acompanhamento de comitês de liderança, auditorias RDC 430,
             fechamentos contábeis, DDS de frotas refrigeradas e reuniões estratégicas.
           </p>
@@ -182,10 +182,10 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
           <button
             type="button"
             onClick={() => exportAtividadesToCSV(atividades)}
-            className="px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+            className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
             title="Exportar todas as atividades em planilha CSV"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             <span>Exportar CSV</span>
           </button>
 

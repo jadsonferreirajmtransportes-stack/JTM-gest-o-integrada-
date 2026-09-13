@@ -115,14 +115,14 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Hero */}
-      <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-md border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#B38F4F]/20 text-[#D8B97E] text-xs font-semibold border border-[#B38F4F]/30">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#8A6A39] text-xs font-semibold border border-amber-200">
             <FileCheck2 className="w-3.5 h-3.5" />
             <span>Instruções de Trabalho (IT)</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight">Procedimentos Operacionais Padronizados</h1>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Procedimentos Operacionais Padronizados</h1>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
             Construa checklists, fluxogramas e procedimentos de referência para o Farma Aéreo, Farma Rodoviário e demais
             operações — com código, dono do processo, versão e status de vigência — e vincule cada instrução a um
             cliente, embarque ou viagem específica. Inclui os modelos do método interno de gestão por processos

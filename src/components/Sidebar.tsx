@@ -447,7 +447,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-left transition-all ${
                 currentSection === 'visao_geral'
-                  ? 'bg-[#B38F4F]/20 text-[#D8B97E] border border-[#B38F4F]/40 font-bold'
+                  ? 'bg-[#B38F4F]/15 text-[#8A6A39] border border-[#B38F4F]/40 font-bold'
                   : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
@@ -455,7 +455,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <LayoutDashboard className="w-4 h-4 text-[#B38F4F]" />
                 <span>Painel Geral Integrado</span>
               </div>
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#B38F4F]/20 text-[#D8B97E] font-bold">Ativo</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#B38F4F]/15 text-[#8A6A39] font-bold">Ativo</span>
             </button>
 
             <button
@@ -545,13 +545,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }
                 onCloseMobile();
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left border bg-gradient-to-r from-amber-950/40 to-slate-950/60 border-amber-500/30 text-amber-300 hover:border-amber-500/60"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left border bg-amber-50 border-amber-200 text-amber-800 hover:border-amber-400"
             >
               <div className="flex items-center gap-2">
-                <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                <UserCheck className="w-3.5 h-3.5 text-amber-600" />
                 <span>Link p/ Candidato</span>
               </div>
-              <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded text-amber-200 font-bold">
+              <span className="text-[10px] bg-amber-100 px-1.5 py-0.5 rounded text-amber-800 font-bold">
                 Enviar
               </span>
             </button>
@@ -955,7 +955,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all duration-150 border ${
                   activeGlobalModule === 'visao_geral' || currentSection === 'visao_geral'
-                    ? 'bg-gradient-to-r from-[#B38F4F]/25 to-[#8A6A39]/20 border-[#B38F4F] text-white shadow-md ring-1 ring-[#B38F4F]/50 font-bold'
+                    ? 'bg-amber-50 border-[#B38F4F] shadow-sm ring-1 ring-[#B38F4F]/40 font-bold'
                     : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-700'
                 }`}
               >
@@ -966,7 +966,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                       <span className="leading-tight">Dashboard Geral</span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#B38F4F]/25 text-[#D8B97E] border border-[#B38F4F]/40 font-extrabold uppercase shrink-0">Geral</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#B38F4F]/15 text-[#8A6A39] border border-[#B38F4F]/40 font-extrabold uppercase shrink-0">Geral</span>
                     </div>
                     <div className="text-[10px] text-slate-400 leading-tight">Todos os Módulos & KPIs</div>
                   </div>
@@ -1014,7 +1014,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     }}
                     className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition-all duration-150 border ${
                       isModActive
-                        ? 'bg-amber-50 border-[#B38F4F] text-slate-900 shadow-sm ring-1 ring-[#B38F4F]/40'
+                        ? 'bg-amber-50 border-[#B38F4F] text-amber-900 shadow-sm ring-1 ring-[#B38F4F]/40'
                         : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-600'
                     }`}
                   >
@@ -1042,7 +1042,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <span
                         className={`text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0 ml-1.5 ${
                           isModActive
-                            ? 'bg-[#B38F4F]/25 text-[#F4EEE1] border border-[#B38F4F]/40'
+                            ? 'bg-[#B38F4F]/15 text-[#8A6A39] border border-[#B38F4F]/40'
                             : 'bg-slate-100 text-slate-500'
                         }`}
                       >
@@ -1113,7 +1113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Compass className="w-3.5 h-3.5 text-[#B38F4F]" />
               <span className="text-[11px] font-semibold">Norteadores Estratégicos</span>
             </div>
-            <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#B38F4F]/20 text-[#D8B97E] font-bold">JMT</span>
+            <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#B38F4F]/15 text-[#8A6A39] font-bold">JMT</span>
           </button>
         </div>
 
