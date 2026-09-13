@@ -23,6 +23,7 @@ import {
   Supervisor,
   Colaborador,
   ItemDeliberacaoAta,
+  UsuarioLogin,
 } from '../../types';
 import { AgendaMonthView } from './AgendaMonthView';
 import { AgendaWeekView } from './AgendaWeekView';
@@ -38,6 +39,7 @@ interface AgendaGestaoViewProps {
   atividades: AtividadeGestao[];
   supervisores: Supervisor[];
   colaboradores: Colaborador[];
+  usuarios: UsuarioLogin[];
   onSaveAtividade: (atividade: AtividadeGestao) => void;
   onDeleteAtividade: (id: string) => void;
   onStatusChange: (id: string, newStatus: StatusAtividadeGestao) => void;
@@ -50,6 +52,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
   atividades,
   supervisores,
   colaboradores,
+  usuarios,
   onSaveAtividade,
   onDeleteAtividade,
   onStatusChange,
@@ -454,6 +457,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
         selectedDate={formSelectedDate}
         supervisores={supervisores}
         colaboradores={colaboradores}
+        usuarios={usuarios}
       />
 
       {/* Detail Modal */}

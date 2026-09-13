@@ -223,6 +223,8 @@ function rowToAtividade(r: any): AtividadeGestao {
     criadoEm: r.criado_em,
     atualizadoEm: u(r.atualizado_em),
     concluidaEm: u(r.concluida_em),
+    criadoPorUserId: u(r.criado_por_user_id),
+    usuariosMarcadosIds: j(r.usuarios_marcados_ids),
   };
 }
 function atividadeToRow(a: AtividadeGestao) {
@@ -255,6 +257,8 @@ function atividadeToRow(a: AtividadeGestao) {
     criado_em: a.criadoEm || new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
     concluida_em: n(a.concluidaEm),
+    criado_por_user_id: n(a.criadoPorUserId),
+    usuarios_marcados_ids: j(a.usuariosMarcadosIds),
   };
 }
 export async function getAtividadesGestao(): Promise<AtividadeGestao[]> {

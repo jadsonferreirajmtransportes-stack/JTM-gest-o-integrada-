@@ -5,6 +5,8 @@ import {
   PrioridadeAtividadeGestao,
   Supervisor,
   Colaborador,
+  UsuarioLogin,
+  UserRole,
 } from '../../types';
 import { STRATEGIC_GUIDELINES } from '../../data/strategicGuidelines';
 
@@ -137,6 +139,34 @@ export function getAtividadeDuracaoDias(atividade: AtividadeGestao): number {
 /** true quando `dateStr` (YYYY-MM-DD) cai dentro do intervalo [data, dataFim] da atividade. */
 export function atividadeOcorreEm(atividade: AtividadeGestao, dateStr: string): boolean {
   return dateStr >= atividade.data && dateStr <= getAtividadeDataFim(atividade);
+}
+
+/** Quem enxerga uma atividade da Agenda da Gestão, agora que o módulo pode ser liberado pra
+ *  mais gente sem virar visão total de tudo (ver comentário em types.ts sobre
+ *  criadoPorUserId/usuariosMarcadosIds):
+ *   - admin sempre vê tudo (mantém a supervisão geral).
+ *   - quem criou a atividade sempre vê a própria.
+ *   - quem foi marcado explicitamente (usuariosMarcadosIds) vê.
+ *   - compatibilidade com atividades antigas (criadas antes dessa marcação existir, ou
+ *     criadas sem marcar ninguém): continua visível pra quem já está escrito como
+ *     responsável/participante pelo nome — texto livre, então comparado sem acento/caixa. */
+export function podeVerAtividade(
+  atividade: AtividadeGestao,
+  currentUser?: UsuarioLogin,
+  userRole?: UserRole
+): boolean {
+  if (userRole === 'admin') return true;
+  if (!currentUser) return true;
+  if (atividade.criadoPorUserId === currentUser.id) return true;
+  if ((atividade.usuariosMarcadosIds || []).includes(currentUser.id)) return true;
+
+  const normalizar = (s: string) => (s || '').trim().toLowerCase();
+  const nomeAtual = normalizar(currentUser.nome);
+  if (!nomeAtual) return false;
+  if (normalizar(atividade.responsavel) === nomeAtual) return true;
+  if ((atividade.participantes || []).some((p) => normalizar(p) === nomeAtual)) return true;
+
+  return false;
 }
 
 /**

@@ -24,6 +24,7 @@ import {
   Supervisor,
   Colaborador,
   ItemDeliberacaoAta,
+  UsuarioLogin,
 } from '../../types';
 import { CATEGORIA_CONFIG, getTipoLocalEfetivo } from './agendaUtils';
 
@@ -35,6 +36,7 @@ interface AgendaFormModalProps {
   selectedDate?: string;
   supervisores: Supervisor[];
   colaboradores: Colaborador[];
+  usuarios: UsuarioLogin[];
 }
 
 const CATEGORIAS: CategoriaAtividadeGestao[] = [
@@ -67,6 +69,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
   selectedDate,
   supervisores,
   colaboradores,
+  usuarios,
 }) => {
   const todayStr = new Date().toISOString().split('T')[0];
   const defaultDate = selectedDate || todayStr;
@@ -89,6 +92,12 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
   const [responsavelCargo, setResponsavelCargo] = useState(initialData?.responsavelCargo || 'Diretoria');
   const [participantesInput, setParticipantesInput] = useState(
     initialData?.participantes?.join(', ') || ''
+  );
+  // Marcação por login do sistema (diferente de "participantes", que é texto livre com nome de
+  // colaborador/supervisor) — quem for marcado aqui ganha visão desta atividade mesmo que o
+  // módulo Agenda esteja liberado só "sob demanda" (ver podeVerAtividade em agendaUtils.ts).
+  const [usuariosMarcadosIds, setUsuariosMarcadosIds] = useState<string[]>(
+    initialData?.usuariosMarcadosIds || []
   );
   const [tipoLocal, setTipoLocal] = useState<'presencial' | 'videoconferencia'>(
     initialData ? getTipoLocalEfetivo(initialData) : 'presencial'
@@ -130,6 +139,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
     setResponsavel(initialData?.responsavel || 'Jadson de Moraes');
     setResponsavelCargo(initialData?.responsavelCargo || 'Diretoria');
     setParticipantesInput(initialData?.participantes?.join(', ') || '');
+    setUsuariosMarcadosIds(initialData?.usuariosMarcadosIds || []);
     setTipoLocal(initialData ? getTipoLocalEfetivo(initialData) : 'presencial');
     setLocalOuLink(initialData?.localOuLink || 'Sala de Reuniões Matriz JMT');
     setLinkLocalizacao(initialData?.linkLocalizacao || '');
@@ -141,6 +151,12 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
     setNovoItemResponsavel('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialData, selectedDate]);
+
+  const handleToggleUsuarioMarcado = (userId: string) => {
+    setUsuariosMarcadosIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
 
   const handleAddDeliberacao = () => {
     if (!novoItemDeliberacao.trim()) return;
@@ -194,6 +210,8 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
       responsavel,
       responsavelCargo: responsavelCargo || undefined,
       participantes: participantesList,
+      criadoPorUserId: initialData?.criadoPorUserId,
+      usuariosMarcadosIds,
       tipoLocal,
       localOuLink: localOuLink.trim() || 'A definir',
       linkLocalizacao: tipoLocal === 'presencial' ? linkLocalizacao.trim() || undefined : undefined,
@@ -543,6 +561,41 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
               placeholder="Ex: Carlos Lima, Mariana Alencar, Equipe Farma Aéreo"
               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
             />
+          </div>
+
+          {/* Marcar Usuários do Sistema — compartilha a visão desta atividade */}
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">
+              Compartilhar com Usuários do Sistema (opcional)
+            </label>
+            <p className="text-[11px] text-slate-500 mb-1.5">
+              Só você (quem criou) e quem for marcado aqui enxergam esta atividade na Agenda — os
+              demais logins com acesso ao módulo não veem, a não ser que sejam administradores.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {usuarios
+                .filter((u) => u.status === 'Ativo')
+                .map((u) => {
+                  const marcado = usuariosMarcadosIds.includes(u.id);
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => handleToggleUsuarioMarcado(u.id)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
+                        marcado
+                          ? 'bg-indigo-600 border-indigo-600 text-white'
+                          : 'bg-white border-slate-300 text-slate-600 hover:border-indigo-300'
+                      }`}
+                    >
+                      {u.nome}
+                    </button>
+                  );
+                })}
+              {usuarios.filter((u) => u.status === 'Ativo').length === 0 && (
+                <span className="text-[11px] text-slate-400">Nenhum outro login cadastrado ainda.</span>
+              )}
+            </div>
           </div>
 
           {/* Descrição e Pauta */}

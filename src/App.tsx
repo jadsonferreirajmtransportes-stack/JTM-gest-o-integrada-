@@ -175,7 +175,7 @@ import { CandidateAdmissionPortal } from './components/Admission/CandidateAdmiss
 import { AdmissionLinkModal } from './components/Admission/AdmissionLinkModal';
 import { PreAdmissionsManagerView } from './components/Admission/PreAdmissionsManagerView';
 import { AgendaGestaoView } from './components/Agenda/AgendaGestaoView';
-import { atividadeOcorreEm } from './components/Agenda/agendaUtils';
+import { atividadeOcorreEm, podeVerAtividade } from './components/Agenda/agendaUtils';
 import { NotasView } from './components/Notas/NotasView';
 import { InstrucoesTrabalhoView } from './components/Instrucoes/InstrucoesTrabalhoView';
 import { GeneralDashboard } from './components/DashboardGeral/GeneralDashboard';
@@ -709,6 +709,14 @@ export default function App() {
     return list;
   }, [colaboradores, feriasList]);
 
+  // Atividades da Agenda da Gestão que o login atual pode ver — liberar o módulo pra alguém não
+  // significa mais dar visão de tudo; ver podeVerAtividade em agendaUtils.ts. Usado aqui (badge
+  // "hoje"), no aviso de abertura e na própria tela da Agenda, pra ficar tudo consistente.
+  const atividadesVisiveis = useMemo(
+    () => atividadesGestao.filter((a) => podeVerAtividade(a, currentUser, userRole)),
+    [atividadesGestao, currentUser, userRole]
+  );
+
   // Sidebar badge counters
   const sidebarCounts = useMemo(() => {
     const ativos = colaboradores.filter((c) => c.status !== 'Inativo').length;
@@ -748,7 +756,7 @@ export default function App() {
     const clientesFarmaRodoviario = clientes.filter(isClienteFarmaRodoviario).length;
     const projetosAtivos = projetos.length;
     const todayIso = new Date().toISOString().split('T')[0];
-    const atividadesHoje = atividadesGestao.filter(
+    const atividadesHoje = atividadesVisiveis.filter(
       (a) => atividadeOcorreEm(a, todayIso) && a.status !== 'Concluída' && a.status !== 'Cancelada'
     ).length;
 
@@ -780,7 +788,7 @@ export default function App() {
     embarquesAereos,
     viagensRodoviarias,
     projetos,
-    atividadesGestao,
+    atividadesVisiveis,
     notasPaginas,
     instrucoesTrabalho,
     users,
@@ -791,7 +799,7 @@ export default function App() {
   // com prazo dentro dos próximos 3 dias.
   const avisoAberturaData = useMemo(() => {
     const hojeIso = new Date().toISOString().split('T')[0];
-    const atividadesHoje = atividadesGestao.filter(
+    const atividadesHoje = atividadesVisiveis.filter(
       (a) => atividadeOcorreEm(a, hojeIso) && a.status !== 'Concluída' && a.status !== 'Cancelada'
     );
 
@@ -805,7 +813,7 @@ export default function App() {
     );
 
     return { atividadesHoje, projetosAtrasados, projetosProximos };
-  }, [atividadesGestao, projetos]);
+  }, [atividadesVisiveis, projetos]);
 
   // Dispara o aviso automaticamente uma vez por dia, assim que os dados terminam de carregar —
   // só o aviso dentro do sistema (sem e-mail/WhatsApp automático, por escolha explícita do usuário).
@@ -886,7 +894,14 @@ export default function App() {
 
   // Agenda Gestão Handlers
   const handleSaveAtividadeGestao = async (item: AtividadeGestao) => {
-    await saveAtividadeGestao(item);
+    // Carimba quem criou (só na primeira vez — edições preservam o criador original) pra
+    // podeVerAtividade (agendaUtils.ts) saber quem, além de admin e quem for marcado, enxerga
+    // esta atividade na Agenda da Gestão.
+    const registro: AtividadeGestao = {
+      ...item,
+      criadoPorUserId: item.criadoPorUserId || currentUser?.id,
+    };
+    await saveAtividadeGestao(registro);
     await loadGestaoData();
     showToast(`Atividade "${item.titulo}" salva na agenda da gestão!`, 'success');
   };
@@ -1794,9 +1809,10 @@ export default function App() {
           {/* ========================================================================= */}
           {(activeGlobalModule === 'agenda' || activeSection === 'agenda_gestao') && (
             <AgendaGestaoView
-              atividades={atividadesGestao}
+              atividades={atividadesVisiveis}
               supervisores={supervisores}
               colaboradores={colaboradores}
+              usuarios={users}
               onSaveAtividade={handleSaveAtividadeGestao}
               onDeleteAtividade={handleDeleteAtividadeGestao}
               onStatusChange={handleUpdateAtividadeStatus}

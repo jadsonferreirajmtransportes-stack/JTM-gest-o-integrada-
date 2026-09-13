@@ -1290,6 +1290,13 @@ export interface AtividadeGestao {
   responsavel: string;
   responsavelCargo?: string;
   participantes: string[];
+  /** UsuarioLogin.id de quem criou a atividade — App.tsx carimba automaticamente ao salvar.
+   *  Junto com usuariosMarcadosIds, define quem (além de admin) enxerga esta atividade na
+   *  Agenda da Gestão; ver podeVerAtividade em agendaUtils.ts. */
+  criadoPorUserId?: string;
+  /** UsuarioLogin.id de quem foi marcado/mencionado nesta atividade — ganham visibilidade dela
+   *  mesmo sem ser responsável/participante (que são texto livre, nem sempre um login real). */
+  usuariosMarcadosIds?: string[];
   /**
    * Alterna entre reunião presencial (endereço/sala física, com link de localização opcional)
    * ou videoconferência (link de sala online — Google Meet, Zoom, Teams etc.). Ausente em
