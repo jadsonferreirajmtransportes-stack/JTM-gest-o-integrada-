@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FolderKanban,
   LayoutDashboard,
@@ -43,6 +43,10 @@ interface ProjetosViewProps {
   colaboradores: Colaborador[];
   usuarios: UsuarioLogin[];
   userRole?: UserRole;
+  /** Id de um projeto pra abrir automaticamente (ex.: veio de uma menção no Chat). */
+  abrirProjetoId?: string;
+  /** Muda a cada clique de menção, mesmo pro mesmo projeto, pra forçar reabrir. */
+  abrirProjetoSinal?: number;
 }
 
 export const ProjetosView: React.FC<ProjetosViewProps> = ({
@@ -54,6 +58,8 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
   colaboradores,
   usuarios,
   userRole = 'admin',
+  abrirProjetoId,
+  abrirProjetoSinal,
 }) => {
   const [activeTab, setActiveTab] = useState<
     'dashboard' | 'portfolio' | 'kanban' | 'cronograma' | 'orcamento' | 'riscos'
@@ -83,6 +89,14 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
     setSelectedDetailProjeto(projeto);
     setIsDetailModalOpen(true);
   };
+
+  // Chegou uma menção do Chat pedindo pra abrir um projeto específico.
+  useEffect(() => {
+    if (!abrirProjetoId) return;
+    const projeto = projetos.find((p) => p.id === abrirProjetoId);
+    if (projeto) handleOpenDetail(projeto);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abrirProjetoSinal]);
 
   const handleOpenResumo = (projeto: ProjetoGerencial) => {
     setSelectedResumoProjeto(projeto);

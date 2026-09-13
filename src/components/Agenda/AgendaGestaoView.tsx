@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   CalendarDays,
   Calendar as CalendarIcon,
@@ -44,6 +44,10 @@ interface AgendaGestaoViewProps {
   onDeleteAtividade: (id: string) => void;
   onStatusChange: (id: string, newStatus: StatusAtividadeGestao) => void;
   onUpdateDeliberacoes: (id: string, deliberacoes: ItemDeliberacaoAta[]) => void;
+  /** Id de uma atividade pra abrir automaticamente (ex.: veio de uma menção no Chat). */
+  abrirAtividadeId?: string;
+  /** Muda a cada clique de menção, mesmo pra mesma atividade, pra forçar reabrir. */
+  abrirAtividadeSinal?: number;
 }
 
 type ViewMode = 'mes' | 'semana' | 'dia' | 'lista' | 'kanban';
@@ -57,6 +61,8 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
   onDeleteAtividade,
   onStatusChange,
   onUpdateDeliberacoes,
+  abrirAtividadeId,
+  abrirAtividadeSinal,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('mes');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -115,6 +121,14 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
     setDetailAtividade(atividade);
     setIsDetailModalOpen(true);
   };
+
+  // Chegou uma menção do Chat pedindo pra abrir uma atividade específica.
+  useEffect(() => {
+    if (!abrirAtividadeId) return;
+    const atividade = atividades.find((a) => a.id === abrirAtividadeId);
+    if (atividade) handleSelectAtividade(atividade);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abrirAtividadeSinal]);
 
   const handleEditFromDetail = (atividade: AtividadeGestao) => {
     setIsDetailModalOpen(false);

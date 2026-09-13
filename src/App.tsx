@@ -381,6 +381,14 @@ export default function App() {
   // não lidas); as mensagens de uma conversa aberta ficam no estado local do ChatView.
   const [conversasChat, setConversasChat] = useState<ConversaChat[]>([]);
   const [ultimasLeiturasChat, setUltimasLeiturasChat] = useState<Record<string, string | null>>({});
+  // Item alvo de uma menção clicada no Chat (@nota/@atividade/@projeto) — a tela do módulo
+  // correspondente usa isso pra abrir o item específico assim que é montada/atualizada.
+  // "sinal" muda a cada clique, mesmo pro mesmo item, pra forçar reabrir o detalhe.
+  const [mencaoAlvo, setMencaoAlvo] = useState<{
+    tipo: 'nota' | 'atividade' | 'projeto';
+    id: string;
+    sinal: number;
+  } | null>(null);
   const [notasPaginas, setNotasPaginas] = useState<NotaPagina[]>([]);
   const [instrucoesTrabalho, setInstrucoesTrabalho] = useState<InstrucaoTrabalho[]>([]);
   const [custosOperacionais, setCustosOperacionais] = useState<CustoOperacional[]>([]);
@@ -555,8 +563,8 @@ export default function App() {
   };
 
   // Menção a Nota/Atividade/Projeto dentro de uma mensagem do Chat Interno — leva pro módulo
-  // certo (a tela ainda não abre o item específico automaticamente, só o módulo/seção).
-  const handleAbrirMencaoChat = (tipo: 'nota' | 'atividade' | 'projeto') => {
+  // certo e pede pra tela abrir o item específico assim que estiver montada.
+  const handleAbrirMencaoChat = (tipo: 'nota' | 'atividade' | 'projeto', id: string) => {
     if (tipo === 'nota') {
       setActiveGlobalModule('notas');
       setActiveSection('notas');
@@ -567,6 +575,7 @@ export default function App() {
       setActiveGlobalModule('projetos');
       setActiveSection('projetos');
     }
+    setMencaoAlvo({ tipo, id, sinal: Date.now() });
     setIsMobileMenuOpen(false);
   };
 
@@ -2181,6 +2190,8 @@ export default function App() {
               colaboradores={colaboradores}
               usuarios={users}
               userRole={userRole}
+              abrirProjetoId={mencaoAlvo?.tipo === 'projeto' ? mencaoAlvo.id : undefined}
+              abrirProjetoSinal={mencaoAlvo?.tipo === 'projeto' ? mencaoAlvo.sinal : undefined}
             />
           )}
 
@@ -2197,6 +2208,8 @@ export default function App() {
               onDeleteAtividade={handleDeleteAtividadeGestao}
               onStatusChange={handleUpdateAtividadeStatus}
               onUpdateDeliberacoes={handleUpdateDeliberacoes}
+              abrirAtividadeId={mencaoAlvo?.tipo === 'atividade' ? mencaoAlvo.id : undefined}
+              abrirAtividadeSinal={mencaoAlvo?.tipo === 'atividade' ? mencaoAlvo.sinal : undefined}
             />
           )}
 
@@ -2252,6 +2265,8 @@ export default function App() {
               embarquesAereos={embarquesAereos}
               viagensRodoviarias={viagensRodoviarias}
               ocorrencias={ocorrencias}
+              abrirPaginaId={mencaoAlvo?.tipo === 'nota' ? mencaoAlvo.id : undefined}
+              abrirPaginaSinal={mencaoAlvo?.tipo === 'nota' ? mencaoAlvo.sinal : undefined}
             />
           )}
 

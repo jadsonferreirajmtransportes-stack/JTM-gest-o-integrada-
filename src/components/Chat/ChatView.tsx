@@ -31,8 +31,8 @@ interface ChatViewProps {
   notas?: NotaPagina[];
   atividades?: AtividadeGestao[];
   projetos?: ProjetoGerencial[];
-  /** Clicou numa menção dentro de uma mensagem — leva pro módulo correspondente. */
-  onAbrirMencao?: (tipo: 'nota' | 'atividade' | 'projeto') => void;
+  /** Clicou numa menção dentro de uma mensagem — leva pro módulo correspondente e abre o item. */
+  onAbrirMencao?: (tipo: 'nota' | 'atividade' | 'projeto', id: string) => void;
 }
 
 // Tamanho máximo de anexo — data URL (base64) direto na linha do banco, sem bucket de Storage;
@@ -90,7 +90,7 @@ function formatHora(iso: string): string {
 function renderTextoComMencoes(
   texto: string,
   propria: boolean,
-  onAbrirMencao?: (tipo: 'nota' | 'atividade' | 'projeto') => void
+  onAbrirMencao?: (tipo: 'nota' | 'atividade' | 'projeto', id: string) => void
 ): React.ReactNode[] {
   const partes: React.ReactNode[] = [];
   let ultimoIndice = 0;
@@ -102,13 +102,13 @@ function renderTextoComMencoes(
     if (match.index > ultimoIndice) {
       partes.push(texto.slice(ultimoIndice, match.index));
     }
-    const [, tipo, , titulo] = match;
+    const [, tipo, id, titulo] = match;
     const Icone = ICONE_MENCAO[tipo as ItemMencionavel['tipo']];
     partes.push(
       <button
         key={`mencao-${chave++}`}
         type="button"
-        onClick={() => onAbrirMencao?.(tipo as ItemMencionavel['tipo'])}
+        onClick={() => onAbrirMencao?.(tipo as ItemMencionavel['tipo'], id)}
         className={`inline-flex items-center gap-1 px-1.5 py-0.5 mx-0.5 rounded-md text-[11px] font-semibold align-middle border transition-colors ${
           propria
             ? 'bg-white/15 text-white border-white/25 hover:bg-white/25'

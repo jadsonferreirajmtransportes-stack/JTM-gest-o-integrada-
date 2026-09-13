@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   NotebookPen,
   Plus,
@@ -38,6 +38,10 @@ interface NotasViewProps {
   viagensRodoviarias: ViagemRodoviaria[];
   ocorrencias: Ocorrencia[];
   usuarios: UsuarioLogin[];
+  /** Id de uma página pra abrir automaticamente (ex.: veio de uma menção no Chat). */
+  abrirPaginaId?: string;
+  /** Muda a cada clique de menção, mesmo pra mesma página, pra forçar reabrir. */
+  abrirPaginaSinal?: number;
 }
 
 export const NotasView: React.FC<NotasViewProps> = ({
@@ -53,6 +57,8 @@ export const NotasView: React.FC<NotasViewProps> = ({
   viagensRodoviarias,
   ocorrencias,
   usuarios,
+  abrirPaginaId,
+  abrirPaginaSinal,
 }) => {
   const paginasAtivas = useMemo(() => paginas.filter((p) => !p.arquivada), [paginas]);
 
@@ -60,6 +66,24 @@ export const NotasView: React.FC<NotasViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [isVincularOpen, setIsVincularOpen] = useState(false);
+
+  // Chegou uma menção do Chat pedindo pra abrir uma página específica.
+  useEffect(() => {
+    if (!abrirPaginaId) return;
+    setSelectedId(abrirPaginaId);
+    setSearchTerm('');
+    // Expande a cadeia de páginas-pai pra a selecionada ficar visível na árvore lateral.
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      let atual = paginas.find((p) => p.id === abrirPaginaId);
+      while (atual?.paginaPaiId) {
+        next.add(atual.paginaPaiId);
+        atual = paginas.find((p) => p.id === atual!.paginaPaiId);
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abrirPaginaSinal]);
 
   const childrenMap = useMemo(() => {
     const map: Record<string, NotaPagina[]> = {};
