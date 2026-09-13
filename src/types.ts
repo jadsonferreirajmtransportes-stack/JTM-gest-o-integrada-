@@ -28,6 +28,11 @@ export interface UsuarioLogin {
   ultimoAcesso?: string;
   modulosPermitidos: GlobalModuleId[];
   observacoes?: string;
+  /** Vínculo com a conta REAL de login (Supabase Auth, auth.users.id) desta pessoa — fase 1 do
+   *  login real por pessoa. Preenchido automaticamente (por e-mail) em usuariosApi.ts quando a
+   *  conta ainda não tem vínculo; nunca via senha/credencial. Enquanto for undefined, essa
+   *  pessoa ainda não tem uma conta de login própria vinculada. */
+  authUserId?: string;
 }
 
 export type EstadoCivil = 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)' | 'União estável';

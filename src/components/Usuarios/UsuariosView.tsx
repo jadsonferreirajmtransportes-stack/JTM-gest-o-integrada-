@@ -417,18 +417,36 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                           </div>
                         </div>
 
-                        {/* Status Badge */}
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 border ${
-                            user.status === 'Ativo'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : user.status === 'Inativo'
-                              ? 'bg-slate-100 text-slate-600 border-slate-200'
-                              : 'bg-rose-50 text-rose-700 border-rose-200'
-                          }`}
-                        >
-                          {user.status}
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {/* Status Badge */}
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 border ${
+                              user.status === 'Ativo'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : user.status === 'Inativo'
+                                ? 'bg-slate-100 text-slate-600 border-slate-200'
+                                : 'bg-rose-50 text-rose-700 border-rose-200'
+                            }`}
+                          >
+                            {user.status}
+                          </span>
+
+                          {/* Vínculo com login real (Supabase Auth) — fase 1 do login por pessoa */}
+                          <span
+                            title={
+                              user.authUserId
+                                ? 'Esta pessoa já tem conta de login real vinculada.'
+                                : 'Ainda não tem conta de login real — precisa ser criada no Supabase (Authentication > Users) com este mesmo e-mail.'
+                            }
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 border ${
+                              user.authUserId
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}
+                          >
+                            {user.authUserId ? 'Login Real Vinculado' : 'Sem Login Real'}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Password Info Box */}

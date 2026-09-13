@@ -186,7 +186,7 @@ import { UsuariosView } from './components/Usuarios/UsuariosView';
 import { SwitchUserModal } from './components/Usuarios/SwitchUserModal';
 import { UsuarioFormModal } from './components/Usuarios/UsuarioFormModal';
 import { INITIAL_USERS_DATA } from './data/initialUsersData';
-import { getUsuarios, saveUsuario, deleteUsuario } from './utils/usuariosApi';
+import { getUsuarios, saveUsuario, deleteUsuario, vincularContaAutenticadaSeNecessario } from './utils/usuariosApi';
 import { ShieldAlert } from 'lucide-react';
 
 export default function App() {
@@ -261,6 +261,10 @@ export default function App() {
         await Promise.all(base.map((u) => saveUsuario(u)));
         lista = await getUsuarios();
       }
+      // Fase 1 do login real por pessoa: se a conta que acabou de logar bater por e-mail com
+      // um cadastro ainda sem vínculo, vincula sozinho. Não muda quem é o currentUser aqui —
+      // isso continua pela troca manual ("Alternar Usuário") até a fase seguinte.
+      lista = await vincularContaAutenticadaSeNecessario(lista);
       setUsers(lista);
       setCurrentUser((prev) => {
         let savedId: string | null = null;

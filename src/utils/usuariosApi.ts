@@ -35,6 +35,7 @@ function rowToUsuario(r: any): UsuarioLogin {
     ultimoAcesso: u(r.ultimo_acesso),
     modulosPermitidos: j(r.modulos_permitidos),
     observacoes: u(r.observacoes),
+    authUserId: u(r.auth_user_id),
   };
 }
 function usuarioToRow(usr: UsuarioLogin) {
@@ -51,6 +52,7 @@ function usuarioToRow(usr: UsuarioLogin) {
     modulos_permitidos: j(usr.modulosPermitidos),
     observacoes: n(usr.observacoes),
     atualizado_em: new Date().toISOString(),
+    auth_user_id: n(usr.authUserId),
   };
 }
 
@@ -66,4 +68,46 @@ export async function saveUsuario(item: UsuarioLogin): Promise<void> {
 export async function deleteUsuario(id: string): Promise<void> {
   const { error } = await supabase.from('usuarios').delete().eq('id', id);
   assertNoError(error, 'deleteUsuario');
+}
+
+// ============================================================================
+// LOGIN REAL POR PESSOA — FASE 1 (vínculo, sem mudar nenhum comportamento
+// visível ainda; a troca de verdade — currentUser vir da conta real, e as
+// políticas de RLS por pessoa — é uma fase futura, separada).
+// ============================================================================
+
+/** Se a conta que acabou de logar (Supabase Auth) ainda não está vinculada a nenhum cadastro
+ *  de Logins & Acessos, tenta vincular automaticamente por e-mail — só em cadastros que ainda
+ *  não têm vínculo, pra nunca roubar o vínculo de outra pessoa. Não mexe com senha nenhuma; só
+ *  liga o cadastro já existente à conta real que autenticou. Silencioso e não-bloqueante: uma
+ *  falha aqui não deve impedir o resto do app de carregar. */
+export async function vincularContaAutenticadaSeNecessario(usuarios: UsuarioLogin[]): Promise<UsuarioLogin[]> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const session = data.session;
+    if (!session?.user) return usuarios;
+
+    const authUserId = session.user.id;
+    const email = (session.user.email || '').trim().toLowerCase();
+    if (!email) return usuarios;
+
+    const jaVinculado = usuarios.some((usr) => usr.authUserId === authUserId);
+    if (jaVinculado) return usuarios;
+
+    const candidato = usuarios.find(
+      (usr) => !usr.authUserId && (usr.email || '').trim().toLowerCase() === email
+    );
+    if (!candidato) return usuarios;
+
+    const { error } = await supabase.from('usuarios').update({ auth_user_id: authUserId }).eq('id', candidato.id);
+    if (error) {
+      console.error('Erro ao vincular conta autenticada:', error.message);
+      return usuarios;
+    }
+
+    return usuarios.map((usr) => (usr.id === candidato.id ? { ...usr, authUserId } : usr));
+  } catch (err) {
+    console.error('Erro ao vincular conta autenticada:', err);
+    return usuarios;
+  }
 }
