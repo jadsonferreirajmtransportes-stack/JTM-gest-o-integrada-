@@ -844,20 +844,32 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-4">
             <div className="font-display text-3xl font-bold text-slate-900 tracking-tight">
               {formatMoney(financialResult.faturamentoBruto)}
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600">
-              <span className="font-semibold text-blue-700">{revenueSummary.clientesAtivosCount} clientes ativos</span>
-              <span>•</span>
-              <span>Ticket médio {formatMoney(revenueSummary.ticketMedio)}</span>
-            </div>
+            <p className="mt-1.5 text-xs text-slate-500">
+              {revenueSummary.clientesAtivosCount} clientes ativos · ticket médio {formatMoney(revenueSummary.ticketMedio)}
+            </p>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Projeção anual:</span>
-            <span className="font-bold text-slate-800">{formatMoney(revenueSummary.totalFaturamentoAnualizado)}</span>
+          {/* Indicador único do cartão: divisão da receita entre Aéreo e Rodoviário */}
+          <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
+            <div
+              className="h-full bg-blue-500"
+              style={{
+                width: `${revenueSummary.clientesAtivosCount > 0 ? (revenueSummary.clientesAereoCount / revenueSummary.clientesAtivosCount) * 100 : 50}%`,
+              }}
+            />
+            <div
+              className="h-full bg-sky-200"
+              style={{
+                width: `${revenueSummary.clientesAtivosCount > 0 ? (revenueSummary.clientesRodoviarioCount / revenueSummary.clientesAtivosCount) * 100 : 50}%`,
+              }}
+            />
           </div>
+          <p className="mt-1.5 text-[11px] text-slate-400">
+            {revenueSummary.clientesAereoCount} Aéreo · {revenueSummary.clientesRodoviarioCount} Rodoviário · projeção anual {formatMoney(revenueSummary.totalFaturamentoAnualizado)}
+          </p>
         </div>
 
         {/* KPI 2: Custo Global Consolidado (Folha + OPEX) */}
@@ -870,38 +882,34 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-4">
             <div className="font-display text-3xl font-bold text-slate-900 tracking-tight">
               {formatMoney(financialResult.custoGlobalMensal)}
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600">
-              <span>Folha: {formatMoney(payrollSummary.custoTotalFolhaMensal)}</span>
-              <span>•</span>
-              <span>OPEX: {formatMoney(opCostsSummary.totalCustosOperacionais)}</span>
-            </div>
-            <div className="mt-2.5 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
-              <div
-                className="h-full bg-rose-500"
-                style={{
-                  width: `${financialResult.custoGlobalMensal > 0 ? (payrollSummary.custoTotalFolhaMensal / financialResult.custoGlobalMensal) * 100 : 50}%`,
-                }}
-              />
-              <div
-                className="h-full bg-rose-200"
-                style={{
-                  width: `${financialResult.custoGlobalMensal > 0 ? (opCostsSummary.totalCustosOperacionais / financialResult.custoGlobalMensal) * 100 : 50}%`,
-                }}
-              />
-            </div>
+            <p className="mt-1.5 text-xs text-slate-500">
+              Folha {formatMoney(payrollSummary.custoTotalFolhaMensal)} · OPEX {formatMoney(opCostsSummary.totalCustosOperacionais)}
+            </p>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Composição:</span>
-            <span className="font-bold text-slate-800">
-              {financialResult.custoGlobalMensal > 0
-                ? `${Math.round((payrollSummary.custoTotalFolhaMensal / financialResult.custoGlobalMensal) * 100)}% Folha / ${Math.round((opCostsSummary.totalCustosOperacionais / financialResult.custoGlobalMensal) * 100)}% OPEX`
-                : '100%'}
-            </span>
+          {/* Indicador único do cartão: composição Folha x OPEX */}
+          <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
+            <div
+              className="h-full bg-rose-500"
+              style={{
+                width: `${financialResult.custoGlobalMensal > 0 ? (payrollSummary.custoTotalFolhaMensal / financialResult.custoGlobalMensal) * 100 : 50}%`,
+              }}
+            />
+            <div
+              className="h-full bg-rose-200"
+              style={{
+                width: `${financialResult.custoGlobalMensal > 0 ? (opCostsSummary.totalCustosOperacionais / financialResult.custoGlobalMensal) * 100 : 50}%`,
+              }}
+            />
           </div>
+          <p className="mt-1.5 text-[11px] text-slate-400">
+            {financialResult.custoGlobalMensal > 0
+              ? `${Math.round((payrollSummary.custoTotalFolhaMensal / financialResult.custoGlobalMensal) * 100)}% folha · ${Math.round((opCostsSummary.totalCustosOperacionais / financialResult.custoGlobalMensal) * 100)}% opex`
+              : 'Sem dados de custo no período'}
+          </p>
         </div>
 
         {/* KPI 3: EBITDA / Margem de Contribuição Consolidada */}
@@ -914,28 +922,24 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
               <Percent className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-4">
             <div className={`font-display text-3xl font-bold tracking-tight ${financialResult.ebitda >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
               {formatMoney(financialResult.ebitda)}
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600">
-              <span className={`font-bold px-1.5 py-0.2 rounded text-[11px] ${financialResult.ebitda >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                {financialResult.margemLiquidaPercent.toFixed(1)}% Margem
-              </span>
-              <span>•</span>
-              <span className="text-slate-500">Rentabilidade {financialResult.margemLiquidaPercent >= 20 ? 'Excelente' : financialResult.margemLiquidaPercent >= 10 ? 'Saudável' : 'Atenção'}</span>
-            </div>
-            <div className="mt-2.5 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${financialResult.ebitda >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}
-                style={{ width: `${Math.min(100, Math.max(4, Math.abs(financialResult.margemLiquidaPercent)))}%` }}
-              />
-            </div>
+            <p className="mt-1.5 text-xs text-slate-500">
+              {financialResult.margemLiquidaPercent.toFixed(1)}% de margem · rentabilidade {financialResult.margemLiquidaPercent >= 20 ? 'excelente' : financialResult.margemLiquidaPercent >= 10 ? 'saudável' : 'em atenção'}
+            </p>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Receita Líquida (após impostos):</span>
-            <span className="font-bold text-slate-800">{formatMoney(financialResult.receitaLiquida)}</span>
+          {/* Indicador único do cartão: margem líquida */}
+          <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${financialResult.ebitda >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}
+              style={{ width: `${Math.min(100, Math.max(4, Math.abs(financialResult.margemLiquidaPercent)))}%` }}
+            />
           </div>
+          <p className="mt-1.5 text-[11px] text-slate-400">
+            Receita líquida (após impostos): {formatMoney(financialResult.receitaLiquida)}
+          </p>
         </div>
 
         {/* KPI 4: Operações em Trânsito (Cadeia Fria RDC 430) */}
@@ -948,20 +952,32 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
               <Activity className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-4">
             <div className="font-display text-3xl font-bold text-slate-900 tracking-tight">
               {opsSummary.totalOperacoesAtivas} em andamento
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600">
-              <span className="font-semibold text-sky-700">{opsSummary.embarquesAereosAtivos} Aéreos</span>
-              <span>•</span>
-              <span className="font-semibold text-emerald-700">{opsSummary.viagensRodoviariasAtivas} Rodoviários</span>
-            </div>
+            <p className="mt-1.5 text-xs text-slate-500">
+              {opsSummary.embarquesAereosAtivos} aéreos · {opsSummary.viagensRodoviariasAtivas} rodoviários
+            </p>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Cargas Termolábeis RDC 430:</span>
-            <span className="font-bold text-slate-800">{opsSummary.embarquesTermolabeisCount} sob 2°C-8°C/Gelo Seco</span>
+          {/* Indicador único do cartão: divisão Aéreo x Rodoviário das operações ativas */}
+          <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
+            <div
+              className="h-full bg-sky-500"
+              style={{
+                width: `${opsSummary.totalOperacoesAtivas > 0 ? (opsSummary.embarquesAereosAtivos / opsSummary.totalOperacoesAtivas) * 100 : 50}%`,
+              }}
+            />
+            <div
+              className="h-full bg-amber-300"
+              style={{
+                width: `${opsSummary.totalOperacoesAtivas > 0 ? (opsSummary.viagensRodoviariasAtivas / opsSummary.totalOperacoesAtivas) * 100 : 50}%`,
+              }}
+            />
           </div>
+          <p className="mt-1.5 text-[11px] text-slate-400">
+            {opsSummary.embarquesTermolabeisCount} cargas termolábeis sob 2°C-8°C/gelo seco (RDC 430)
+          </p>
         </div>
       </div>
 
