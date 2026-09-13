@@ -277,7 +277,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
           onClick={() => setActiveTab('lista')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'lista'
-              ? 'bg-slate-900 text-white shadow-sm'
+              ? 'bg-[#B38F4F] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -290,7 +290,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
           onClick={() => setActiveTab('matriz')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'matriz'
-              ? 'bg-slate-900 text-white shadow-sm'
+              ? 'bg-[#B38F4F] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -303,7 +303,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
           onClick={() => setActiveTab('seguranca')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'seguranca'
-              ? 'bg-slate-900 text-white shadow-sm'
+              ? 'bg-[#B38F4F] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -726,7 +726,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
       {activeTab === 'seguranca' && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 text-[#B38F4F] flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-[#B38F4F] text-white flex items-center justify-center font-bold">
               <FileCheck className="w-5 h-5" />
             </div>
             <div>

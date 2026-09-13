@@ -116,7 +116,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
           <button
             type="button"
             onClick={() => setIsNovaConversaOpen(true)}
-            className="w-full px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+            className="w-full px-3 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
           >
             <MessageSquarePlus className="w-4 h-4" /> Nova Conversa
           </button>
@@ -212,13 +212,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 return (
                   <div key={m.id} className={`flex ${propria ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] rounded-2xl px-3.5 py-2 text-xs ${
-                      propria ? 'bg-slate-900 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'
+                      propria ? 'bg-[#B38F4F] text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'
                     }`}>
                       {!propria && conversaAberta.tipo === 'grupo' && (
                         <p className="text-[10px] font-bold text-indigo-500 mb-0.5">{autor?.nome || 'Alguém'}</p>
                       )}
                       <p className="whitespace-pre-wrap break-words">{m.texto}</p>
-                      <p className={`text-[9px] mt-1 text-right ${propria ? 'text-slate-400' : 'text-slate-400'}`}>{formatHora(m.criadoEm)}</p>
+                      <p className={`text-[9px] mt-1 text-right ${propria ? 'text-white/70' : 'text-slate-400'}`}>{formatHora(m.criadoEm)}</p>
                     </div>
                   </div>
                 );
@@ -244,7 +244,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 type="button"
                 onClick={handleEnviar}
                 disabled={!textoNovo.trim()}
-                className="p-2.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
+                className="p-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
                 title="Enviar (Enter)"
               >
                 <Send className="w-4 h-4" />

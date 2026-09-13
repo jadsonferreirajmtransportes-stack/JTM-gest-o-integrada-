@@ -614,17 +614,17 @@ export const VacationView: React.FC<VacationViewProps> = ({
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+            <div className="p-4 bg-white border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Palmtree className="w-5 h-5 text-amber-400" />
-                <h2 className="text-base font-bold">
+                <Palmtree className="w-5 h-5 text-amber-600" />
+                <h2 className="text-base font-bold text-slate-900">
                   {editingFerias ? 'Editar Programação de Férias' : 'Nova Programação de Férias'}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -788,12 +788,12 @@ export const VacationView: React.FC<VacationViewProps> = ({
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+            <div className="p-4 bg-white border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
-                <Paperclip className="w-5 h-5 text-amber-400 shrink-0" />
+                <Paperclip className="w-5 h-5 text-amber-600 shrink-0" />
                 <div className="min-w-0">
-                  <h2 className="text-base font-bold truncate">Comprovante de Férias Assinado</h2>
-                  <p className="text-[11px] text-slate-400 truncate">
+                  <h2 className="text-base font-bold text-slate-900 truncate">Comprovante de Férias Assinado</h2>
+                  <p className="text-[11px] text-slate-500 truncate">
                     {colaboradores.find((c) => c.id === comprovanteFerias.colaboradorId)?.nomeCompleto ||
                       'Colaborador não encontrado'}
                   </p>
@@ -802,7 +802,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
               <button
                 type="button"
                 onClick={() => setComprovanteFerias(null)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 shrink-0"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
