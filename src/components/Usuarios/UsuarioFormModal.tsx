@@ -21,7 +21,7 @@ import {
   CalendarDays,
   NotebookPen,
 } from 'lucide-react';
-import { UsuarioLogin, GlobalModuleId } from '../../types';
+import { UsuarioLogin, GlobalModuleId, UserRole } from '../../types';
 import { MODULOS_SISTEMA } from '../../data/initialUsersData';
 
 interface UsuarioFormModalProps {
@@ -47,6 +47,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
   const [cargo, setCargo] = useState('');
   const [setor, setSetor] = useState('');
   const [status, setStatus] = useState<'Ativo' | 'Inativo' | 'Bloqueado'>('Ativo');
+  const [role, setRole] = useState<UserRole>('colaborador');
   const [modulosPermitidos, setModulosPermitidos] = useState<GlobalModuleId[]>([
     'visao_geral',
     'clientes',
@@ -63,6 +64,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       setCargo(usuarioToEdit.cargo || '');
       setSetor(usuarioToEdit.setor || '');
       setStatus(usuarioToEdit.status || 'Ativo');
+      setRole(usuarioToEdit.role || 'colaborador');
       setModulosPermitidos(
         usuarioToEdit.modulosPermitidos && usuarioToEdit.modulosPermitidos.length > 0
           ? [...usuarioToEdit.modulosPermitidos]
@@ -79,6 +81,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       setCargo('');
       setSetor('');
       setStatus('Ativo');
+      setRole('colaborador');
       setModulosPermitidos(['visao_geral', 'clientes', 'farma_aereo']);
       setObservacoes('');
       setErrorMsg('');
@@ -217,6 +220,8 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       cargo: cargo.trim() || 'Colaborador JMT',
       setor: setor.trim() || 'Operações',
       status,
+      role,
+      authUserId: usuarioToEdit?.authUserId,
       dataCriacao: usuarioToEdit?.dataCriacao || new Date().toISOString(),
       ultimoAcesso: usuarioToEdit?.ultimoAcesso,
       modulosPermitidos,
@@ -411,6 +416,31 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Papel (checado no servidor — controla quem pode convidar gente nova)
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['admin', 'supervisor', 'colaborador'] as const).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all capitalize ${
+                        role === r
+                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Só quem tiver "admin" aqui consegue enviar convite por e-mail pra criar login novo.
+                </p>
               </div>
             </div>
           </div>

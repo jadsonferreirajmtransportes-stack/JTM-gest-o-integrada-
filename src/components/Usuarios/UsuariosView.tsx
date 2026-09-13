@@ -29,6 +29,8 @@ import {
   FileCheck,
   CalendarDays,
   NotebookPen,
+  Send,
+  Loader2,
 } from 'lucide-react';
 import { UsuarioLogin, GlobalModuleId } from '../../types';
 import { MODULOS_SISTEMA } from '../../data/initialUsersData';
@@ -43,6 +45,7 @@ interface UsuariosViewProps {
   onDeleteUser: (userId: string) => void;
   onSelectUserSession: (user: UsuarioLogin) => void;
   onToggleUserModuleAccess: (userId: string, moduleId: GlobalModuleId) => void;
+  onEnviarConvite: (email: string) => Promise<void>;
 }
 
 export const UsuariosView: React.FC<UsuariosViewProps> = ({
@@ -52,18 +55,30 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
   onDeleteUser,
   onSelectUserSession,
   onToggleUserModuleAccess,
+  onEnviarConvite,
 }) => {
   const [activeTab, setActiveTab] = useState<'lista' | 'matriz' | 'seguranca'>('lista');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'Todos' | 'Ativo' | 'Inativo' | 'Bloqueado'>('Todos');
   const [moduleFilter, setModuleFilter] = useState<string>('todos');
-  
+
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UsuarioLogin | null>(null);
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
   const [userToDelete, setUserToDelete] = useState<UsuarioLogin | null>(null);
+  const [enviandoConviteId, setEnviandoConviteId] = useState<string | null>(null);
+
+  const handleEnviarConvite = async (u: UsuarioLogin) => {
+    if (!u.email) return;
+    setEnviandoConviteId(u.id);
+    try {
+      await onEnviarConvite(u.email);
+    } finally {
+      setEnviandoConviteId(null);
+    }
+  };
 
   // Toggle show password for a specific user
   const toggleRevealPassword = (id: string) => {
@@ -512,7 +527,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
 
                     {/* Card Actions Footer */}
                     <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <div>
+                      <div className="flex items-center gap-1.5">
                         {!isCurrent ? (
                           <button
                             type="button"
@@ -528,6 +543,29 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>Sessão Atual</span>
                           </span>
+                        )}
+
+                        {/* Convite por e-mail — só faz sentido pra quem ainda não tem conta real
+                            de login vinculada (ver selo "Sem Login Real" mais acima). */}
+                        {!user.authUserId && (
+                          <button
+                            type="button"
+                            onClick={() => handleEnviarConvite(user)}
+                            disabled={!user.email || enviandoConviteId === user.id}
+                            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={
+                              user.email
+                                ? 'Envia um e-mail pra esta pessoa criar a própria senha de acesso'
+                                : 'Cadastre um e-mail pra este login antes de convidar'
+                            }
+                          >
+                            {enviandoConviteId === user.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Send className="w-3.5 h-3.5" />
+                            )}
+                            <span>Convidar por E-mail</span>
+                          </button>
                         )}
                       </div>
 

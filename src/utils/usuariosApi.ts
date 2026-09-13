@@ -36,6 +36,7 @@ function rowToUsuario(r: any): UsuarioLogin {
     modulosPermitidos: j(r.modulos_permitidos),
     observacoes: u(r.observacoes),
     authUserId: u(r.auth_user_id),
+    role: u(r.role),
   };
 }
 function usuarioToRow(usr: UsuarioLogin) {
@@ -53,6 +54,7 @@ function usuarioToRow(usr: UsuarioLogin) {
     observacoes: n(usr.observacoes),
     atualizado_em: new Date().toISOString(),
     auth_user_id: n(usr.authUserId),
+    role: usr.role || 'colaborador',
   };
 }
 
@@ -109,5 +111,23 @@ export async function vincularContaAutenticadaSeNecessario(usuarios: UsuarioLogi
   } catch (err) {
     console.error('Erro ao vincular conta autenticada:', err);
     return usuarios;
+  }
+}
+
+/** Envia o convite por e-mail (Edge Function `convidar-usuario`, que roda no servidor do
+ *  Supabase — nunca no navegador — e é a única peça que toca a service_role). A pessoa recebe
+ *  um e-mail, clica no link, define a própria senha (DefinirSenhaScreen) e, no primeiro login,
+ *  o vínculo automático (vincularContaAutenticadaSeNecessario) já liga a conta nova ao cadastro
+ *  existente pelo e-mail. Só quem tiver `role: 'admin'` no próprio cadastro consegue convidar —
+ *  isso é checado de novo, no servidor, então não dá pra burlar só editando a tela. */
+export async function convidarUsuarioPorEmail(email: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('convidar-usuario', {
+    body: { email, redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
+  });
+  if (error) {
+    throw new Error(error.message || 'Erro ao enviar convite.');
+  }
+  if (data?.error) {
+    throw new Error(data.error);
   }
 }

@@ -186,7 +186,13 @@ import { UsuariosView } from './components/Usuarios/UsuariosView';
 import { SwitchUserModal } from './components/Usuarios/SwitchUserModal';
 import { UsuarioFormModal } from './components/Usuarios/UsuarioFormModal';
 import { INITIAL_USERS_DATA } from './data/initialUsersData';
-import { getUsuarios, saveUsuario, deleteUsuario, vincularContaAutenticadaSeNecessario } from './utils/usuariosApi';
+import {
+  getUsuarios,
+  saveUsuario,
+  deleteUsuario,
+  vincularContaAutenticadaSeNecessario,
+  convidarUsuarioPorEmail,
+} from './utils/usuariosApi';
 import { ShieldAlert } from 'lucide-react';
 
 export default function App() {
@@ -422,6 +428,21 @@ export default function App() {
       setCurrentUser(userToSave);
     }
     showToast(`Usuário @${userToSave.login} salvo com sucesso!`, 'success');
+  };
+
+  // Convite por e-mail (Opção B — login real por pessoa, fase "cadastro unificado"): quem tiver
+  // role: 'admin' consegue disparar um convite pra pessoa criar a própria senha, sem passar
+  // pelo painel do Supabase. A checagem de admin de verdade acontece no servidor (Edge Function
+  // convidar-usuario); esta função aqui só chama e mostra o resultado.
+  const handleEnviarConvite = async (email: string) => {
+    try {
+      await convidarUsuarioPorEmail(email);
+      showToast(`Convite enviado para ${email}. A pessoa vai receber um e-mail pra definir a senha.`, 'success');
+    } catch (err) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido.';
+      showToast(`Não foi possível enviar o convite: ${msg}`, 'error');
+    }
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -1936,6 +1957,7 @@ export default function App() {
               onDeleteUser={handleDeleteUser}
               onSelectUserSession={handleSelectUserSession}
               onToggleUserModuleAccess={handleToggleUserModuleAccess}
+              onEnviarConvite={handleEnviarConvite}
             />
           )}
 

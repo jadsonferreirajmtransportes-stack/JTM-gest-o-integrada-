@@ -33,6 +33,10 @@ export interface UsuarioLogin {
    *  conta ainda não tem vínculo; nunca via senha/credencial. Enquanto for undefined, essa
    *  pessoa ainda não tem uma conta de login própria vinculada. */
   authUserId?: string;
+  /** Papel real desta pessoa, checado no SERVIDOR (Edge Function convidar-usuario) — diferente
+   *  do seletor "userRole" do cabeçalho, que é só uma troca de visual sem checagem nenhuma por
+   *  trás. Só quem tiver role 'admin' aqui consegue convidar gente nova por e-mail. */
+  role?: UserRole;
 }
 
 export type EstadoCivil = 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)' | 'União estável';

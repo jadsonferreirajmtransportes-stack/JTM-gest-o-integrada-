@@ -4,6 +4,18 @@ import { Loader2, LogOut } from 'lucide-react';
 import { supabase, supabaseConfigurado } from '../../utils/supabaseClient';
 import { isRotaPublica } from '../../utils/publicRoutes';
 import { LoginScreen } from './LoginScreen';
+import { DefinirSenhaScreen } from './DefinirSenhaScreen';
+
+/** Link de convite/redefinição de senha vem com `#...&type=invite` (ou `type=recovery`) na URL
+ *  — o Supabase já consome esse hash e cria a sessão sozinho antes daqui, então só precisamos
+ *  checar se é esse o motivo da sessão existir, pra decidir se mostra a tela de "definir senha"
+ *  antes de deixar entrar no sistema de verdade. */
+function ehLinkDeConviteOuRecuperacao(): boolean {
+  if (typeof window === 'undefined') return false;
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const tipo = hash.get('type');
+  return tipo === 'invite' || tipo === 'recovery';
+}
 
 /** Porta de entrada do sistema: só renderiza o app (children) quando existe uma sessão válida
  *  do Supabase Auth. Sem sessão, mostra a tela de login; enquanto verifica se já existe uma
@@ -20,6 +32,7 @@ import { LoginScreen } from './LoginScreen';
 export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null | undefined>(undefined); // undefined = ainda carregando
   const [saindo, setSaindo] = useState(false);
+  const [precisaDefinirSenha, setPrecisaDefinirSenha] = useState(ehLinkDeConviteOuRecuperacao);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -57,6 +70,19 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
   if (!session) {
     return <LoginScreen />;
+  }
+
+  if (precisaDefinirSenha) {
+    return (
+      <DefinirSenhaScreen
+        onConcluido={() => {
+          setPrecisaDefinirSenha(false);
+          // Limpa o #access_token=...&type=invite da URL — sem isso, um F5 nessa página
+          // reabriria a tela de definir senha de novo.
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }}
+      />
+    );
   }
 
   return (
