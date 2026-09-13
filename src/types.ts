@@ -1433,6 +1433,11 @@ export interface MensagemChat {
   autorId: string;
   texto: string;
   criadoEm: string;
+  /** Anexo opcional (imagem ou PDF) — data URL (base64), mesmo padrão do ASO digitalizado e do
+   *  comprovante de férias. `anexoNome`/`anexoTipo` vêm do arquivo original selecionado. */
+  anexoUrl?: string;
+  anexoNome?: string;
+  anexoTipo?: string;
 }
 
 // ==========================================

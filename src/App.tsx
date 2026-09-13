@@ -220,6 +220,7 @@ import {
   criarConversaGrupo,
   enviarMensagem,
   assinarMensagensNovas,
+  AnexoMensagemChat,
 } from './utils/chatApi';
 
 export default function App() {
@@ -540,10 +541,10 @@ export default function App() {
     }
   };
 
-  const handleEnviarMensagemChat = async (conversaId: string, texto: string) => {
+  const handleEnviarMensagemChat = async (conversaId: string, texto: string, anexo?: AnexoMensagemChat) => {
     if (!currentUser) return;
     try {
-      await enviarMensagem(conversaId, currentUser.id, texto);
+      await enviarMensagem(conversaId, currentUser.id, texto, anexo);
       const agora = new Date().toISOString();
       setConversasChat((prev) => prev.map((c) => (c.id === conversaId ? { ...c, atualizadoEm: agora } : c)));
       setUltimasLeiturasChat((prev) => ({ ...prev, [conversaId]: agora }));
@@ -551,6 +552,22 @@ export default function App() {
       console.error(err);
       showToast('Não foi possível enviar a mensagem. Verifique sua conexão.', 'error');
     }
+  };
+
+  // Menção a Nota/Atividade/Projeto dentro de uma mensagem do Chat Interno — leva pro módulo
+  // certo (a tela ainda não abre o item específico automaticamente, só o módulo/seção).
+  const handleAbrirMencaoChat = (tipo: 'nota' | 'atividade' | 'projeto') => {
+    if (tipo === 'nota') {
+      setActiveGlobalModule('notas');
+      setActiveSection('notas');
+    } else if (tipo === 'atividade') {
+      setActiveGlobalModule('agenda');
+      setActiveSection('agenda_gestao');
+    } else {
+      setActiveGlobalModule('projetos');
+      setActiveSection('projetos');
+    }
+    setIsMobileMenuOpen(false);
   };
 
   const handleCriarConversaDiretaChat = async (outroUsuarioId: string) => {
@@ -2211,6 +2228,10 @@ export default function App() {
               onEnviarMensagem={handleEnviarMensagemChat}
               onCriarConversaDireta={handleCriarConversaDiretaChat}
               onCriarConversaGrupo={handleCriarConversaGrupoChat}
+              notas={notasVisiveis}
+              atividades={atividadesVisiveis}
+              projetos={projetosVisiveis}
+              onAbrirMencao={handleAbrirMencaoChat}
             />
           )}
 

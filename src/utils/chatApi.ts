@@ -20,6 +20,9 @@ function rowToMensagem(r: any): MensagemChat {
     autorId: r.autor_id,
     texto: r.texto,
     criadoEm: r.criado_em,
+    anexoUrl: r.anexo_url ?? undefined,
+    anexoNome: r.anexo_nome ?? undefined,
+    anexoTipo: r.anexo_tipo ?? undefined,
   };
 }
 
@@ -183,15 +186,34 @@ export async function getMensagens(conversaId: string): Promise<MensagemChat[]> 
   return (data ?? []).map(rowToMensagem);
 }
 
-export async function enviarMensagem(conversaId: string, autorId: string, texto: string): Promise<void> {
+export interface AnexoMensagemChat {
+  url: string; // data URL (base64)
+  nome: string;
+  tipo: string; // mime type
+}
+
+export async function enviarMensagem(
+  conversaId: string,
+  autorId: string,
+  texto: string,
+  anexo?: AnexoMensagemChat
+): Promise<void> {
   const textoLimpo = texto.trim();
-  if (!textoLimpo) return;
+  // Precisa de texto OU anexo — uma imagem/PDF sozinho, sem legenda, também é uma mensagem válida.
+  if (!textoLimpo && !anexo) return;
   const id = gerarId('msg');
   const agora = new Date().toISOString();
 
-  const { error } = await supabase
-    .from('chat_mensagens')
-    .insert({ id, conversa_id: conversaId, autor_id: autorId, texto: textoLimpo, criado_em: agora });
+  const { error } = await supabase.from('chat_mensagens').insert({
+    id,
+    conversa_id: conversaId,
+    autor_id: autorId,
+    texto: textoLimpo,
+    criado_em: agora,
+    anexo_url: anexo?.url ?? null,
+    anexo_nome: anexo?.nome ?? null,
+    anexo_tipo: anexo?.tipo ?? null,
+  });
   assertNoError(error, 'enviarMensagem');
 
   // Carimba a conversa como "mexida agora", pra ela subir no topo da lista de conversas.
