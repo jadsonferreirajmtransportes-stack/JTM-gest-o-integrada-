@@ -114,7 +114,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   return (
     <div className="space-y-4">
       {/* Control Bar: Filters, Search, Export, and Add */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bg-white p-5 rounded-3xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Filters Group */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 flex-1">
           <div className="relative flex-1 min-w-[200px] max-w-xs">
@@ -254,7 +254,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
 
       {/* Table View */}
       {viewMode === 'table' ? (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
@@ -492,7 +492,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             return (
               <div
                 key={colab.id}
-                className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs hover:border-amber-400 hover:shadow-md transition-all flex flex-col justify-between"
+                className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">

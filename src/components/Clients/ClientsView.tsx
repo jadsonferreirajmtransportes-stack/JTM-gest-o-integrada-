@@ -270,8 +270,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-slate-900 rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider">Carteira de Clientes</span>
             <Building2 className="w-4 h-4 text-[#B38F4F]" />
@@ -285,7 +285,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
           <p className="text-[11px] text-slate-500 mt-1">Parceiros contratados JMT</p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-xs">
+        <div className="bg-slate-900 rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider">Faturamento / Mês Estimado</span>
             <DollarSign className="w-4 h-4 text-emerald-400" />
@@ -298,7 +298,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
           <p className="text-[11px] text-slate-500 mt-1">Receita estimada da carteira ativa</p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-xs">
+        <div className="bg-slate-900 rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider">Volume de Entregas / Mês</span>
             <Truck className="w-4 h-4 text-cyan-400" />
@@ -310,7 +310,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
           <p className="text-[11px] text-slate-500 mt-1">Last mile e transferências</p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-xs">
+        <div className="bg-slate-900 rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider">Cadeia Fria & RDC 430</span>
             <ShieldCheck className="w-4 h-4 text-amber-400" />
@@ -326,7 +326,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 shadow-xs">
+      <div className="bg-slate-900 rounded-3xl p-6 space-y-3 shadow-md">
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
           {/* Search Box */}
           <div className="sm:col-span-4 relative">
@@ -460,7 +460,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
         </div>
       ) : (
         /* Table View */
-        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xs">
+        <div className="bg-slate-900 rounded-3xl overflow-hidden shadow-md">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
