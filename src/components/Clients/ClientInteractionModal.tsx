@@ -62,18 +62,18 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#B38F4F]/15 border border-[#B38F4F]/30 flex items-center justify-center text-[#B38F4F]">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#8A6A39]">
               <Clock className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">
+              <h2 className="text-base font-bold text-slate-900">
                 Registrar Interação Comercial / CRM
               </h2>
-              <p className="text-xs text-slate-400 font-mono">
+              <p className="text-xs text-slate-500 font-mono">
                 {cliente.nomeFantasia || cliente.razaoSocial} ({cliente.codigoCliente})
               </p>
             </div>
@@ -81,7 +81,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -91,7 +91,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
                 Data da Interação *
               </label>
               <input
@@ -99,18 +99,18 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
                 required
                 value={data}
                 onChange={(e) => setData(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
                 Tipo de Contato / Evento *
               </label>
               <select
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value as InteracaoCliente['tipo'])}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
               >
                 <option value="Reunião Comercial">Reunião Comercial</option>
                 <option value="Alinhamento Operacional">Alinhamento Operacional</option>
@@ -124,13 +124,13 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-slate-600 mb-1">
               Responsável JMT *
             </label>
             <select
               value={responsavelJMT}
               onChange={(e) => setResponsavelJMT(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
             >
               {supervisores.map((s) => (
                 <option key={s.id} value={s.nome}>
@@ -143,7 +143,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-slate-600 mb-1">
               Resumo da Conversa / Assunto Tratado *
             </label>
             <textarea
@@ -152,13 +152,13 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
               value={resumo}
               onChange={(e) => setResumo(e.target.value)}
               placeholder="Descreva detalhadamente o que foi conversado, alinhamentos de frete, acordos operacionais ou auditorias..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-white border border-slate-200 rounded-lg p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
                 Próximo Passo / Ação de Acompanhamento
               </label>
               <input
@@ -166,35 +166,35 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
                 value={proximoPasso}
                 onChange={(e) => setProximoPasso(e.target.value)}
                 placeholder="Ex: Enviar minuta aditiva de frete..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-[#B38F4F]"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
                 Data Prevista
               </label>
               <input
                 type="date"
                 value={dataProximoPasso}
                 onChange={(e) => setDataProximoPasso(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-[#B38F4F]"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
               />
             </div>
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-slate-950 transition-colors flex items-center gap-1.5 shadow-md"
+              className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white transition-colors flex items-center gap-1.5 shadow-md"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Salvar Interação</span>
