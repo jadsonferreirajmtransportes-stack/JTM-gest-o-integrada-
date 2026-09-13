@@ -420,6 +420,8 @@ export default function App() {
       setActiveSection('chat');
     } else if (modId === 'notas') {
       setActiveSection('notas');
+    } else if (modId === 'instrucoes') {
+      setActiveSection('instrucoes');
     } else if (modId === 'usuarios') {
       setActiveSection('usuarios');
     } else if (modId === 'dp') {
@@ -1846,6 +1848,7 @@ export default function App() {
           else if (sec === 'controladoria') setActiveGlobalModule('controladoria');
           else if (sec === 'chat') setActiveGlobalModule('chat');
           else if (sec === 'notas') setActiveGlobalModule('notas');
+          else if (sec === 'instrucoes') setActiveGlobalModule('instrucoes');
           else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
           else setActiveGlobalModule('dp');
           setIsMobileMenuOpen(false);
