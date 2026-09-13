@@ -31,6 +31,7 @@ import {
   RiscoControleProcesso,
   AcaoPlano5W2H,
   RevisaoHistorico,
+  UsuarioLogin,
 } from '../../types';
 import {
   STATUS_INSTRUCAO_CONFIG,
@@ -64,6 +65,7 @@ interface InstrucaoEditorProps {
   /** Modo de preenchimento por link público (colaborador sem login): esconde exclusão,
    *  favoritar e o vínculo com outros módulos — o preenchedor só cuida do conteúdo do processo. */
   modoPublico?: boolean;
+  usuarios?: UsuarioLogin[];
 }
 
 const VINCULO_ICON: Record<VinculoNotaModulo['tipoEntidade'], React.ElementType> = {
@@ -89,11 +91,13 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
   onNavigateToVinculo,
   onShare,
   modoPublico = false,
+  usuarios = [],
 }) => {
   const [form, setForm] = useState<InstrucaoTrabalho>(instrucao);
   const [etapaAtual, setEtapaAtual] = useState<EtapaFormularioId>('identificacao');
   const [mostrarGuia, setMostrarGuia] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCompartilhar, setShowCompartilhar] = useState(false);
 
   useEffect(() => {
     setForm(instrucao);
@@ -104,6 +108,12 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
     const next = { ...form, ...patch };
     setForm(next);
     onSave(next);
+  };
+
+  const handleToggleUsuarioMarcado = (userId: string) => {
+    const atual = form.usuariosMarcadosIds || [];
+    const novo = atual.includes(userId) ? atual.filter((id) => id !== userId) : [...atual, userId];
+    atualizar({ usuariosMarcadosIds: novo });
   };
 
   const categoriaCfg = getCategoriaConfig(form.categoria);
@@ -550,8 +560,64 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
         value={form.titulo}
         onChange={(e) => atualizar({ titulo: e.target.value })}
         placeholder="Título da Instrução de Trabalho"
-        className="w-full bg-transparent border-none outline-hidden text-2xl font-extrabold text-slate-900 placeholder-slate-300 mb-4"
+        className="w-full bg-transparent border-none outline-hidden text-2xl font-extrabold text-slate-900 placeholder-slate-300 mb-1"
       />
+
+      {/* Compartilhar com Usuários do Sistema — mesma regra de visibilidade da Agenda da
+          Gestão, Projetos Gerenciais e Notas & Ideias (ver visibilidadeUtils.ts). */}
+      {!modoPublico && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setShowCompartilhar((v) => !v)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-[11px] font-medium transition-colors ${
+              (form.usuariosMarcadosIds || []).length > 0
+                ? 'bg-teal-50 border-teal-200 text-teal-800'
+                : 'bg-white border-dashed border-slate-300 text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>
+              {(form.usuariosMarcadosIds || []).length > 0
+                ? `Compartilhada com ${(form.usuariosMarcadosIds || []).length}`
+                : 'Compartilhar com Usuários do Sistema'}
+            </span>
+          </button>
+
+          {showCompartilhar && (
+            <div className="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <p className="text-[11px] text-slate-500 mb-1.5">
+                Só quem criou esta instrução e quem for marcado aqui enxerga ela em Instruções de Trabalho.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {usuarios
+                  .filter((u) => u.status === 'Ativo')
+                  .map((u) => {
+                    const marcado = (form.usuariosMarcadosIds || []).includes(u.id);
+                    return (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => handleToggleUsuarioMarcado(u.id)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border flex items-center gap-1 transition-colors ${
+                          marcado
+                            ? 'bg-teal-600 border-teal-600 text-white'
+                            : 'bg-white border-slate-300 text-slate-600 hover:border-teal-300'
+                        }`}
+                      >
+                        {marcado && <Check className="w-3 h-3" />}
+                        {u.nome}
+                      </button>
+                    );
+                  })}
+                {usuarios.filter((u) => u.status === 'Ativo').length === 0 && (
+                  <span className="text-[11px] text-slate-400">Nenhum outro login cadastrado ainda.</span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Stepper — etapas do processo */}
       <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-1 -mx-1 px-1">

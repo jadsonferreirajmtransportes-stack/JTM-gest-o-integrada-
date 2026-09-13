@@ -177,6 +177,7 @@ import { AdmissionLinkModal } from './components/Admission/AdmissionLinkModal';
 import { PreAdmissionsManagerView } from './components/Admission/PreAdmissionsManagerView';
 import { AgendaGestaoView } from './components/Agenda/AgendaGestaoView';
 import { atividadeOcorreEm, podeVerAtividade } from './components/Agenda/agendaUtils';
+import { podeVerRegistroCompartilhado } from './utils/visibilidadeUtils';
 import { NotasView } from './components/Notas/NotasView';
 import { InstrucoesTrabalhoView } from './components/Instrucoes/InstrucoesTrabalhoView';
 import { GeneralDashboard } from './components/DashboardGeral/GeneralDashboard';
@@ -900,6 +901,51 @@ export default function App() {
     [atividadesGestao, currentUser, userRole]
   );
 
+  // Mesmo raciocínio da Agenda da Gestão, agora também em Projetos Gerenciais, Notas & Ideias e
+  // Instruções de Trabalho — ver visibilidadeUtils.ts. Cada um usa seus próprios campos de texto
+  // livre pra manter registros antigos (de antes dessa marcação existir) visíveis por nome.
+  const projetosVisiveis = useMemo(
+    () =>
+      projetos.filter((p) =>
+        podeVerRegistroCompartilhado({
+          criadoPorUserId: p.criadoPorUserId,
+          usuariosMarcadosIds: p.usuariosMarcadosIds,
+          nomesTextoLivre: [p.liderProjetoNome, ...(p.equipeMembros || [])],
+          currentUser,
+          userRole,
+        })
+      ),
+    [projetos, currentUser, userRole]
+  );
+
+  const notasVisiveis = useMemo(
+    () =>
+      notasPaginas.filter((n) =>
+        podeVerRegistroCompartilhado({
+          criadoPorUserId: n.criadoPorUserId,
+          usuariosMarcadosIds: n.usuariosMarcadosIds,
+          nomesTextoLivre: [n.autor],
+          currentUser,
+          userRole,
+        })
+      ),
+    [notasPaginas, currentUser, userRole]
+  );
+
+  const instrucoesVisiveis = useMemo(
+    () =>
+      instrucoesTrabalho.filter((it) =>
+        podeVerRegistroCompartilhado({
+          criadoPorUserId: it.criadoPorUserId,
+          usuariosMarcadosIds: it.usuariosMarcadosIds,
+          nomesTextoLivre: [it.autor, it.responsavel, it.aprovadoPor],
+          currentUser,
+          userRole,
+        })
+      ),
+    [instrucoesTrabalho, currentUser, userRole]
+  );
+
   // Sidebar badge counters
   const sidebarCounts = useMemo(() => {
     const ativos = colaboradores.filter((c) => c.status !== 'Inativo').length;
@@ -937,7 +983,7 @@ export default function App() {
     // vez de embarques/viagens ativas (que hoje são sempre 0, sem dado real).
     const clientesFarmaAereo = clientes.filter(isClienteFarmaAereo).length;
     const clientesFarmaRodoviario = clientes.filter(isClienteFarmaRodoviario).length;
-    const projetosAtivos = projetos.length;
+    const projetosAtivos = projetosVisiveis.length;
     const todayIso = new Date().toISOString().split('T')[0];
     const atividadesHoje = atividadesVisiveis.filter(
       (a) => atividadeOcorreEm(a, todayIso) && a.status !== 'Concluída' && a.status !== 'Cancelada'
@@ -965,8 +1011,8 @@ export default function App() {
       atividadesHoje,
       conversasChatNaoLidas,
       totalLogins: users.length,
-      notasCount: notasPaginas.filter((n) => !n.arquivada).length,
-      instrucoesCount: instrucoesTrabalho.filter((i) => !i.arquivada).length,
+      notasCount: notasVisiveis.filter((n) => !n.arquivada).length,
+      instrucoesCount: instrucoesVisiveis.filter((i) => !i.arquivada).length,
     };
   }, [
     colaboradores,
@@ -976,10 +1022,10 @@ export default function App() {
     clientes,
     embarquesAereos,
     viagensRodoviarias,
-    projetos,
+    projetosVisiveis,
     atividadesVisiveis,
-    notasPaginas,
-    instrucoesTrabalho,
+    notasVisiveis,
+    instrucoesVisiveis,
     users,
     conversasChat,
     ultimasLeiturasChat,
@@ -994,7 +1040,7 @@ export default function App() {
       (a) => atividadeOcorreEm(a, hojeIso) && a.status !== 'Concluída' && a.status !== 'Cancelada'
     );
 
-    const projetosAtivos = projetos.filter((p) => p.status !== 'Concluído' && p.status !== 'Cancelado');
+    const projetosAtivos = projetosVisiveis.filter((p) => p.status !== 'Concluído' && p.status !== 'Cancelado');
     const limite = new Date();
     limite.setDate(limite.getDate() + 3);
     const limiteIso = limite.toISOString().split('T')[0];
@@ -1004,7 +1050,7 @@ export default function App() {
     );
 
     return { atividadesHoje, projetosAtrasados, projetosProximos };
-  }, [atividadesVisiveis, projetos]);
+  }, [atividadesVisiveis, projetosVisiveis]);
 
   // Dispara o aviso automaticamente uma vez por dia, assim que os dados terminam de carregar —
   // só o aviso dentro do sistema (sem e-mail/WhatsApp automático, por escolha explícita do usuário).
@@ -1047,7 +1093,13 @@ export default function App() {
 
   // HANDLERS FOR ENTITY OPERATIONS
   const handleSaveProjeto = async (proj: ProjetoGerencial) => {
-    await saveProjetoGerencial(proj);
+    // Carimba quem criou (só na primeira vez) pra podeVerRegistroCompartilhado saber quem, além
+    // de admin e quem for marcado, enxerga este projeto — mesma regra da Agenda da Gestão.
+    const registro: ProjetoGerencial = {
+      ...proj,
+      criadoPorUserId: proj.criadoPorUserId || currentUser?.id,
+    };
+    await saveProjetoGerencial(registro);
     await loadGestaoData();
     showToast(`Projeto "${proj.titulo}" salvo com sucesso!`, 'success');
   };
@@ -1111,7 +1163,12 @@ export default function App() {
 
   // Notas & Ideias Handlers
   const handleSaveNotaPagina = async (pagina: NotaPagina) => {
-    await saveNotaPagina(pagina);
+    // Mesma regra de visibilidade da Agenda da Gestão — ver visibilidadeUtils.ts.
+    const registro: NotaPagina = {
+      ...pagina,
+      criadoPorUserId: pagina.criadoPorUserId || currentUser?.id,
+    };
+    await saveNotaPagina(registro);
     await loadGestaoData();
   };
 
@@ -1123,7 +1180,12 @@ export default function App() {
 
   // Instruções de Trabalho Handlers
   const handleSaveInstrucaoTrabalho = async (instrucao: InstrucaoTrabalho) => {
-    await saveInstrucaoTrabalho(instrucao);
+    // Mesma regra de visibilidade da Agenda da Gestão — ver visibilidadeUtils.ts.
+    const registro: InstrucaoTrabalho = {
+      ...instrucao,
+      criadoPorUserId: instrucao.criadoPorUserId || currentUser?.id,
+    };
+    await saveInstrucaoTrabalho(registro);
     await loadGestaoData();
   };
 
@@ -1860,7 +1922,7 @@ export default function App() {
               embarquesAereos={embarquesAereos}
               viagensRodoviarias={viagensRodoviarias}
               colaboradores={colaboradores}
-              projetos={projetos}
+              projetos={projetosVisiveis}
               atividadesGestao={atividadesGestao}
               custosOperacionais={custosOperacionais}
               feriasList={feriasList}
@@ -1987,12 +2049,13 @@ export default function App() {
           {/* ========================================================================= */}
           {(activeGlobalModule === 'projetos' || activeSection === 'projetos') && (
             <ProjetosView
-              projetos={projetos}
+              projetos={projetosVisiveis}
               onSaveProjeto={handleSaveProjeto}
               onDeleteProjeto={handleDeleteProjeto}
               onUpdateProjetoStatus={handleUpdateProjetoStatus}
               supervisores={supervisores}
               colaboradores={colaboradores}
+              usuarios={users}
               userRole={userRole}
             />
           )}
@@ -2021,7 +2084,7 @@ export default function App() {
               custosOperacionais={custosOperacionais}
               colaboradores={colaboradores}
               lancamentosFaturamentoAereo={lancamentosFaturamentoAereo}
-              projetos={projetos}
+              projetos={projetosVisiveis}
               orcamentos={orcamentos}
               userRole={userRole}
               onSaveOrcamento={handleSaveOrcamento}
@@ -2049,14 +2112,15 @@ export default function App() {
           {/* ========================================================================= */}
           {(activeGlobalModule === 'notas' || activeSection === 'notas') && (
             <NotasView
-              paginas={notasPaginas}
+              usuarios={users}
+              paginas={notasVisiveis}
               onSavePagina={handleSaveNotaPagina}
               onDeletePagina={handleDeleteNotaPagina}
               currentUserName={currentUser?.nome}
               onNavigateModule={handleSelectGlobalModule}
               clientes={clientes}
               colaboradores={colaboradores}
-              projetos={projetos}
+              projetos={projetosVisiveis}
               embarquesAereos={embarquesAereos}
               viagensRodoviarias={viagensRodoviarias}
               ocorrencias={ocorrencias}
@@ -2068,14 +2132,15 @@ export default function App() {
           {/* ========================================================================= */}
           {(activeGlobalModule === 'instrucoes' || activeSection === 'instrucoes') && (
             <InstrucoesTrabalhoView
-              instrucoes={instrucoesTrabalho}
+              usuarios={users}
+              instrucoes={instrucoesVisiveis}
               onSaveInstrucao={handleSaveInstrucaoTrabalho}
               onDeleteInstrucao={handleDeleteInstrucaoTrabalho}
               currentUserName={currentUser?.nome}
               onNavigateModule={handleSelectGlobalModule}
               clientes={clientes}
               colaboradores={colaboradores}
-              projetos={projetos}
+              projetos={projetosVisiveis}
               embarquesAereos={embarquesAereos}
               viagensRodoviarias={viagensRodoviarias}
               ocorrencias={ocorrencias}

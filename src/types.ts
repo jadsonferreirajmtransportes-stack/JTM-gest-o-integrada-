@@ -1248,10 +1248,13 @@ export interface ProjetoGerencial {
   kpis?: IndicadorKPIProjeto[];
   atualizacoes?: AtualizacaoProjeto[];
   documentos?: AnexoDocumentoProjeto[];
-  
+
   observacoes?: string;
   criadoEm?: string;
   atualizadoEm?: string;
+  /** Mesma regra de visibilidade da Agenda da Gestão — ver src/utils/visibilidadeUtils.ts. */
+  criadoPorUserId?: string;
+  usuariosMarcadosIds?: string[];
 }
 
 // ==========================================
@@ -1522,6 +1525,9 @@ export interface NotaPagina {
   autor?: string;
   criadoEm: string;
   atualizadoEm?: string;
+  /** Mesma regra de visibilidade da Agenda da Gestão — ver src/utils/visibilidadeUtils.ts. */
+  criadoPorUserId?: string;
+  usuariosMarcadosIds?: string[];
 }
 
 // ==========================================
@@ -1668,5 +1674,8 @@ export interface InstrucaoTrabalho {
   autor?: string;
   criadoEm: string;
   atualizadoEm?: string;
+  /** Mesma regra de visibilidade da Agenda da Gestão — ver src/utils/visibilidadeUtils.ts. */
+  criadoPorUserId?: string;
+  usuariosMarcadosIds?: string[];
 }
 

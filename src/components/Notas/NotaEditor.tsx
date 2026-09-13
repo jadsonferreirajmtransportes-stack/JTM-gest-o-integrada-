@@ -21,6 +21,8 @@ import {
   Paperclip,
   Download,
   Eye,
+  Share2,
+  Check,
 } from 'lucide-react';
 import {
   BlocoNota,
@@ -30,6 +32,7 @@ import {
   GlobalModuleId,
   FluxogramaNo,
   FluxogramaConexao,
+  UsuarioLogin,
 } from '../../types';
 import { BLOCO_CONFIG, ICONES_SUGERIDOS, criarBlocoVazio, getFileKind } from './notasUtils';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
@@ -42,6 +45,7 @@ interface NotaEditorProps {
   onDelete: () => void;
   onOpenVincular: () => void;
   onNavigateToVinculo?: (modulo: GlobalModuleId) => void;
+  usuarios: UsuarioLogin[];
 }
 
 const VINCULO_ICON: Record<VinculoNotaModulo['tipoEntidade'], React.ElementType> = {
@@ -53,7 +57,7 @@ const VINCULO_ICON: Record<VinculoNotaModulo['tipoEntidade'], React.ElementType>
   ocorrencia: AlertTriangle,
 };
 
-export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete, onOpenVincular, onNavigateToVinculo }) => {
+export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete, onOpenVincular, onNavigateToVinculo, usuarios }) => {
   const [titulo, setTitulo] = useState(pagina.titulo);
   const [icone, setIcone] = useState(pagina.icone || '📄');
   const [blocos, setBlocos] = useState<BlocoNota[]>(pagina.blocos.length ? pagina.blocos : [criarBlocoVazio()]);
@@ -61,6 +65,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
   const [menuAdicionarIdx, setMenuAdicionarIdx] = useState<number | null>(null);
   const [viewingImage, setViewingImage] = useState<{ url: string; nome?: string; titulo: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCompartilhar, setShowCompartilhar] = useState(false);
 
   useEffect(() => {
     setTitulo(pagina.titulo);
@@ -71,6 +76,12 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
 
   const persist = (patch: Partial<NotaPagina>) => {
     onSave({ ...pagina, titulo, icone, blocos, ...patch });
+  };
+
+  const handleToggleUsuarioMarcado = (userId: string) => {
+    const atual = pagina.usuariosMarcadosIds || [];
+    const novo = atual.includes(userId) ? atual.filter((id) => id !== userId) : [...atual, userId];
+    persist({ usuariosMarcadosIds: novo });
   };
 
   const handleUpdateBloco = (idx: number, field: keyof BlocoNota, value: any) => {
@@ -515,6 +526,58 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
           >
             alterar
           </button>
+        )}
+
+        {/* Compartilhar com Usuários do Sistema — mesma regra de visibilidade da Agenda da
+            Gestão e Projetos Gerenciais (ver visibilidadeUtils.ts). */}
+        <button
+          type="button"
+          onClick={() => setShowCompartilhar((v) => !v)}
+          className={`ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-[11px] font-medium transition-colors ${
+            (pagina.usuariosMarcadosIds || []).length > 0
+              ? 'bg-teal-50 border-teal-200 text-teal-800'
+              : 'bg-white border-dashed border-slate-300 text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Share2 className="w-3.5 h-3.5" />
+          <span>
+            {(pagina.usuariosMarcadosIds || []).length > 0
+              ? `Compartilhada com ${(pagina.usuariosMarcadosIds || []).length}`
+              : 'Compartilhar'}
+          </span>
+        </button>
+
+        {showCompartilhar && (
+          <div className="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <p className="text-[11px] text-slate-500 mb-1.5">
+              Só quem criou esta página e quem for marcado aqui enxerga ela em Notas & Ideias.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {usuarios
+                .filter((u) => u.status === 'Ativo')
+                .map((u) => {
+                  const marcado = (pagina.usuariosMarcadosIds || []).includes(u.id);
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => handleToggleUsuarioMarcado(u.id)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border flex items-center gap-1 transition-colors ${
+                        marcado
+                          ? 'bg-teal-600 border-teal-600 text-white'
+                          : 'bg-white border-slate-300 text-slate-600 hover:border-teal-300'
+                      }`}
+                    >
+                      {marcado && <Check className="w-3 h-3" />}
+                      {u.nome}
+                    </button>
+                  );
+                })}
+              {usuarios.filter((u) => u.status === 'Ativo').length === 0 && (
+                <span className="text-[11px] text-slate-400">Nenhum outro login cadastrado ainda.</span>
+              )}
+            </div>
+          </div>
         )}
       </div>
 

@@ -19,6 +19,7 @@ import {
   EmbarqueAereo,
   ViagemRodoviaria,
   Ocorrencia,
+  UsuarioLogin,
 } from '../../types';
 import { criarPaginaVazia } from './notasUtils';
 import { NotaEditor } from './NotaEditor';
@@ -36,6 +37,7 @@ interface NotasViewProps {
   embarquesAereos: EmbarqueAereo[];
   viagensRodoviarias: ViagemRodoviaria[];
   ocorrencias: Ocorrencia[];
+  usuarios: UsuarioLogin[];
 }
 
 export const NotasView: React.FC<NotasViewProps> = ({
@@ -50,6 +52,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
   embarquesAereos,
   viagensRodoviarias,
   ocorrencias,
+  usuarios,
 }) => {
   const paginasAtivas = useMemo(() => paginas.filter((p) => !p.arquivada), [paginas]);
 
@@ -286,6 +289,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
               onDelete={() => handleDelete(paginaSelecionada.id)}
               onOpenVincular={() => setIsVincularOpen(true)}
               onNavigateToVinculo={onNavigateModule}
+              usuarios={usuarios}
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center py-16">

@@ -11,6 +11,7 @@ import {
   ViagemRodoviaria,
   Ocorrencia,
   CategoriaInstrucaoTrabalho,
+  UsuarioLogin,
 } from '../../types';
 import { CATEGORIAS_INSTRUCAO, STATUS_INSTRUCAO_CONFIG, TEMPLATES_INSTRUCAO, criarInstrucaoVazia, getCategoriaConfig } from './instrucoesTrabalhoUtils';
 import { InstrucaoEditor } from './InstrucaoEditor';
@@ -30,6 +31,7 @@ interface InstrucoesTrabalhoViewProps {
   embarquesAereos: EmbarqueAereo[];
   viagensRodoviarias: ViagemRodoviaria[];
   ocorrencias: Ocorrencia[];
+  usuarios: UsuarioLogin[];
 }
 
 export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
@@ -44,6 +46,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
   embarquesAereos,
   viagensRodoviarias,
   ocorrencias,
+  usuarios,
 }) => {
   const instrucoesAtivas = useMemo(() => instrucoes.filter((i) => !i.arquivada), [instrucoes]);
 
@@ -219,6 +222,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
               onOpenVincular={() => setIsVincularOpen(true)}
               onNavigateToVinculo={onNavigateModule}
               onShare={() => setIsLinkModalOpen(true)}
+              usuarios={usuarios}
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center py-16">

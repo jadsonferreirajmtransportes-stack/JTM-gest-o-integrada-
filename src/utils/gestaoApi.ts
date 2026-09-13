@@ -130,6 +130,8 @@ function rowToProjeto(r: any): ProjetoGerencial {
     observacoes: u(r.observacoes),
     criadoEm: u(r.criado_em),
     atualizadoEm: u(r.atualizado_em),
+    criadoPorUserId: u(r.criado_por_user_id),
+    usuariosMarcadosIds: j(r.usuarios_marcados_ids),
   };
 }
 function projetoToRow(p: ProjetoGerencial) {
@@ -166,6 +168,8 @@ function projetoToRow(p: ProjetoGerencial) {
     observacoes: n(p.observacoes),
     criado_em: p.criadoEm || new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
+    criado_por_user_id: n(p.criadoPorUserId),
+    usuarios_marcados_ids: j(p.usuariosMarcadosIds),
   };
 }
 export async function getProjetosGerenciais(): Promise<ProjetoGerencial[]> {
@@ -298,6 +302,8 @@ function rowToNota(r: any): NotaPagina {
     autor: u(r.autor),
     criadoEm: r.criado_em,
     atualizadoEm: u(r.atualizado_em),
+    criadoPorUserId: u(r.criado_por_user_id),
+    usuariosMarcadosIds: j(r.usuarios_marcados_ids),
   };
 }
 function notaToRow(nt: NotaPagina) {
@@ -313,6 +319,8 @@ function notaToRow(nt: NotaPagina) {
     autor: n(nt.autor),
     criado_em: nt.criadoEm || new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
+    criado_por_user_id: n(nt.criadoPorUserId),
+    usuarios_marcados_ids: j(nt.usuariosMarcadosIds),
   };
 }
 export async function getNotasPaginas(): Promise<NotaPagina[]> {
@@ -377,6 +385,8 @@ function rowToInstrucao(r: any): InstrucaoTrabalho {
     autor: u(r.autor),
     criadoEm: r.criado_em,
     atualizadoEm: u(r.atualizado_em),
+    criadoPorUserId: u(r.criado_por_user_id),
+    usuariosMarcadosIds: j(r.usuarios_marcados_ids),
   };
 }
 function instrucaoToRow(it: InstrucaoTrabalho) {
@@ -408,6 +418,8 @@ function instrucaoToRow(it: InstrucaoTrabalho) {
     autor: n(it.autor),
     criado_em: it.criadoEm || new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
+    criado_por_user_id: n(it.criadoPorUserId),
+    usuarios_marcados_ids: j(it.usuariosMarcadosIds),
   };
 }
 export async function getInstrucoesTrabalho(): Promise<InstrucaoTrabalho[]> {

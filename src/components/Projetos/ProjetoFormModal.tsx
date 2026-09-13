@@ -31,6 +31,7 @@ import {
   CategoriaDocumentoProjeto,
   Supervisor,
   Colaborador,
+  UsuarioLogin,
 } from '../../types';
 import {
   CATEGORIAS_DOCUMENTOS_PROJETO,
@@ -45,6 +46,7 @@ interface ProjetoFormModalProps {
   initialData?: ProjetoGerencial | null;
   supervisores: Supervisor[];
   colaboradores: Colaborador[];
+  usuarios: UsuarioLogin[];
 }
 
 const CATEGORIAS: CategoriaProjeto[] = [
@@ -85,6 +87,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
   initialData,
   supervisores,
   colaboradores,
+  usuarios,
 }) => {
   const [activeTab, setActiveTab] = useState<'geral' | 'equipe' | 'cronograma' | 'financeiro' | 'marcos' | 'riscos' | 'anexos'>('geral');
 
@@ -100,6 +103,9 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
   const [liderProjetoNome, setLiderProjetoNome] = useState('');
   const [liderCargo, setLiderCargo] = useState('');
   const [equipeMembrosInput, setEquipeMembrosInput] = useState('');
+  // Marcação por login do sistema — diferente de "equipe" (texto livre) — quem for marcado aqui
+  // ganha visão deste projeto mesmo sem estar na equipe. Ver visibilidadeUtils.ts.
+  const [usuariosMarcadosIds, setUsuariosMarcadosIds] = useState<string[]>([]);
 
   const [dataInicio, setDataInicio] = useState('');
   const [dataPrevisaoFim, setDataPrevisaoFim] = useState('');
@@ -165,6 +171,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
       setMarcos(initialData.marcos || []);
       setRiscos(initialData.riscos || []);
       setDocumentos(initialData.documentos || []);
+      setUsuariosMarcadosIds(initialData.usuariosMarcadosIds || []);
     } else {
       const today = new Date().toISOString().split('T')[0];
       const sixMonthsLater = new Date();
@@ -196,6 +203,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
       setMarcos([]);
       setRiscos([]);
       setDocumentos([]);
+      setUsuariosMarcadosIds([]);
     }
     setActiveTab('geral');
   }, [initialData, isOpen, supervisores]);
@@ -275,6 +283,12 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
     setDocumentos((prev) => prev.filter((d) => d.id !== id));
   };
 
+  const handleToggleUsuarioMarcado = (userId: string) => {
+    setUsuariosMarcadosIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!titulo.trim()) return;
@@ -320,6 +334,8 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
       documentos: documentos,
       criadoEm: initialData?.criadoEm || new Date().toISOString(),
       atualizadoEm: new Date().toISOString(),
+      criadoPorUserId: initialData?.criadoPorUserId,
+      usuariosMarcadosIds,
     };
 
     onSave(projetoToSave);
@@ -686,6 +702,41 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                       + {sup.nome}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Marcar Usuários do Sistema — compartilha a visão deste projeto */}
+              <div className="pt-3 border-t border-slate-100">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Compartilhar com Usuários do Sistema (opcional)
+                </label>
+                <p className="text-[11px] text-slate-500 mb-1.5">
+                  Só quem criou este projeto e quem for marcado aqui enxerga ele na tela de Projetos —
+                  os demais logins com acesso ao módulo não veem, a não ser que sejam administradores.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {usuarios
+                    .filter((u) => u.status === 'Ativo')
+                    .map((u) => {
+                      const marcado = usuariosMarcadosIds.includes(u.id);
+                      return (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => handleToggleUsuarioMarcado(u.id)}
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
+                            marcado
+                              ? 'bg-purple-600 border-purple-600 text-white'
+                              : 'bg-white border-slate-300 text-slate-600 hover:border-purple-300'
+                          }`}
+                        >
+                          {u.nome}
+                        </button>
+                      );
+                    })}
+                  {usuarios.filter((u) => u.status === 'Ativo').length === 0 && (
+                    <span className="text-[11px] text-slate-400">Nenhum outro login cadastrado ainda.</span>
+                  )}
                 </div>
               </div>
             </div>

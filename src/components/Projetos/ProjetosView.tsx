@@ -20,6 +20,7 @@ import {
   Supervisor,
   Colaborador,
   UserRole,
+  UsuarioLogin,
 } from '../../types';
 
 import { ProjetosDashboardTab } from './ProjetosDashboardTab';
@@ -40,6 +41,7 @@ interface ProjetosViewProps {
   onUpdateProjetoStatus?: (id: string, newStatus: StatusProjeto) => void;
   supervisores: Supervisor[];
   colaboradores: Colaborador[];
+  usuarios: UsuarioLogin[];
   userRole?: UserRole;
 }
 
@@ -50,6 +52,7 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
   onUpdateProjetoStatus,
   supervisores,
   colaboradores,
+  usuarios,
   userRole = 'admin',
 }) => {
   const [activeTab, setActiveTab] = useState<
@@ -286,6 +289,7 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
         initialData={editingProjeto}
         supervisores={supervisores}
         colaboradores={colaboradores}
+        usuarios={usuarios}
       />
 
       {/* Detail 360° Modal */}
