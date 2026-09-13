@@ -436,7 +436,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200 pb-12">
+    <div className="space-y-8 animate-in fade-in duration-200 pb-12">
       {/* ========================================================================= */}
       {/* 1. TOP HERO: DASHBOARD GERAL & ACTION / SEARCH BAR                        */}
       {/* ========================================================================= */}
@@ -833,14 +833,14 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
       {/* ========================================================================= */}
       {/* 2. GRANDES NÚMEROS: CONSOLIDAÇÃO FINANCEIRA & OPERACIONAL (KPI CARDS)     */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* KPI 1: Faturamento Mensal Consolidado */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Receita Mensal (Carteira)
             </span>
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
@@ -861,12 +861,12 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
         </div>
 
         {/* KPI 2: Custo Global Consolidado (Folha + OPEX) */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Custo Total da Operação
             </span>
-            <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-700 flex items-center justify-center">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
@@ -891,12 +891,12 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
         </div>
 
         {/* KPI 3: EBITDA / Margem de Contribuição Consolidada */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               EBITDA / Margem Operacional
             </span>
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${financialResult.ebitda >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${financialResult.ebitda >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
               <Percent className="w-5 h-5" />
             </div>
           </div>
@@ -919,12 +919,12 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
         </div>
 
         {/* KPI 4: Operações em Trânsito (Cadeia Fria RDC 430) */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Operações em Trânsito
             </span>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center">
               <Activity className="w-5 h-5" />
             </div>
           </div>
@@ -960,13 +960,13 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* CARD GESTÃO DE CLIENTES */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+          <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <div>
@@ -981,7 +981,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl">
+              <div className="grid grid-cols-2 gap-2 bg-slate-50/70 p-3.5 rounded-2xl">
                 <div>
                   <span className="text-[10px] text-slate-500 block">Faturamento Total</span>
                   <span className="text-xs font-bold text-slate-900">{formatMoney(revenueSummary.totalFaturamentoMensal)}</span>
@@ -1030,11 +1030,11 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
           </div>
 
           {/* CARD FARMA AÉREO */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+          <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
                     <Plane className="w-5 h-5" />
                   </div>
                   <div>
@@ -1049,7 +1049,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl">
+              <div className="grid grid-cols-2 gap-2 bg-slate-50/70 p-3.5 rounded-2xl">
                 <div>
                   <span className="text-[10px] text-slate-500 block">Faturamento Aéreo</span>
                   <span className="text-xs font-bold text-slate-900">{formatMoney(revenueSummary.faturamentoAereo)}</span>
@@ -1088,11 +1088,11 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
           </div>
 
           {/* CARD FARMA RODOVIÁRIO */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+          <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
                     <Truck className="w-5 h-5" />
                   </div>
                   <div>
@@ -1107,7 +1107,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl">
+              <div className="grid grid-cols-2 gap-2 bg-slate-50/70 p-3.5 rounded-2xl">
                 <div>
                   <span className="text-[10px] text-slate-500 block">Faturamento Rodoviário</span>
                   <span className="text-xs font-bold text-slate-900">{formatMoney(revenueSummary.faturamentoRodoviario)}</span>
@@ -1146,11 +1146,11 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
           </div>
 
           {/* CARD DEPARTAMENTO PESSOAL & RH */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+          <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
                     <Users className="w-5 h-5" />
                   </div>
                   <div>
@@ -1165,7 +1165,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl">
+              <div className="grid grid-cols-2 gap-2 bg-slate-50/70 p-3.5 rounded-2xl">
                 <div>
                   <span className="text-[10px] text-slate-500 block">Custo Total Folha CLT</span>
                   <span className="text-xs font-bold text-slate-900">{formatMoney(payrollSummary.custoTotalFolhaMensal)}</span>
@@ -1218,11 +1218,11 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
           </div>
 
           {/* CARD PROJETOS GERENCIAIS & OKRs */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+          <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
                     <FolderKanban className="w-5 h-5" />
                   </div>
                   <div>
@@ -1237,7 +1237,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl">
+              <div className="grid grid-cols-2 gap-2 bg-slate-50/70 p-3.5 rounded-2xl">
                 <div>
                   <span className="text-[10px] text-slate-500 block">Progresso Médio OKRs</span>
                   <span className="text-xs font-bold text-purple-700">{govSummary.mediaProgressoOkrs}% concluído</span>
@@ -1278,11 +1278,11 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
           </div>
 
           {/* CARD CENTRAL DE ALERTAS REGULATÓRIOS (RDC 430 & CLT) */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+          <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
                     <AlertTriangle className="w-5 h-5" />
                   </div>
                   <div>
@@ -1339,7 +1339,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Próximas Atividades da Gestão */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+        <div className="bg-white rounded-3xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <CalendarDays className="w-5 h-5 text-indigo-600" />
@@ -1387,7 +1387,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
         </div>
 
         {/* Right: Top Alertas Críticos de Conformidade */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+        <div className="bg-white rounded-3xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-[#B38F4F]" />
