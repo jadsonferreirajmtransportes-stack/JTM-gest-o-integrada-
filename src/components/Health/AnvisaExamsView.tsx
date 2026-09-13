@@ -385,15 +385,15 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
       {isModalOpen && selectedColab && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+            <div className="p-4 bg-white border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Stethoscope className="w-5 h-5 text-emerald-400" />
-                <h2 className="text-base font-bold">Renovar Exame ASO Periódico</h2>
+                <Stethoscope className="w-5 h-5 text-emerald-600" />
+                <h2 className="text-base font-bold text-slate-900">Renovar Exame ASO Periódico</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
               >
                 <X className="w-5 h-5" />
               </button>

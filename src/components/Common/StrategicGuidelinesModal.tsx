@@ -173,9 +173,9 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
           </div>
 
           {/* 4. Pilares Operacionais */}
-          <div className="bg-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-md border border-slate-800">
+          <div className="bg-slate-50 rounded-2xl p-5 sm:p-6 border border-slate-200">
             <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-              <span className="text-xs font-black uppercase tracking-widest text-[#D8B97E]">
+              <span className="text-xs font-black uppercase tracking-widest text-[#8A6A39]">
                 Pilares Operacionais
               </span>
               <span className="text-[11px] text-slate-400">Diretriz de Execução Diária</span>
@@ -184,12 +184,12 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
               {pilaresOperacionais.map((pilar, pIdx) => (
                 <div
                   key={pIdx}
-                  className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 text-center flex flex-col justify-center"
+                  className="bg-white border border-slate-200 shadow-xs rounded-xl p-3 text-center flex flex-col justify-center"
                 >
-                  <span className="text-xs font-bold text-white leading-tight">
+                  <span className="text-xs font-bold text-slate-900 leading-tight">
                     {pilar.nome}
                   </span>
-                  <span className="text-[10px] text-slate-400 mt-1 leading-tight">
+                  <span className="text-[10px] text-slate-500 mt-1 leading-tight">
                     {pilar.descricao}
                   </span>
                 </div>
@@ -221,7 +221,7 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
           </div>
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shrink-0 shadow-xs"
+            className="px-5 py-2.5 rounded-xl bg-[#B38F4F] hover:bg-[#8A6A39] text-white text-xs font-bold transition-all shrink-0 shadow-xs"
           >
             Entendido
           </button>

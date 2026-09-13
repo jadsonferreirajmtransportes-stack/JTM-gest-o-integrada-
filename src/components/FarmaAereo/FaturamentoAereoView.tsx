@@ -1276,12 +1276,12 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       {isNovaFaturaOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm overflow-hidden">
-            <div className="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="text-sm font-bold">Nova Fatura</h3>
+            <div className="px-5 py-3.5 bg-white border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900">Nova Fatura</h3>
               <button
                 type="button"
                 onClick={() => setIsNovaFaturaOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700"
               >
                 <X className="w-4 h-4" />
               </button>

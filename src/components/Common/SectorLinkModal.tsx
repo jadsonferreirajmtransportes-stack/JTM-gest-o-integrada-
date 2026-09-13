@@ -103,7 +103,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                 onClose();
                 onOpenNovoCliente();
               }}
-              className="w-full sm:w-auto px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shrink-0 shadow-xs"
+              className="w-full sm:w-auto px-3.5 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shrink-0 shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Nova Empresa</span>
@@ -115,7 +115,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                 onClose();
                 onOpenNovoColaborador();
               }}
-              className="w-full sm:w-auto px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shrink-0 shadow-xs"
+              className="w-full sm:w-auto px-3.5 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shrink-0 shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Novo Colaborador</span>

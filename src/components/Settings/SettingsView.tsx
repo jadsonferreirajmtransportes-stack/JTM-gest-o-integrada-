@@ -260,25 +260,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {activeTab === 'cct' && (
           <div className="space-y-6">
             {/* Header info card */}
-            <div className="bg-slate-900 text-white rounded-xl p-4 sm:p-5 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-slate-50 rounded-xl p-4 sm:p-5 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[10px] font-mono font-bold uppercase">
+                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[10px] font-mono font-bold uppercase">
                     Registro MTE: {CCT_METADATA.registroMte}
                   </span>
-                  <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[10px] font-mono font-bold uppercase">
+                  <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[10px] font-mono font-bold uppercase">
                     Processo: {CCT_METADATA.processo}
                   </span>
-                  <span className="px-2 py-0.5 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded text-[10px] font-bold">
+                  <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[10px] font-bold">
                     Reajuste Geral: {(CCT_METADATA.indiceReajuste * 100).toFixed(1)}%
                   </span>
                   <span
                     className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
                       cctStatus === 'vencida'
-                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                        ? 'bg-rose-50 text-rose-700 border-rose-200'
                         : cctStatus === 'renovacao_proxima'
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                        : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-slate-100 text-slate-600 border-slate-200'
                     }`}
                   >
                     {cctStatus === 'vencida'
@@ -288,10 +288,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       : 'VIGENTE'}
                   </span>
                 </div>
-                <h3 className="text-base font-bold text-white mt-2">
+                <h3 className="text-base font-bold text-slate-900 mt-2">
                   Convenção Coletiva de Trabalho 2026/2028 (SETCERN × SINTROCERN)
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Sindicatos Convenentes: {CCT_METADATA.sindicatoPatronal} e {CCT_METADATA.sindicatoLaboral}.
                   Vigência: <strong>01/05/2026 a 30/04/2028</strong>.
                 </p>
