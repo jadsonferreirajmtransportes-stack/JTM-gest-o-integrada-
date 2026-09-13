@@ -235,6 +235,11 @@ export default function App() {
     if (initialMod === 'farma_aereo') return 'farma_aereo';
     if (initialMod === 'farma_rodoviario') return 'farma_rodoviario';
     if (initialMod === 'projetos') return 'projetos';
+    if (initialMod === 'agenda') return 'agenda_gestao';
+    if (initialMod === 'controladoria') return 'controladoria';
+    if (initialMod === 'chat') return 'chat';
+    if (initialMod === 'notas') return 'notas';
+    if (initialMod === 'instrucoes') return 'instrucoes';
     if (initialMod === 'usuarios') return 'usuarios';
     return 'dashboard';
   });
