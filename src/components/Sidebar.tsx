@@ -15,6 +15,7 @@ import {
   Share2,
   DollarSign,
   ChevronRight,
+  ChevronLeft,
   Building2,
   Plane,
   Truck,
@@ -99,6 +100,10 @@ interface SidebarProps {
   };
   isMobileOpen: boolean;
   onCloseMobile: () => void;
+  /** Estado retraído do menu (só afeta telas grandes — no mobile a barra é sempre exibida por
+   *  inteiro, já que ali funciona como uma gaveta que abre/fecha, não uma coluna fixa). */
+  isCollapsed?: boolean;
+  onToggleCollapsed?: () => void;
   onOpenAdmissionLinkModal?: () => void;
   onOpenOccurrenceLinkModal?: () => void;
   /** Abre o modal de "Vincular Empresas"/"Alocar Equipe" do Farma Aéreo ou Farma Rodoviário —
@@ -130,12 +135,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   counts,
   isMobileOpen,
   onCloseMobile,
+  isCollapsed = false,
+  onToggleCollapsed,
   onOpenAdmissionLinkModal,
   onOpenOccurrenceLinkModal,
   onOpenSectorLinkModal,
   onExportSectorReport,
 }) => {
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
+  // No mobile a barra é uma gaveta que abre por cima do conteúdo — nunca deve aparecer
+  // "retraída" ali, então o recolhimento só vale de fato quando a gaveta não está aberta
+  // (equivale, na prática, a "estamos em tela grande").
+  const collapsed = isCollapsed && !isMobileOpen;
 
   // System Modules
   const globalModules = [
@@ -906,43 +917,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <aside
         id="jmt-main-sidebar"
-        className={`fixed top-0 left-0 bottom-0 z-50 w-72 bg-white text-slate-700 flex flex-col border-r border-slate-200 transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 left-0 bottom-0 z-50 bg-white text-slate-700 flex flex-col border-r border-slate-200 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        } ${collapsed ? 'w-72 lg:w-[76px]' : 'w-72'}`}
       >
+        {/* Botão de recolher/expandir — só em telas grandes; no mobile a gaveta some pelo
+            próprio backdrop/hambúrguer, não precisa desse controle. */}
+        {onToggleCollapsed && (
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            className="hidden lg:flex absolute -right-3 top-7 z-10 w-6 h-6 rounded-full bg-white border border-slate-200 shadow-md items-center justify-center text-slate-400 hover:text-[#B38F4F] hover:border-[#B38F4F]/50 transition-colors"
+            title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+          >
+            {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+          </button>
+        )}
+
         {/* Brand Header with Official JMT Logo */}
         <div className="p-4 border-b border-slate-100 bg-white relative overflow-hidden shrink-0">
           {/* Subtle brand diagonal accent light */}
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#B38F4F]/5 rounded-full blur-2xl pointer-events-none" />
-          
-          <div className="flex items-center justify-between">
-            <JmtLogo variant="full" theme="light" iconSize={34} />
+
+          <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
+            {collapsed ? (
+              <JmtLogo variant="icon" theme="light" iconSize={30} />
+            ) : (
+              <JmtLogo variant="full" theme="light" iconSize={34} />
+            )}
           </div>
 
-          {/* Slogan & Official Strategic Signature */}
-          <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] font-bold tracking-[0.16em] text-[#B38F4F] uppercase">
-                Logística da Saúde
-              </span>
-              <span className="text-[9px] text-slate-400 font-semibold flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-[#B38F4F]" />
-                RDC 430 / BPAD
-              </span>
-            </div>
-            <p className="text-[9.5px] text-slate-400 font-medium leading-tight">
-              Segurança, Rastreabilidade e Pontualidade
-            </p>
-          </div>
+          {!collapsed && (
+            <>
+              {/* Slogan & Official Strategic Signature */}
+              <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold tracking-[0.16em] text-[#B38F4F] uppercase">
+                    Logística da Saúde
+                  </span>
+                  <span className="text-[9px] text-slate-400 font-semibold flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-[#B38F4F]" />
+                    RDC 430 / BPAD
+                  </span>
+                </div>
+                <p className="text-[9.5px] text-slate-400 font-medium leading-tight">
+                  Segurança, Rastreabilidade e Pontualidade
+                </p>
+              </div>
 
-          {/* Route accent line from brand manual */}
-          <div className="mt-2 h-[2px] w-full bg-gradient-to-r from-[#B38F4F] via-[#8A6A39] to-transparent rounded-full" />
+              {/* Route accent line from brand manual */}
+              <div className="mt-2 h-[2px] w-full bg-gradient-to-r from-[#B38F4F] via-[#8A6A39] to-transparent rounded-full" />
+            </>
+          )}
         </div>
 
         {/* Unified Scrollable Container: Ensures all navigation, modules, and dashboard buttons scroll smoothly without overlapping or covering text */}
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0 divide-y divide-slate-100">
           {/* PRIMARY MODULE SELECTORS + DASHBOARD GERAL */}
-          <div className="p-3 bg-slate-50 space-y-2 shrink-0">
+          <div className={`p-3 bg-slate-50 space-y-2 shrink-0 ${collapsed ? 'px-2' : ''}`}>
             {/* Main Integrated Dashboard Button (only if allowed) */}
             {canAccessVisaoGeral && (
               <button
@@ -953,41 +985,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onSelectSection('visao_geral');
                   onCloseMobile();
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all duration-150 border ${
+                title={collapsed ? 'Dashboard Geral' : undefined}
+                className={`w-full flex items-center rounded-xl transition-all duration-150 border ${
+                  collapsed ? 'justify-center py-2.5' : 'justify-between px-3 py-2.5 text-left'
+                } ${
                   activeGlobalModule === 'visao_geral' || currentSection === 'visao_geral'
                     ? 'bg-amber-50 border-[#B38F4F] shadow-sm ring-1 ring-[#B38F4F]/40 font-bold'
                     : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-700'
                 }`}
               >
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                {collapsed ? (
                   <div className={`p-1.5 rounded-lg shrink-0 ${activeGlobalModule === 'visao_geral' ? 'bg-[#B38F4F] text-white' : 'bg-slate-100 text-[#B38F4F]'}`}>
                     <LayoutDashboard className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                      <span className="leading-tight">Dashboard Geral</span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#B38F4F]/15 text-[#8A6A39] border border-[#B38F4F]/40 font-extrabold uppercase shrink-0">Geral</span>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className={`p-1.5 rounded-lg shrink-0 ${activeGlobalModule === 'visao_geral' ? 'bg-[#B38F4F] text-white' : 'bg-slate-100 text-[#B38F4F]'}`}>
+                        <LayoutDashboard className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                          <span className="leading-tight">Dashboard Geral</span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#B38F4F]/15 text-[#8A6A39] border border-[#B38F4F]/40 font-extrabold uppercase shrink-0">Geral</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 leading-tight">Todos os Módulos & KPIs</div>
+                      </div>
                     </div>
-                    <div className="text-[10px] text-slate-400 leading-tight">Todos os Módulos & KPIs</div>
-                  </div>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+                  </>
+                )}
               </button>
             )}
-            {canAccessVisaoGeral && (activeGlobalModule === 'visao_geral' || currentSection === 'visao_geral') && (
+            {!collapsed && canAccessVisaoGeral && (activeGlobalModule === 'visao_geral' || currentSection === 'visao_geral') && (
               <div className="pl-3 ml-3 border-l-2 border-[#B38F4F]/30 space-y-1">
                 {renderModuleSubNav('visao_geral')}
               </div>
             )}
 
-            <div className="flex items-center justify-between px-1 pt-1 mb-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Módulos Permitidos
-              </span>
-              <span className="text-[10px] text-[#B38F4F] font-semibold">
-                {accessibleGlobalModules.length} de {globalModules.length}
-              </span>
-            </div>
+            {!collapsed && (
+              <div className="flex items-center justify-between px-1 pt-1 mb-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Módulos Permitidos
+                </span>
+                <span className="text-[10px] text-[#B38F4F] font-semibold">
+                  {accessibleGlobalModules.length} de {globalModules.length}
+                </span>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-1.5">
               {accessibleGlobalModules.map((mod) => {
@@ -1012,45 +1057,61 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       }
                       onCloseMobile();
                     }}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition-all duration-150 border ${
+                    title={collapsed ? mod.title : undefined}
+                    className={`w-full flex items-center rounded-xl transition-all duration-150 border ${
+                      collapsed ? 'justify-center py-2' : 'justify-between px-2.5 py-2 text-left'
+                    } ${
                       isModActive
                         ? 'bg-amber-50 border-[#B38F4F] text-amber-900 shadow-sm ring-1 ring-[#B38F4F]/40'
                         : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-600'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <span
-                        className={`w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-extrabold shrink-0 ${
-                          isModActive
-                            ? 'bg-[#B38F4F] text-white shadow-xs'
-                            : 'bg-slate-100 text-slate-500'
-                        }`}
-                      >
-                        {mod.number}
-                      </span>
-                      <Icon
-                        className={`w-4 h-4 shrink-0 ${
-                          isModActive ? 'text-[#B38F4F]' : 'text-slate-400'
-                        }`}
-                      />
-                      <span className="font-semibold text-xs text-slate-900 min-w-0 leading-tight">
-                        {mod.title}
-                      </span>
-                    </div>
+                    {collapsed ? (
+                      <div className="relative">
+                        <Icon className={`w-5 h-5 ${isModActive ? 'text-[#B38F4F]' : 'text-slate-400'}`} />
+                        {mod.badge !== undefined && mod.badge > 0 && (
+                          <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-0.5 rounded-full bg-[#B38F4F] text-white text-[8px] font-extrabold flex items-center justify-center leading-none shadow-xs">
+                            {mod.badge > 9 ? '9+' : mod.badge}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <span
+                            className={`w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-extrabold shrink-0 ${
+                              isModActive
+                                ? 'bg-[#B38F4F] text-white shadow-xs'
+                                : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            {mod.number}
+                          </span>
+                          <Icon
+                            className={`w-4 h-4 shrink-0 ${
+                              isModActive ? 'text-[#B38F4F]' : 'text-slate-400'
+                            }`}
+                          />
+                          <span className="font-semibold text-xs text-slate-900 min-w-0 leading-tight">
+                            {mod.title}
+                          </span>
+                        </div>
 
-                    {mod.badge !== undefined && mod.badge > 0 && (
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0 ml-1.5 ${
-                          isModActive
-                            ? 'bg-[#B38F4F]/15 text-[#8A6A39] border border-[#B38F4F]/40'
-                            : 'bg-slate-100 text-slate-500'
-                        }`}
-                      >
-                        {mod.badge}
-                      </span>
+                        {mod.badge !== undefined && mod.badge > 0 && (
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0 ml-1.5 ${
+                              isModActive
+                                ? 'bg-[#B38F4F]/15 text-[#8A6A39] border border-[#B38F4F]/40'
+                                : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            {mod.badge}
+                          </span>
+                        )}
+                      </>
                     )}
                   </button>
-                  {isModActive && (
+                  {!collapsed && isModActive && (
                     <div className="pl-3 ml-3 border-l-2 border-[#B38F4F]/30 space-y-1 mt-1">
                       {renderModuleSubNav(mod.id)}
                     </div>
@@ -1061,8 +1122,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {/* User Session & Login Box (Replaces old Perfil de Acesso switcher) */}
-          {currentUser && (
+          {/* User Session & Login Box (Replaces old Perfil de Acesso switcher) — escondida
+              quando recolhido, não cabe nesse espaço; o rodapé abaixo já mostra quem está
+              logado, mesmo retraído. */}
+          {!collapsed && currentUser && (
             <div className="px-3.5 py-2.5 bg-slate-50 border-t border-b border-slate-200 shrink-0">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -1101,39 +1164,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Strategic Guidelines Shortcut */}
-        <div className="px-3 pt-2.5 pb-1 bg-slate-50 border-t border-slate-100 shrink-0">
-          <button
-            id="btn-sidebar-norteadores"
-            type="button"
-            onClick={() => setIsGuidelinesOpen(true)}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-[#B38F4F]/40 transition-colors"
-            title="Ver Missão, Visão e Valores da JMT"
-          >
-            <div className="flex items-center gap-2">
-              <Compass className="w-3.5 h-3.5 text-[#B38F4F]" />
-              <span className="text-[11px] font-semibold">Norteadores Estratégicos</span>
-            </div>
-            <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#B38F4F]/15 text-[#8A6A39] font-bold">JMT</span>
-          </button>
-        </div>
+        {!collapsed && (
+          <div className="px-3 pt-2.5 pb-1 bg-slate-50 border-t border-slate-100 shrink-0">
+            <button
+              id="btn-sidebar-norteadores"
+              type="button"
+              onClick={() => setIsGuidelinesOpen(true)}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-[#B38F4F]/40 transition-colors"
+              title="Ver Missão, Visão e Valores da JMT"
+            >
+              <div className="flex items-center gap-2">
+                <Compass className="w-3.5 h-3.5 text-[#B38F4F]" />
+                <span className="text-[11px] font-semibold">Norteadores Estratégicos</span>
+              </div>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#B38F4F]/15 text-[#8A6A39] font-bold">JMT</span>
+            </button>
+          </div>
+        )}
 
         {/* User Profile Footer */}
-        <div className="p-3.5 border-t border-slate-100 bg-white shrink-0">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 border border-[#B38F4F]/40 flex items-center justify-center font-bold text-xs text-[#B38F4F] shadow-xs shrink-0">
+        <div className={`border-t border-slate-100 bg-white shrink-0 ${collapsed ? 'p-2.5' : 'p-3.5'}`}>
+          <div className={`flex items-center px-1 ${collapsed ? 'justify-center' : 'justify-between'}`}>
+            {collapsed ? (
+              <div
+                className="relative w-8 h-8 rounded-lg bg-amber-50 border border-[#B38F4F]/40 flex items-center justify-center font-bold text-xs text-[#B38F4F] shadow-xs shrink-0"
+                title={currentUser ? `${currentUser.nome} · ${currentUser.cargo}` : 'Jadson Moraes · Diretoria Executiva'}
+              >
                 {currentUser ? currentUser.nome.substring(0, 2).toUpperCase() : 'JM'}
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white" />
               </div>
-              <div className="min-w-0">
-                <p className="text-xs text-slate-900 font-bold leading-tight truncate">
-                  {currentUser ? currentUser.nome : 'Jadson Moraes'}
-                </p>
-                <p className="text-[10px] text-slate-500 truncate">
-                  {currentUser ? currentUser.cargo : 'Diretoria Executiva'}
-                </p>
-              </div>
-            </div>
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-emerald-500/40 shrink-0" title="JMT Conectado · RDC 430/2020" />
+            ) : (
+              <>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 border border-[#B38F4F]/40 flex items-center justify-center font-bold text-xs text-[#B38F4F] shadow-xs shrink-0">
+                    {currentUser ? currentUser.nome.substring(0, 2).toUpperCase() : 'JM'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-900 font-bold leading-tight truncate">
+                      {currentUser ? currentUser.nome : 'Jadson Moraes'}
+                    </p>
+                    <p className="text-[10px] text-slate-500 truncate">
+                      {currentUser ? currentUser.cargo : 'Diretoria Executiva'}
+                    </p>
+                  </div>
+                </div>
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-emerald-500/40 shrink-0" title="JMT Conectado · RDC 430/2020" />
+              </>
+            )}
           </div>
         </div>
       </aside>

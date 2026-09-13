@@ -240,6 +240,24 @@ export default function App() {
   const [userRole, setUserRole] = useState<UserRole>('admin');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  // Menu lateral retrátil (só afeta telas grandes) — preferência de cada navegador/dispositivo,
+  // não precisa ir pro banco: só quem usa aquele computador vê a barra recolhida ou não.
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('jmt_sidebar_collapsed') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const handleToggleSidebarCollapsed = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('jmt_sidebar_collapsed', next ? '1' : '0');
+      } catch {}
+      return next;
+    });
+  };
 
   // Users & Permissions Management (Replaces old fixed role system)
   const [users, setUsers] = useState<UsuarioLogin[]>(() => {
@@ -1940,6 +1958,8 @@ export default function App() {
         counts={sidebarCounts}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapsed={handleToggleSidebarCollapsed}
         onOpenAdmissionLinkModal={() => setIsAdmissionLinkModalOpen(true)}
         onOpenOccurrenceLinkModal={() => setIsOccurrenceLinkModalOpen(true)}
         onOpenSectorLinkModal={handleOpenSectorLinkModal}
@@ -1947,7 +1967,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden lg:pl-72">
+      <div className={`flex-1 flex flex-col min-w-0 overflow-hidden transition-[padding] duration-300 ease-in-out ${isSidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-72'}`}>
         {/* Top Header */}
         <Header
           onOpenMobile={() => setIsMobileMenuOpen(true)}
