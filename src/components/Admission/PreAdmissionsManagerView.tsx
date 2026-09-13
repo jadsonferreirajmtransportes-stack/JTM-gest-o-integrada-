@@ -390,16 +390,16 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
           <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-200">
             {/* Header */}
-            <div className="bg-slate-900 text-white p-6 flex items-center justify-between">
+            <div className="bg-white border-b border-slate-100 p-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#B38F4F] text-white flex items-center justify-center font-bold text-lg">
                   {selectedCandidate.dadosPessoais.nomeCompleto.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white leading-tight">
+                  <h2 className="text-base font-bold text-slate-900 leading-tight">
                     Ficha de Admissão: {selectedCandidate.dadosPessoais.nomeCompleto}
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500">
                     Protocolo: Token {selectedCandidate.token} • Enviado em {formatDate(selectedCandidate.dataEnvio)}
                   </p>
                 </div>
@@ -408,7 +408,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
               <button
                 type="button"
                 onClick={() => setSelectedCandidate(null)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>

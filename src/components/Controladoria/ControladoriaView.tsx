@@ -141,7 +141,7 @@ export const ControladoriaView: React.FC<ControladoriaViewProps> = ({
       {/* Cabeçalho / Filtros */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg bg-[#B38F4F] text-white flex items-center justify-center">
             <Calculator className="w-4.5 h-4.5" />
           </div>
           <div>

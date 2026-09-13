@@ -157,7 +157,7 @@ export const NovaConversaModal: React.FC<NovaConversaModalProps> = ({
             type="button"
             onClick={handleConfirmar}
             disabled={!podeConfirmar}
-            className="px-5 py-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold shadow-sm"
+            className="px-5 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold shadow-sm"
           >
             {modo === 'direta' ? 'Iniciar Conversa' : 'Criar Grupo'}
           </button>

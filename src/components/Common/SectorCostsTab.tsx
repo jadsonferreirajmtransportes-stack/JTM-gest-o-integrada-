@@ -313,7 +313,7 @@ export const SectorCostsTab: React.FC<SectorCostsTabProps> = ({
                       onClick={() => setStatusFilter(st)}
                       className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         statusFilter === st
-                          ? 'bg-slate-900 text-white'
+                          ? 'bg-[#B38F4F] text-white'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
