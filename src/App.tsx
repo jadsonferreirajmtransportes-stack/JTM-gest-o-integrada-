@@ -186,6 +186,7 @@ import { UsuariosView } from './components/Usuarios/UsuariosView';
 import { SwitchUserModal } from './components/Usuarios/SwitchUserModal';
 import { UsuarioFormModal } from './components/Usuarios/UsuarioFormModal';
 import { INITIAL_USERS_DATA } from './data/initialUsersData';
+import { getUsuarios, saveUsuario, deleteUsuario } from './utils/usuariosApi';
 import { ShieldAlert } from 'lucide-react';
 
 export default function App() {
@@ -240,14 +241,41 @@ export default function App() {
     return INITIAL_USERS_DATA[0];
   });
 
-  // Sync users to persistent storage
-  useEffect(() => {
+  // Logins & Acessos agora mora no Supabase (compartilhado entre navegadores/dispositivos) em
+  // vez de só no localStorage deste — ver migração 012 e usuariosApi.ts. Os useState acima
+  // continuam lendo do localStorage só pra ter algo pra mostrar instantaneamente antes dessa
+  // busca terminar; loadUsuarios() abaixo substitui esse valor pelo dado real assim que chega.
+  const loadUsuarios = useCallback(async () => {
     try {
-      localStorage.setItem('jmt_usuarios_logins', JSON.stringify(users));
-    } catch (e) {
-      console.error('Failed to persist users', e);
+      let lista = await getUsuarios();
+      if (lista.length === 0) {
+        // Primeira vez usando o Supabase pra isso — migra o que já existir neste navegador (ou
+        // os dados de fábrica) uma única vez, pra não perder configuração já feita por aqui.
+        let base: UsuarioLogin[] = INITIAL_USERS_DATA;
+        try {
+          const saved = localStorage.getItem('jmt_usuarios_logins');
+          if (saved) base = JSON.parse(saved);
+        } catch {
+          // ignora — usa os dados de fábrica
+        }
+        await Promise.all(base.map((u) => saveUsuario(u)));
+        lista = await getUsuarios();
+      }
+      setUsers(lista);
+      setCurrentUser((prev) => {
+        let savedId: string | null = null;
+        try {
+          savedId = localStorage.getItem('jmt_current_user_id');
+        } catch {
+          // ignora
+        }
+        return lista.find((u) => u.id === (savedId || prev?.id)) || lista[0] || prev;
+      });
+    } catch (err) {
+      console.error('Erro ao carregar Logins & Acessos (Supabase):', err);
+      showToast('Não foi possível carregar os logins do Supabase — usando os dados salvos neste navegador.', 'info');
     }
-  }, [users]);
+  }, []);
 
   // User Modals State
   const [isSwitchUserModalOpen, setIsSwitchUserModalOpen] = useState<boolean>(false);
@@ -370,7 +398,14 @@ export default function App() {
     showToast(`Conectado como ${user.nome} (@${user.login})`, 'success');
   };
 
-  const handleSaveUser = (userToSave: UsuarioLogin) => {
+  const handleSaveUser = async (userToSave: UsuarioLogin) => {
+    try {
+      await saveUsuario(userToSave);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível salvar o login no Supabase. Verifique sua conexão.', 'error');
+      return;
+    }
     setUsers((prev) => {
       const exists = prev.some((u) => u.id === userToSave.id);
       if (exists) {
@@ -385,12 +420,19 @@ export default function App() {
     showToast(`Usuário @${userToSave.login} salvo com sucesso!`, 'success');
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (users.length <= 1) {
       showToast('O sistema precisa manter ao menos um login cadastrado.', 'error');
       return;
     }
     const targetUser = users.find((u) => u.id === userId);
+    try {
+      await deleteUsuario(userId);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível excluir o login no Supabase. Verifique sua conexão.', 'error');
+      return;
+    }
     setUsers((prev) => prev.filter((u) => u.id !== userId));
 
     if (currentUser.id === userId) {
@@ -403,21 +445,27 @@ export default function App() {
     showToast(`Usuário @${targetUser?.login || userId} excluído.`, 'info');
   };
 
-  const handleToggleUserModuleAccess = (userId: string, moduleId: GlobalModuleId) => {
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id !== userId) return u;
-        const hasMod = u.modulosPermitidos.includes(moduleId);
-        const newMods = hasMod
-          ? u.modulosPermitidos.filter((m) => m !== moduleId)
-          : [...u.modulosPermitidos, moduleId];
-        const updated = { ...u, modulosPermitidos: newMods };
-        if (u.id === currentUser.id) {
-          setCurrentUser(updated);
-        }
-        return updated;
-      })
-    );
+  const handleToggleUserModuleAccess = async (userId: string, moduleId: GlobalModuleId) => {
+    const target = users.find((u) => u.id === userId);
+    if (!target) return;
+    const hasMod = target.modulosPermitidos.includes(moduleId);
+    const updated: UsuarioLogin = {
+      ...target,
+      modulosPermitidos: hasMod
+        ? target.modulosPermitidos.filter((m) => m !== moduleId)
+        : [...target.modulosPermitidos, moduleId],
+    };
+    try {
+      await saveUsuario(updated);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível atualizar o acesso ao módulo no Supabase.', 'error');
+      return;
+    }
+    setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)));
+    if (userId === currentUser.id) {
+      setCurrentUser(updated);
+    }
     showToast('Permissão de módulo atualizada com sucesso!', 'success');
   };
 
@@ -607,7 +655,7 @@ export default function App() {
     // Só libera o aviso de abertura (compromissos/prazos) depois que os dados de
     // Agenda da Gestão e Projetos (e o resto) já terminaram de chegar — evita disparar
     // o aviso com as listas ainda vazias por causa da requisição em andamento.
-    Promise.all([loadDpData(), loadFarmaAereoData(), loadGestaoData()]).then(() => {
+    Promise.all([loadDpData(), loadFarmaAereoData(), loadGestaoData(), loadUsuarios()]).then(() => {
       setDadosIniciaisCarregados(true);
     });
 
@@ -617,7 +665,7 @@ export default function App() {
     };
     window.addEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
     return () => window.removeEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
-  }, [loadData, loadDpData, loadFarmaAereoData, loadGestaoData]);
+  }, [loadData, loadDpData, loadFarmaAereoData, loadGestaoData, loadUsuarios]);
 
   // Keep detail view synchronized with updated store
   useEffect(() => {
