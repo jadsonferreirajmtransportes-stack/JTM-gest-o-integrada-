@@ -412,6 +412,386 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
+  // Conteúdo específico de cada módulo, mostrado suspenso logo abaixo do próprio botão dele na
+  // lista "Módulos Permitidos" (accordion) — antes ficava num painel à parte, mais abaixo na
+  // tela, sem nenhuma ligação visual com o módulo clicado.
+  const renderModuleSubNav = (moduleId: GlobalModuleId): React.ReactNode => {
+    if (moduleId === 'visao_geral') {
+      return (
+        <div className="p-1 space-y-2.5">
+          <div className="flex items-center justify-between text-slate-400 text-[10px] uppercase font-bold px-1">
+            <span>Torre de Controle</span>
+            <span className="text-[#B38F4F]">Visão Executiva</span>
+          </div>
+          <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
+            Visão consolidada de DRE, receitas, frota, AWB e conformidade RDC 430 de todos os módulos.
+          </p>
+
+          <div className="space-y-1 pt-1">
+            <button
+              id="subnav-visao-geral-painel"
+              type="button"
+              onClick={() => {
+                onSelectSection('visao_geral');
+                onCloseMobile();
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-left transition-all ${
+                currentSection === 'visao_geral'
+                  ? 'bg-[#B38F4F]/20 text-[#D8B97E] border border-[#B38F4F]/40 font-bold'
+                  : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <LayoutDashboard className="w-4 h-4 text-[#B38F4F]" />
+                <span>Painel Geral Integrado</span>
+              </div>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#B38F4F]/20 text-[#D8B97E] font-bold">Ativo</span>
+            </button>
+
+            <button
+              id="subnav-visao-geral-agenda"
+              type="button"
+              onClick={() => {
+                onChangeGlobalModule('agenda');
+                onSelectSection('agenda_gestao');
+                onCloseMobile();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors text-left"
+            >
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-indigo-400" />
+                <span>Agenda da Gestão</span>
+              </div>
+              {counts.atividadesHoje && counts.atividadesHoje > 0 ? (
+                <span className="px-1.5 py-0.5 text-[10px] bg-indigo-500/30 text-indigo-200 rounded font-bold">
+                  {counts.atividadesHoje} hoje
+                </span>
+              ) : null}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (moduleId === 'dp') {
+      return (
+        <>
+          <div className="text-slate-500 text-[10px] uppercase font-bold px-2 mb-1.5">
+            Principal DP
+          </div>
+          {principalItems.map(renderNavButton)}
+
+          {operacionalItems.length > 0 && (
+            <>
+              <div className="pt-4 text-slate-500 text-[10px] uppercase font-bold px-2 mb-1.5">
+                Operacional CLT & ANVISA
+              </div>
+              {operacionalItems.map(renderNavButton)}
+            </>
+          )}
+
+          {gestaoItems.length > 0 && (
+            <>
+              <div className="pt-4 text-slate-500 text-[10px] uppercase font-bold px-2 mb-1.5">
+                Gestão & Tabelas
+              </div>
+              {gestaoItems.map(renderNavButton)}
+            </>
+          )}
+
+          {/* External Links */}
+          <div className="pt-4 text-slate-500 text-[10px] uppercase font-bold px-2 mb-1.5">
+            Links Digitais & Campo
+          </div>
+          <div className="space-y-1.5">
+            <button
+              id="nav-item-form-publico"
+              type="button"
+              onClick={() => {
+                onSelectSection('formulario_publico');
+                onCloseMobile();
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left border ${
+                currentSection === 'formulario_publico'
+                  ? 'bg-amber-100 text-amber-800 border-amber-300'
+                  : 'bg-slate-50 text-slate-500 border-slate-200 hover:text-slate-900 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Share2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="truncate">Ocorrência em Campo</span>
+              </div>
+              <span className="text-[10px] text-amber-400 font-semibold">Abrir</span>
+            </button>
+
+            <button
+              id="nav-item-form-admissao"
+              type="button"
+              onClick={() => {
+                if (onOpenAdmissionLinkModal) {
+                  onOpenAdmissionLinkModal();
+                } else {
+                  onSelectSection('preadmissoes');
+                }
+                onCloseMobile();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left border bg-gradient-to-r from-amber-950/40 to-slate-950/60 border-amber-500/30 text-amber-300 hover:border-amber-500/60"
+            >
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span>Link p/ Candidato</span>
+              </div>
+              <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded text-amber-200 font-bold">
+                Enviar
+              </span>
+            </button>
+          </div>
+        </>
+      );
+    }
+
+    if (moduleId === 'clientes') {
+      return (
+        <div className="p-2 space-y-2">
+          <div className="text-slate-700 text-xs font-bold px-1">
+            Carteira de Clientes
+          </div>
+          <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
+            Gestão centralizada de parceiros comerciais, contratos farmacêuticos RDC 430, rotas e tabelas de frete.
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                onSelectSection('clientes');
+                onCloseMobile();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-xs"
+            >
+              <Building2 className="w-4 h-4" />
+              Visualizar Todos os Clientes
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (moduleId === 'farma_aereo') {
+      return (
+        <div className="p-2 space-y-2">
+          <div className="text-slate-700 text-xs font-bold px-1">
+            Operações Farma Aéreo
+          </div>
+          <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
+            Rastreamento AWB em tempo real, monitoramento de cadeias 2°C a 8°C e gelo seco, liberação em TECA e plantão UTI 24h.
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                onSelectSection('farma_aereo');
+                onCloseMobile();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600 text-white shadow-xs"
+            >
+              <Plane className="w-4 h-4" />
+              Painel de Voos & AWB
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (moduleId === 'farma_rodoviario') {
+      return (
+        <div className="p-2 space-y-2">
+          <div className="text-slate-700 text-xs font-bold px-1">
+            Operações Farma Rodoviário
+          </div>
+          <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
+            Gestão de frota com telemetria contínua do baú refrigerado, MDF-e, pontos de parada e baixa de entregas.
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                onSelectSection('farma_rodoviario');
+                onCloseMobile();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-xs"
+            >
+              <Truck className="w-4 h-4" />
+              Painel de Viagens & Frotas
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (moduleId === 'usuarios') {
+      return (
+        <div className="p-2 space-y-2">
+          <div className="flex items-center justify-between text-slate-700 text-xs font-bold px-1">
+            <span>Controle de Acessos</span>
+            <span className="text-[#B38F4F] text-[10px]">Segurança</span>
+          </div>
+          <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
+            Cadastre credenciais e defina exatamente quais módulos cada login pode acessar no sistema JMT.
+          </p>
+          <div className="pt-2 space-y-1.5">
+            <button
+              onClick={() => {
+                onSelectSection('usuarios');
+                onCloseMobile();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-colors"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Gerenciar Logins & Permissões
+            </button>
+            {onOpenSwitchUserModal && (
+              <button
+                onClick={() => {
+                  onOpenSwitchUserModal();
+                  onCloseMobile();
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <ArrowRightLeft className="w-4 h-4 text-[#B38F4F]" />
+                  <span>Trocar Usuário Atual</span>
+                </div>
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (moduleId === 'agenda') {
+      return (
+        <div className="p-2 space-y-2">
+          <div className="text-slate-700 text-xs font-bold px-1">
+            Agenda da Gestão
+          </div>
+          <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
+            Reuniões executivas, comitês de liderança, auditorias RDC 430, fechamentos contábeis e prazos estratégicos da governança JMT.
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                onSelectSection('agenda_gestao');
+                onCloseMobile();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4" />
+                <span>Abrir Agenda Completa</span>
+              </div>
+              {counts.atividadesHoje && counts.atividadesHoje > 0 ? (
+                <span className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded font-bold">
+                  {counts.atividadesHoje} hoje
+                </span>
+              ) : null}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (moduleId === 'notas') {
+      return (
+        <div className="p-2 space-y-2">
+          <div className="text-slate-700 text-xs font-bold px-1">
+            Notas & Ideias
+          </div>
+          <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
+            Páginas livres de anotações e brainstorm, estilo Notion — vincule qualquer página a um cliente, projeto, colaborador ou operação.
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                onSelectSection('notas');
+                onCloseMobile();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white shadow-xs transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <NotebookPen className="w-4 h-4" />
+                <span>Abrir Notas & Ideias</span>
+              </div>
+              {counts.notasCount && counts.notasCount > 0 ? (
+                <span className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded font-bold">
+                  {counts.notasCount}
+                </span>
+              ) : null}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (moduleId === 'instrucoes') {
+      return (
+        <div className="p-2 space-y-2">
+          <div className="text-slate-700 text-xs font-bold px-1">
+            Instruções de Trabalho
+          </div>
+          <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
+            Checklists, fluxogramas e procedimentos padronizados por operação — com código, dono do processo,
+            versão e vínculo a clientes, embarques ou viagens.
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                onSelectSection('instrucoes');
+                onCloseMobile();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <FileCheck2 className="w-4 h-4" />
+                <span>Abrir Instruções de Trabalho</span>
+              </div>
+              {counts.instrucoesCount && counts.instrucoesCount > 0 ? (
+                <span className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded font-bold">
+                  {counts.instrucoesCount}
+                </span>
+              ) : null}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (moduleId === 'projetos') {
+      return (
+        <div className="p-2 space-y-2">
+          <div className="text-slate-700 text-xs font-bold px-1">
+            Projetos Gerenciais & OKRs
+          </div>
+          <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
+            Gestão de iniciativas estratégicas, CAPEX, roadmap de marcos, quadro Kanban e matriz de riscos RDC 430.
+          </p>
+          <div className="pt-2 space-y-1.5">
+            <button
+              onClick={() => {
+                onSelectSection('projetos');
+                onCloseMobile();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white shadow-xs hover:bg-purple-700 transition-colors"
+            >
+              <FolderKanban className="w-4 h-4" />
+              Painel de Projetos & OKRs
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Módulos sem sub-navegação própria (ex.: Controladoria, Chat Interno) — o botão já leva
+    // direto pra tela, não precisa de suspenso.
+    return null;
+  };
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -492,6 +872,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
               </button>
             )}
+            {canAccessVisaoGeral && (activeGlobalModule === 'visao_geral' || currentSection === 'visao_geral') && (
+              <div className="pl-3 ml-3 border-l-2 border-[#B38F4F]/30 space-y-1">
+                {renderModuleSubNav('visao_geral')}
+              </div>
+            )}
 
             <div className="flex items-center justify-between px-1 pt-1 mb-0.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -508,8 +893,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 const Icon = mod.icon;
 
                 return (
+                  <React.Fragment key={mod.id}>
                   <button
-                    key={mod.id}
                     id={`sidebar-module-${mod.id}`}
                     type="button"
                     onClick={() => {
@@ -563,6 +948,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       </span>
                     )}
                   </button>
+                  {isModActive && (
+                    <div className="pl-3 ml-3 border-l-2 border-[#B38F4F]/30 space-y-1 mt-1">
+                      {renderModuleSubNav(mod.id)}
+                    </div>
+                  )}
+                  </React.Fragment>
                 );
               })}
             </div>
@@ -605,341 +996,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          {/* CONTEXTUAL SUB-NAV ITEMS BASED ON ACTIVE MODULE */}
-          <div className="flex-1 px-3 py-3 space-y-1 bg-white">
-            {activeGlobalModule === 'visao_geral' ? (
-              <div className="p-1 space-y-2.5">
-                <div className="flex items-center justify-between text-slate-400 text-[10px] uppercase font-bold px-1">
-                  <span>Torre de Controle</span>
-                  <span className="text-[#B38F4F]">Visão Executiva</span>
-                </div>
-                <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-                  Visão consolidada de DRE, receitas, frota, AWB e conformidade RDC 430 de todos os módulos.
-                </p>
-
-                <div className="space-y-1 pt-1">
-                  <button
-                    id="subnav-visao-geral-painel"
-                    type="button"
-                    onClick={() => {
-                      onSelectSection('visao_geral');
-                      onCloseMobile();
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-left transition-all ${
-                      currentSection === 'visao_geral'
-                        ? 'bg-[#B38F4F]/20 text-[#D8B97E] border border-[#B38F4F]/40 font-bold'
-                        : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <LayoutDashboard className="w-4 h-4 text-[#B38F4F]" />
-                      <span>Painel Geral Integrado</span>
-                    </div>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#B38F4F]/20 text-[#D8B97E] font-bold">Ativo</span>
-                  </button>
-
-                  <button
-                    id="subnav-visao-geral-agenda"
-                    type="button"
-                    onClick={() => {
-                      onChangeGlobalModule('agenda');
-                      onSelectSection('agenda_gestao');
-                      onCloseMobile();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors text-left"
-                  >
-                    <div className="flex items-center gap-2">
-                      <CalendarDays className="w-4 h-4 text-indigo-400" />
-                      <span>Agenda da Gestão</span>
-                    </div>
-                    {counts.atividadesHoje && counts.atividadesHoje > 0 ? (
-                      <span className="px-1.5 py-0.5 text-[10px] bg-indigo-500/30 text-indigo-200 rounded font-bold">
-                        {counts.atividadesHoje} hoje
-                      </span>
-                    ) : null}
-                  </button>
-                </div>
-              </div>
-            ) : activeGlobalModule === 'dp' ? (
-            <>
-              <div className="text-slate-500 text-[10px] uppercase font-bold px-2 mb-1.5">
-                Principal DP
-              </div>
-              {principalItems.map(renderNavButton)}
-
-              {operacionalItems.length > 0 && (
-                <>
-                  <div className="pt-4 text-slate-500 text-[10px] uppercase font-bold px-2 mb-1.5">
-                    Operacional CLT & ANVISA
-                  </div>
-                  {operacionalItems.map(renderNavButton)}
-                </>
-              )}
-
-              {gestaoItems.length > 0 && (
-                <>
-                  <div className="pt-4 text-slate-500 text-[10px] uppercase font-bold px-2 mb-1.5">
-                    Gestão & Tabelas
-                  </div>
-                  {gestaoItems.map(renderNavButton)}
-                </>
-              )}
-
-              {/* External Links */}
-              <div className="pt-4 text-slate-500 text-[10px] uppercase font-bold px-2 mb-1.5">
-                Links Digitais & Campo
-              </div>
-              <div className="space-y-1.5">
-                <button
-                  id="nav-item-form-publico"
-                  type="button"
-                  onClick={() => {
-                    onSelectSection('formulario_publico');
-                    onCloseMobile();
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left border ${
-                    currentSection === 'formulario_publico'
-                      ? 'bg-amber-100 text-amber-800 border-amber-300'
-                      : 'bg-slate-50 text-slate-500 border-slate-200 hover:text-slate-900 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Share2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span className="truncate">Ocorrência em Campo</span>
-                  </div>
-                  <span className="text-[10px] text-amber-400 font-semibold">Abrir</span>
-                </button>
-
-                <button
-                  id="nav-item-form-admissao"
-                  type="button"
-                  onClick={() => {
-                    if (onOpenAdmissionLinkModal) {
-                      onOpenAdmissionLinkModal();
-                    } else {
-                      onSelectSection('preadmissoes');
-                    }
-                    onCloseMobile();
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left border bg-gradient-to-r from-amber-950/40 to-slate-950/60 border-amber-500/30 text-amber-300 hover:border-amber-500/60"
-                >
-                  <div className="flex items-center gap-2">
-                    <UserCheck className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Link p/ Candidato</span>
-                  </div>
-                  <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded text-amber-200 font-bold">
-                    Enviar
-                  </span>
-                </button>
-              </div>
-            </>
-          ) : activeGlobalModule === 'clientes' ? (
-            <div className="p-2 space-y-2">
-              <div className="text-slate-700 text-xs font-bold px-1">
-                Carteira de Clientes
-              </div>
-              <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-                Gestão centralizada de parceiros comerciais, contratos farmacêuticos RDC 430, rotas e tabelas de frete.
-              </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => {
-                    onSelectSection('clientes');
-                    onCloseMobile();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-xs"
-                >
-                  <Building2 className="w-4 h-4" />
-                  Visualizar Todos os Clientes
-                </button>
-              </div>
-            </div>
-          ) : activeGlobalModule === 'farma_aereo' ? (
-            <div className="p-2 space-y-2">
-              <div className="text-slate-700 text-xs font-bold px-1">
-                Operações Farma Aéreo
-              </div>
-              <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-                Rastreamento AWB em tempo real, monitoramento de cadeias 2°C a 8°C e gelo seco, liberação em TECA e plantão UTI 24h.
-              </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => {
-                    onSelectSection('farma_aereo');
-                    onCloseMobile();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600 text-white shadow-xs"
-                >
-                  <Plane className="w-4 h-4" />
-                  Painel de Voos & AWB
-                </button>
-              </div>
-            </div>
-          ) : activeGlobalModule === 'farma_rodoviario' ? (
-            <div className="p-2 space-y-2">
-              <div className="text-slate-700 text-xs font-bold px-1">
-                Operações Farma Rodoviário
-              </div>
-              <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-                Gestão de frota com telemetria contínua do baú refrigerado, MDF-e, pontos de parada e baixa de entregas.
-              </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => {
-                    onSelectSection('farma_rodoviario');
-                    onCloseMobile();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-600 text-white shadow-xs"
-                >
-                  <Truck className="w-4 h-4" />
-                  Painel de Viagens & Frotas
-                </button>
-              </div>
-            </div>
-          ) : activeGlobalModule === 'usuarios' ? (
-            <div className="p-2 space-y-2">
-              <div className="flex items-center justify-between text-slate-700 text-xs font-bold px-1">
-                <span>Controle de Acessos</span>
-                <span className="text-[#B38F4F] text-[10px]">Segurança</span>
-              </div>
-              <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-                Cadastre credenciais e defina exatamente quais módulos cada login pode acessar no sistema JMT.
-              </p>
-              <div className="pt-2 space-y-1.5">
-                <button
-                  onClick={() => {
-                    onSelectSection('usuarios');
-                    onCloseMobile();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-colors"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  Gerenciar Logins & Permissões
-                </button>
-                {onOpenSwitchUserModal && (
-                  <button
-                    onClick={() => {
-                      onOpenSwitchUserModal();
-                      onCloseMobile();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <ArrowRightLeft className="w-4 h-4 text-[#B38F4F]" />
-                      <span>Trocar Usuário Atual</span>
-                    </div>
-                  </button>
-                )}
-              </div>
-            </div>
-          ) : activeGlobalModule === 'agenda' ? (
-            <div className="p-2 space-y-2">
-              <div className="text-slate-700 text-xs font-bold px-1">
-                Agenda da Gestão
-              </div>
-              <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-                Reuniões executivas, comitês de liderança, auditorias RDC 430, fechamentos contábeis e prazos estratégicos da governança JMT.
-              </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => {
-                    onSelectSection('agenda_gestao');
-                    onCloseMobile();
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4" />
-                    <span>Abrir Agenda Completa</span>
-                  </div>
-                  {counts.atividadesHoje && counts.atividadesHoje > 0 ? (
-                    <span className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded font-bold">
-                      {counts.atividadesHoje} hoje
-                    </span>
-                  ) : null}
-                </button>
-              </div>
-            </div>
-          ) : activeGlobalModule === 'notas' ? (
-            <div className="p-2 space-y-2">
-              <div className="text-slate-700 text-xs font-bold px-1">
-                Notas & Ideias
-              </div>
-              <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-                Páginas livres de anotações e brainstorm, estilo Notion — vincule qualquer página a um cliente, projeto, colaborador ou operação.
-              </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => {
-                    onSelectSection('notas');
-                    onCloseMobile();
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white shadow-xs transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <NotebookPen className="w-4 h-4" />
-                    <span>Abrir Notas & Ideias</span>
-                  </div>
-                  {counts.notasCount && counts.notasCount > 0 ? (
-                    <span className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded font-bold">
-                      {counts.notasCount}
-                    </span>
-                  ) : null}
-                </button>
-              </div>
-            </div>
-          ) : activeGlobalModule === 'instrucoes' ? (
-            <div className="p-2 space-y-2">
-              <div className="text-slate-700 text-xs font-bold px-1">
-                Instruções de Trabalho
-              </div>
-              <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-                Checklists, fluxogramas e procedimentos padronizados por operação — com código, dono do processo,
-                versão e vínculo a clientes, embarques ou viagens.
-              </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => {
-                    onSelectSection('instrucoes');
-                    onCloseMobile();
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileCheck2 className="w-4 h-4" />
-                    <span>Abrir Instruções de Trabalho</span>
-                  </div>
-                  {counts.instrucoesCount && counts.instrucoesCount > 0 ? (
-                    <span className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded font-bold">
-                      {counts.instrucoesCount}
-                    </span>
-                  ) : null}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="p-2 space-y-2">
-              <div className="text-slate-700 text-xs font-bold px-1">
-                Projetos Gerenciais & OKRs
-              </div>
-              <p className="text-[11px] text-slate-400 px-1 leading-relaxed">
-                Gestão de iniciativas estratégicas, CAPEX, roadmap de marcos, quadro Kanban e matriz de riscos RDC 430.
-              </p>
-              <div className="pt-2 space-y-1.5">
-                <button
-                  onClick={() => {
-                    onSelectSection('projetos');
-                    onCloseMobile();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white shadow-xs hover:bg-purple-700 transition-colors"
-                >
-                  <FolderKanban className="w-4 h-4" />
-                  Painel de Projetos & OKRs
-                </button>
-              </div>
-            </div>
-          )}
-          </div>
         </div>
 
         {/* Strategic Guidelines Shortcut */}
