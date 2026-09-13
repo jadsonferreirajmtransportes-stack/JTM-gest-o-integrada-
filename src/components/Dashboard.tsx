@@ -514,19 +514,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Right 4 Columns */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Status Compliance ANVISA (Dark Card Widget) */}
-          <div className="bg-slate-900 text-white p-6 rounded-xl shadow-md border border-slate-800">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#B38F4F] mb-5">
+          {/* Status Compliance ANVISA */}
+          <div className="bg-white p-6 rounded-xl shadow-xs border border-slate-200">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#8A6A39] mb-5">
               Status Compliance ANVISA
             </h3>
 
             <div className="space-y-5">
               <div>
-                <div className="flex justify-between text-xs mb-2 text-slate-200">
+                <div className="flex justify-between text-xs mb-2 text-slate-600">
                   <span>Documentação Digitalizada</span>
-                  <span className="font-semibold">{pctDocs}%</span>
+                  <span className="font-semibold text-slate-900">{pctDocs}%</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                   <div
                     className="bg-[#B38F4F] h-1.5 rounded-full transition-all duration-500"
                     style={{ width: `${pctDocs}%` }}
@@ -535,11 +535,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               <div>
-                <div className="flex justify-between text-xs mb-2 text-slate-200">
+                <div className="flex justify-between text-xs mb-2 text-slate-600">
                   <span>Treinamentos Críticos RDC 430</span>
-                  <span className="font-semibold">78%</span>
+                  <span className="font-semibold text-slate-900">78%</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                   <div
                     className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
                     style={{ width: '78%' }}
@@ -548,19 +548,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               <div>
-                <div className="flex justify-between text-xs mb-2 text-slate-200">
+                <div className="flex justify-between text-xs mb-2 text-slate-600">
                   <span>Exames Ocupacionais ASO</span>
-                  <span className="font-semibold">{pctExams}%</span>
+                  <span className="font-semibold text-slate-900">{pctExams}%</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-blue-400 h-1.5 rounded-full transition-all duration-500"
+                    className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
                     style={{ width: `${pctExams}%` }}
                   />
                 </div>
               </div>
 
-              <div className="mt-6 pt-5 border-t border-slate-800">
+              <div className="mt-6 pt-5 border-t border-slate-100">
                 <p className="text-[10px] text-slate-400 italic leading-normal">
                   Última auditoria interna realizada em 20/08/2026. Conformidade regulatória
                   certificada sob RDC 430/2020.
