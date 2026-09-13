@@ -130,34 +130,34 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 print:m-0 print:p-0 print:border-none print:shadow-none print:max-h-none print:overflow-visible">
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 bg-slate-900 text-white flex items-center justify-between shrink-0 print:bg-white print:text-black print:border-b-2 print:border-black">
+        <div className="p-5 border-b border-slate-100 bg-white flex items-center justify-between shrink-0 print:border-b-2 print:border-black">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-md">
               {colaborador.nomeCompleto.charAt(0)}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                <span className="font-mono text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                   {colaborador.codigoMatricula}
                 </span>
                 <span
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                     colaborador.status === 'Ativo'
-                      ? 'bg-emerald-500/20 text-emerald-300'
+                      ? 'bg-emerald-50 text-emerald-700'
                       : colaborador.status === 'Férias'
-                      ? 'bg-blue-500/20 text-blue-300'
+                      ? 'bg-blue-50 text-blue-700'
                       : colaborador.status === 'Afastado'
-                      ? 'bg-amber-500/20 text-amber-300'
-                      : 'bg-slate-700 text-slate-300'
+                      ? 'bg-amber-50 text-amber-700'
+                      : 'bg-slate-100 text-slate-600'
                   }`}
                 >
                   {colaborador.status}
                 </span>
               </div>
-              <h2 className="text-xl font-bold text-white mt-1 leading-tight print:text-slate-950">
+              <h2 className="text-xl font-bold text-slate-900 mt-1 leading-tight">
                 {colaborador.nomeCompleto}
               </h2>
-              <p className="text-xs text-slate-300 print:text-slate-600">
+              <p className="text-xs text-slate-500 print:text-slate-600">
                 {colaborador.funcaoCargo} • {colaborador.setor}
               </p>
             </div>
@@ -167,20 +167,20 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
             <button
               type="button"
               onClick={handlePrint}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700"
+              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-200"
               title="Imprimir Ficha Cadastral do Empregado"
             >
-              <Printer className="w-4 h-4 text-amber-400" />
+              <Printer className="w-4 h-4 text-[#8A6A39]" />
               <span>Imprimir Ficha</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsShareModalOpen(true)}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700"
+              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-200"
               title="Compartilhar Ficha Cadastral por link (terceiro externo, sem login)"
             >
-              <Link2 className="w-4 h-4 text-amber-400" />
+              <Link2 className="w-4 h-4 text-[#8A6A39]" />
               <span>Compartilhar</span>
             </button>
 
@@ -201,7 +201,7 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+              className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
             >
               <X className="w-5 h-5" />
             </button>
@@ -749,7 +749,7 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold"
+              className="px-4 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold"
             >
               Fechar
             </button>

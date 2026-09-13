@@ -346,19 +346,19 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
       <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-900 text-white border-b border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600">
               <FolderKanban className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 {initialData ? 'Editar Projeto Gerencial' : 'Novo Projeto Estratégico & Gerencial'}
-                <span className="text-xs font-mono font-normal px-2 py-0.5 rounded bg-slate-800 text-purple-300 border border-slate-700">
+                <span className="text-xs font-mono font-normal px-2 py-0.5 rounded bg-slate-100 text-purple-700 border border-slate-200">
                   {codigo || 'PRJ-2026'}
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Governança de Projetos, Metas RDC 430, Orçamento e Matriz de Riscos JMT
               </p>
             </div>
@@ -366,7 +366,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

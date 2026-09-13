@@ -106,15 +106,15 @@ export const CompartilharFichaModal: React.FC<CompartilharFichaModalProps> = ({
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white shrink-0">
+        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div>
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <Link2 className="w-4 h-4 text-amber-400" />
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Link2 className="w-4 h-4 text-[#8A6A39]" />
               Compartilhar Ficha Cadastral
             </h2>
-            <p className="text-[11px] text-slate-400 mt-0.5">{colaborador.nomeCompleto}</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">{colaborador.nomeCompleto}</p>
           </div>
-          <button type="button" onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
+          <button type="button" onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -224,7 +224,7 @@ export const CompartilharFichaModal: React.FC<CompartilharFichaModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold"
+            className="px-4 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold"
           >
             Fechar
           </button>

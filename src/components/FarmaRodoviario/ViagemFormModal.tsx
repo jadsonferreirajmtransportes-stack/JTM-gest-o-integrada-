@@ -232,23 +232,23 @@ export const ViagemFormModal: React.FC<ViagemFormModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+        <div className="px-6 py-4 bg-white flex items-center justify-between border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600/30 border border-emerald-500/50 flex items-center justify-center text-emerald-400">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-bold text-base text-white">
+              <h2 className="font-bold text-base text-slate-900">
                 {initialData ? 'Editar Viagem Rodoviária' : 'Novo Romaneio / Viagem Rodoviária'}
               </h2>
-              <p className="text-slate-400 text-xs mt-0.5">
+              <p className="text-slate-500 text-xs mt-0.5">
                 Controle de frotas, motoristas, telemetria e conformidade RDC 430
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -421,7 +421,7 @@ export const ViagemFormModal: React.FC<ViagemFormModalProps> = ({
                 <div key={ponto.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <span className="w-5 h-5 rounded-full bg-slate-900 text-white text-[10px] flex items-center justify-center">
+                      <span className="w-5 h-5 rounded-full bg-[#B38F4F] text-white text-[10px] flex items-center justify-center">
                         {idx + 1}
                       </span>
                       Parada #{idx + 1}
