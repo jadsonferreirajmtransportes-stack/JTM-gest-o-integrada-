@@ -22,7 +22,7 @@ import {
   NotebookPen,
   UserCog,
 } from 'lucide-react';
-import { UsuarioLogin, GlobalModuleId, UserRole, SecaoDp, Supervisor } from '../../types';
+import { UsuarioLogin, GlobalModuleId, UserRole, SecaoDp, SecaoOperacoes, Supervisor } from '../../types';
 import { MODULOS_SISTEMA } from '../../data/initialUsersData';
 
 // Seções de dentro do módulo DP (Departamento Pessoal) que podem ser restringidas
@@ -45,6 +45,18 @@ const SECOES_DP: { id: SecaoDp; label: string }[] = [
   { id: 'supervisores', label: 'Supervisores e Gestão' },
 ];
 const TODAS_SECOES_DP = SECOES_DP.map((s) => s.id);
+
+// Abas de dentro de Farma Aéreo/Farma Rodoviário (mesma estrutura nos dois módulos) que podem
+// ser restringidas — um único recorte vale pros dois. Ver SecaoOperacoes em types.ts.
+const SECOES_OPERACOES: { id: SecaoOperacoes; label: string }[] = [
+  { id: 'visao_geral', label: 'Visão Geral & DRE' },
+  { id: 'empresas', label: 'Empresas Atreladas' },
+  { id: 'equipe', label: 'Equipe do Setor' },
+  { id: 'faturamento', label: 'Faturamento' },
+  { id: 'controle_financeiro', label: 'Controle Financeiro (Faturas)' },
+  { id: 'custos', label: 'Custos Operacionais' },
+];
+const TODAS_SECOES_OPERACOES = SECOES_OPERACOES.map((s) => s.id);
 
 interface UsuarioFormModalProps {
   isOpen: boolean;
@@ -84,6 +96,9 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
   const [supervisorId, setSupervisorId] = useState('');
   const [escopoApenasProprioSetor, setEscopoApenasProprioSetor] = useState(false);
   const [secoesDpPermitidas, setSecoesDpPermitidas] = useState<SecaoDp[]>(TODAS_SECOES_DP);
+  const [secoesOperacoesPermitidas, setSecoesOperacoesPermitidas] = useState<SecaoOperacoes[]>(
+    TODAS_SECOES_OPERACOES
+  );
 
   useEffect(() => {
     if (usuarioToEdit) {
@@ -108,6 +123,11 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
           ? [...usuarioToEdit.secoesDpPermitidas]
           : TODAS_SECOES_DP
       );
+      setSecoesOperacoesPermitidas(
+        usuarioToEdit.secoesOperacoesPermitidas && usuarioToEdit.secoesOperacoesPermitidas.length > 0
+          ? [...usuarioToEdit.secoesOperacoesPermitidas]
+          : TODAS_SECOES_OPERACOES
+      );
       setErrorMsg('');
     } else {
       // Default new user
@@ -124,6 +144,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       setSupervisorId('');
       setEscopoApenasProprioSetor(false);
       setSecoesDpPermitidas(TODAS_SECOES_DP);
+      setSecoesOperacoesPermitidas(TODAS_SECOES_OPERACOES);
       setErrorMsg('');
     }
   }, [usuarioToEdit, isOpen]);
@@ -174,6 +195,14 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       setSecoesDpPermitidas(secoesDpPermitidas.filter((id) => id !== secaoId));
     } else {
       setSecoesDpPermitidas([...secoesDpPermitidas, secaoId]);
+    }
+  };
+
+  const toggleSecaoOperacoes = (secaoId: SecaoOperacoes) => {
+    if (secoesOperacoesPermitidas.includes(secaoId)) {
+      setSecoesOperacoesPermitidas(secoesOperacoesPermitidas.filter((id) => id !== secaoId));
+    } else {
+      setSecoesOperacoesPermitidas([...secoesOperacoesPermitidas, secaoId]);
     }
   };
 
@@ -264,11 +293,21 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       return;
     }
 
+    const usaOperacoes = modulosPermitidos.includes('farma_aereo') || modulosPermitidos.includes('farma_rodoviario');
+    if (usaOperacoes && secoesOperacoesPermitidas.length === 0) {
+      setErrorMsg('Marque pelo menos 1 (uma) aba de Operações, ou desmarque Farma Aéreo/Rodoviário.');
+      return;
+    }
+
     // Todas as seções marcadas = sem restrição (equivalente a não ter secoesDpPermitidas
     // nenhuma) — só grava a lista quando é de fato um recorte menor que o total.
     const secoesDpParaSalvar: SecaoDp[] | undefined =
       modulosPermitidos.includes('dp') && secoesDpPermitidas.length < TODAS_SECOES_DP.length
         ? secoesDpPermitidas
+        : undefined;
+    const secoesOperacoesParaSalvar: SecaoOperacoes[] | undefined =
+      usaOperacoes && secoesOperacoesPermitidas.length < TODAS_SECOES_OPERACOES.length
+        ? secoesOperacoesPermitidas
         : undefined;
 
     const userToSave: UsuarioLogin = {
@@ -289,6 +328,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       supervisorId: supervisorId || undefined,
       secoesDpPermitidas: secoesDpParaSalvar,
       escopoApenasProprioSetor: supervisorId ? escopoApenasProprioSetor : false,
+      secoesOperacoesPermitidas: secoesOperacoesParaSalvar,
     };
 
     onSave(userToSave);
@@ -717,6 +757,68 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                   <p className="text-[11px] text-rose-600 font-semibold mt-2">
                     Nenhuma seção marcada — esse login vai entrar em DP e não ver nada. Marque ao
                     menos uma.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Mesmo recorte, agora pras abas de dentro de Farma Aéreo/Farma Rodoviário — um
+                único checklist vale pros dois módulos (não dá pra restringir cada um diferente
+                hoje). Só aparece se pelo menos um dos dois estiver marcado acima. */}
+            {(modulosPermitidos.includes('farma_aereo') || modulosPermitidos.includes('farma_rodoviario')) && (
+              <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                  <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <UserCog className="w-3.5 h-3.5 text-[#B38F4F]" />
+                    Dentro de Farma Aéreo/Rodoviário, quais abas esse login vê? (
+                    {secoesOperacoesPermitidas.length} de {TODAS_SECOES_OPERACOES.length})
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSecoesOperacoesPermitidas(TODAS_SECOES_OPERACOES)}
+                      className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-md text-[11px] font-semibold transition-colors"
+                    >
+                      Marcar Todas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSecoesOperacoesPermitidas(['empresas', 'equipe'])}
+                      className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-md text-[11px] font-semibold transition-colors"
+                      title="Empresas Atreladas + Equipe do Setor, sem Visão Geral/Faturamento/Custos"
+                    >
+                      Supervisor de Campo
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {SECOES_OPERACOES.map((secao) => {
+                    const isChecked = secoesOperacoesPermitidas.includes(secao.id);
+                    return (
+                      <label
+                        key={secao.id}
+                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer select-none transition-colors ${
+                          isChecked
+                            ? 'bg-white border-[#B38F4F]/40 text-slate-800'
+                            : 'bg-white/60 border-slate-200 text-slate-400'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleSecaoOperacoes(secao.id)}
+                          className="w-3.5 h-3.5 accent-[#B38F4F]"
+                        />
+                        <span className="text-[11px] font-medium">{secao.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {secoesOperacoesPermitidas.length === 0 && (
+                  <p className="text-[11px] text-rose-600 font-semibold mt-2">
+                    Nenhuma aba marcada — esse login vai entrar em Farma Aéreo/Rodoviário e não
+                    ver nada. Marque ao menos uma.
                   </p>
                 )}
               </div>

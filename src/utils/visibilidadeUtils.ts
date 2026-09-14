@@ -12,7 +12,7 @@
 // por isso `nomesTextoLivre` é passado por quem chama).
 // ============================================================================
 
-import { UsuarioLogin, UserRole, SecaoDp, Colaborador, Cliente } from '../types';
+import { UsuarioLogin, UserRole, SecaoDp, SecaoOperacoes, Colaborador, Cliente } from '../types';
 
 // ============================================================================
 // Acesso por SEÇÃO dentro do módulo DP + escopo "própria equipe/carteira" —
@@ -50,6 +50,15 @@ export function filtrarClientesDoSupervisor(clientes: Cliente[], nomeSupervisor?
   const alvo = nomeSupervisor.trim().toLowerCase();
   if (!alvo) return clientes;
   return clientes.filter((c) => (c.gerenteContaResponsavel || '').trim().toLowerCase() === alvo);
+}
+
+/** Essa aba de dentro de Farma Aéreo/Farma Rodoviário está liberada pro login atual? Sem
+ *  restrição cadastrada (secoesOperacoesPermitidas ausente/vazio) = liberado, preservando o
+ *  comportamento de todo login já cadastrado. Mesmo raciocínio de podeVerSecaoDp, só que pra
+ *  abas internas de um painel em vez de seções separadas na barra lateral. */
+export function podeVerAbaOperacoes(currentUser: UsuarioLogin | undefined, aba: SecaoOperacoes): boolean {
+  if (!currentUser?.secoesOperacoesPermitidas || currentUser.secoesOperacoesPermitidas.length === 0) return true;
+  return currentUser.secoesOperacoesPermitidas.includes(aba);
 }
 
 export function podeVerRegistroCompartilhado(params: {

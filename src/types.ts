@@ -35,6 +35,18 @@ export type SecaoDp =
   | 'cargos'
   | 'supervisores';
 
+// Abas de dentro dos módulos Farma Aéreo e Farma Rodoviário (mesma estrutura de 6 abas nos
+// dois — ver FarmaAereoView.tsx/FarmaRodoviarioView.tsx) que podem ser restringidas — ver
+// UsuarioLogin.secoesOperacoesPermitidas. Um único recorte vale pros dois módulos (não dá
+// pra restringir Aéreo diferente de Rodoviário hoje).
+export type SecaoOperacoes =
+  | 'visao_geral'
+  | 'empresas'
+  | 'equipe'
+  | 'faturamento'
+  | 'controle_financeiro'
+  | 'custos';
+
 // Sistema de Autenticação e Permissão de Módulos por Login
 export interface UsuarioLogin {
   id: string;
@@ -71,6 +83,10 @@ export interface UsuarioLogin {
    *  está sob a responsabilidade do Supervisor vinculado (supervisorId) — não dá acesso a
    *  nada novo, só filtra o que já era visível pra só a própria equipe/carteira. */
   escopoApenasProprioSetor?: boolean;
+  /** Restringe as abas internas de Farma Aéreo/Farma Rodoviário (já liberados em
+   *  modulosPermitidos) a só estas — ausente ou vazio = acesso a TODAS (comportamento de
+   *  sempre). Mesmo raciocínio de secoesDpPermitidas, um recorte pros dois setores. */
+  secoesOperacoesPermitidas?: SecaoOperacoes[];
 }
 
 export type EstadoCivil = 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)' | 'União estável';

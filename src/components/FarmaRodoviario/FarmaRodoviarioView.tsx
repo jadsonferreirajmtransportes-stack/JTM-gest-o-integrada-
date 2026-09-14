@@ -17,11 +17,13 @@ import {
   Cliente,
   Colaborador,
   UserRole,
+  UsuarioLogin,
   CustoOperacional,
   StatusCustoOperacional,
   LancamentoFaturamentoAereo,
   FaturaAereo,
 } from '../../types';
+import { podeVerAbaOperacoes } from '../../utils/visibilidadeUtils';
 import { SectorClientsTab } from '../Common/SectorClientsTab';
 import { SectorEmployeesTab } from '../Common/SectorEmployeesTab';
 import { SectorManagerialDashboard } from '../Common/SectorManagerialDashboard';
@@ -58,6 +60,7 @@ interface FarmaRodoviarioViewProps {
    *  quanto pelo atalho suspenso no menu lateral, abaixo do botão do módulo. */
   onOpenLinkModal: (mode: 'clientes' | 'colaboradores') => void;
   userRole?: UserRole;
+  currentUser?: UsuarioLogin;
   // Controle Financeiro — mesma tabela de lançamentos/faturas do Farma Aéreo
   // (LancamentoFaturamentoAereo/FaturaAereo), separada pelo campo `modal`.
   lancamentosFaturamentoAereo?: LancamentoFaturamentoAereo[];
@@ -85,6 +88,7 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
   onSelectColaboradorDetail,
   onOpenLinkModal,
   userRole = 'admin',
+  currentUser,
   lancamentosFaturamentoAereo = [],
   faturasAereo = [],
   onImportFaturamentoAereo = () => {},
@@ -94,10 +98,20 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
   onUpdateLancamentoFaturamentoAereo = () => {},
   onDeleteLancamentoFaturamentoAereo = () => {},
 }) => {
-  // Managerial sub-tabs
+  // Managerial sub-tabs — a aba inicial é a primeira permitida (ver secoesOperacoesPermitidas),
+  // não sempre "visao_geral": alguém sem acesso a ela (ex.: só Empresas/Equipe) não pode abrir
+  // a tela numa aba que nem vai poder ver.
+  const ORDEM_ABAS_OPERACOES = [
+    'visao_geral',
+    'empresas',
+    'equipe',
+    'faturamento',
+    'controle_financeiro',
+    'custos',
+  ] as const;
   const [activeSubTab, setActiveSubTab] = useState<
     'visao_geral' | 'empresas' | 'equipe' | 'faturamento' | 'controle_financeiro' | 'custos'
-  >('visao_geral');
+  >(() => ORDEM_ABAS_OPERACOES.find((aba) => podeVerAbaOperacoes(currentUser, aba)) || 'visao_geral');
 
   // Farma Aéreo e Farma Rodoviário compartilham a mesma tabela de lançamentos/faturas — o
   // campo `modal` separa quem é de quem (ver ehModalRodoviario).
@@ -159,81 +173,93 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
 
       {/* Sub-Navigation Tabs */}
       <div className="flex items-center overflow-x-auto border-b border-slate-200 gap-2 bg-white px-3 pt-2 rounded-xl shadow-xs">
-        <button
-          onClick={() => setActiveSubTab('visao_geral')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
-            activeSubTab === 'visao_geral'
-              ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <PieChart className="w-4 h-4" />
-          <span>Visão Geral & DRE</span>
-        </button>
+        {podeVerAbaOperacoes(currentUser, 'visao_geral') && (
+          <button
+            onClick={() => setActiveSubTab('visao_geral')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
+              activeSubTab === 'visao_geral'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <PieChart className="w-4 h-4" />
+            <span>Visão Geral & DRE</span>
+          </button>
+        )}
 
-        <button
-          onClick={() => setActiveSubTab('empresas')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
-            activeSubTab === 'empresas'
-              ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>Empresas Atreladas ({metrics.totalClientesVinculados})</span>
-        </button>
+        {podeVerAbaOperacoes(currentUser, 'empresas') && (
+          <button
+            onClick={() => setActiveSubTab('empresas')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
+              activeSubTab === 'empresas'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            <span>Empresas Atreladas ({metrics.totalClientesVinculados})</span>
+          </button>
+        )}
 
-        <button
-          onClick={() => setActiveSubTab('equipe')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
-            activeSubTab === 'equipe'
-              ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          <span>Equipe do Setor ({metrics.headcountEquipe})</span>
-        </button>
+        {podeVerAbaOperacoes(currentUser, 'equipe') && (
+          <button
+            onClick={() => setActiveSubTab('equipe')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
+              activeSubTab === 'equipe'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Equipe do Setor ({metrics.headcountEquipe})</span>
+          </button>
+        )}
 
-        <button
-          onClick={() => setActiveSubTab('faturamento')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
-            activeSubTab === 'faturamento'
-              ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <DollarSign className="w-4 h-4" />
-          <span>Faturamento ({formatCurrency(metrics.faturamentoMensalTotal)})</span>
-        </button>
+        {podeVerAbaOperacoes(currentUser, 'faturamento') && (
+          <button
+            onClick={() => setActiveSubTab('faturamento')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
+              activeSubTab === 'faturamento'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <DollarSign className="w-4 h-4" />
+            <span>Faturamento ({formatCurrency(metrics.faturamentoMensalTotal)})</span>
+          </button>
+        )}
 
-        <button
-          onClick={() => setActiveSubTab('controle_financeiro')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
-            activeSubTab === 'controle_financeiro'
-              ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Wallet className="w-4 h-4" />
-          <span>Controle Financeiro ({lancamentosDoSetor.length} NFs/CT-es)</span>
-        </button>
+        {podeVerAbaOperacoes(currentUser, 'controle_financeiro') && (
+          <button
+            onClick={() => setActiveSubTab('controle_financeiro')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
+              activeSubTab === 'controle_financeiro'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Wallet className="w-4 h-4" />
+            <span>Controle Financeiro ({lancamentosDoSetor.length} NFs/CT-es)</span>
+          </button>
+        )}
 
-        <button
-          onClick={() => setActiveSubTab('custos')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
-            activeSubTab === 'custos'
-              ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <TrendingUp className="w-4 h-4" />
-          <span>Custos Operacionais ({formatCurrency(metrics.custoTotalSetor)})</span>
-        </button>
+        {podeVerAbaOperacoes(currentUser, 'custos') && (
+          <button
+            onClick={() => setActiveSubTab('custos')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
+              activeSubTab === 'custos'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>Custos Operacionais ({formatCurrency(metrics.custoTotalSetor)})</span>
+          </button>
+        )}
       </div>
 
       {/* TAB 1: VISÃO GERAL GERENCIAL & DRE */}
-      {activeSubTab === 'visao_geral' && (
+      {activeSubTab === 'visao_geral' && podeVerAbaOperacoes(currentUser, 'visao_geral') && (
         <SectorManagerialDashboard
           setor="farma_rodoviario"
           metrics={metrics}
@@ -245,7 +271,7 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
       )}
 
       {/* TAB 2: EMPRESAS ATRELADAS */}
-      {activeSubTab === 'empresas' && (
+      {activeSubTab === 'empresas' && podeVerAbaOperacoes(currentUser, 'empresas') && (
         <SectorClientsTab
           setor="farma_rodoviario"
           allClientes={clientes}
@@ -258,7 +284,7 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
       )}
 
       {/* TAB 3: EQUIPE DO SETOR */}
-      {activeSubTab === 'equipe' && (
+      {activeSubTab === 'equipe' && podeVerAbaOperacoes(currentUser, 'equipe') && (
         <SectorEmployeesTab
           setor="farma_rodoviario"
           allColaboradores={colaboradores}
@@ -271,7 +297,7 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
       )}
 
       {/* TAB 4: FATURAMENTO & RECEITAS */}
-      {activeSubTab === 'faturamento' && (
+      {activeSubTab === 'faturamento' && podeVerAbaOperacoes(currentUser, 'faturamento') && (
         <SectorRevenueTab
           setor="farma_rodoviario"
           metrics={metrics}
@@ -284,7 +310,7 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
 
       {/* TAB: CONTROLE FINANCEIRO — FATURAMENTO (NFs / CT-es, precificação Ad Valorem ou por
           tabela de peso/cidade, conforme cadastrado no tarifário de cada cliente) */}
-      {activeSubTab === 'controle_financeiro' && (
+      {activeSubTab === 'controle_financeiro' && podeVerAbaOperacoes(currentUser, 'controle_financeiro') && (
         <FaturamentoAereoView
           lancamentos={lancamentosDoSetor}
           faturas={faturasDoSetor}
@@ -304,7 +330,7 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
       )}
 
       {/* TAB 5: CUSTOS OPERACIONAIS */}
-      {activeSubTab === 'custos' && (
+      {activeSubTab === 'custos' && podeVerAbaOperacoes(currentUser, 'custos') && (
         <SectorCostsTab
           setor="farma_rodoviario"
           metrics={metrics}

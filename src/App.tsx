@@ -2207,6 +2207,7 @@ export default function App() {
               onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
               onOpenLinkModal={(mode) => handleOpenSectorLinkModal('farma_aereo', mode)}
               userRole={userRole}
+              currentUser={currentUser}
               lancamentosFaturamentoAereo={lancamentosFaturamentoAereo}
               faturasAereo={faturasAereo}
               onImportFaturamentoAereo={handleImportFaturamentoAereo}
@@ -2245,6 +2246,7 @@ export default function App() {
               onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
               onOpenLinkModal={(mode) => handleOpenSectorLinkModal('farma_rodoviario', mode)}
               userRole={userRole}
+              currentUser={currentUser}
               lancamentosFaturamentoAereo={lancamentosFaturamentoAereo}
               faturasAereo={faturasAereo}
               onImportFaturamentoAereo={handleImportFaturamentoAereo}
