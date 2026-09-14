@@ -35,7 +35,7 @@ import {
   Download,
 } from 'lucide-react';
 import { UserRole, GlobalModuleId, UsuarioLogin, SecaoDp } from '../types';
-import { podeVerSecaoDp } from '../utils/visibilidadeUtils';
+import { podeVerSecaoDp, primeiraSecaoDpPermitida } from '../utils/visibilidadeUtils';
 import { JmtLogo } from './Brand/JmtLogo';
 import { StrategicGuidelinesModal } from './Common/StrategicGuidelinesModal';
 
@@ -1057,7 +1057,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       else if (mod.id === 'usuarios') onSelectSection('usuarios');
                       else if (mod.id === 'instrucoes') onSelectSection('instrucoes');
                       else if (mod.id === 'dp') {
-                        onSelectSection('dashboard');
+                        // Não assume 'dashboard' fixo — quem tem DP restrito sem essa seção
+                        // liberada cairia numa tela em branco (ver primeiraSecaoDpPermitida).
+                        onSelectSection(primeiraSecaoDpPermitida(currentUser));
                       }
                       onCloseMobile();
                     }}

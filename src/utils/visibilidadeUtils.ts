@@ -29,6 +29,22 @@ export function podeVerSecaoDp(currentUser: UsuarioLogin | undefined, secao: Sec
   return currentUser.secoesDpPermitidas.includes(secao);
 }
 
+// Mesma ordem usada no menu de DP (ver dpNavItems em Sidebar.tsx) — usada só pra achar a
+// primeira seção permitida, não precisa estar 100% igual visualmente.
+const ORDEM_SECOES_DP: SecaoDp[] = [
+  'dashboard', 'colaboradores', 'preadmissoes', 'custos', 'beneficios', 'vale_alimentacao',
+  'ferias', 'saude', 'onboarding', 'ocorrencias', 'aniversariantes', 'arquivo', 'cargos', 'supervisores',
+];
+
+/** Primeira seção de DP que o login atual pode ver — usar toda vez que o app entra ou volta
+ *  pro módulo DP sem saber ainda em qual seção (ex.: clicar direto no ícone do módulo). Nunca
+ *  assumir 'dashboard' fixo: quem tem DP restrito a só, por exemplo, Ocorrências/Aniversariantes
+ *  (sem 'dashboard' entre elas) cai numa seção que nem pode ver, e a tela fica em branco —
+ *  nenhum bloco de DP bate com activeSection === 'dashboard' E podeVerSecaoDp ao mesmo tempo. */
+export function primeiraSecaoDpPermitida(currentUser: UsuarioLogin | undefined): SecaoDp {
+  return ORDEM_SECOES_DP.find((secao) => podeVerSecaoDp(currentUser, secao)) || 'dashboard';
+}
+
 /** Só os colaboradores da equipe de um supervisor (Colaborador.supervisorId) — sem
  *  supervisorId (ex.: escopo desligado, ou login não vinculado a nenhum Supervisor), devolve
  *  a lista inteira sem filtrar. */

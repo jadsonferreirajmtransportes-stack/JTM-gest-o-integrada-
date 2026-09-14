@@ -199,6 +199,7 @@ import { atividadeOcorreEm, podeVerAtividade } from './components/Agenda/agendaU
 import {
   podeVerRegistroCompartilhado,
   podeVerSecaoDp,
+  primeiraSecaoDpPermitida,
   filtrarColaboradoresDoSupervisor,
   filtrarClientesDoSupervisor,
 } from './utils/visibilidadeUtils';
@@ -252,6 +253,22 @@ export default function App() {
     if (initialMod === 'notas') return 'notas';
     if (initialMod === 'instrucoes') return 'instrucoes';
     if (initialMod === 'usuarios') return 'usuarios';
+    if (initialMod === 'dp') {
+      // primeiraSecaoDpPermitida depende do usuário logado (secoesDpPermitidas) — nesse ponto
+      // do código o state `currentUser` ainda não existe (é declarado mais abaixo), então lê
+      // direto do localStorage, do mesmo jeito que o próprio initializer de currentUser faz.
+      // Sem isso, alguém com DP restrito a seções sem 'dashboard' (ex.: só Ocorrências) abriria
+      // o sistema numa seção que nem pode ver, e a tela ficaria em branco.
+      try {
+        const savedId = localStorage.getItem('jmt_current_user_id');
+        const s = localStorage.getItem('jmt_usuarios_logins');
+        const storedUsers: UsuarioLogin[] = s ? JSON.parse(s) : INITIAL_USERS_DATA;
+        const found = savedId ? storedUsers.find((u: UsuarioLogin) => u.id === savedId) : undefined;
+        return primeiraSecaoDpPermitida(found);
+      } catch {
+        return 'dashboard';
+      }
+    }
     return 'dashboard';
   });
   const [userRole, setUserRole] = useState<UserRole>('admin');
@@ -505,7 +522,9 @@ export default function App() {
           activeSection
         )
       ) {
-        setActiveSection('dashboard');
+        // Não assume 'dashboard' fixo — quem tem DP restrito sem essa seção liberada cairia
+        // numa tela em branco (ver primeiraSecaoDpPermitida).
+        setActiveSection(primeiraSecaoDpPermitida(currentUser));
       }
     }
   };
