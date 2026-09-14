@@ -295,6 +295,16 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   // tamanho dos outros uploads (ver EmployeeDossierSection.tsx/AsoImageUploader.tsx —
   // anexos grandes na mesma gravação estouram o tempo limite do banco).
   const LIMITE_DOCUMENTO_MB = 8;
+  // Limite COMBINADO entre documentos + dossiê de anexos + ASO — os 3 campos gravam no mesmo
+  // registro do colaborador, então o que importa pro banco não estourar o tempo limite é a
+  // SOMA de tudo, não cada campo isolado (caso real: colaborador com vários documentos de
+  // ~7-8MB cada passava longe disso mesmo com o dossiê de anexos vazio).
+  const LIMITE_TOTAL_GERAL_MB = 20;
+  const tamanhoDocumentosMB =
+    (formData.documentos || []).reduce((soma, d) => soma + (d.arquivoUrl?.length || 0), 0) / (1024 * 1024);
+  const tamanhoAnexosMB =
+    (formData.anexos || []).reduce((soma, a) => soma + (a.arquivoUrl?.length || 0), 0) / (1024 * 1024);
+  const tamanhoAsoMB = (formData.asoImagemUrl?.length || 0) / (1024 * 1024);
 
   const handleDocUploadSimulated = (docId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -305,6 +315,19 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     if (tamanhoMB > LIMITE_DOCUMENTO_MB) {
       setErroUploadDocumento(
         `"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite é ${LIMITE_DOCUMENTO_MB}MB. Comprima o arquivo ou tire uma foto em resolução menor.`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    const tamanhoOutrosDocumentosMB =
+      (formData.documentos || [])
+        .filter((d) => d.id !== docId)
+        .reduce((soma, d) => soma + (d.arquivoUrl?.length || 0), 0) / (1024 * 1024);
+    const totalComEsteMB = tamanhoOutrosDocumentosMB + tamanhoAnexosMB + tamanhoAsoMB + tamanhoMB;
+    if (totalComEsteMB > LIMITE_TOTAL_GERAL_MB) {
+      setErroUploadDocumento(
+        `Esse arquivo deixaria o total de anexos deste colaborador em ~${totalComEsteMB.toFixed(1)}MB (limite combinado: ${LIMITE_TOTAL_GERAL_MB}MB, somando documentos + dossiê + ASO) — pode falhar ao salvar. Remova algum anexo antigo ou comprima este arquivo antes.`
       );
       e.target.value = '';
       return;
@@ -1252,6 +1275,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               <AsoImageUploader
                 asoImagemUrl={formData.asoImagemUrl}
                 asoNomeArquivo={formData.asoNomeArquivo}
+                tamanhoOutrosCamposMB={tamanhoDocumentosMB + tamanhoAnexosMB}
                 onImageChange={(dataUrl, fileName) => {
                   handleChange('asoImagemUrl', dataUrl);
                   handleChange('asoNomeArquivo', fileName);
@@ -1596,6 +1620,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                 onUpdateAnotacoes={(newNotes) => handleChange('anotacoes', newNotes)}
                 onUpdateAnexos={(newAnexos) => handleChange('anexos', newAnexos)}
                 onUpdateObservacoesGerais={(text) => handleChange('observacoesGerais', text)}
+                tamanhoOutrosCamposMB={tamanhoDocumentosMB + tamanhoAsoMB}
               />
             </div>
           )}

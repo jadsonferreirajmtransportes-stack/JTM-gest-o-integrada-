@@ -487,6 +487,11 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                     setAsoImagemUrl(url);
                     setAsoNomeArquivo(name);
                   }}
+                  tamanhoOutrosCamposMB={
+                    ((selectedColab.documentos || []).reduce((soma, d) => soma + (d.arquivoUrl?.length || 0), 0) +
+                      (selectedColab.anexos || []).reduce((soma, a) => soma + (a.arquivoUrl?.length || 0), 0)) /
+                    (1024 * 1024)
+                  }
                 />
               </div>
 

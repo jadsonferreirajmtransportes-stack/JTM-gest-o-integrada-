@@ -29,6 +29,9 @@ interface EmployeeDossierSectionProps {
   onUpdateAnexos: (anexos: AnexoColaborador[]) => void;
   onUpdateObservacoesGerais?: (text: string) => void;
   readOnly?: boolean;
+  /** Tamanho (em MB) já ocupado por OUTROS anexos do mesmo colaborador (documentos + ASO) —
+   *  soma na checagem do limite combinado abaixo. Ver LIMITE_TOTAL_GERAL_MB. */
+  tamanhoOutrosCamposMB?: number;
 }
 
 const CATEGORIAS_ANOTACOES: AnotacaoColaborador['categoria'][] = [
@@ -59,6 +62,7 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
   onUpdateAnexos,
   onUpdateObservacoesGerais,
   readOnly = false,
+  tamanhoOutrosCamposMB = 0,
 }) => {
   // New Note state
   const [isAddingNote, setIsAddingNote] = useState(false);
@@ -102,9 +106,12 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
   // Postgres (não em um storage de arquivos separado) — um payload grande demais na mesma
   // gravação estoura o tempo limite da instrução SQL no banco (testado: 25MB já falha com
   // "canceling statement due to statement timeout"; 15MB passa mas demora ~20s mesmo numa
-  // boa conexão). Os limites abaixo dão uma margem confortável pra conexões mais lentas.
+  // boa conexão). O limite abaixo é COMBINADO com os outros campos do mesmo colaborador que
+  // também guardam anexo (documentos e ASO, ver tamanhoOutrosCamposMB) — checar só os anexos
+  // deste dossiê, sozinhos, não bastava: um colaborador com vários documentos grandes já
+  // estourava o total mesmo com o dossiê de anexos vazio.
   const LIMITE_ANEXO_MB = 8;
-  const LIMITE_TOTAL_ANEXOS_MB = 20;
+  const LIMITE_TOTAL_GERAL_MB = 20;
 
   const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -121,9 +128,10 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
     }
 
     const tamanhoAtualAnexosMB = anexos.reduce((soma, a) => soma + (a.arquivoUrl?.length || 0), 0) / (1024 * 1024);
-    if (tamanhoAtualAnexosMB + tamanhoMB > LIMITE_TOTAL_ANEXOS_MB) {
+    const totalComEsteMB = tamanhoAtualAnexosMB + tamanhoOutrosCamposMB + tamanhoMB;
+    if (totalComEsteMB > LIMITE_TOTAL_GERAL_MB) {
       setErroAnexo(
-        `O total de anexos deste colaborador passaria de ${LIMITE_TOTAL_ANEXOS_MB}MB, o que pode falhar ao salvar. Remova algum anexo antigo antes de adicionar este.`
+        `Esse arquivo deixaria o total de anexos deste colaborador em ~${totalComEsteMB.toFixed(1)}MB (limite combinado: ${LIMITE_TOTAL_GERAL_MB}MB, somando documentos + dossiê + ASO) — pode falhar ao salvar. Remova algum anexo antigo antes de adicionar este.`
       );
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;

@@ -18,6 +18,9 @@ interface AsoImageUploaderProps {
   onImageChange: (dataUrl: string, fileName: string) => void;
   onImageRemove: () => void;
   readOnly?: boolean;
+  /** Tamanho (em MB) já ocupado por OUTROS anexos do mesmo colaborador (documentos + dossiê) —
+   *  soma na checagem do limite combinado abaixo. Ver LIMITE_TOTAL_GERAL_MB. */
+  tamanhoOutrosCamposMB?: number;
 }
 
 export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
@@ -26,6 +29,7 @@ export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
   onImageChange,
   onImageRemove,
   readOnly = false,
+  tamanhoOutrosCamposMB = 0,
 }) => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [erroUpload, setErroUpload] = useState<string | null>(null);
@@ -33,8 +37,12 @@ export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
 
   // O ASO fica gravado como base64 numa coluna do próprio cadastro do colaborador (não num
   // storage de arquivos separado) — um arquivo grande demais nessa mesma gravação estoura o
-  // tempo limite da instrução SQL no banco. Ver mesmo limite em EmployeeDossierSection.tsx.
+  // tempo limite da instrução SQL no banco (testado: 25MB somados no cadastro já falha com
+  // "canceling statement due to statement timeout"). O limite por arquivo sozinho não bastava:
+  // documentos + dossiê + ASO juntos é que precisam ficar dentro do total combinado — ver mesmo
+  // limite em EmployeeDossierSection.tsx e EmployeeFormModal.tsx.
   const LIMITE_MB = 8;
+  const LIMITE_TOTAL_GERAL_MB = 20;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,6 +53,15 @@ export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
     if (tamanhoMB > LIMITE_MB) {
       setErroUpload(
         `"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite é ${LIMITE_MB}MB. Comprima a imagem/PDF ou tire uma foto em resolução menor.`
+      );
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const totalComEsteMB = tamanhoOutrosCamposMB + tamanhoMB;
+    if (totalComEsteMB > LIMITE_TOTAL_GERAL_MB) {
+      setErroUpload(
+        `Esse arquivo deixaria o total de anexos deste colaborador em ~${totalComEsteMB.toFixed(1)}MB (limite combinado: ${LIMITE_TOTAL_GERAL_MB}MB, somando documentos + dossiê + ASO) — pode falhar ao salvar. Remova algum anexo antigo ou comprima este arquivo antes.`
       );
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
