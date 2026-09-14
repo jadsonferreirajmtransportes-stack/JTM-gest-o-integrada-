@@ -29,7 +29,6 @@ import {
   ExternalLink,
   Percent,
   Wallet,
-  Activity,
   Award,
 } from 'lucide-react';
 import {
@@ -865,7 +864,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
       {/* ========================================================================= */}
       {/* 2. GRANDES NÚMEROS: CONSOLIDAÇÃO FINANCEIRA & OPERACIONAL (KPI CARDS)     */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* KPI 1: Faturamento Mensal Consolidado */}
         <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300 relative overflow-hidden">
           <div className="flex items-center justify-between">
@@ -974,43 +973,6 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
           </p>
         </div>
 
-        {/* KPI 4: Operações em Trânsito (Cadeia Fria RDC 430) */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300 relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Operações em Trânsito
-            </span>
-            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <Activity className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="font-display text-3xl font-bold text-slate-900 tracking-tight">
-              {opsSummary.totalOperacoesAtivas} em andamento
-            </div>
-            <p className="mt-1.5 text-xs text-slate-500">
-              {opsSummary.embarquesAereosAtivos} aéreos · {opsSummary.viagensRodoviariasAtivas} rodoviários
-            </p>
-          </div>
-          {/* Indicador único do cartão: divisão Aéreo x Rodoviário das operações ativas */}
-          <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
-            <div
-              className="h-full bg-sky-500"
-              style={{
-                width: `${opsSummary.totalOperacoesAtivas > 0 ? (opsSummary.embarquesAereosAtivos / opsSummary.totalOperacoesAtivas) * 100 : 50}%`,
-              }}
-            />
-            <div
-              className="h-full bg-amber-300"
-              style={{
-                width: `${opsSummary.totalOperacoesAtivas > 0 ? (opsSummary.viagensRodoviariasAtivas / opsSummary.totalOperacoesAtivas) * 100 : 50}%`,
-              }}
-            />
-          </div>
-          <p className="mt-1.5 text-[11px] text-slate-400">
-            {opsSummary.embarquesTermolabeisCount} cargas termolábeis sob 2°C-8°C/gelo seco (RDC 430)
-          </p>
-        </div>
       </div>
 
       {/* ========================================================================= */}
