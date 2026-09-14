@@ -19,6 +19,8 @@ import {
   Search,
   Receipt,
   Check,
+  Pencil,
+  RotateCcw,
 } from 'lucide-react';
 import { Cliente, LancamentoFaturamentoAereo, FaturaAereo } from '../../types';
 import { formatCurrency, formatDateBR } from '../../utils/formatters';
@@ -241,10 +243,39 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
         />
       </td>
       <td className="px-2 py-1.5 text-right font-bold text-slate-800 whitespace-nowrap">
-        <span className="inline-flex items-center gap-1 cursor-help" title={tituloValorACobrar}>
-          <Calculator className="w-3 h-3 text-emerald-500 shrink-0" />
-          {formatCurrency(valorCalculado)}
-        </span>
+        {l.valorACobrarManual !== undefined ? (
+          <div className="inline-flex items-center gap-1 justify-end">
+            <input
+              type="number"
+              step="0.01"
+              value={l.valorACobrarManual}
+              onChange={(e) =>
+                onFieldChange({ valorACobrarManual: e.target.value ? parseFloat(e.target.value) : 0 })
+              }
+              className={inputCls + ' w-20 text-right'}
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => onFieldChange({ valorACobrarManual: undefined })}
+              className="p-0.5 text-slate-400 hover:text-emerald-600 transition-colors shrink-0"
+              title="Voltar a calcular automaticamente pelo tarifário do cliente"
+            >
+              <RotateCcw className="w-3 h-3" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onFieldChange({ valorACobrarManual: valorCalculado })}
+            className="inline-flex items-center gap-1 hover:text-emerald-700 transition-colors group"
+            title={`${tituloValorACobrar}\n\nClique no lápis pra digitar um valor manualmente.`}
+          >
+            <Calculator className="w-3 h-3 text-emerald-500 shrink-0" />
+            {formatCurrency(valorCalculado)}
+            <Pencil className="w-3 h-3 text-slate-300 group-hover:text-slate-500 shrink-0" />
+          </button>
+        )}
       </td>
       <td className="px-2 py-1.5">
         <input

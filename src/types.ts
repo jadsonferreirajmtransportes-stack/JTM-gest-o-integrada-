@@ -967,6 +967,11 @@ export interface LancamentoFaturamentoAereo {
   custoDescarga?: number;
   /** Valor a cobrar do cliente por este lançamento (informado ou importado). */
   valorACobrar: number;
+  /** Sobrepõe o cálculo automático pelo tarifário do cliente (ver explicarValorACobrar em
+   *  faturamentoAereoUtils.ts) — preenchido só quando alguém edita manualmente o "Valor a
+   *  Cobrar" na tela (ex.: cidade sem tarifa cadastrada, peso ausente etc.). Ausente = calcula
+   *  normalmente pela fórmula/tarifário; nunca reseta sozinho, só removendo esse campo. */
+  valorACobrarManual?: number;
   valorRecebido?: number;
   confirmacaoPagamento: boolean;
   dataConclusao?: string;

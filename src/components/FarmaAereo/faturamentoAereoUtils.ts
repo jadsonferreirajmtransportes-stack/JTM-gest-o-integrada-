@@ -150,6 +150,14 @@ export function explicarValorACobrar(
   l: LancamentoFaturamentoAereo,
   cliente?: Cliente
 ): { linhas: LinhaValorACobrar[]; total: number } {
+  // Valor digitado manualmente na tela sempre vence — sobrepõe até um tarifário cadastrado
+  // (ver comentário em LancamentoFaturamentoAereo.valorACobrarManual, types.ts). Único jeito de
+  // "editar" o Valor a Cobrar quando o cálculo automático vem errado (cidade sem tarifa,
+  // peso ausente etc.) sem inventar uma exceção só pra essa linha na fórmula abaixo.
+  if (l.valorACobrarManual !== undefined) {
+    return { linhas: [{ label: 'Valor definido manualmente', valor: l.valorACobrarManual }], total: l.valorACobrarManual };
+  }
+
   const tipoNorm = normalizeKey(l.tipoCustoExtra || '');
   const custoExtra = l.custoExtra ?? 0;
 
