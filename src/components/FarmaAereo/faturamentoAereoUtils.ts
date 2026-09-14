@@ -1204,9 +1204,24 @@ export function mapRowsToFaturamentoAereo(
       );
     }
 
-    // Tenta casar com um cliente já cadastrado no sistema (nome fantasia ou razão social)
+    // Tenta casar com um cliente já cadastrado no sistema (nome fantasia ou razão social).
+    // Caso especial BOMI/BIOMEDICAL: a planilha de conferência que a própria BOMI usa lista o
+    // nome do cliente final dela por REGIÃO ("Biomedical Distribution (Itapevi)", "(Goiás)",
+    // "(Itajaí)", "(Rio de Janeiro)") em vez do nome da BOMI — nenhuma dessas variantes bate,
+    // por substring, com o cadastro único "BOMI Brasil", e cada região virava um cliente
+    // "fantasma" separado (sem clienteId) em vez de cair no cadastro certo. Mesmo
+    // reconhecimento (nome contém BIOMEDICAL ou BOMI) já usado em getTemplateParaFatura pra
+    // escolher o modelo de exportação certo por região — aqui é o espelho do lado da
+    // IMPORTAÇÃO, então os dois pontos do sistema tratam a BOMI da mesma forma.
+    const alvo = normalizeKey(clienteNomeBruto);
+    const pareceBomiOuBiomedical = (n: string) => n.includes('biomedical') || n.includes('bomi');
     const clienteEncontrado = clientesConhecidos.find((c) => {
-      const alvo = normalizeKey(clienteNomeBruto);
+      if (pareceBomiOuBiomedical(alvo)) {
+        return (
+          pareceBomiOuBiomedical(normalizeKey(c.razaoSocial || '')) ||
+          pareceBomiOuBiomedical(normalizeKey(c.nomeFantasia || ''))
+        );
+      }
       return (
         normalizeKey(c.razaoSocial || '') === alvo ||
         normalizeKey(c.nomeFantasia || '') === alvo ||
