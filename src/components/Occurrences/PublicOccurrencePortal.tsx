@@ -26,20 +26,20 @@ import {
   Sparkles,
 } from 'lucide-react';
 import {
-  Colaborador,
-  Supervisor,
+  ColaboradorPublico,
+  SupervisorPublico,
   TipoOcorrencia,
   Ocorrencia,
-  Empregador,
+  EmpregadorPublico,
 } from '../../types';
 import { JmtLogo } from '../Brand/JmtLogo';
 import { formatDate } from '../../utils/formatters';
 import { useBotGuard } from '../../utils/botProtection';
 
 interface PublicOccurrencePortalProps {
-  colaboradores: Colaborador[];
-  supervisores: Supervisor[];
-  empregadores?: Empregador[];
+  colaboradores: ColaboradorPublico[];
+  supervisores: SupervisorPublico[];
+  empregadores?: EmpregadorPublico[];
   preselectedSupervisorId?: string;
   preselectedEmpresaId?: string;
   onSuccessSubmit: (ocorrencia: Ocorrencia) => void;
@@ -167,10 +167,10 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
   const [submittedData, setSubmittedData] = useState<Ocorrencia | null>(null);
   const botGuard = useBotGuard();
 
-  // Active employees list filtered by optional employer
+  // Employees list filtered by optional employer — já vem só com colaboradores Ativos
+  // (filtrado no próprio banco, ver getColaboradoresAtivosPublico/obter_colaboradores_ativos_publico).
   const availableEmployees = useMemo(() => {
     return colaboradores.filter((c) => {
-      if (c.status === 'Inativo') return false;
       if (selectedEmpresaId && c.empregadorId !== selectedEmpresaId) return false;
       if (employeeSearch.trim()) {
         const q = employeeSearch.toLowerCase();

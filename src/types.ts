@@ -177,6 +177,33 @@ export interface Supervisor {
   ativo?: boolean;
 }
 
+// Versões "públicas" (só os campos mínimos e não sensíveis) de Supervisor/Colaborador/
+// Empregador — usadas nos formulários preenchidos por quem NÃO tem login no sistema (ex.:
+// Formulário Público de Ocorrências). O papel "anon" do Supabase não tem acesso de leitura
+// às tabelas completas (colaboradores guarda CPF, endereço, dados bancários e de saúde) —
+// essas listas vêm de funções "security definer" que devolvem só isto (ver migração
+// 019_acesso_publico_ocorrencias.sql e getSupervisoresPublico/getColaboradoresAtivosPublico/
+// getEmpregadoresPublico em dpApi.ts). Nunca adicionar um campo sensível aqui.
+export interface SupervisorPublico {
+  id: string;
+  nome: string;
+  cargo: string;
+  setor?: string;
+}
+export interface ColaboradorPublico {
+  id: string;
+  nomeCompleto: string;
+  funcaoCargo: string;
+  codigoMatricula: string;
+  setor?: string;
+  empregadorId?: string;
+  dataAdmissao?: string;
+}
+export interface EmpregadorPublico {
+  id: string;
+  razaoSocial: string;
+}
+
 // 2.18 Feriados da Empresa
 export interface FeriadoEmpresa {
   id: string;

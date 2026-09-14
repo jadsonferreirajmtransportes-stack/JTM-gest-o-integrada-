@@ -32,6 +32,9 @@ import {
   LancamentoValeAlimentacao,
   OrcamentoItem,
   ConversaChat,
+  SupervisorPublico,
+  ColaboradorPublico,
+  EmpregadorPublico,
 } from './types';
 import {
   getStoredGlobalModule,
@@ -76,6 +79,9 @@ import {
   saveLancamentosValeAlimentacao,
   saveLancamentoValeAlimentacao,
   deleteLancamentoValeAlimentacao,
+  getSupervisoresPublico,
+  getColaboradoresAtivosPublico,
+  getEmpregadoresPublico,
 } from './utils/dpApi';
 // Carteira de Clientes + Farma Aéreo também já migrados para o Supabase — ver
 // src/utils/farmaAereoApi.ts.
@@ -412,6 +418,16 @@ export default function App() {
     empresa?: string;
     supervisor?: string;
   }>({});
+  // Dados desse formulário público — quem preenche não tem login (papel "anon" do Supabase),
+  // então NÃO dá pra usar os states normais (colaboradores/supervisores/empregadores logo
+  // abaixo): aquelas tabelas só liberam leitura pra usuário autenticado, e "anon" simplesmente
+  // recebe 0 linhas de volta, sem erro nenhum — é por isso que o formulário carregava com os
+  // campos de seleção vazios. Estas 3 listas vêm de funções públicas dedicadas (só os campos
+  // não sensíveis — ver getSupervisoresPublico/getColaboradoresAtivosPublico/
+  // getEmpregadoresPublico em dpApi.ts), carregadas só quando o portal é aberto.
+  const [supervisoresPublico, setSupervisoresPublico] = useState<SupervisorPublico[]>([]);
+  const [colaboradoresPublico, setColaboradoresPublico] = useState<ColaboradorPublico[]>([]);
+  const [empregadoresPublico, setEmpregadoresPublico] = useState<EmpregadorPublico[]>([]);
 
   // Public work-instruction (Instrução de Trabalho) filling portal — via ?form=instrucao&id=...
   const [isInstrucaoPortalView, setIsInstrucaoPortalView] = useState<boolean>(false);
@@ -740,6 +756,24 @@ export default function App() {
       }
     }
   }, []);
+
+  // Carrega os dados do Formulário Público de Ocorrências (ver comentário nos states
+  // supervisoresPublico/colaboradoresPublico/empregadoresPublico acima) sempre que essa tela
+  // for aberta — tanto pelo link público de verdade (isOccurrencePortalView) quanto pelo botão
+  // "Testar Formulário" de dentro do sistema (activeSection === 'formulario_publico').
+  useEffect(() => {
+    if (isOccurrencePortalView || activeSection === 'formulario_publico') {
+      Promise.all([getSupervisoresPublico(), getColaboradoresAtivosPublico(), getEmpregadoresPublico()])
+        .then(([sups, colabs, emps]) => {
+          setSupervisoresPublico(sups);
+          setColaboradoresPublico(colabs);
+          setEmpregadoresPublico(emps);
+        })
+        .catch((err) => {
+          console.error('Erro ao carregar dados públicos do Formulário de Ocorrências:', err);
+        });
+    }
+  }, [isOccurrencePortalView, activeSection]);
 
   // A Agenda da Gestão é um módulo próprio: qualquer atalho que selecione a
   // seção 'agenda_gestao' (dashboard geral, painel DP...) deve refletir
@@ -1917,9 +1951,9 @@ export default function App() {
   if (isOccurrencePortalView || activeSection === 'formulario_publico') {
     return (
       <PublicOccurrencePortal
-        colaboradores={colaboradores}
-        supervisores={supervisores}
-        empregadores={empregadores}
+        colaboradores={colaboradoresPublico}
+        supervisores={supervisoresPublico}
+        empregadores={empregadoresPublico}
         preselectedSupervisorId={occurrenceUrlParams.supervisor}
         preselectedEmpresaId={occurrenceUrlParams.empresa}
         onSuccessSubmit={(ocorr) => {

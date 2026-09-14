@@ -33,6 +33,9 @@ import {
   MotivoDemissao,
   PreAdmissao,
   StatusPreAdmissao,
+  SupervisorPublico,
+  ColaboradorPublico,
+  EmpregadorPublico,
 } from '../types';
 
 /** '' e undefined viram null — colunas de data/numéricas do Postgres rejeitam string vazia. */
@@ -52,6 +55,50 @@ function assertNoError(error: { message: string } | null, contexto: string) {
   if (error) {
     throw new Error(`Erro no Supabase (${contexto}): ${error.message}`);
   }
+}
+
+// ============================================================================
+// ACESSO PÚBLICO (formulários sem login — ver PublicOccurrencePortal.tsx)
+//
+// supervisores/colaboradores/empregadores exigem usuário autenticado (RLS, ver
+// comentário no topo do arquivo) — quem preenche um formulário público (papel
+// "anon" do Supabase) não consegue ler NADA dessas tabelas: a query roda sem
+// erro, só devolve 0 linhas, e o formulário fica com os campos de seleção
+// vazios sem nenhum aviso. As 3 funções abaixo chamam funções do banco
+// ("security definer", ver migração 019_acesso_publico_ocorrencias.sql) que
+// devolvem só os campos mínimos e não sensíveis de cada tabela — nunca a
+// tabela inteira (colaboradores guarda CPF, endereço, dados bancários e de
+// saúde, que nunca podem ficar acessíveis por "anon").
+// ============================================================================
+export async function getSupervisoresPublico(): Promise<SupervisorPublico[]> {
+  const { data, error } = await supabase.rpc('obter_supervisores_publico');
+  assertNoError(error, 'getSupervisoresPublico');
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    nome: r.nome,
+    cargo: r.cargo,
+    setor: u(r.setor),
+  }));
+}
+/** "Ativos" = não Inativo (mesmo critério que o formulário já usava antes) — inclui quem
+ *  está de Férias ou Afastado, só exclui quem já foi desligado. */
+export async function getColaboradoresAtivosPublico(): Promise<ColaboradorPublico[]> {
+  const { data, error } = await supabase.rpc('obter_colaboradores_ativos_publico');
+  assertNoError(error, 'getColaboradoresAtivosPublico');
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    nomeCompleto: r.nome_completo,
+    funcaoCargo: r.funcao_cargo,
+    codigoMatricula: r.codigo_matricula,
+    setor: u(r.setor),
+    empregadorId: u(r.empregador_id),
+    dataAdmissao: u(r.data_admissao),
+  }));
+}
+export async function getEmpregadoresPublico(): Promise<EmpregadorPublico[]> {
+  const { data, error } = await supabase.rpc('obter_empregadores_publico');
+  assertNoError(error, 'getEmpregadoresPublico');
+  return (data ?? []).map((r: any) => ({ id: r.id, razaoSocial: r.razao_social }));
 }
 
 // ============================================================================
