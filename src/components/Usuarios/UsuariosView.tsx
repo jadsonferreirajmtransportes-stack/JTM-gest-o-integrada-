@@ -32,7 +32,7 @@ import {
   Send,
   Loader2,
 } from 'lucide-react';
-import { UsuarioLogin, GlobalModuleId } from '../../types';
+import { UsuarioLogin, GlobalModuleId, Supervisor } from '../../types';
 import { MODULOS_SISTEMA } from '../../data/initialUsersData';
 import { UsuarioFormModal } from './UsuarioFormModal';
 import { SwitchUserModal } from './SwitchUserModal';
@@ -46,6 +46,7 @@ interface UsuariosViewProps {
   onSelectUserSession: (user: UsuarioLogin) => void;
   onToggleUserModuleAccess: (userId: string, moduleId: GlobalModuleId) => void;
   onEnviarConvite: (email: string) => Promise<void>;
+  supervisores: Supervisor[];
 }
 
 export const UsuariosView: React.FC<UsuariosViewProps> = ({
@@ -56,6 +57,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
   onSelectUserSession,
   onToggleUserModuleAccess,
   onEnviarConvite,
+  supervisores,
 }) => {
   const [activeTab, setActiveTab] = useState<'lista' | 'matriz' | 'seguranca'>('lista');
   const [searchTerm, setSearchTerm] = useState('');
@@ -790,6 +792,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
         onSave={onSaveUser}
         usuarioToEdit={editingUser}
         existingUsers={users}
+        supervisores={supervisores}
       />
 
       {/* Modal: Trocar de Login / Simular Sessão */}

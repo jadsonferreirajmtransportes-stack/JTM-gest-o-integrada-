@@ -2381,6 +2381,7 @@ export default function App() {
               onSelectUserSession={handleSelectUserSession}
               onToggleUserModuleAccess={handleToggleUserModuleAccess}
               onEnviarConvite={handleEnviarConvite}
+              supervisores={supervisores}
             />
           )}
 
