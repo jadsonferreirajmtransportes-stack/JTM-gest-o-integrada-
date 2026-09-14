@@ -37,6 +37,10 @@ function rowToUsuario(r: any): UsuarioLogin {
     observacoes: u(r.observacoes),
     authUserId: u(r.auth_user_id),
     role: u(r.role),
+    supervisorId: u(r.supervisor_id),
+    secoesDpPermitidas: u(r.secoes_dp_permitidas),
+    escopoApenasProprioSetor: r.escopo_apenas_proprio_setor ?? false,
+    secoesOperacoesPermitidas: u(r.secoes_operacoes_permitidas),
   };
 }
 function usuarioToRow(usr: UsuarioLogin) {
@@ -55,6 +59,11 @@ function usuarioToRow(usr: UsuarioLogin) {
     atualizado_em: new Date().toISOString(),
     auth_user_id: n(usr.authUserId),
     role: usr.role || 'colaborador',
+    supervisor_id: n(usr.supervisorId),
+    secoes_dp_permitidas: usr.secoesDpPermitidas && usr.secoesDpPermitidas.length > 0 ? usr.secoesDpPermitidas : null,
+    escopo_apenas_proprio_setor: usr.escopoApenasProprioSetor ?? false,
+    secoes_operacoes_permitidas:
+      usr.secoesOperacoesPermitidas && usr.secoesOperacoesPermitidas.length > 0 ? usr.secoesOperacoesPermitidas : null,
   };
 }
 
