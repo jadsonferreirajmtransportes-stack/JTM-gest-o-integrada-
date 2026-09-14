@@ -34,7 +34,8 @@ import {
   MessageSquare,
   Download,
 } from 'lucide-react';
-import { UserRole, GlobalModuleId, UsuarioLogin } from '../types';
+import { UserRole, GlobalModuleId, UsuarioLogin, SecaoDp } from '../types';
+import { podeVerSecaoDp } from '../utils/visibilidadeUtils';
 import { JmtLogo } from './Brand/JmtLogo';
 import { StrategicGuidelinesModal } from './Common/StrategicGuidelinesModal';
 
@@ -393,9 +394,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
-  const principalItems = dpNavItems.filter((i) => i.group === 'principal');
-  const operacionalItems = dpNavItems.filter((i) => i.group === 'operacional');
-  const gestaoItems = dpNavItems.filter((i) => i.group === 'gestao');
+  // Restringe pelas seções de DP liberadas pro login atual (ver UsuarioLogin.secoesDpPermitidas
+  // / podeVerSecaoDp) — sem restrição cadastrada, mostra tudo (comportamento de sempre).
+  const dpNavItemsPermitidos = dpNavItems.filter((i) => podeVerSecaoDp(currentUser, i.id as SecaoDp));
+  const principalItems = dpNavItemsPermitidos.filter((i) => i.group === 'principal');
+  const operacionalItems = dpNavItemsPermitidos.filter((i) => i.group === 'operacional');
+  const gestaoItems = dpNavItemsPermitidos.filter((i) => i.group === 'gestao');
 
   const renderNavButton = (item: NavItemDef) => {
     const Icon = item.icon;

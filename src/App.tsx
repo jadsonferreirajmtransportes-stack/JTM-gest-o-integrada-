@@ -196,7 +196,12 @@ import { AdmissionLinkModal } from './components/Admission/AdmissionLinkModal';
 import { PreAdmissionsManagerView } from './components/Admission/PreAdmissionsManagerView';
 import { AgendaGestaoView } from './components/Agenda/AgendaGestaoView';
 import { atividadeOcorreEm, podeVerAtividade } from './components/Agenda/agendaUtils';
-import { podeVerRegistroCompartilhado } from './utils/visibilidadeUtils';
+import {
+  podeVerRegistroCompartilhado,
+  podeVerSecaoDp,
+  filtrarColaboradoresDoSupervisor,
+  filtrarClientesDoSupervisor,
+} from './utils/visibilidadeUtils';
 import { NotasView } from './components/Notas/NotasView';
 import { InstrucoesTrabalhoView } from './components/Instrucoes/InstrucoesTrabalhoView';
 import { GeneralDashboard } from './components/DashboardGeral/GeneralDashboard';
@@ -1052,6 +1057,35 @@ export default function App() {
       ),
     [instrucoesTrabalho, currentUser, userRole]
   );
+
+  // Escopo "própria equipe/carteira" (currentUser.escopoApenasProprioSetor) — usado só nos
+  // pontos de DP e Clientes que um supervisor de campo pode ver (ver visibilidadeUtils.ts).
+  // Sem essa flag ligada, as 3 listas abaixo são idênticas às originais.
+  const supervisorVinculado = useMemo(
+    () => supervisores.find((s) => s.id === currentUser?.supervisorId),
+    [supervisores, currentUser]
+  );
+  const colaboradoresEquipeVisiveis = useMemo(
+    () =>
+      filtrarColaboradoresDoSupervisor(
+        colaboradores,
+        currentUser?.escopoApenasProprioSetor ? currentUser.supervisorId : undefined
+      ),
+    [colaboradores, currentUser]
+  );
+  const clientesVisiveis = useMemo(
+    () =>
+      filtrarClientesDoSupervisor(
+        clientes,
+        currentUser?.escopoApenasProprioSetor ? supervisorVinculado?.nome : undefined
+      ),
+    [clientes, currentUser, supervisorVinculado]
+  );
+  const ocorrenciasEquipeVisiveis = useMemo(() => {
+    if (!currentUser?.escopoApenasProprioSetor) return ocorrencias;
+    const idsEquipe = new Set(colaboradoresEquipeVisiveis.map((c) => c.id));
+    return ocorrencias.filter((o) => idsEquipe.has(o.colaboradorId));
+  }, [ocorrencias, colaboradoresEquipeVisiveis, currentUser]);
 
   // Métricas gerenciais do Farma Aéreo e Farma Rodoviário — mesmo cálculo usado dentro de
   // cada painel (SectorManagerialDashboard), recalculado aqui pra alimentar tanto os badges
@@ -2137,7 +2171,7 @@ export default function App() {
           {/* ========================================================================= */}
           {(activeGlobalModule === 'clientes' || activeSection === 'clientes') && (
             <ClientsView
-              clientes={clientes}
+              clientes={clientesVisiveis}
               onSaveCliente={handleSaveCliente}
               onDeleteCliente={handleDeleteCliente}
               empregadores={empregadores}
@@ -2389,7 +2423,7 @@ export default function App() {
           {/* ========================================================================= */}
           {/* MODULE 4: DEPARTAMENTO PESSOAL (DP) */}
           {/* ========================================================================= */}
-          {activeGlobalModule === 'dp' && activeSection === 'dashboard' && (
+          {activeGlobalModule === 'dp' && activeSection === 'dashboard' && podeVerSecaoDp(currentUser, 'dashboard') && (
             <Dashboard
               colaboradores={colaboradores}
               ferias={feriasList}
@@ -2404,9 +2438,9 @@ export default function App() {
             />
           )}
 
-          {activeGlobalModule === 'dp' && activeSection === 'colaboradores' && (
+          {activeGlobalModule === 'dp' && activeSection === 'colaboradores' && podeVerSecaoDp(currentUser, 'colaboradores') && (
             <EmployeeList
-              colaboradores={colaboradores.filter((c) => c.status !== 'Inativo')}
+              colaboradores={colaboradoresEquipeVisiveis.filter((c) => c.status !== 'Inativo')}
               empregadores={empregadores}
               supervisores={supervisores}
               userRole={userRole}
@@ -2422,7 +2456,7 @@ export default function App() {
             />
           )}
 
-          {activeGlobalModule === 'dp' && activeSection === 'preadmissoes' && (
+          {activeGlobalModule === 'dp' && activeSection === 'preadmissoes' && podeVerSecaoDp(currentUser, 'preadmissoes') && (
             <PreAdmissionsManagerView
               preAdmissoes={preAdmissoes}
               empregadores={empregadores}
@@ -2436,7 +2470,7 @@ export default function App() {
             />
           )}
 
-          {activeGlobalModule === 'dp' && activeSection === 'arquivo' && (
+          {activeGlobalModule === 'dp' && activeSection === 'arquivo' && podeVerSecaoDp(currentUser, 'arquivo') && (
             <EmployeeList
               colaboradores={colaboradores.filter((c) => c.status === 'Inativo')}
               apenasInativos
@@ -2455,14 +2489,14 @@ export default function App() {
             />
           )}
 
-          {activeGlobalModule === 'dp' && (activeSection === 'custos' || activeSection === 'beneficios') && (
+          {activeGlobalModule === 'dp' && (activeSection === 'custos' || activeSection === 'beneficios') && (podeVerSecaoDp(currentUser, 'custos') || podeVerSecaoDp(currentUser, 'beneficios')) && (
             <MonthlyCostView
               colaboradores={colaboradores}
               empregadores={empregadores}
             />
           )}
 
-          {activeGlobalModule === 'dp' && activeSection === 'vale_alimentacao' && (
+          {activeGlobalModule === 'dp' && activeSection === 'vale_alimentacao' && podeVerSecaoDp(currentUser, 'vale_alimentacao') && (
             <ValeAlimentacaoView
               colaboradores={colaboradores}
               ocorrencias={ocorrencias}
@@ -2478,7 +2512,7 @@ export default function App() {
             />
           )}
 
-          {activeGlobalModule === 'dp' && activeSection === 'ferias' && (
+          {activeGlobalModule === 'dp' && activeSection === 'ferias' && podeVerSecaoDp(currentUser, 'ferias') && (
             <VacationView
               colaboradores={colaboradores}
               feriasList={feriasList}
@@ -2488,11 +2522,11 @@ export default function App() {
             />
           )}
 
-          {activeGlobalModule === 'dp' && activeSection === 'ocorrencias' && (
+          {activeGlobalModule === 'dp' && activeSection === 'ocorrencias' && podeVerSecaoDp(currentUser, 'ocorrencias') && (
             <OccurrencesView
-              colaboradores={colaboradores}
+              colaboradores={colaboradoresEquipeVisiveis}
               supervisores={supervisores}
-              ocorrencias={ocorrencias}
+              ocorrencias={ocorrenciasEquipeVisiveis}
               userRole={userRole}
               onSaveOcorrencia={handleSaveOcorrencia}
               onOpenPublicFormModal={() => setIsPublicOccurrenceFormOpen(true)}
@@ -2501,7 +2535,7 @@ export default function App() {
             />
           )}
 
-          {activeGlobalModule === 'dp' && activeSection === 'saude' && (
+          {activeGlobalModule === 'dp' && activeSection === 'saude' && podeVerSecaoDp(currentUser, 'saude') && (
             <AnvisaExamsView
               colaboradores={colaboradores}
               empregadores={empregadores}
@@ -2509,14 +2543,14 @@ export default function App() {
             />
           )}
 
-          {activeGlobalModule === 'dp' && activeSection === 'onboarding' && (
+          {activeGlobalModule === 'dp' && activeSection === 'onboarding' && podeVerSecaoDp(currentUser, 'onboarding') && (
             <OnboardingView
               colaboradores={colaboradores}
               onUpdateOnboardingItem={handleUpdateOnboardingItem}
             />
           )}
 
-          {activeGlobalModule === 'dp' && (activeSection === 'cargos' || activeSection === 'supervisores') && (
+          {activeGlobalModule === 'dp' && (activeSection === 'cargos' || activeSection === 'supervisores') && (podeVerSecaoDp(currentUser, 'cargos') || podeVerSecaoDp(currentUser, 'supervisores')) && (
             <SettingsView
               empregadores={empregadores}
               cargos={cargos}
@@ -2530,9 +2564,9 @@ export default function App() {
             />
           )}
 
-          {activeGlobalModule === 'dp' && activeSection === 'aniversariantes' && (
+          {activeGlobalModule === 'dp' && activeSection === 'aniversariantes' && podeVerSecaoDp(currentUser, 'aniversariantes') && (
             <BirthdaysView
-              colaboradores={colaboradores}
+              colaboradores={colaboradoresEquipeVisiveis}
               empregadores={empregadores}
               onSelectColaborador={(c) => setSelectedColaboradorDetail(c)}
               onNotifySuccess={(msg) => showToast(msg, 'success')}
@@ -2689,6 +2723,7 @@ export default function App() {
         onSave={handleSaveUser}
         usuarioToEdit={editingUser}
         existingUsers={users}
+        supervisores={supervisores}
       />
 
       {/* 10. Aviso de Abertura (compromissos de hoje + prazos de projetos) */}

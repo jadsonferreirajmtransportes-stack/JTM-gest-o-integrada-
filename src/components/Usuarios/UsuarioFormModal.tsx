@@ -20,9 +20,31 @@ import {
   AlertCircle,
   CalendarDays,
   NotebookPen,
+  UserCog,
 } from 'lucide-react';
-import { UsuarioLogin, GlobalModuleId, UserRole } from '../../types';
+import { UsuarioLogin, GlobalModuleId, UserRole, SecaoDp, Supervisor } from '../../types';
 import { MODULOS_SISTEMA } from '../../data/initialUsersData';
+
+// Seções de dentro do módulo DP (Departamento Pessoal) que podem ser restringidas
+// individualmente — mesma lista de src/components/Sidebar.tsx (renderModuleSubNav 'dp'),
+// só que sem os contadores/badges (que não fazem sentido aqui). Ver SecaoDp em types.ts.
+const SECOES_DP: { id: SecaoDp; label: string }[] = [
+  { id: 'dashboard', label: 'Painel DP & Indicadores' },
+  { id: 'colaboradores', label: 'Colaboradores Ativos' },
+  { id: 'preadmissoes', label: 'Pré-Admissões (Link)' },
+  { id: 'custos', label: 'Custo Mensal por Colaborador' },
+  { id: 'beneficios', label: 'Benefícios (VA & VT)' },
+  { id: 'vale_alimentacao', label: 'Programação VA (Quinzenas)' },
+  { id: 'ferias', label: 'Férias & Ausências CLT' },
+  { id: 'saude', label: 'Exames ASO (RDC 430)' },
+  { id: 'onboarding', label: 'EPI & Checklist Admissão' },
+  { id: 'ocorrencias', label: 'Ocorrências & Advertências' },
+  { id: 'aniversariantes', label: 'Aniversariantes do Mês' },
+  { id: 'arquivo', label: 'Arquivo / Demitidos' },
+  { id: 'cargos', label: 'Cargos e Salários' },
+  { id: 'supervisores', label: 'Supervisores e Gestão' },
+];
+const TODAS_SECOES_DP = SECOES_DP.map((s) => s.id);
 
 interface UsuarioFormModalProps {
   isOpen: boolean;
@@ -30,6 +52,7 @@ interface UsuarioFormModalProps {
   onSave: (usuario: UsuarioLogin) => void;
   usuarioToEdit?: UsuarioLogin | null;
   existingUsers: UsuarioLogin[];
+  supervisores: Supervisor[];
 }
 
 export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
@@ -38,6 +61,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
   onSave,
   usuarioToEdit,
   existingUsers,
+  supervisores,
 }) => {
   const [nome, setNome] = useState('');
   const [login, setLogin] = useState('');
@@ -54,6 +78,12 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
   ]);
   const [observacoes, setObservacoes] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  // Vínculo com Supervisor + recorte fino dentro do módulo DP — ver SecaoDp/supervisorId/
+  // escopoApenasProprioSetor em types.ts. Tudo marcado em secoesDpPermitidas (o padrão aqui)
+  // significa "sem restrição", igual quem já estava cadastrado antes disso existir.
+  const [supervisorId, setSupervisorId] = useState('');
+  const [escopoApenasProprioSetor, setEscopoApenasProprioSetor] = useState(false);
+  const [secoesDpPermitidas, setSecoesDpPermitidas] = useState<SecaoDp[]>(TODAS_SECOES_DP);
 
   useEffect(() => {
     if (usuarioToEdit) {
@@ -71,6 +101,13 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
           : ['visao_geral']
       );
       setObservacoes(usuarioToEdit.observacoes || '');
+      setSupervisorId(usuarioToEdit.supervisorId || '');
+      setEscopoApenasProprioSetor(usuarioToEdit.escopoApenasProprioSetor || false);
+      setSecoesDpPermitidas(
+        usuarioToEdit.secoesDpPermitidas && usuarioToEdit.secoesDpPermitidas.length > 0
+          ? [...usuarioToEdit.secoesDpPermitidas]
+          : TODAS_SECOES_DP
+      );
       setErrorMsg('');
     } else {
       // Default new user
@@ -84,6 +121,9 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       setRole('colaborador');
       setModulosPermitidos(['visao_geral', 'clientes', 'farma_aereo']);
       setObservacoes('');
+      setSupervisorId('');
+      setEscopoApenasProprioSetor(false);
+      setSecoesDpPermitidas(TODAS_SECOES_DP);
       setErrorMsg('');
     }
   }, [usuarioToEdit, isOpen]);
@@ -127,6 +167,14 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
 
   const selectAllModules = () => {
     setModulosPermitidos(MODULOS_SISTEMA.map((m) => m.id));
+  };
+
+  const toggleSecaoDp = (secaoId: SecaoDp) => {
+    if (secoesDpPermitidas.includes(secaoId)) {
+      setSecoesDpPermitidas(secoesDpPermitidas.filter((id) => id !== secaoId));
+    } else {
+      setSecoesDpPermitidas([...secoesDpPermitidas, secaoId]);
+    }
   };
 
   const clearAllModules = () => {
@@ -211,6 +259,18 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       return;
     }
 
+    if (modulosPermitidos.includes('dp') && secoesDpPermitidas.length === 0) {
+      setErrorMsg('Marque pelo menos 1 (uma) seção de DP, ou desmarque o módulo DP inteiro.');
+      return;
+    }
+
+    // Todas as seções marcadas = sem restrição (equivalente a não ter secoesDpPermitidas
+    // nenhuma) — só grava a lista quando é de fato um recorte menor que o total.
+    const secoesDpParaSalvar: SecaoDp[] | undefined =
+      modulosPermitidos.includes('dp') && secoesDpPermitidas.length < TODAS_SECOES_DP.length
+        ? secoesDpPermitidas
+        : undefined;
+
     const userToSave: UsuarioLogin = {
       id: usuarioToEdit ? usuarioToEdit.id : `usr-${Date.now()}`,
       nome: nome.trim(),
@@ -226,6 +286,9 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       ultimoAcesso: usuarioToEdit?.ultimoAcesso,
       modulosPermitidos,
       observacoes: observacoes.trim(),
+      supervisorId: supervisorId || undefined,
+      secoesDpPermitidas: secoesDpParaSalvar,
+      escopoApenasProprioSetor: supervisorId ? escopoApenasProprioSetor : false,
     };
 
     onSave(userToSave);
@@ -442,6 +505,52 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                   Só quem tiver "admin" aqui consegue enviar convite por e-mail pra criar login novo.
                 </p>
               </div>
+
+              <div className="sm:col-span-2 pt-2 border-t border-slate-100">
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <UserCog className="w-3.5 h-3.5 text-[#B38F4F]" />
+                  Vincular a um Supervisor (opcional)
+                </label>
+                <select
+                  value={supervisorId}
+                  onChange={(e) => {
+                    setSupervisorId(e.target.value);
+                    if (!e.target.value) setEscopoApenasProprioSetor(false);
+                  }}
+                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden transition-all"
+                >
+                  <option value="">— Nenhum —</option>
+                  {supervisores.map((sup) => (
+                    <option key={sup.id} value={sup.id}>
+                      {sup.nome} — {sup.cargo}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Identifica de qual equipe/carteira de clientes este login é responsável — usado
+                  pela opção abaixo.
+                </p>
+
+                <label
+                  className={`mt-2.5 flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-colors ${
+                    supervisorId ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    disabled={!supervisorId}
+                    checked={escopoApenasProprioSetor}
+                    onChange={(e) => setEscopoApenasProprioSetor(e.target.checked)}
+                    className="mt-0.5 w-3.5 h-3.5 accent-[#B38F4F]"
+                  />
+                  <span className="text-xs text-slate-700">
+                    <strong className="font-bold">Restringir à própria equipe/carteira</strong> —
+                    em Clientes, Colaboradores e Ocorrências, esse login só vê o que está sob a
+                    responsabilidade do supervisor vinculado acima (não dá acesso a nada novo, só
+                    filtra o que já seria visível pros módulos/seções marcados abaixo).
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -549,6 +658,69 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                 );
               })}
             </div>
+
+            {/* Recorte fino de DENTRO do módulo DP — só aparece se 'dp' estiver marcado acima.
+                DP mistura telas bem diferentes em sensibilidade (Colaboradores tem CPF/dados
+                bancários; Cargos tem faixa salarial; Ocorrências e Aniversariantes não), então
+                marcar o módulo inteiro não devia significar acesso a tudo isso. */}
+            {modulosPermitidos.includes('dp') && (
+              <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                  <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <UserCog className="w-3.5 h-3.5 text-[#B38F4F]" />
+                    Dentro de DP, quais seções esse login vê? ({secoesDpPermitidas.length} de{' '}
+                    {TODAS_SECOES_DP.length})
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSecoesDpPermitidas(TODAS_SECOES_DP)}
+                      className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-md text-[11px] font-semibold transition-colors"
+                    >
+                      Marcar Todas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSecoesDpPermitidas(['ocorrencias', 'aniversariantes'])}
+                      className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-md text-[11px] font-semibold transition-colors"
+                      title="Ocorrências + Aniversariantes, sem Colaboradores/Saúde/Cargos/etc."
+                    >
+                      Supervisor de Campo
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {SECOES_DP.map((secao) => {
+                    const isChecked = secoesDpPermitidas.includes(secao.id);
+                    return (
+                      <label
+                        key={secao.id}
+                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer select-none transition-colors ${
+                          isChecked
+                            ? 'bg-white border-[#B38F4F]/40 text-slate-800'
+                            : 'bg-white/60 border-slate-200 text-slate-400'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleSecaoDp(secao.id)}
+                          className="w-3.5 h-3.5 accent-[#B38F4F]"
+                        />
+                        <span className="text-[11px] font-medium">{secao.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {secoesDpPermitidas.length === 0 && (
+                  <p className="text-[11px] text-rose-600 font-semibold mt-2">
+                    Nenhuma seção marcada — esse login vai entrar em DP e não ver nada. Marque ao
+                    menos uma.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Section 3: Observações */}

@@ -14,6 +14,27 @@ export type GlobalModuleId =
   | 'instrucoes'
   | 'usuarios';
 
+// Seções de dentro do módulo DP (Departamento Pessoal) que podem ser restringidas
+// individualmente — ver UsuarioLogin.secoesDpPermitidas. DP mistura, sob um único módulo,
+// telas bem diferentes em sensibilidade (Colaboradores tem CPF/dados bancários/saúde; Cargos
+// tem faixa salarial; Ocorrências e Aniversariantes não) — sem esse recorte, liberar o módulo
+// inteiro pra alguém (ex.: um supervisor de campo) dava acesso a tudo isso de todo mundo.
+export type SecaoDp =
+  | 'dashboard'
+  | 'colaboradores'
+  | 'preadmissoes'
+  | 'custos'
+  | 'ferias'
+  | 'beneficios'
+  | 'vale_alimentacao'
+  | 'saude'
+  | 'ocorrencias'
+  | 'onboarding'
+  | 'arquivo'
+  | 'aniversariantes'
+  | 'cargos'
+  | 'supervisores';
+
 // Sistema de Autenticação e Permissão de Módulos por Login
 export interface UsuarioLogin {
   id: string;
@@ -38,6 +59,18 @@ export interface UsuarioLogin {
    *  do seletor "userRole" do cabeçalho, que é só uma troca de visual sem checagem nenhuma por
    *  trás. Só quem tiver role 'admin' aqui consegue convidar gente nova por e-mail. */
   role?: UserRole;
+  /** Vincula esse login a um Supervisor já cadastrado (Supervisor.id) — usado junto com
+   *  escopoApenasProprioSetor pra saber "de quem" é a equipe/carteira dessa pessoa. */
+  supervisorId?: string;
+  /** Restringe o módulo 'dp' (já liberado em modulosPermitidos) a só estas seções — ex.: um
+   *  supervisor de campo com só ['ocorrencias', 'aniversariantes'], sem Colaboradores/Saúde/
+   *  Cargos/etc. Ausente ou vazio = acesso a TODAS as seções de DP (comportamento de sempre,
+   *  não quebra nenhum login já cadastrado). */
+  secoesDpPermitidas?: SecaoDp[];
+  /** Quando true, restringe o que essa pessoa vê em Clientes/Colaboradores/Ocorrências ao que
+   *  está sob a responsabilidade do Supervisor vinculado (supervisorId) — não dá acesso a
+   *  nada novo, só filtra o que já era visível pra só a própria equipe/carteira. */
+  escopoApenasProprioSetor?: boolean;
 }
 
 export type EstadoCivil = 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)' | 'União estável';
