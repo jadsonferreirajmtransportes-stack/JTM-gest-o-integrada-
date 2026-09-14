@@ -446,7 +446,9 @@ export default function App() {
 
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToastMessage({ text, type });
-    setTimeout(() => setToastMessage(null), 3500);
+    // Erro fica mais tempo na tela — geralmente carrega um detalhe técnico mais longo
+    // (ex.: motivo de uma falha ao salvar), e a pessoa precisa de tempo pra ler ou printar.
+    setTimeout(() => setToastMessage(null), type === 'error' ? 9000 : 3500);
   };
 
   // Switch Global Module
@@ -1352,8 +1354,12 @@ export default function App() {
       console.error(err);
       // Deixa o formulário aberto (não fecha em caso de erro) — o EmployeeFormModal
       // só fecha quando isEmployeeFormOpen vira false, o que só acontece no sucesso abaixo.
+      // O motivo técnico (err.message) vai junto na mensagem — sem isso, "não foi possível
+      // salvar" sozinho não dá pra saber se é payload grande demais, timeout, RLS etc.,
+      // e sem acesso ao Supabase/console do usuário essa é a única forma de diagnosticar.
+      const motivo = err instanceof Error ? err.message : String(err);
       showToast(
-        'Não foi possível salvar o colaborador — verifique sua conexão (anexos grandes podem demorar ou falhar em conexões lentas) e tente novamente.',
+        `Não foi possível salvar o colaborador — verifique sua conexão (anexos grandes podem demorar ou falhar em conexões lentas) e tente novamente. Detalhe técnico: ${motivo}`,
         'error'
       );
       return;
@@ -2037,7 +2043,7 @@ export default function App() {
           {/* TOAST NOTIFICATION */}
           {toastMessage && (
             <div
-              className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl shadow-xl text-xs font-bold text-white flex items-center gap-2 animate-in slide-in-from-bottom-4 duration-200 ${
+              className={`fixed bottom-5 right-5 z-50 max-w-md px-4 py-3 rounded-xl shadow-xl text-xs font-bold text-white flex items-center gap-2 break-words animate-in slide-in-from-bottom-4 duration-200 ${
                 toastMessage.type === 'error'
                   ? 'bg-rose-600'
                   : toastMessage.type === 'info'
