@@ -82,6 +82,22 @@ const KpiCard: React.FC<{
 const inputCls =
   'px-1.5 py-1 border border-slate-200 rounded text-[11px] focus:outline-hidden focus:ring-1 focus:ring-emerald-500';
 
+// Fatura.periodo é texto livre (ex.: "Setembro 2026", digitado na hora de criar a fatura),
+// não uma data — pra ordenar o filtro do mais recente pro mais antigo (em vez de alfabético,
+// que colocaria "Agosto" antes de "Setembro" incorretamente), reconhece o padrão "Mês Ano" e
+// converte pra um número comparável (AAAAMM). Período em formato diferente (raro, mas
+// possível já que é texto livre) cai no fim da lista em vez de quebrar a ordenação.
+const MESES_PT_BR: Record<string, number> = {
+  janeiro: 1, fevereiro: 2, março: 3, marco: 3, abril: 4, maio: 5, junho: 6,
+  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+};
+function periodoParaChaveOrdenacao(periodo: string): number {
+  const partes = periodo.trim().toLowerCase().split(/\s+/);
+  const mes = MESES_PT_BR[partes[0]];
+  const ano = partes.length === 2 ? parseInt(partes[1], 10) : NaN;
+  return mes && !isNaN(ano) ? ano * 100 + mes : 0;
+}
+
 /** Monta o texto do tooltip (title nativo, \n vira quebra de linha) explicando linha a linha
  *  de onde vem o Valor a Cobrar de um lançamento — mesma lista usada pra somar o total em
  *  `explicarValorACobrar`, então nunca mostra uma conta diferente da que foi realmente
@@ -324,6 +340,9 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   // vinculada) e leva o usuário direto até ele, sem precisar abrir fatura por fatura.
   const [buscaGlobal, setBuscaGlobal] = useState('');
 
+  // Filtro por período (Fatura.periodo, ex.: "Setembro 2026") — '' = todos os períodos.
+  const [filtroPeriodo, setFiltroPeriodo] = useState('');
+
   // Filtro por empresa — a página inteira (contadores, alerta de duplicidade, faturas e
   // lançamentos sem fatura) passa a considerar só os lançamentos/faturas da empresa escolhida.
   const [empresaSelecionada, setEmpresaSelecionada] = useState('');
@@ -399,9 +418,25 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     });
   }, [lancamentosSemFatura, buscaSemFatura]);
 
+  // Períodos disponíveis pro filtro — só os que realmente existem entre as faturas da empresa
+  // selecionada (não faz sentido oferecer um período sem nenhuma fatura), do mais recente pro
+  // mais antigo.
+  const periodosDisponiveis = useMemo(() => {
+    const unicos: string[] = Array.from(new Set(faturasDaEmpresa.map((f) => f.periodo).filter(Boolean)));
+    return unicos.sort((a, b) => periodoParaChaveOrdenacao(b) - periodoParaChaveOrdenacao(a));
+  }, [faturasDaEmpresa]);
+
   const faturasOrdenadas = useMemo(
     () => [...faturasDaEmpresa].sort((a, b) => (b.criadoEm || '').localeCompare(a.criadoEm || '')),
     [faturasDaEmpresa]
+  );
+
+  // Recorte de faturasOrdenadas pelo filtro de Período — só pra tabela listada abaixo.
+  // "Exportar Todas as Faturas" continua exportando TODAS as faturas da empresa (o nome do
+  // botão diz "todas"), não só as do período filtrado na tela.
+  const faturasFiltradas = useMemo(
+    () => (filtroPeriodo ? faturasOrdenadas.filter((f) => f.periodo === filtroPeriodo) : faturasOrdenadas),
+    [faturasOrdenadas, filtroPeriodo]
   );
 
   // Resultados da busca global por NF/CT-e — respeita o filtro de empresa selecionado.
@@ -418,6 +453,10 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   const handleIrParaResultado = (l: LancamentoFaturamentoAereo) => {
     setBuscaGlobal('');
     if (l.faturaId) {
+      // Limpa o filtro de Período antes de rolar até a fatura — senão, se o resultado
+      // pertencer a uma fatura de um período diferente do filtrado, ela nem estaria na
+      // lista renderizada pra rolar até ela.
+      setFiltroPeriodo('');
       setExpandedFaturaId(l.faturaId);
       requestAnimationFrame(() => {
         document
@@ -652,6 +691,37 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
             Limpar filtro
           </button>
         )}
+
+        {/* Filtro por Período — só afeta a tabela de Faturas abaixo (os cartões de KPI e a
+            busca global continuam somando tudo, igual antes; só filtrar as faturas listadas
+            já resolve o caso de uso — achar as faturas de um mês sem rolar a lista inteira). */}
+        <label htmlFor="filtro-periodo-aereo" className="text-xs font-semibold text-slate-600 shrink-0 sm:ml-2">
+          Período
+        </label>
+        <select
+          id="filtro-periodo-aereo"
+          value={filtroPeriodo}
+          onChange={(e) => setFiltroPeriodo(e.target.value)}
+          className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+        >
+          <option value="">Todos os Períodos</option>
+          {periodosDisponiveis.map((periodo) => (
+            <option key={periodo} value={periodo}>
+              {periodo}
+            </option>
+          ))}
+        </select>
+        {filtroPeriodo && (
+          <button
+            type="button"
+            onClick={() => setFiltroPeriodo('')}
+            className="text-[11px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1"
+          >
+            <X className="w-3 h-3" />
+            Limpar filtro
+          </button>
+        )}
+
         <span className="text-[11px] text-slate-400 ml-auto">
           {resumoGeral.totalCtes} CT-e(s) • {resumoGeral.totalFaturas} fatura(s)
         </span>
@@ -832,17 +902,19 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
           <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
-            Faturas ({faturasOrdenadas.length})
+            Faturas ({faturasFiltradas.length})
           </h4>
         </div>
 
-        {faturasOrdenadas.length === 0 ? (
+        {faturasFiltradas.length === 0 ? (
           <div className="py-10 text-center text-xs text-slate-400">
-            Nenhuma fatura cadastrada ainda. Importe uma planilha ou crie uma fatura manualmente.
+            {filtroPeriodo
+              ? `Nenhuma fatura encontrada para "${filtroPeriodo}".`
+              : 'Nenhuma fatura cadastrada ainda. Importe uma planilha ou crie uma fatura manualmente.'}
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {faturasOrdenadas.map((fatura) => {
+            {faturasFiltradas.map((fatura) => {
               const resumo = computeResumoFatura(fatura.id, lancamentos, clientes);
               const statusCfg = STATUS_FATURA_CONFIG[resumo.status];
               const isExpanded = expandedFaturaId === fatura.id;
