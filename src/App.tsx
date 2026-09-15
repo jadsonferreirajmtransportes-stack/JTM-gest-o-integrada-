@@ -232,6 +232,7 @@ import {
   obterOuCriarConversaDireta,
   criarConversaGrupo,
   enviarMensagem,
+  excluirConversa,
   assinarMensagensNovas,
   AnexoMensagemChat,
 } from './utils/chatApi';
@@ -667,6 +668,21 @@ export default function App() {
     } catch (err) {
       console.error(err);
       showToast('Não foi possível iniciar a conversa.', 'error');
+    }
+  };
+
+  const handleExcluirConversaChat = async (conversaId: string) => {
+    try {
+      await excluirConversa(conversaId);
+      setConversasChat((prev) => prev.filter((c) => c.id !== conversaId));
+      setUltimasLeiturasChat((prev) => {
+        const { [conversaId]: _removida, ...resto } = prev;
+        return resto;
+      });
+      showToast('Conversa excluída.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível excluir a conversa. Tente novamente.', 'error');
     }
   };
 
@@ -2431,6 +2447,7 @@ export default function App() {
               onEnviarMensagem={handleEnviarMensagemChat}
               onCriarConversaDireta={handleCriarConversaDiretaChat}
               onCriarConversaGrupo={handleCriarConversaGrupoChat}
+              onExcluirConversa={handleExcluirConversaChat}
               notas={notasVisiveis}
               atividades={atividadesVisiveis}
               projetos={projetosVisiveis}

@@ -12,6 +12,7 @@ import {
   CalendarDays,
   FolderKanban,
   AtSign,
+  Trash2,
 } from 'lucide-react';
 import { ConversaChat, MensagemChat, UsuarioLogin, NotaPagina, AtividadeGestao, ProjetoGerencial } from '../../types';
 import { getMensagens, assinarMensagensNovas, AnexoMensagemChat } from '../../utils/chatApi';
@@ -27,6 +28,8 @@ interface ChatViewProps {
   onEnviarMensagem: (conversaId: string, texto: string, anexo?: AnexoMensagemChat) => void;
   onCriarConversaDireta: (outroUsuarioId: string) => void;
   onCriarConversaGrupo: (nome: string, participantesIds: string[]) => void;
+  /** Exclui a conversa (e todo o histórico dela) pra todo mundo que participava. */
+  onExcluirConversa: (conversaId: string) => void;
   /** Pra @mencionar Notas, Atividades da Agenda e Projetos dentro de uma mensagem. */
   notas?: NotaPagina[];
   atividades?: AtividadeGestao[];
@@ -136,6 +139,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onEnviarMensagem,
   onCriarConversaDireta,
   onCriarConversaGrupo,
+  onExcluirConversa,
   notas = [],
   atividades = [],
   projetos = [],
@@ -195,6 +199,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const handleAbrirConversa = (id: string) => {
     setConversaAbertaId(id);
     onAbrirConversa(id);
+  };
+
+  const handleExcluirConversa = (conversa: ConversaChat, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nome = nomeDaConversa(conversa, usuarios, currentUserId);
+    const confirmado = window.confirm(
+      `Excluir a conversa com "${nome}"?\n\nApaga todo o histórico de mensagens pra todo mundo que participava — não tem como desfazer.`
+    );
+    if (!confirmado) return;
+    if (conversaAbertaId === conversa.id) setConversaAbertaId(null);
+    onExcluirConversa(conversa.id);
   };
 
   const handleEnviar = () => {
@@ -337,29 +352,41 @@ export const ChatView: React.FC<ChatViewProps> = ({
             const naoLida = temNaoLida(c, ultimasLeituras);
             const ativa = c.id === conversaAbertaId;
             return (
-              <button
+              <div
                 key={c.id}
-                type="button"
-                onClick={() => handleAbrirConversa(c.id)}
-                className={`w-full flex items-center gap-2.5 p-3 border-b border-slate-50 text-left transition-colors ${
+                className={`group relative flex items-center border-b border-slate-50 transition-colors ${
                   ativa ? 'bg-slate-100' : 'hover:bg-slate-50'
                 }`}
               >
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-[11px] shrink-0 ${
-                    c.tipo === 'grupo' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-700'
-                  }`}
+                <button
+                  type="button"
+                  onClick={() => handleAbrirConversa(c.id)}
+                  className="flex-1 min-w-0 flex items-center gap-2.5 p-3 text-left"
                 >
-                  {c.tipo === 'grupo' ? <Users className="w-4 h-4" /> : inicialAvatar(nome)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`text-xs truncate ${naoLida ? 'font-extrabold text-slate-900' : 'font-semibold text-slate-700'}`}>
-                    {nome}
-                  </p>
-                  <p className="text-[10px] text-slate-400">{c.tipo === 'grupo' ? `${c.participantesIds.length} participantes` : 'Conversa direta'}</p>
-                </div>
-                {naoLida && <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />}
-              </button>
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-[11px] shrink-0 ${
+                      c.tipo === 'grupo' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {c.tipo === 'grupo' ? <Users className="w-4 h-4" /> : inicialAvatar(nome)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-xs truncate ${naoLida ? 'font-extrabold text-slate-900' : 'font-semibold text-slate-700'}`}>
+                      {nome}
+                    </p>
+                    <p className="text-[10px] text-slate-400">{c.tipo === 'grupo' ? `${c.participantesIds.length} participantes` : 'Conversa direta'}</p>
+                  </div>
+                  {naoLida && <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleExcluirConversa(c, e)}
+                  title="Excluir conversa"
+                  className="shrink-0 mr-2 p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             );
           })}
         </div>

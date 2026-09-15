@@ -148,6 +148,14 @@ export async function obterOuCriarConversaDireta(usuarioAId: string, usuarioBId:
   return novaId;
 }
 
+/** Exclui uma conversa (direta ou grupo) e tudo dentro dela — participantes e mensagens somem
+ *  junto por causa do "on delete cascade" no schema (ver migração 015). É definitivo: some pra
+ *  todo mundo que participava, não só pra quem clicou. */
+export async function excluirConversa(conversaId: string): Promise<void> {
+  const { error } = await supabase.from('chat_conversas').delete().eq('id', conversaId);
+  assertNoError(error, 'excluirConversa');
+}
+
 /** Cria uma sala em grupo com nome e uma lista de participantes — quem cria sempre entra
  *  automaticamente, mesmo que não esteja na lista passada. */
 export async function criarConversaGrupo(
