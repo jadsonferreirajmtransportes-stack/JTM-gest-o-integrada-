@@ -221,6 +221,7 @@ import {
   convidarUsuarioPorEmail,
 } from './utils/usuariosApi';
 import { ShieldAlert } from 'lucide-react';
+import { supabase } from './utils/supabaseClient';
 
 // Module: Chat Interno (conversas diretas e em grupo entre Logins & Acessos)
 import { ChatView } from './components/Chat/ChatView';
@@ -346,11 +347,26 @@ export default function App() {
         await Promise.all(base.map((u) => saveUsuario(u)));
         lista = await getUsuarios();
       }
-      // Fase 1 do login real por pessoa: se a conta que acabou de logar bater por e-mail com
-      // um cadastro ainda sem vínculo, vincula sozinho. Não muda quem é o currentUser aqui —
-      // isso continua pela troca manual ("Alternar Usuário") até a fase seguinte.
+      // Vincula a conta autenticada (Supabase Auth) ao cadastro certo por e-mail, se ainda não
+      // tiver vínculo (ver comentário na própria função).
       lista = await vincularContaAutenticadaSeNecessario(lista);
       setUsers(lista);
+
+      // Fase 2 do login real por pessoa: quem é o currentUser TEM que ser a pessoa realmente
+      // autenticada (Supabase Auth), nunca um perfil só "lembrado" neste navegador — sem isso,
+      // qualquer convite aceito num navegador novo (sem jmt_current_user_id salvo ainda) caía
+      // no primeiro usuário da lista (o admin mais antigo), dando acesso total a quem tinha
+      // acabado de entrar com login próprio (bug real, reportado por um supervisor recém-
+      // convidado). Um savedId só é usado como preferência quando NENHUM cadastro bate com a
+      // sessão autenticada (ex.: ainda sem authUserId vinculado por algum motivo).
+      const { data: sessionData } = await supabase.auth.getSession();
+      const authUserIdReal = sessionData.session?.user?.id;
+      const emailReal = (sessionData.session?.user?.email || '').trim().toLowerCase();
+      const usuarioReal = authUserIdReal
+        ? lista.find((u) => u.authUserId === authUserIdReal) ||
+          (emailReal ? lista.find((u) => (u.email || '').trim().toLowerCase() === emailReal) : undefined)
+        : undefined;
+
       let usuarioEscolhido: UsuarioLogin | null = null;
       setCurrentUser((prev) => {
         let savedId: string | null = null;
@@ -359,7 +375,7 @@ export default function App() {
         } catch {
           // ignora
         }
-        usuarioEscolhido = lista.find((u) => u.id === (savedId || prev?.id)) || lista[0] || prev;
+        usuarioEscolhido = usuarioReal || lista.find((u) => u.id === (savedId || prev?.id)) || lista[0] || prev;
         return usuarioEscolhido;
       });
       return usuarioEscolhido;
