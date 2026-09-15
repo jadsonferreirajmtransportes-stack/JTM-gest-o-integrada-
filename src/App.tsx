@@ -1006,84 +1006,126 @@ export default function App() {
   }, [colaboradores]);
 
   // Dynamic calculation of System Alerts
+  // Escopo "própria equipe/carteira" (currentUser.escopoApenasProprioSetor) — usado só nos
+  // pontos de DP e Clientes que um supervisor de campo pode ver (ver visibilidadeUtils.ts).
+  // Sem essa flag ligada, as 3 listas abaixo são idênticas às originais.
+  const supervisorVinculado = useMemo(
+    () => supervisores.find((s) => s.id === currentUser?.supervisorId),
+    [supervisores, currentUser]
+  );
+  const colaboradoresEquipeVisiveis = useMemo(
+    () =>
+      filtrarColaboradoresDoSupervisor(
+        colaboradores,
+        currentUser?.escopoApenasProprioSetor ? currentUser.supervisorId : undefined
+      ),
+    [colaboradores, currentUser]
+  );
+  const clientesVisiveis = useMemo(
+    () =>
+      filtrarClientesDoSupervisor(
+        clientes,
+        currentUser?.escopoApenasProprioSetor ? supervisorVinculado?.nome : undefined
+      ),
+    [clientes, currentUser, supervisorVinculado]
+  );
+  const ocorrenciasEquipeVisiveis = useMemo(() => {
+    if (!currentUser?.escopoApenasProprioSetor) return ocorrencias;
+    const idsEquipe = new Set(colaboradoresEquipeVisiveis.map((c) => c.id));
+    return ocorrencias.filter((o) => idsEquipe.has(o.colaboradorId));
+  }, [ocorrencias, colaboradoresEquipeVisiveis, currentUser]);
+
+  // Alertas Regulatórios (sino do cabeçalho) — são dados de RH/DP (exame ASO, férias,
+  // documentos pendentes). Sem NENHUM acesso ao módulo DP, não faz sentido nenhum desses
+  // alertas aparecer (ex.: um supervisor só de Farma Aéreo/Rodoviário via os 32 alertas da
+  // empresa inteira, incluindo colaboradores que ele nem consegue abrir o cadastro). Cada
+  // categoria também respeita a seção de DP correspondente (podeVerSecaoDp) e o escopo de
+  // "própria equipe" (colaboradoresEquipeVisiveis), igual ao resto do sistema.
   const alertas: AlertaItem[] = useMemo(() => {
     const list: AlertaItem[] = [];
+    if (!currentUser?.modulosPermitidos.includes('dp')) return list;
 
     // 1. ANVISA / RDC 430 ASO Exams Alerts
-    colaboradores.forEach((c) => {
-      if (c.status === 'Inativo') return;
-      const status = calcExamStatus(c.dataVencimentoExame);
-      const days = calcDaysRemaining(c.dataVencimentoExame);
+    if (podeVerSecaoDp(currentUser, 'saude')) {
+      colaboradoresEquipeVisiveis.forEach((c) => {
+        if (c.status === 'Inativo') return;
+        const status = calcExamStatus(c.dataVencimentoExame);
+        const days = calcDaysRemaining(c.dataVencimentoExame);
 
-      if (status === 'Vencido') {
-        list.push({
-          id: `alerta-exam-${c.id}`,
-          tipo: 'exame',
-          nivel: 'urgente',
-          colaboradorId: c.id,
-          colaboradorNome: c.nomeCompleto,
-          titulo: `Exame ASO Vencido (${c.nomeCompleto})`,
-          descricao: `Exame ocupacional venceu há ${Math.abs(days || 0)} dias. Risco de auto de infração ANVISA RDC 430.`,
-          diasRestantes: days || 0,
-          dataLimite: c.dataVencimentoExame,
-        });
-      } else if (status === 'A vencer') {
-        list.push({
-          id: `alerta-exam-${c.id}`,
-          tipo: 'exame',
-          nivel: 'atencao',
-          colaboradorId: c.id,
-          colaboradorNome: c.nomeCompleto,
-          titulo: `Exame ASO Vence em Breve (${c.nomeCompleto})`,
-          descricao: `Exame periódico vence em ${days} dias (${c.dataVencimentoExame}). Agendar com clínica conveniada.`,
-          diasRestantes: days || 0,
-          dataLimite: c.dataVencimentoExame,
-        });
-      }
-    });
+        if (status === 'Vencido') {
+          list.push({
+            id: `alerta-exam-${c.id}`,
+            tipo: 'exame',
+            nivel: 'urgente',
+            colaboradorId: c.id,
+            colaboradorNome: c.nomeCompleto,
+            titulo: `Exame ASO Vencido (${c.nomeCompleto})`,
+            descricao: `Exame ocupacional venceu há ${Math.abs(days || 0)} dias. Risco de auto de infração ANVISA RDC 430.`,
+            diasRestantes: days || 0,
+            dataLimite: c.dataVencimentoExame,
+          });
+        } else if (status === 'A vencer') {
+          list.push({
+            id: `alerta-exam-${c.id}`,
+            tipo: 'exame',
+            nivel: 'atencao',
+            colaboradorId: c.id,
+            colaboradorNome: c.nomeCompleto,
+            titulo: `Exame ASO Vence em Breve (${c.nomeCompleto})`,
+            descricao: `Exame periódico vence em ${days} dias (${c.dataVencimentoExame}). Agendar com clínica conveniada.`,
+            diasRestantes: days || 0,
+            dataLimite: c.dataVencimentoExame,
+          });
+        }
+      });
+    }
 
     // 2. Critical CLT Vacation Alerts
-    feriasList.forEach((f) => {
-      const colab = colaboradores.find((c) => c.id === f.colaboradorId);
-      if (!colab || colab.status === 'Inativo') return;
+    if (podeVerSecaoDp(currentUser, 'ferias')) {
+      feriasList.forEach((f) => {
+        const colab = colaboradoresEquipeVisiveis.find((c) => c.id === f.colaboradorId);
+        if (!colab || colab.status === 'Inativo') return;
 
-      if (f.status === 'Crítico' || f.status === 'Vencido') {
-        const days = calcDaysRemaining(f.limiteConcessivo);
-        list.push({
-          id: `alerta-ferias-${f.id}`,
-          tipo: 'ferias',
-          nivel: 'urgente',
-          colaboradorId: f.colaboradorId,
-          colaboradorNome: f.colaboradorNome,
-          titulo: `Férias no Limite Concessivo (${f.colaboradorNome})`,
-          descricao: `Limite concessivo (11 meses) em ${f.limiteConcessivo}. Risco de pagamento de férias em dobro (Art. 137 CLT).`,
-          diasRestantes: days || 0,
-          dataLimite: f.limiteConcessivo,
-        });
-      }
-    });
+        if (f.status === 'Crítico' || f.status === 'Vencido') {
+          const days = calcDaysRemaining(f.limiteConcessivo);
+          list.push({
+            id: `alerta-ferias-${f.id}`,
+            tipo: 'ferias',
+            nivel: 'urgente',
+            colaboradorId: f.colaboradorId,
+            colaboradorNome: f.colaboradorNome,
+            titulo: `Férias no Limite Concessivo (${f.colaboradorNome})`,
+            descricao: `Limite concessivo (11 meses) em ${f.limiteConcessivo}. Risco de pagamento de férias em dobro (Art. 137 CLT).`,
+            diasRestantes: days || 0,
+            dataLimite: f.limiteConcessivo,
+          });
+        }
+      });
+    }
 
     // 3. Pending Documents / Onboarding Alerts
-    colaboradores.forEach((c) => {
-      if (c.status === 'Inativo') return;
-      const docsFaltando = (c.documentos || []).filter((d) => d.status === 'Pendente');
+    if (podeVerSecaoDp(currentUser, 'colaboradores')) {
+      colaboradoresEquipeVisiveis.forEach((c) => {
+        if (c.status === 'Inativo') return;
+        const docsFaltando = (c.documentos || []).filter((d) => d.status === 'Pendente');
 
-      if (docsFaltando.length > 0) {
-        list.push({
-          id: `alerta-doc-${c.id}`,
-          tipo: 'documento',
-          nivel: 'info',
-          colaboradorId: c.id,
-          colaboradorNome: c.nomeCompleto,
-          titulo: `Documentos Pendentes (${c.nomeCompleto})`,
-          descricao: `Faltam ${docsFaltando.length} documento(s): ${docsFaltando.map((d) => d.tipo).join(', ')}.`,
-          diasRestantes: 0,
-        });
-      }
-    });
+        if (docsFaltando.length > 0) {
+          list.push({
+            id: `alerta-doc-${c.id}`,
+            tipo: 'documento',
+            nivel: 'info',
+            colaboradorId: c.id,
+            colaboradorNome: c.nomeCompleto,
+            titulo: `Documentos Pendentes (${c.nomeCompleto})`,
+            descricao: `Faltam ${docsFaltando.length} documento(s): ${docsFaltando.map((d) => d.tipo).join(', ')}.`,
+            diasRestantes: 0,
+          });
+        }
+      });
+    }
 
     return list;
-  }, [colaboradores, feriasList]);
+  }, [colaboradoresEquipeVisiveis, feriasList, currentUser]);
 
   // Atividades da Agenda da Gestão que o login atual pode ver — liberar o módulo pra alguém não
   // significa mais dar visão de tudo; ver podeVerAtividade em agendaUtils.ts. Usado aqui (badge
@@ -1143,35 +1185,6 @@ export default function App() {
       ),
     [instrucoesTrabalho, currentUser]
   );
-
-  // Escopo "própria equipe/carteira" (currentUser.escopoApenasProprioSetor) — usado só nos
-  // pontos de DP e Clientes que um supervisor de campo pode ver (ver visibilidadeUtils.ts).
-  // Sem essa flag ligada, as 3 listas abaixo são idênticas às originais.
-  const supervisorVinculado = useMemo(
-    () => supervisores.find((s) => s.id === currentUser?.supervisorId),
-    [supervisores, currentUser]
-  );
-  const colaboradoresEquipeVisiveis = useMemo(
-    () =>
-      filtrarColaboradoresDoSupervisor(
-        colaboradores,
-        currentUser?.escopoApenasProprioSetor ? currentUser.supervisorId : undefined
-      ),
-    [colaboradores, currentUser]
-  );
-  const clientesVisiveis = useMemo(
-    () =>
-      filtrarClientesDoSupervisor(
-        clientes,
-        currentUser?.escopoApenasProprioSetor ? supervisorVinculado?.nome : undefined
-      ),
-    [clientes, currentUser, supervisorVinculado]
-  );
-  const ocorrenciasEquipeVisiveis = useMemo(() => {
-    if (!currentUser?.escopoApenasProprioSetor) return ocorrencias;
-    const idsEquipe = new Set(colaboradoresEquipeVisiveis.map((c) => c.id));
-    return ocorrencias.filter((o) => idsEquipe.has(o.colaboradorId));
-  }, [ocorrencias, colaboradoresEquipeVisiveis, currentUser]);
 
   // Métricas gerenciais do Farma Aéreo e Farma Rodoviário — mesmo cálculo usado dentro de
   // cada painel (SectorManagerialDashboard), recalculado aqui pra alimentar tanto os badges
