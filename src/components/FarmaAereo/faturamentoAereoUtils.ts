@@ -1009,7 +1009,7 @@ const HEADER_ALIASES: Record<string, string[]> = {
   observacao: ['observacao', 'observação'],
 };
 
-function normalizeKey(text: string): string {
+export function normalizeKey(text: string): string {
   return text
     .toString()
     .normalize('NFD')

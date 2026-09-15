@@ -34,6 +34,7 @@ import {
   findLancamentosDuplicados,
   STATUS_FATURA_CONFIG,
   TIPOS_CUSTO_EXTRA,
+  normalizeKey,
 } from './faturamentoAereoUtils';
 import { ImportFaturamentoAereoModal } from './ImportFaturamentoAereoModal';
 
@@ -504,22 +505,44 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     }
   };
 
-  // Clientes distintos entre os lançamentos selecionados (para saber se dá para vincular
-  // a uma fatura já existente daquele cliente, ou se precisa criar uma nova).
-  const clienteIdsSelecionados = useMemo(() => {
-    const ids = new Set<string | undefined>();
+  // Clientes distintos entre os lançamentos selecionados (para saber se dá para vincular a uma
+  // fatura já existente daquele cliente, ou se precisa criar uma nova). Agrupa pelo NOME
+  // (clienteNome, normalizado), não pelo clienteId — na tela, "mesmo cliente" é o que a pessoa
+  // vê na coluna Cliente; usar clienteId sozinho falha em pelo menos dois casos reais: parte
+  // dos lançamentos do mesmo cliente (mesmo nome) ter batido com o cadastro e ganho clienteId
+  // enquanto outra parte não (comum em importação), ou dois cadastros de Cliente duplicados
+  // pro mesmo nome (ver caso BOMI, corrigido antes) — nos dois, o aviso de "selecione CT-es de
+  // um único cliente" disparava mesmo com tudo mostrando o mesmo nome na tela.
+  const nomesClienteSelecionados = useMemo(() => {
+    const nomes = new Set<string>();
     selecionados.forEach((id) => {
       const l = lancamentos.find((x) => x.id === id);
-      ids.add(l?.clienteId);
+      if (l) nomes.add(normalizeKey(l.clienteNome || ''));
     });
-    return ids;
+    return nomes;
   }, [selecionados, lancamentos]);
-  const clienteUnicoSelecionado =
-    clienteIdsSelecionados.size === 1 ? Array.from(clienteIdsSelecionados)[0] : undefined;
+  const nomeClienteSelecionadoUnico =
+    nomesClienteSelecionados.size === 1 ? Array.from(nomesClienteSelecionados)[0] : undefined;
+
+  // clienteId de verdade do grupo selecionado — só pra pré-preencher o cliente ao criar uma
+  // fatura NOVA (handleAbrirNovaFaturaComSelecao); melhor esforço, primeiro clienteId real
+  // encontrado entre os selecionados. "Vincular a uma fatura existente" não depende disso —
+  // busca as faturas candidatas pelo mesmo nome, não por este id (ver faturasDoClienteSelecionado).
+  const clienteUnicoSelecionado = useMemo(() => {
+    if (!nomeClienteSelecionadoUnico) return undefined;
+    for (const id of selecionados) {
+      const l = lancamentos.find((x) => x.id === id);
+      if (l?.clienteId) return l.clienteId;
+    }
+    return undefined;
+  }, [nomeClienteSelecionadoUnico, selecionados, lancamentos]);
 
   const faturasDoClienteSelecionado = useMemo(
-    () => (clienteUnicoSelecionado ? faturas.filter((f) => f.clienteId === clienteUnicoSelecionado) : []),
-    [faturas, clienteUnicoSelecionado]
+    () =>
+      nomeClienteSelecionadoUnico
+        ? faturas.filter((f) => normalizeKey(f.clienteNome || '') === nomeClienteSelecionadoUnico)
+        : [],
+    [faturas, nomeClienteSelecionadoUnico]
   );
 
   const totalSelecionado = useMemo(() => {
@@ -1272,7 +1295,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                 {selecionados.size} CT-e(s) selecionado(s) — {formatCurrency(totalSelecionado)}
               </span>
 
-              {clienteUnicoSelecionado === undefined && clienteIdsSelecionados.size > 1 ? (
+              {nomesClienteSelecionados.size > 1 ? (
                 <span className="text-[11px] text-amber-700">
                   Selecione CT-es de um único cliente para vincular a uma fatura existente.
                 </span>
