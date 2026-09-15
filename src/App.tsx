@@ -1060,9 +1060,15 @@ export default function App() {
   // Atividades da Agenda da Gestão que o login atual pode ver — liberar o módulo pra alguém não
   // significa mais dar visão de tudo; ver podeVerAtividade em agendaUtils.ts. Usado aqui (badge
   // "hoje"), no aviso de abertura e na própria tela da Agenda, pra ficar tudo consistente.
+  //
+  // IMPORTANTE: o papel usado aqui é currentUser.role (o perfil ATIVO/simulado agora), nunca o
+  // state global `userRole` do cabeçalho — aquele nunca é trocado por ninguém (o seletor que
+  // deveria mudá-lo não existe de verdade na tela) e fica sempre 'admin' desde o carregamento
+  // da página, o que fazia esse "vê só o que é seu" nunca valer pra ninguém, pra nenhum módulo
+  // destes — bug real reportado: um supervisor via compromissos particulares de outra pessoa.
   const atividadesVisiveis = useMemo(
-    () => atividadesGestao.filter((a) => podeVerAtividade(a, currentUser, userRole)),
-    [atividadesGestao, currentUser, userRole]
+    () => atividadesGestao.filter((a) => podeVerAtividade(a, currentUser, currentUser.role)),
+    [atividadesGestao, currentUser]
   );
 
   // Mesmo raciocínio da Agenda da Gestão, agora também em Projetos Gerenciais, Notas & Ideias e
@@ -1076,10 +1082,10 @@ export default function App() {
           usuariosMarcadosIds: p.usuariosMarcadosIds,
           nomesTextoLivre: [p.liderProjetoNome, ...(p.equipeMembros || [])],
           currentUser,
-          userRole,
+          userRole: currentUser.role,
         })
       ),
-    [projetos, currentUser, userRole]
+    [projetos, currentUser]
   );
 
   const notasVisiveis = useMemo(
@@ -1090,10 +1096,10 @@ export default function App() {
           usuariosMarcadosIds: n.usuariosMarcadosIds,
           nomesTextoLivre: [n.autor],
           currentUser,
-          userRole,
+          userRole: currentUser.role,
         })
       ),
-    [notasPaginas, currentUser, userRole]
+    [notasPaginas, currentUser]
   );
 
   const instrucoesVisiveis = useMemo(
@@ -1104,10 +1110,10 @@ export default function App() {
           usuariosMarcadosIds: it.usuariosMarcadosIds,
           nomesTextoLivre: [it.autor, it.responsavel, it.aprovadoPor],
           currentUser,
-          userRole,
+          userRole: currentUser.role,
         })
       ),
-    [instrucoesTrabalho, currentUser, userRole]
+    [instrucoesTrabalho, currentUser]
   );
 
   // Escopo "própria equipe/carteira" (currentUser.escopoApenasProprioSetor) — usado só nos
