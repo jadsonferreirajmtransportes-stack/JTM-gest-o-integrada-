@@ -11,6 +11,7 @@ import {
 import { formatCurrency, formatDateBR } from '../../utils/formatters';
 import { STRATEGIC_GUIDELINES } from '../../data/strategicGuidelines';
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
+import { isClienteFarmaAereo, isClienteFarmaRodoviario } from '../../utils/sectorUtils';
 
 export const TIPOS_CUSTO_EXTRA: TipoCustoExtraFaturamentoAereo[] = [
   'Dedicado por KM',
@@ -1036,6 +1037,30 @@ function normalizeCidade(text: string): string {
  *  mantém o comportamento de antes da existência do Rodoviário, quando não havia esse campo. */
 export function ehModalRodoviario(modal?: string): boolean {
   return normalizeKey(modal || '').includes('rodoviari');
+}
+
+/** Um lançamento/fatura pertence ao Controle Financeiro do Farma Aéreo ou do Farma
+ *  Rodoviário? A resposta certa é o SETOR VINCULADO AO CLIENTE (Cliente.setoresVinculados/
+ *  setorAtuacao — mesmo critério já usado nas abas "Empresas Atreladas"/"Equipe do Setor" de
+ *  cada painel, ver isClienteFarmaAereo/isClienteFarmaRodoviario em sectorUtils.ts), NUNCA o
+ *  texto livre da coluna "Modal" de uma planilha importada — esse texto vem do relatório de
+ *  origem e pode vir errado ou inconsistente linha a linha (caso real: SafetyLog é cliente só
+ *  do Aéreo, mas a maioria das linhas do relatório dela vinham com Modal = "RODOVIARIO").
+ *
+ *  O Modal só entra como critério em dois casos, onde não tem outro sinal confiável:
+ *  1. O lançamento não tem clienteId vinculado (import que não bateu com nenhum cadastro).
+ *  2. O cliente está vinculado aos DOIS setores (ex.: "ambos") — aí o cadastro sozinho não
+ *     decide, e cada linha pode legitimamente ser de um modal diferente. */
+export function pertenceAoFarmaAereo(item: { clienteId?: string; modal?: string }, clientes: Cliente[]): boolean {
+  const cliente = item.clienteId ? clientes.find((c) => c.id === item.clienteId) : undefined;
+  if (cliente) {
+    const aereo = isClienteFarmaAereo(cliente);
+    const rodoviario = isClienteFarmaRodoviario(cliente);
+    if (aereo && !rodoviario) return true;
+    if (rodoviario && !aereo) return false;
+    // vinculado aos dois setores (ou a nenhum, apesar de cadastrado) — cai pro Modal abaixo.
+  }
+  return !ehModalRodoviario(item.modal);
 }
 
 /** Constrói o mapa "coluna normalizada -> campo do sistema" a partir dos aliases. */

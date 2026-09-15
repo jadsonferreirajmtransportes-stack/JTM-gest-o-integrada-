@@ -31,7 +31,7 @@ import { SectorRevenueTab } from '../Common/SectorRevenueTab';
 import { SectorCostsTab } from '../Common/SectorCostsTab';
 import { CustoOperacionalFormModal } from '../Cost/CustoOperacionalFormModal';
 import { FaturamentoAereoView } from '../FarmaAereo/FaturamentoAereoView';
-import { ehModalRodoviario } from '../FarmaAereo/faturamentoAereoUtils';
+import { pertenceAoFarmaAereo } from '../FarmaAereo/faturamentoAereoUtils';
 import {
   calcFinancialsSetor,
   computeFaturamentoRealAereo,
@@ -113,15 +113,18 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
     'visao_geral' | 'empresas' | 'equipe' | 'faturamento' | 'controle_financeiro' | 'custos'
   >(() => ORDEM_ABAS_OPERACOES.find((aba) => podeVerAbaOperacoes(currentUser, aba)) || 'visao_geral');
 
-  // Farma Aéreo e Farma Rodoviário compartilham a mesma tabela de lançamentos/faturas — o
-  // campo `modal` separa quem é de quem (ver ehModalRodoviario).
+  // Farma Aéreo e Farma Rodoviário compartilham a mesma tabela de lançamentos/faturas — quem
+  // separa qual é de quem é o SETOR VINCULADO AO CLIENTE (cadastro), não o texto livre da
+  // coluna "Modal" de uma planilha importada — ver pertenceAoFarmaAereo. Rodoviário é o
+  // complemento exato do Aéreo (mesmo critério, negado), pra nunca faltar nem duplicar um
+  // lançamento entre os dois painéis.
   const lancamentosDoSetor = useMemo(
-    () => lancamentosFaturamentoAereo.filter((l) => ehModalRodoviario(l.modal)),
-    [lancamentosFaturamentoAereo]
+    () => lancamentosFaturamentoAereo.filter((l) => !pertenceAoFarmaAereo(l, clientes)),
+    [lancamentosFaturamentoAereo, clientes]
   );
   const faturasDoSetor = useMemo(
-    () => faturasAereo.filter((f) => ehModalRodoviario(f.modal)),
-    [faturasAereo]
+    () => faturasAereo.filter((f) => !pertenceAoFarmaAereo(f, clientes)),
+    [faturasAereo, clientes]
   );
   const faturamentoReal = useMemo(
     () => computeFaturamentoRealAereo(lancamentosDoSetor),

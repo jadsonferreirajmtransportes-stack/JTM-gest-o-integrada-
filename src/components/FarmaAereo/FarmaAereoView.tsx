@@ -37,7 +37,7 @@ import {
   isClienteFarmaAereo,
   isColaboradorFarmaAereo,
 } from '../../utils/sectorUtils';
-import { ehModalRodoviario } from './faturamentoAereoUtils';
+import { pertenceAoFarmaAereo } from './faturamentoAereoUtils';
 import { formatCurrency } from '../../utils/formatters';
 
 interface FarmaAereoViewProps {
@@ -116,16 +116,16 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
   const [selectedCustoEdit, setSelectedCustoEdit] = useState<CustoOperacional | null>(null);
 
   // Farma Aéreo e Farma Rodoviário compartilham a mesma tabela de lançamentos/faturas
-  // (LancamentoFaturamentoAereo/FaturaAereo) — o campo `modal` separa quem é de quem. Sem
-  // `modal` preenchido conta como Aéreo (compatibilidade com tudo que já existia antes do
-  // Rodoviário ter Controle Financeiro próprio).
+  // (LancamentoFaturamentoAereo/FaturaAereo) — quem separa qual é de quem é o SETOR VINCULADO
+  // AO CLIENTE (cadastro), não o texto livre da coluna "Modal" de uma planilha importada (que
+  // pode vir errado/inconsistente linha a linha) — ver pertenceAoFarmaAereo.
   const lancamentosDoSetor = useMemo(
-    () => lancamentosFaturamentoAereo.filter((l) => !ehModalRodoviario(l.modal)),
-    [lancamentosFaturamentoAereo]
+    () => lancamentosFaturamentoAereo.filter((l) => pertenceAoFarmaAereo(l, clientes)),
+    [lancamentosFaturamentoAereo, clientes]
   );
   const faturasDoSetor = useMemo(
-    () => faturasAereo.filter((f) => !ehModalRodoviario(f.modal)),
-    [faturasAereo]
+    () => faturasAereo.filter((f) => pertenceAoFarmaAereo(f, clientes)),
+    [faturasAereo, clientes]
   );
 
   // Faturamento real (Controle Financeiro) — substitui o campo "estimado" por cliente
