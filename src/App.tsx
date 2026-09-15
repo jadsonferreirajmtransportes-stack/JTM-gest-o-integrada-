@@ -547,6 +547,13 @@ export default function App() {
 
   // User Session & CRUD Handlers
   const handleSelectUserSession = (user: UsuarioLogin) => {
+    // Segunda trava (a primeira é escondida o botão que abre o modal, ver onOpenSwitchUserModal
+    // acima) — só admin pode virar outra pessoa. Sem isso, alguém que force a chamada (ex.:
+    // console do navegador) ainda conseguiria trocar de identidade mesmo sem ver o botão.
+    if (currentUser.role !== 'admin') {
+      showToast('Só administradores podem trocar de usuário.', 'error');
+      return;
+    }
     setCurrentUser(user);
     try {
       localStorage.setItem('jmt_current_user_id', user.id);
@@ -2092,7 +2099,11 @@ export default function App() {
           setIsMobileMenuOpen(false);
         }}
         currentUser={currentUser}
-        onOpenSwitchUserModal={() => setIsSwitchUserModalOpen(true)}
+        // Só admin pode "virar" outra pessoa — sem essa checagem, qualquer login (mesmo um
+        // supervisor bem restrito) conseguia abrir este mesmo modal e clicar "Entrar" na conta
+        // de um admin, contornando toda e qualquer permissão granular. Passar undefined some
+        // com o botão de vez (Sidebar/Header só renderizam o gatilho quando esta prop existe).
+        onOpenSwitchUserModal={currentUser.role === 'admin' ? () => setIsSwitchUserModalOpen(true) : undefined}
         userRole={userRole}
         onChangeRole={setUserRole}
         counts={sidebarCounts}
@@ -2114,7 +2125,7 @@ export default function App() {
           currentSection={activeSection}
           userRole={userRole}
           currentUser={currentUser}
-          onOpenSwitchUserModal={() => setIsSwitchUserModalOpen(true)}
+          onOpenSwitchUserModal={currentUser.role === 'admin' ? () => setIsSwitchUserModalOpen(true) : undefined}
           alertas={alertas}
           atividadesHojeCount={sidebarCounts.atividadesHoje}
           onOpenNovoColaborador={handleOpenNovoColaborador}
@@ -2447,13 +2458,15 @@ export default function App() {
                   >
                     Ir para Módulo Autorizado
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsSwitchUserModalOpen(true)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
-                  >
-                    Alternar Usuário
-                  </button>
+                  {currentUser.role === 'admin' && (
+                    <button
+                      type="button"
+                      onClick={() => setIsSwitchUserModalOpen(true)}
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                    >
+                      Alternar Usuário
+                    </button>
+                  )}
                 </div>
               </div>
             )}
