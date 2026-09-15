@@ -21,7 +21,6 @@ import {
   Check,
   Pencil,
   RotateCcw,
-  ArrowLeftRight,
 } from 'lucide-react';
 import { Cliente, LancamentoFaturamentoAereo, FaturaAereo } from '../../types';
 import { formatCurrency, formatDateBR } from '../../utils/formatters';
@@ -36,7 +35,6 @@ import {
   STATUS_FATURA_CONFIG,
   TIPOS_CUSTO_EXTRA,
   normalizeKey,
-  ehModalRodoviario,
 } from './faturamentoAereoUtils';
 import { ImportFaturamentoAereoModal } from './ImportFaturamentoAereoModal';
 
@@ -605,32 +603,6 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     limparSelecao();
   };
 
-  // Move TODOS os lançamentos/faturas da empresa filtrada (nos dados já filtrados por setor —
-  // lancamentosDaEmpresa/faturasDaEmpresa) pro outro modal (Aéreo ⇄ Rodoviário). Corrige o
-  // mesmo problema visto mais de uma vez: uma planilha importada traz o "Modal" errado por
-  // linha (ex.: SafetyLog veio majoritariamente "RODOVIARIO" quando é operação aérea de
-  // verdade) e a empresa inteira acaba aparecendo no Controle Financeiro do setor errado —
-  // sem precisar pedir uma migração SQL toda vez que isso acontecer de novo.
-  const estouNoRodoviario = ehModalRodoviario(modalPadrao);
-  const outroSetorNome = estouNoRodoviario ? 'Farma Aéreo' : 'Farma Rodoviário';
-  const handleMoverEmpresaParaOutroSetor = () => {
-    if (!empresaSelecionada) return;
-    const nomeEmpresa =
-      empresasDisponiveis.find((e) => e.value === empresaSelecionada)?.label || empresaSelecionada;
-    const novoModal = estouNoRodoviario ? 'Aéreo' : 'Rodoviário';
-    const totalItens = lancamentosDaEmpresa.length + faturasDaEmpresa.length;
-    const confirmado = window.confirm(
-      `Mover "${nomeEmpresa}" inteira (${lancamentosDaEmpresa.length} lançamento(s) e ${faturasDaEmpresa.length} fatura(s)) de ${tituloSetor} pra ${outroSetorNome}?\n\n` +
-        `Isso muda a classificação real desses registros nos relatórios e indicadores — não é só cosmético.`
-    );
-    if (!confirmado || totalItens === 0) return;
-    lancamentosDaEmpresa.forEach((l) => onUpdateLancamento({ ...l, modal: novoModal }));
-    if (onUpdateFatura) {
-      faturasDaEmpresa.forEach((f) => onUpdateFatura({ ...f, modal: novoModal }));
-    }
-    setEmpresaSelecionada('');
-  };
-
   const handleCriarFatura = () => {
     if (!novaFaturaCliente.trim() || !novaFaturaNumero.trim()) return;
     const cliente = clientes.find((c) => c.id === novaFaturaCliente);
@@ -774,19 +746,6 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           </button>
         )}
 
-        {/* Empresa inteira no setor errado (Modal errado na importação) — move todos os
-            lançamentos e faturas dela pro outro setor, sem precisar de migração SQL. */}
-        {empresaSelecionada && (
-          <button
-            type="button"
-            onClick={handleMoverEmpresaParaOutroSetor}
-            title={`Move todos os lançamentos e faturas desta empresa pra ${outroSetorNome}`}
-            className="text-[11px] font-semibold text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5"
-          >
-            <ArrowLeftRight className="w-3 h-3" />
-            Mover pra {outroSetorNome}
-          </button>
-        )}
 
         {/* Filtro por Período — só afeta a tabela de Faturas abaixo (os cartões de KPI e a
             busca global continuam somando tudo, igual antes; só filtrar as faturas listadas
