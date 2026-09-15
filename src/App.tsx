@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Colaborador,
   Empregador,
@@ -952,12 +952,22 @@ export default function App() {
     return () => window.removeEventListener(NOTIFICATION_EVENT, handleStorageUpdate);
   }, [loadData, loadDpData, loadFarmaAereoData, loadGestaoData, loadUsuarios, loadChatData]);
 
+  // Ref só pra checar (dentro da assinatura em tempo real abaixo) se uma conversa já era minha,
+  // sem precisar colocar conversasChat nas dependências do efeito — isso derrubaria e recriaria
+  // a assinatura a cada mensagem nova (o próprio evento que ela escuta), com risco real de
+  // perder uma mensagem chegando exatamente durante essa reconexão.
+  const conversasChatRef = useRef<ConversaChat[]>([]);
+  useEffect(() => {
+    conversasChatRef.current = conversasChat;
+  }, [conversasChat]);
+
   // Chat Interno em tempo real: uma mensagem nova em qualquer conversa (mesmo com a tela em
   // outro módulo) atualiza a data da conversa na lista — é o que faz ela subir no topo e o selo
   // de não lida aparecer, mesmo sem a Chat estar aberta. Assina uma vez só; usa a forma funcional
   // do setState pra nunca trabalhar com uma lista de conversas desatualizada.
   useEffect(() => {
     const cancelarInscricao = assinarMensagensNovas((msg) => {
+      const jaEraMinha = conversasChatRef.current.some((c) => c.id === msg.conversaId);
       setConversasChat((prev) => {
         const pertence = prev.some((c) => c.id === msg.conversaId);
         if (!pertence) {
@@ -971,9 +981,19 @@ export default function App() {
         }
         return prev.map((c) => (c.id === msg.conversaId ? { ...c, atualizadoEm: msg.criadoEm } : c));
       });
+
+      // Alerta visual (toast) de mensagem nova — a assinatura escuta TODA mensagem inserida no
+      // sistema (o filtro de "é uma conversa minha?" é feito aqui, não no Supabase), então só
+      // alerta quando a conversa já era conhecida como minha e não fui eu que mandei. Numa
+      // conversa nova (1ª mensagem recebida), o loadChatData acima já traz o selo de não lida
+      // na lista — sem alerta extra pra não duplicar antes dela nem existir localmente.
+      if (currentUser && jaEraMinha && msg.autorId !== currentUser.id) {
+        const autor = users.find((u) => u.id === msg.autorId);
+        showToast(`💬 Nova mensagem${autor ? ` de ${autor.nome}` : ''} no Chat Interno`, 'info');
+      }
     });
     return cancelarInscricao;
-  }, [currentUser, loadChatData]);
+  }, [currentUser, loadChatData, users]);
 
   // Keep detail view synchronized with updated store
   useEffect(() => {
