@@ -1241,25 +1241,31 @@ export default function App() {
 
   // Sidebar badge counters
   const sidebarCounts = useMemo(() => {
-    const ativos = colaboradores.filter((c) => c.status !== 'Inativo').length;
-    const examesVencendo = colaboradores.filter((c) => {
+    // Escopo "própria equipe/carteira" (colaboradoresEquipeVisiveis/clientesVisiveis/
+    // ocorrenciasEquipeVisiveis, calculados acima) — os badges do menu lateral (módulos e
+    // sub-itens de DP) usam os MESMOS dados que as telas de verdade mostram pra esse login,
+    // senão um supervisor restrito veria aqui o headcount/carteira da empresa inteira mesmo
+    // sem conseguir abrir o cadastro de ninguém fora da própria equipe.
+    const ativos = colaboradoresEquipeVisiveis.filter((c) => c.status !== 'Inativo').length;
+    const examesVencendo = colaboradoresEquipeVisiveis.filter((c) => {
       if (c.status === 'Inativo') return false;
       const st = calcExamStatus(c.dataVencimentoExame);
       return st === 'Vencido' || st === 'A vencer';
     }).length;
 
+    const idsEquipeParaFerias = new Set(colaboradoresEquipeVisiveis.map((c) => c.id));
     const feriasCriticas = feriasList.filter(
-      (f) => f.status === 'Crítico' || f.status === 'Vencido'
+      (f) => idsEquipeParaFerias.has(f.colaboradorId) && (f.status === 'Crítico' || f.status === 'Vencido')
     ).length;
 
-    const docsPendentes = colaboradores.filter((c) => {
+    const docsPendentes = colaboradoresEquipeVisiveis.filter((c) => {
       if (c.status === 'Inativo') return false;
       return (c.documentos || []).some((d) => d.status === 'Pendente');
     }).length;
 
-    const ocorrenciasAbertas = ocorrencias.filter((o) => o.status === 'Pendente').length;
+    const ocorrenciasAbertas = ocorrenciasEquipeVisiveis.filter((o) => o.status === 'Pendente').length;
 
-    const onboardingPendente = colaboradores.filter((c) => {
+    const onboardingPendente = colaboradoresEquipeVisiveis.filter((c) => {
       if (c.status === 'Inativo') return false;
       return (c.onboarding || []).some((item) => !item.concluido);
     }).length;
@@ -1268,19 +1274,19 @@ export default function App() {
       (p) => p.status === 'Aguardando Revisão' || p.status === 'Pendente Documentos'
     ).length;
 
-    const clientesAtivos = clientes.filter((cl) => cl.status === 'Ativo').length;
+    const clientesAtivos = clientesVisiveis.filter((cl) => cl.status === 'Ativo').length;
     const embarquesAereosAtivos = embarquesAereos.filter((e) => e.status !== 'Entregue / Concluído').length;
     const viagensRodoviariasAtivas = viagensRodoviarias.filter((v) => v.status !== 'Viagem Concluída').length;
     // Empresas vinculadas a cada setor — mesmo número mostrado como "Empresas Atreladas"
     // dentro dos próprios painéis do Aéreo/Rodoviário. Usado no badge do menu lateral em
     // vez de embarques/viagens ativas (que hoje são sempre 0, sem dado real).
-    const clientesFarmaAereo = clientes.filter(isClienteFarmaAereo).length;
-    const clientesFarmaRodoviario = clientes.filter(isClienteFarmaRodoviario).length;
+    const clientesFarmaAereo = clientesVisiveis.filter(isClienteFarmaAereo).length;
+    const clientesFarmaRodoviario = clientesVisiveis.filter(isClienteFarmaRodoviario).length;
     // Equipe alocada em cada setor — junto com clientesFarmaAereo/clientesFarmaRodoviario
     // acima, alimenta os atalhos "Vincular Empresas"/"Alocar Equipe" suspensos no menu
     // lateral, abaixo do botão do módulo (antes ficavam soltos no topo de cada painel).
-    const headcountFarmaAereo = colaboradores.filter((c) => c.status !== 'Inativo' && isColaboradorFarmaAereo(c)).length;
-    const headcountFarmaRodoviario = colaboradores.filter((c) => c.status !== 'Inativo' && isColaboradorFarmaRodoviario(c)).length;
+    const headcountFarmaAereo = colaboradoresEquipeVisiveis.filter((c) => c.status !== 'Inativo' && isColaboradorFarmaAereo(c)).length;
+    const headcountFarmaRodoviario = colaboradoresEquipeVisiveis.filter((c) => c.status !== 'Inativo' && isColaboradorFarmaRodoviario(c)).length;
     const projetosAtivos = projetosVisiveis.length;
     const todayIso = new Date().toISOString().split('T')[0];
     const atividadesHoje = atividadesVisiveis.filter(
@@ -1315,11 +1321,11 @@ export default function App() {
       instrucoesCount: instrucoesVisiveis.filter((i) => !i.arquivada).length,
     };
   }, [
-    colaboradores,
+    colaboradoresEquipeVisiveis,
     feriasList,
-    ocorrencias,
+    ocorrenciasEquipeVisiveis,
     preAdmissoes,
-    clientes,
+    clientesVisiveis,
     embarquesAereos,
     viagensRodoviarias,
     projetosVisiveis,
