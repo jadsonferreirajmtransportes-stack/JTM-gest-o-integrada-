@@ -274,6 +274,55 @@ export function findLancamentosDuplicados(
   return grupos;
 }
 
+/** Mesmo critério de correspondência do `findLancamentosDuplicados` acima (NF do mesmo cliente
+ *  como critério primário; CT-e como reserva só quando a NF não está preenchida), mas devolvendo
+ *  uma chave única em vez de agrupar — usado pra checar se um lançamento recém-importado já
+ *  existe no sistema, e não só pra reportar duplicidade depois do fato. */
+function chaveCorrespondenciaLancamento(l: LancamentoFaturamentoAereo): string | undefined {
+  const clienteChave = normalizeKey(l.clienteId || l.clienteNome || '');
+  const notaFiscal = l.notaFiscal || '';
+  if (!ehPlaceholderVazio(notaFiscal)) {
+    return `nf|${clienteChave}|${normalizeKey(notaFiscal)}`;
+  }
+  const numeroCte = l.numeroCte || '';
+  if (!ehPlaceholderVazio(numeroCte)) {
+    return `cte|${clienteChave}|${normalizeKey(numeroCte)}`;
+  }
+  return undefined;
+}
+
+/**
+ * Separa lançamentos recém-lidos de uma planilha entre os que já existem no sistema (mesma NF —
+ * ou CT-e, se a NF não estiver preenchida — do mesmo cliente) e os realmente novos. Usado na
+ * importação pra não recriar duplicidades já resolvidas manualmente: reimportar a mesma planilha
+ * (ou uma com linhas sobrepostas a uma importação anterior) não volta a gerar as mesmas entradas.
+ * Também dedupe dentro do próprio lote importado, caso a planilha em si traga a linha repetida.
+ */
+export function separarLancamentosNovosDeExistentes(
+  novosLancamentos: LancamentoFaturamentoAereo[],
+  lancamentosExistentes: LancamentoFaturamentoAereo[]
+): { novos: LancamentoFaturamentoAereo[]; jaExistentes: LancamentoFaturamentoAereo[] } {
+  const chavesExistentes = new Set<string>();
+  lancamentosExistentes.forEach((l) => {
+    const chave = chaveCorrespondenciaLancamento(l);
+    if (chave) chavesExistentes.add(chave);
+  });
+
+  const novos: LancamentoFaturamentoAereo[] = [];
+  const jaExistentes: LancamentoFaturamentoAereo[] = [];
+  const chavesDesteLote = new Set<string>();
+  novosLancamentos.forEach((l) => {
+    const chave = chaveCorrespondenciaLancamento(l);
+    if (chave && (chavesExistentes.has(chave) || chavesDesteLote.has(chave))) {
+      jaExistentes.push(l);
+      return;
+    }
+    if (chave) chavesDesteLote.add(chave);
+    novos.push(l);
+  });
+  return { novos, jaExistentes };
+}
+
 export interface ResumoFaturaAereo {
   valorTotalCobrado: number;
   valorPago: number;

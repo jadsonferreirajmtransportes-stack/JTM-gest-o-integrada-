@@ -1559,6 +1559,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         clientes={clientes}
+        lancamentosExistentes={lancamentos}
         onConfirmImport={onImport}
         titulo={`Importar Faturamento — ${tituloSetor} (Excel/XLS)`}
         subtitulo={`Controle Financeiro — ${tituloSetor}: lançamentos de CT-e e faturas`}

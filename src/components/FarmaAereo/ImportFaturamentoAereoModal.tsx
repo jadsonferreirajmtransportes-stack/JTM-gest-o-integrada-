@@ -4,6 +4,7 @@ import { Cliente, LancamentoFaturamentoAereo, FaturaAereo } from '../../types';
 import {
   readSpreadsheetFile,
   mapRowsToFaturamentoAereo,
+  separarLancamentosNovosDeExistentes,
   ImportacaoFaturamentoAereoResultado,
 } from './faturamentoAereoUtils';
 import { formatCurrency } from '../../utils/formatters';
@@ -12,6 +13,9 @@ interface ImportFaturamentoAereoModalProps {
   isOpen: boolean;
   onClose: () => void;
   clientes: Cliente[];
+  /** Lançamentos já cadastrados neste setor — usado pra não reimportar linhas que já existem
+   *  (mesma NF/CT-e do mesmo cliente), evitando recriar duplicidades já apagadas manualmente. */
+  lancamentosExistentes: LancamentoFaturamentoAereo[];
   onConfirmImport: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[]) => void;
   /** Título/legenda exibidos no cabeçalho — deixa o modal genérico entre Farma Aéreo e
    *  Farma Rodoviário (mesma estrutura de importação, só muda o setor). */
@@ -27,6 +31,7 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
   isOpen,
   onClose,
   clientes,
+  lancamentosExistentes,
   onConfirmImport,
   titulo = 'Importar Faturamento (Excel/XLS)',
   subtitulo = 'Controle Financeiro — Farma Aéreo: lançamentos de CT-e e faturas',
@@ -65,7 +70,26 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
         );
         return;
       }
-      setResultado(mapped);
+
+      const { novos, jaExistentes } = separarLancamentosNovosDeExistentes(
+        mapped.lancamentos,
+        lancamentosExistentes
+      );
+      if (novos.length === 0) {
+        setErro(
+          `Todos os ${mapped.lancamentos.length} lançamento(s) dessa planilha já estão cadastrados no sistema (mesma Nota Fiscal ou CT-e do mesmo cliente) — nada novo pra importar.`
+        );
+        return;
+      }
+      const idsFaturasNecessarias = new Set(novos.map((l) => l.faturaId).filter(Boolean));
+      const faturasFiltradas = mapped.faturas.filter((f) => idsFaturasNecessarias.has(f.id));
+      const avisos = [...mapped.avisos];
+      if (jaExistentes.length > 0) {
+        avisos.unshift(
+          `${jaExistentes.length} lançamento(s) ignorado(s) por já existirem no sistema (mesma Nota Fiscal — ou CT-e, quando a NF não está preenchida — do mesmo cliente). Evita recriar duplicidades já resolvidas.`
+        );
+      }
+      setResultado({ ...mapped, lancamentos: novos, faturas: faturasFiltradas, avisos });
     } catch (err: any) {
       setErro(err.message || 'Erro ao processar o arquivo.');
     } finally {
