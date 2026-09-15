@@ -960,12 +960,20 @@ export default function App() {
     const cancelarInscricao = assinarMensagensNovas((msg) => {
       setConversasChat((prev) => {
         const pertence = prev.some((c) => c.id === msg.conversaId);
-        if (!pertence) return prev;
+        if (!pertence) {
+          // Mensagem de uma conversa que este navegador ainda não tinha carregado — o caso
+          // mais comum é ser a PRIMEIRA mensagem de uma conversa nova, criada por quem enviou
+          // (ex.: alguém manda uma mensagem direta pra você por iniciativa própria). Sem isso,
+          // a conversa simplesmente nunca aparecia pra quem recebeu, até ele trocar de usuário
+          // ou recarregar a página manualmente — parecia que a mensagem "não chegou".
+          if (currentUser) loadChatData(currentUser.id);
+          return prev;
+        }
         return prev.map((c) => (c.id === msg.conversaId ? { ...c, atualizadoEm: msg.criadoEm } : c));
       });
     });
     return cancelarInscricao;
-  }, []);
+  }, [currentUser, loadChatData]);
 
   // Keep detail view synchronized with updated store
   useEffect(() => {
