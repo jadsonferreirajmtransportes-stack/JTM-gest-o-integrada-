@@ -327,6 +327,13 @@ export default function App() {
     return INITIAL_USERS_DATA[0];
   });
 
+  // Quem REALMENTE fez login (Supabase Auth) — diferente de `currentUser`, que muda ao usar
+  // "Trocar de Login" pra simular outro perfil. Um admin simulando um supervisor não pode
+  // perder a capacidade de voltar a ser admin só porque currentUser.role não é mais 'admin'
+  // nesse momento — os controles de "quem pode trocar" (ver onOpenSwitchUserModal abaixo)
+  // checam ESTE valor, não o currentUser simulado. Preenchido só dentro de loadUsuarios.
+  const [usuarioAutenticadoReal, setUsuarioAutenticadoReal] = useState<UsuarioLogin | undefined>(undefined);
+
   // Logins & Acessos agora mora no Supabase (compartilhado entre navegadores/dispositivos) em
   // vez de só no localStorage deste — ver migração 012 e usuariosApi.ts. Os useState acima
   // continuam lendo do localStorage só pra ter algo pra mostrar instantaneamente antes dessa
@@ -366,6 +373,7 @@ export default function App() {
         ? lista.find((u) => u.authUserId === authUserIdReal) ||
           (emailReal ? lista.find((u) => (u.email || '').trim().toLowerCase() === emailReal) : undefined)
         : undefined;
+      setUsuarioAutenticadoReal(usuarioReal);
 
       let usuarioEscolhido: UsuarioLogin | null = null;
       setCurrentUser((prev) => {
@@ -548,9 +556,11 @@ export default function App() {
   // User Session & CRUD Handlers
   const handleSelectUserSession = (user: UsuarioLogin) => {
     // Segunda trava (a primeira é escondida o botão que abre o modal, ver onOpenSwitchUserModal
-    // acima) — só admin pode virar outra pessoa. Sem isso, alguém que force a chamada (ex.:
-    // console do navegador) ainda conseguiria trocar de identidade mesmo sem ver o botão.
-    if (currentUser.role !== 'admin') {
+    // acima) — só quem REALMENTE logou como admin pode virar outra pessoa. Checa
+    // usuarioAutenticadoReal, não currentUser: um admin simulando outro perfil continua sendo
+    // admin de verdade e precisa conseguir trocar de volta (ou pra um terceiro perfil) mesmo
+    // com currentUser.role já não sendo 'admin' durante a simulação.
+    if (usuarioAutenticadoReal?.role !== 'admin') {
       showToast('Só administradores podem trocar de usuário.', 'error');
       return;
     }
@@ -2099,11 +2109,11 @@ export default function App() {
           setIsMobileMenuOpen(false);
         }}
         currentUser={currentUser}
-        // Só admin pode "virar" outra pessoa — sem essa checagem, qualquer login (mesmo um
-        // supervisor bem restrito) conseguia abrir este mesmo modal e clicar "Entrar" na conta
-        // de um admin, contornando toda e qualquer permissão granular. Passar undefined some
-        // com o botão de vez (Sidebar/Header só renderizam o gatilho quando esta prop existe).
-        onOpenSwitchUserModal={currentUser.role === 'admin' ? () => setIsSwitchUserModalOpen(true) : undefined}
+        // Só quem REALMENTE fez login como admin pode "virar" outra pessoa — importante checar
+        // usuarioAutenticadoReal (a identidade de verdade), não currentUser: senão, um admin
+        // simulando outro perfil via "Trocar" perderia o próprio botão de trocar de volta, já
+        // que currentUser.role deixaria de ser 'admin' enquanto a simulação estivesse ativa.
+        onOpenSwitchUserModal={usuarioAutenticadoReal?.role === 'admin' ? () => setIsSwitchUserModalOpen(true) : undefined}
         userRole={userRole}
         onChangeRole={setUserRole}
         counts={sidebarCounts}
@@ -2125,7 +2135,7 @@ export default function App() {
           currentSection={activeSection}
           userRole={userRole}
           currentUser={currentUser}
-          onOpenSwitchUserModal={currentUser.role === 'admin' ? () => setIsSwitchUserModalOpen(true) : undefined}
+          onOpenSwitchUserModal={usuarioAutenticadoReal?.role === 'admin' ? () => setIsSwitchUserModalOpen(true) : undefined}
           alertas={alertas}
           atividadesHojeCount={sidebarCounts.atividadesHoje}
           onOpenNovoColaborador={handleOpenNovoColaborador}
@@ -2458,7 +2468,7 @@ export default function App() {
                   >
                     Ir para Módulo Autorizado
                   </button>
-                  {currentUser.role === 'admin' && (
+                  {usuarioAutenticadoReal?.role === 'admin' && (
                     <button
                       type="button"
                       onClick={() => setIsSwitchUserModalOpen(true)}
