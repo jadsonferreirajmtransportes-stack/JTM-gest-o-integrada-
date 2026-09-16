@@ -16,6 +16,7 @@ import {
   Paperclip,
   Upload,
   Download,
+  ExternalLink,
 } from 'lucide-react';
 import {
   AtividadeGestao,
@@ -784,27 +785,40 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                     key={anexo.id}
                     className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200"
                   >
-                    <a
-                      href={anexo.arquivoUrl}
-                      download={anexo.nome}
-                      className="flex items-center gap-2 min-w-0 flex-1 text-slate-700 hover:text-[#8A6A39]"
-                      title="Baixar anexo"
-                    >
+                    <div className="flex items-center gap-2 min-w-0 flex-1 text-slate-700">
                       <FileText className="w-3.5 h-3.5 text-[#B38F4F] shrink-0" />
                       <span className="truncate font-medium">{anexo.nome}</span>
                       {anexo.tamanho && (
                         <span className="text-[10px] text-slate-400 font-mono shrink-0">{anexo.tamanho}</span>
                       )}
-                      <Download className="w-3 h-3 text-slate-300 shrink-0" />
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoverAnexo(anexo.id)}
-                      className="p-1 text-slate-400 hover:text-rose-500 transition-colors shrink-0"
-                      title="Remover anexo"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <a
+                        href={anexo.arquivoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1 text-slate-400 hover:text-[#8A6A39] transition-colors"
+                        title="Visualizar anexo"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                      <a
+                        href={anexo.arquivoUrl}
+                        download={anexo.nome}
+                        className="p-1 text-slate-400 hover:text-[#8A6A39] transition-colors"
+                        title="Baixar anexo"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoverAnexo(anexo.id)}
+                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                        title="Remover anexo"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

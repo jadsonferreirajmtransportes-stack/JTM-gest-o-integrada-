@@ -415,20 +415,33 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
               </span>
               <div className="space-y-1.5">
                 {atividade.anexos.map((anexo) => (
-                  <a
+                  <div
                     key={anexo.id}
-                    href={anexo.arquivoUrl}
-                    download={anexo.nome}
-                    className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700 hover:text-[#8A6A39] hover:border-amber-300 transition-colors"
-                    title="Baixar anexo"
+                    className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700"
                   >
                     <FileText className="w-3.5 h-3.5 text-[#B38F4F] shrink-0" />
                     <span className="truncate font-medium flex-1">{anexo.nome}</span>
                     {anexo.tamanho && (
                       <span className="text-[10px] text-slate-400 font-mono shrink-0">{anexo.tamanho}</span>
                     )}
-                    <Download className="w-3 h-3 text-slate-400 shrink-0" />
-                  </a>
+                    <a
+                      href={anexo.arquivoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-1 text-slate-400 hover:text-[#8A6A39] shrink-0"
+                      title="Visualizar anexo"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                    <a
+                      href={anexo.arquivoUrl}
+                      download={anexo.nome}
+                      className="p-1 text-slate-400 hover:text-[#8A6A39] shrink-0"
+                      title="Baixar anexo"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
                 ))}
               </div>
             </div>
