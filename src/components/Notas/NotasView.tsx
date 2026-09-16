@@ -177,7 +177,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
               e.stopPropagation();
               handleNovaPagina(p.id);
             }}
-            className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-teal-600 shrink-0 transition-opacity"
+            className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-[#B38F4F] shrink-0 transition-opacity"
             title="Nova sub-página"
           >
             <Plus className="w-3 h-3" />
@@ -206,7 +206,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
         <button
           type="button"
           onClick={() => handleNovaPagina()}
-          className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-teal-500/25 shrink-0"
+          className="px-4 py-2 rounded-xl bg-[#B38F4F] hover:bg-[#8A6A39] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Página</span>
@@ -284,7 +284,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleNovaPagina()}
-                    className="p-0.5 text-slate-400 hover:text-teal-600 transition-colors"
+                    className="p-0.5 text-slate-400 hover:text-[#B38F4F] transition-colors"
                     title="Nova página"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -325,7 +325,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
               <button
                 type="button"
                 onClick={() => handleNovaPagina()}
-                className="px-4 py-2 text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-lg shadow-xs inline-flex items-center gap-2 transition-colors"
+                className="px-4 py-2 text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg shadow-xs inline-flex items-center gap-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 <span>Nova Página</span>
