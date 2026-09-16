@@ -635,7 +635,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-sky-600" />
+                  <Building2 className="w-4 h-4 text-[#B38F4F]" />
                   <span>Vincular Empresas</span>
                 </div>
                 {counts.clientesFarmaAereo !== undefined && (
@@ -652,7 +652,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-sky-600" />
+                  <Users className="w-4 h-4 text-[#B38F4F]" />
                   <span>Alocar Equipe</span>
                 </div>
                 {counts.headcountFarmaAereo !== undefined && (
@@ -668,7 +668,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
               >
-                <Download className="w-4 h-4 text-sky-600" />
+                <Download className="w-4 h-4 text-[#B38F4F]" />
                 <span>Relatório Gerencial</span>
               </button>
             )}
@@ -706,7 +706,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-emerald-600" />
+                  <Building2 className="w-4 h-4 text-[#B38F4F]" />
                   <span>Vincular Empresas</span>
                 </div>
                 {counts.clientesFarmaRodoviario !== undefined && (
@@ -723,7 +723,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-emerald-600" />
+                  <Users className="w-4 h-4 text-[#B38F4F]" />
                   <span>Alocar Equipe</span>
                 </div>
                 {counts.headcountFarmaRodoviario !== undefined && (
@@ -739,7 +739,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-xs transition-colors"
               >
-                <Download className="w-4 h-4 text-emerald-600" />
+                <Download className="w-4 h-4 text-[#B38F4F]" />
                 <span>Relatório Gerencial</span>
               </button>
             )}
