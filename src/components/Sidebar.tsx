@@ -553,27 +553,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
             )}
 
-            <button
-              id="nav-item-form-admissao"
-              type="button"
-              onClick={() => {
-                if (onOpenAdmissionLinkModal) {
-                  onOpenAdmissionLinkModal();
-                } else {
-                  onSelectSection('preadmissoes');
-                }
-                onCloseMobile();
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left border bg-amber-50 border-amber-200 text-amber-800 hover:border-amber-400"
-            >
-              <div className="flex items-center gap-2">
-                <UserCheck className="w-3.5 h-3.5 text-amber-600" />
-                <span>Link p/ Candidato</span>
-              </div>
-              <span className="text-[10px] bg-amber-100 px-1.5 py-0.5 rounded text-amber-800 font-bold">
-                Enviar
-              </span>
-            </button>
+            {temAcessoGeralDp(currentUser) && (
+              <button
+                id="nav-item-form-admissao"
+                type="button"
+                onClick={() => {
+                  if (onOpenAdmissionLinkModal) {
+                    onOpenAdmissionLinkModal();
+                  } else {
+                    onSelectSection('preadmissoes');
+                  }
+                  onCloseMobile();
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left border bg-amber-50 border-amber-200 text-amber-800 hover:border-amber-400"
+              >
+                <div className="flex items-center gap-2">
+                  <UserCheck className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Link p/ Candidato</span>
+                </div>
+                <span className="text-[10px] bg-amber-100 px-1.5 py-0.5 rounded text-amber-800 font-bold">
+                  Enviar
+                </span>
+              </button>
+            )}
           </div>
         </>
       );

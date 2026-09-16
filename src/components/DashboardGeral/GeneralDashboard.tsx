@@ -77,6 +77,9 @@ interface GeneralDashboardProps {
   preAdmissoes: PreAdmissao[];
   alertas: AlertaItem[];
   userRole: UserRole;
+  /** Acesso GERAL ao módulo DP — ver temAcessoGeralDp em visibilidadeUtils.ts. Controla só o
+   *  atalho de "Link Admissão Digital" abaixo, mesma restrição da tela de Ocorrências. */
+  temAcessoGeralDp: boolean;
   onNavigateModule: (mod: GlobalModuleId) => void;
   onNavigateSection: (sec: NavSection) => void;
   onOpenNovoColaborador: () => void;
@@ -106,6 +109,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
   preAdmissoes = [],
   alertas = [],
   userRole,
+  temAcessoGeralDp,
   onNavigateModule,
   onNavigateSection,
   onOpenNovoColaborador,
@@ -725,7 +729,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                 )}
 
                 {/* 2. Link Admissão Digital */}
-                {userRole !== 'colaborador' && onOpenAdmissionLink && (
+                {userRole !== 'colaborador' && temAcessoGeralDp && onOpenAdmissionLink && (
                   <button
                     id="dash-action-link-admissao"
                     onClick={onOpenAdmissionLink}

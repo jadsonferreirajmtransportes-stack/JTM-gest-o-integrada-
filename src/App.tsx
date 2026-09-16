@@ -2337,6 +2337,7 @@ export default function App() {
               preAdmissoes={preAdmissoes}
               alertas={alertas}
               userRole={userRole}
+              temAcessoGeralDp={temAcessoGeralDp(currentUser)}
               onNavigateModule={handleSelectGlobalModule}
               onNavigateSection={setActiveSection}
               onOpenNovoColaborador={handleOpenNovoColaborador}
@@ -2657,6 +2658,7 @@ export default function App() {
               empregadores={empregadores}
               cargos={cargos}
               supervisores={supervisores}
+              temAcessoGeralDp={temAcessoGeralDp(currentUser)}
               onOpenLinkGenerator={() => setIsAdmissionLinkModalOpen(true)}
               onEfetivarAdmissao={handleEfetivarAdmissao}
               onUpdateStatus={handleUpdatePreAdmissaoStatus}

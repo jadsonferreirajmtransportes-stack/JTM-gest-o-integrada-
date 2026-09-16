@@ -202,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Action Buttons inside the DP module */}
         <div className="flex items-center gap-2 flex-wrap">
-          {onOpenAdmissionLink && (
+          {temAcessoGeralDp && onOpenAdmissionLink && (
             <button
               id="dp-btn-admission-link"
               type="button"

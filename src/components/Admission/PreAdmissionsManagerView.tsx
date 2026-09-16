@@ -42,6 +42,10 @@ interface PreAdmissionsManagerViewProps {
   empregadores: Empregador[];
   cargos: CargoSalario[];
   supervisores: Supervisor[];
+  /** Acesso GERAL ao módulo DP — ver temAcessoGeralDp em visibilidadeUtils.ts. Controla só os
+   *  botões de gerar/enviar o link de admissão abaixo, mesma restrição da tela de Ocorrências;
+   *  a lista e a efetivação de pré-admissões continuam liberadas normalmente. */
+  temAcessoGeralDp: boolean;
   onOpenLinkGenerator: () => void;
   onEfetivarAdmissao: (
     preAdmissaoId: string,
@@ -67,6 +71,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
   empregadores,
   cargos,
   supervisores,
+  temAcessoGeralDp,
   onOpenLinkGenerator,
   onEfetivarAdmissao,
   onUpdateStatus,
@@ -162,14 +167,16 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenLinkGenerator}
-          className="px-4 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-900/20 shrink-0"
-        >
-          <Share2 className="w-4 h-4" />
-          <span>Gerar / Enviar Link de Admissão</span>
-        </button>
+        {temAcessoGeralDp && (
+          <button
+            type="button"
+            onClick={onOpenLinkGenerator}
+            className="px-4 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-900/20 shrink-0"
+          >
+            <Share2 className="w-4 h-4" />
+            <span>Gerar / Enviar Link de Admissão</span>
+          </button>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -253,13 +260,15 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
           <p className="text-xs text-slate-500 max-w-md mx-auto mb-6">
             Envie o link para novos colaboradores preencherem seus dados cadastrais, anexar fotos e agilizar o processo admissional.
           </p>
-          <button
-            type="button"
-            onClick={onOpenLinkGenerator}
-            className="px-5 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-amber-900/20"
-          >
-            Gerar Link de Admissão Agora
-          </button>
+          {temAcessoGeralDp && (
+            <button
+              type="button"
+              onClick={onOpenLinkGenerator}
+              className="px-5 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-amber-900/20"
+            >
+              Gerar Link de Admissão Agora
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
