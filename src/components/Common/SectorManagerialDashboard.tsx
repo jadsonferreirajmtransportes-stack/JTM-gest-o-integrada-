@@ -42,10 +42,8 @@ export const SectorManagerialDashboard: React.FC<SectorManagerialDashboardProps>
   onSwitchTab,
 }) => {
   const isAereo = setor === 'farma_aereo';
-  const themeBg = isAereo ? 'bg-sky-600' : 'bg-emerald-600';
-  const themeText = isAereo ? 'text-sky-700' : 'text-emerald-700';
-  const themeBorder = isAereo ? 'border-sky-200' : 'border-emerald-200';
-  const themeLightBg = isAereo ? 'bg-sky-50' : 'bg-emerald-50';
+  const themeText = 'text-[#8A6A39]';
+  const themeLightBg = 'bg-amber-50';
 
   // Faturamento do cliente — usa a média mensal real (Controle Financeiro) quando
   // disponível; cai para o campo manual "estimado" só nos setores sem lançamento

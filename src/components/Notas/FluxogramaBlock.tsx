@@ -35,15 +35,15 @@ const EtapaNode: React.FC<NodeProps<Node<EtapaData>>> = ({ data, selected }) => 
   return (
     <div
       className={`group relative min-w-[130px] rounded-xl border-2 bg-white px-3.5 py-2.5 text-center shadow-xs transition-colors ${
-        selected ? 'border-teal-500 shadow-md' : 'border-slate-300'
+        selected ? 'border-[#B38F4F] shadow-md' : 'border-slate-300'
       }`}
     >
-      <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-teal-500 !border-white" />
+      <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-[#B38F4F] !border-white" />
       <Handle
         type="target"
         position={Position.Left}
         id="left-target"
-        className="!w-2 !h-2 !bg-teal-500 !border-white"
+        className="!w-2 !h-2 !bg-[#B38F4F] !border-white"
       />
       <textarea
         value={data.label}
@@ -61,12 +61,12 @@ const EtapaNode: React.FC<NodeProps<Node<EtapaData>>> = ({ data, selected }) => 
       >
         <X className="w-3 h-3" />
       </button>
-      <Handle type="source" position={Position.Bottom} className="!w-2 !h-2 !bg-teal-500 !border-white" />
+      <Handle type="source" position={Position.Bottom} className="!w-2 !h-2 !bg-[#B38F4F] !border-white" />
       <Handle
         type="source"
         position={Position.Right}
         id="right-source"
-        className="!w-2 !h-2 !bg-teal-500 !border-white"
+        className="!w-2 !h-2 !bg-[#B38F4F] !border-white"
       />
     </div>
   );
@@ -188,7 +188,7 @@ const FluxogramaCanvas: React.FC<FluxogramaBlockProps> = ({ nos, conexoes, onCha
         <button
           type="button"
           onClick={handleAddNode}
-          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-teal-700 transition-colors hover:bg-teal-50 hover:text-teal-800"
+          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-[#8A6A39] transition-colors hover:bg-amber-50 hover:text-[#8A6A39]"
         >
           <Plus className="w-3.5 h-3.5" />
           Adicionar etapa

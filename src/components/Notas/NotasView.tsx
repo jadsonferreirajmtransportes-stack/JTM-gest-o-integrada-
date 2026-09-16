@@ -148,7 +148,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
       <div key={p.id}>
         <div
           className={`group flex items-center gap-1 pr-1.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
-            selecionado ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-100'
+            selecionado ? 'bg-amber-50 text-[#8A6A39]' : 'text-slate-600 hover:bg-slate-100'
           }`}
           style={{ paddingLeft: `${6 + depth * 14}px` }}
           onClick={() => setSelectedId(p.id)}
@@ -193,7 +193,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
       {/* Hero */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#8A6A39] text-xs font-semibold border border-amber-200">
             <NotebookPen className="w-3.5 h-3.5" />
             <span>Notas & Ideias JMT</span>
           </div>
@@ -225,7 +225,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar páginas..."
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-teal-500/30"
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/30"
               />
             </div>
           </div>
@@ -242,7 +242,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
                     type="button"
                     onClick={() => setSelectedId(p.id)}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
-                      selectedId === p.id ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-100'
+                      selectedId === p.id ? 'bg-amber-50 text-[#8A6A39]' : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
                     <span className="text-sm shrink-0">{p.icone || '📄'}</span>
@@ -268,7 +268,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
                           type="button"
                           onClick={() => setSelectedId(p.id)}
                           className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
-                            selectedId === p.id ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-100'
+                            selectedId === p.id ? 'bg-amber-50 text-[#8A6A39]' : 'text-slate-600 hover:bg-slate-100'
                           }`}
                         >
                           <span className="text-sm shrink-0">{p.icone || '📄'}</span>

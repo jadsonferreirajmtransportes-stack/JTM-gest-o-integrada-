@@ -157,11 +157,11 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           módulo, em vez de duplicadas aqui no topo. */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 opacity-100 pointer-events-none flex items-center pr-8">
-          <Plane className="w-64 h-64 text-sky-50" />
+          <Plane className="w-64 h-64 text-amber-50" />
         </div>
 
         <div className="relative z-10 space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-[#8A6A39] border border-amber-200 text-xs font-semibold">
             <Plane className="w-3.5 h-3.5" />
             <span>Painel Gerencial do Setor • Centro de Custo Aéreo</span>
           </div>
@@ -181,7 +181,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
             onClick={() => setActiveSubTab('visao_geral')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
               activeSubTab === 'visao_geral'
-                ? 'border-sky-600 text-sky-700 bg-sky-50/50 rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-amber-50/50 rounded-t-lg'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -195,7 +195,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
             onClick={() => setActiveSubTab('empresas')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
               activeSubTab === 'empresas'
-                ? 'border-sky-600 text-sky-700 bg-sky-50/50 rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-amber-50/50 rounded-t-lg'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -209,7 +209,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
             onClick={() => setActiveSubTab('equipe')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
               activeSubTab === 'equipe'
-                ? 'border-sky-600 text-sky-700 bg-sky-50/50 rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-amber-50/50 rounded-t-lg'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -223,7 +223,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
             onClick={() => setActiveSubTab('faturamento')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
               activeSubTab === 'faturamento'
-                ? 'border-sky-600 text-sky-700 bg-sky-50/50 rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-amber-50/50 rounded-t-lg'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -237,7 +237,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
             onClick={() => setActiveSubTab('controle_financeiro')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
               activeSubTab === 'controle_financeiro'
-                ? 'border-sky-600 text-sky-700 bg-sky-50/50 rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-amber-50/50 rounded-t-lg'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -251,7 +251,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
             onClick={() => setActiveSubTab('custos')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
               activeSubTab === 'custos'
-                ? 'border-sky-600 text-sky-700 bg-sky-50/50 rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-amber-50/50 rounded-t-lg'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >

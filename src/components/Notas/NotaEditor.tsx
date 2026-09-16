@@ -213,7 +213,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
                   blocos: blocos.map((b, i) => (i === idx ? { ...b, concluido: e.target.checked } : b)),
                 });
               }}
-              className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 shrink-0"
+              className="w-4 h-4 rounded border-slate-300 text-[#B38F4F] focus:ring-[#B38F4F] shrink-0"
             />
             <input
               type="text"
@@ -244,7 +244,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
 
       case 'callout':
         return (
-          <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-start gap-2">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
             <span className="text-base shrink-0">💡</span>
             <textarea
               value={bloco.texto}
@@ -252,7 +252,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
               onBlur={commonBlur}
               placeholder={cfg.placeholder}
               rows={2}
-              className="flex-1 bg-transparent border-none outline-hidden text-sm text-teal-900 placeholder-teal-400/60 resize-y"
+              className="flex-1 bg-transparent border-none outline-hidden text-sm text-[#5c4526] placeholder-amber-400/60 resize-y"
             />
           </div>
         );
@@ -298,7 +298,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
         return (
           <label
             htmlFor={inputId}
-            className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-slate-200 hover:border-teal-300 hover:bg-teal-50/40 rounded-xl p-6 cursor-pointer transition-colors"
+            className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-slate-200 hover:border-amber-300 hover:bg-amber-50/40 rounded-xl p-6 cursor-pointer transition-colors"
           >
             <ImageIcon className="w-6 h-6 text-slate-300" />
             <span className="text-xs text-slate-400 font-medium">Clique para adicionar uma imagem</span>
@@ -379,7 +379,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
         return (
           <label
             htmlFor={inputId}
-            className="flex items-center gap-3 border-2 border-dashed border-slate-200 hover:border-teal-300 hover:bg-teal-50/40 rounded-xl p-4 cursor-pointer transition-colors"
+            className="flex items-center gap-3 border-2 border-dashed border-slate-200 hover:border-amber-300 hover:bg-amber-50/40 rounded-xl p-4 cursor-pointer transition-colors"
           >
             <Paperclip className="w-5 h-5 text-slate-300 shrink-0" />
             <div>
@@ -501,7 +501,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
           <button
             type="button"
             onClick={() => onNavigateToVinculo?.(vinculo.modulo)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg text-[11px] font-semibold text-teal-800 transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-[11px] font-semibold text-[#8A6A39] transition-colors"
             title="Ir para o registro vinculado"
           >
             {VinculoIcon && <VinculoIcon className="w-3.5 h-3.5" />}
@@ -535,7 +535,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
           onClick={() => setShowCompartilhar((v) => !v)}
           className={`ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-[11px] font-medium transition-colors ${
             (pagina.usuariosMarcadosIds || []).length > 0
-              ? 'bg-teal-50 border-teal-200 text-teal-800'
+              ? 'bg-amber-50 border-amber-200 text-[#8A6A39]'
               : 'bg-white border-dashed border-slate-300 text-slate-500 hover:text-slate-700'
           }`}
         >
@@ -564,8 +564,8 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
                       onClick={() => handleToggleUsuarioMarcado(u.id)}
                       className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border flex items-center gap-1 transition-colors ${
                         marcado
-                          ? 'bg-teal-600 border-teal-600 text-white'
-                          : 'bg-white border-slate-300 text-slate-600 hover:border-teal-300'
+                          ? 'bg-[#B38F4F] border-[#B38F4F] text-white'
+                          : 'bg-white border-slate-300 text-slate-600 hover:border-amber-300'
                       }`}
                     >
                       {marcado && <Check className="w-3 h-3" />}
@@ -624,7 +624,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
                     key={cfg.tipo}
                     type="button"
                     onClick={() => handleInserirBloco(idx, cfg.tipo)}
-                    className="text-[10px] px-2 py-1 bg-white border border-slate-200 rounded-md hover:border-teal-400 hover:text-teal-700 text-slate-600 font-medium transition-colors flex items-center gap-1"
+                    className="text-[10px] px-2 py-1 bg-white border border-slate-200 rounded-md hover:border-amber-400 hover:text-[#8A6A39] text-slate-600 font-medium transition-colors flex items-center gap-1"
                   >
                     <span className="text-slate-400">{cfg.atalho}</span>
                     {cfg.label}
@@ -638,7 +638,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
         <button
           type="button"
           onClick={() => setMenuAdicionarIdx(menuAdicionarIdx === blocos.length - 1 ? null : blocos.length - 1)}
-          className="ml-5 mt-1 flex items-center gap-1 text-[11px] text-slate-400 hover:text-teal-600 transition-colors"
+          className="ml-5 mt-1 flex items-center gap-1 text-[11px] text-slate-400 hover:text-[#B38F4F] transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Adicionar bloco</span>

@@ -113,7 +113,7 @@ export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150">
         <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-teal-600" />
+            <Link2 className="w-4 h-4 text-[#B38F4F]" />
             <h3 className="text-sm font-bold text-slate-800">
               {tipoSelecionado ? `Selecionar ${TIPOS.find((t) => t.tipo === tipoSelecionado)?.label}` : 'Vincular a um Módulo'}
             </h3>
@@ -134,10 +134,10 @@ export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
         <div className="overflow-y-auto flex-1">
           {vinculoAtual && !tipoSelecionado && (
             <div className="p-3 border-b border-slate-100">
-              <div className="flex items-center justify-between gap-2 p-2.5 bg-teal-50 border border-teal-200 rounded-xl">
+              <div className="flex items-center justify-between gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl">
                 <div className="min-w-0">
-                  <span className="text-[10px] text-teal-700 font-bold uppercase tracking-wider block">Vínculo Atual</span>
-                  <span className="text-xs text-teal-900 font-semibold truncate block">{vinculoAtual.entidadeLabel}</span>
+                  <span className="text-[10px] text-[#8A6A39] font-bold uppercase tracking-wider block">Vínculo Atual</span>
+                  <span className="text-xs text-[#5c4526] font-semibold truncate block">{vinculoAtual.entidadeLabel}</span>
                 </div>
                 <button
                   type="button"
@@ -145,7 +145,7 @@ export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
                     onRemoverVinculo();
                     onClose();
                   }}
-                  className="p-1.5 text-teal-700 hover:text-rose-600 hover:bg-white rounded-lg transition-colors shrink-0"
+                  className="p-1.5 text-[#8A6A39] hover:text-rose-600 hover:bg-white rounded-lg transition-colors shrink-0"
                   title="Remover vínculo"
                 >
                   <Unlink className="w-3.5 h-3.5" />
@@ -186,7 +186,7 @@ export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   placeholder="Buscar..."
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-teal-500/30"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/30"
                 />
               </div>
               <button

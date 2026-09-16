@@ -50,7 +50,6 @@ export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
   const isAereo = setor === 'farma_aereo';
   const setorNome = isAereo ? 'Farma Aéreo' : 'Farma Rodoviário';
   const SetorIcon = isAereo ? Plane : Truck;
-  const themeColor = isAereo ? 'sky' : 'emerald';
 
   // Filter clients that belong to this sector
   const linkedClientes = useMemo(() => {
@@ -96,9 +95,7 @@ export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              isAereo ? 'bg-sky-50 text-sky-600' : 'bg-emerald-50 text-emerald-600'
-            }`}
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-50 text-[#B38F4F]"
           >
             <Building2 className="w-5 h-5" />
           </div>
@@ -108,11 +105,7 @@ export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
                 Empresas Atendidas no {setorNome}
               </h2>
               <span
-                className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  isAereo
-                    ? 'bg-sky-100 text-sky-800'
-                    : 'bg-emerald-100 text-emerald-800'
-                }`}
+                className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#8A6A39]"
               >
                 {linkedClientes.length} empresas vinculadas
               </span>
@@ -127,11 +120,7 @@ export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
           {onOpenLinkModal && (
             <button
               onClick={onOpenLinkModal}
-              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs ${
-                isAereo
-                  ? 'bg-sky-600 hover:bg-sky-700 text-white'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              }`}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs bg-[#B38F4F] hover:bg-[#8A6A39] text-white"
             >
               <Link2 className="w-3.5 h-3.5" />
               <span>Gerenciar Vínculos ({allClientes.length})</span>
@@ -159,7 +148,7 @@ export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por Razão Social, Fantasia, CNPJ..."
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-sky-500 focus:bg-white"
+            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] focus:bg-white"
           />
         </div>
 
@@ -170,7 +159,7 @@ export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
           <select
             value={segmentoFilter}
             onChange={(e) => setSegmentoFilter(e.target.value)}
-            className="w-full md:w-auto px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-sky-500 focus:bg-white"
+            className="w-full md:w-auto px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] focus:bg-white"
           >
             <option value="todos">Todos os Segmentos</option>
             <option value="Indústria Farmacêutica">Indústria Farmacêutica</option>
@@ -187,9 +176,7 @@ export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
       {displayedClientes.length === 0 ? (
         <div className="bg-white rounded-xl p-10 border border-slate-200 text-center space-y-3">
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto ${
-              isAereo ? 'bg-sky-50 text-sky-500' : 'bg-emerald-50 text-emerald-500'
-            }`}
+            className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto bg-amber-50 text-[#B38F4F]"
           >
             <Building2 className="w-6 h-6" />
           </div>
@@ -204,9 +191,7 @@ export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
           {onOpenLinkModal && (
             <button
               onClick={onOpenLinkModal}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all ${
-                isAereo ? 'bg-sky-600 hover:bg-sky-700' : 'bg-emerald-600 hover:bg-emerald-700'
-              }`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all bg-[#B38F4F] hover:bg-[#8A6A39]"
             >
               <Link2 className="w-4 h-4" />
               <span>Vincular Empresas ao {setorNome}</span>
@@ -226,11 +211,7 @@ export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
-                        isAereo
-                          ? 'bg-sky-100 text-sky-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}
+                      className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 bg-amber-100 text-[#8A6A39]"
                     >
                       {cliente.nomeFantasia.substring(0, 2).toUpperCase()}
                     </div>

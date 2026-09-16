@@ -533,7 +533,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                       onClick={() => setRole(r)}
                       className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all capitalize ${
                         role === r
-                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
+                          ? 'bg-[#B38F4F] border-[#B38F4F] text-white shadow-xs'
                           : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                       }`}
                     >

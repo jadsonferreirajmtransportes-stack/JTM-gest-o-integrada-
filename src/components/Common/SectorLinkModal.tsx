@@ -53,7 +53,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
   const isAereo = setor === 'farma_aereo';
   const setorNome = isAereo ? 'Farma Aéreo (AWB / RDC 430)' : 'Farma Rodoviário (Frota / MDF-e)';
   const SetorIcon = isAereo ? Plane : Truck;
-  const themeBg = isAereo ? 'from-sky-700 to-blue-800' : 'from-emerald-700 to-teal-800';
+  const themeBg = 'from-[#B38F4F] to-[#5c4526]';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
@@ -94,7 +94,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                   ? 'Buscar por Razão Social, Nome Fantasia ou CNPJ...'
                   : 'Buscar por Nome, Matrícula, Cargo ou CPF...'
               }
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] focus:border-[#B38F4F]"
             />
           </div>
           {mode === 'clientes' && onOpenNovoCliente && (
@@ -148,9 +148,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                       key={cliente.id}
                       className={`pt-2.5 first:pt-0 flex items-center justify-between p-3 rounded-xl border transition-all ${
                         isLinked
-                          ? isAereo
-                            ? 'bg-sky-50/60 border-sky-200'
-                            : 'bg-emerald-50/60 border-emerald-200'
+                          ? 'bg-amber-50/60 border-amber-200'
                           : 'bg-white border-slate-200 hover:border-slate-300'
                       }`}
                     >
@@ -158,9 +156,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                         <div
                           className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                             isLinked
-                              ? isAereo
-                                ? 'bg-sky-600 text-white shadow-xs'
-                                : 'bg-emerald-600 text-white shadow-xs'
+                              ? 'bg-[#B38F4F] text-white shadow-xs'
                               : 'bg-slate-100 text-slate-500'
                           }`}
                         >
@@ -175,13 +171,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                               {cliente.codigoCliente}
                             </span>
                             {isLinked && (
-                              <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                  isAereo
-                                    ? 'bg-sky-100 text-sky-800'
-                                    : 'bg-emerald-100 text-emerald-800'
-                                }`}
-                              >
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#8A6A39]">
                                 Vinculada ao {isAereo ? 'Aéreo' : 'Rodoviário'}
                               </span>
                             )}
@@ -197,9 +187,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
                           isLinked
                             ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                            : isAereo
-                            ? 'bg-sky-600 hover:bg-sky-700 text-white shadow-xs'
-                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                            : 'bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs'
                         }`}
                       >
                         {isLinked ? (
@@ -242,9 +230,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                       key={colab.id}
                       className={`pt-2.5 first:pt-0 flex items-center justify-between p-3 rounded-xl border transition-all ${
                         isLinked
-                          ? isAereo
-                            ? 'bg-sky-50/60 border-sky-200'
-                            : 'bg-emerald-50/60 border-emerald-200'
+                          ? 'bg-amber-50/60 border-amber-200'
                           : 'bg-white border-slate-200 hover:border-slate-300'
                       }`}
                     >
@@ -252,9 +238,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                         <div
                           className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                             isLinked
-                              ? isAereo
-                                ? 'bg-sky-600 text-white shadow-xs'
-                                : 'bg-emerald-600 text-white shadow-xs'
+                              ? 'bg-[#B38F4F] text-white shadow-xs'
                               : 'bg-slate-100 text-slate-500'
                           }`}
                         >
@@ -269,13 +253,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                               {colab.codigoMatricula}
                             </span>
                             {isLinked && (
-                              <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                  isAereo
-                                    ? 'bg-sky-100 text-sky-800'
-                                    : 'bg-emerald-100 text-emerald-800'
-                                }`}
-                              >
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#8A6A39]">
                                 Alocado ao {isAereo ? 'Aéreo' : 'Rodoviário'}
                               </span>
                             )}
@@ -291,9 +269,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
                           isLinked
                             ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                            : isAereo
-                            ? 'bg-sky-600 hover:bg-sky-700 text-white shadow-xs'
-                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                            : 'bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs'
                         }`}
                       >
                         {isLinked ? (
