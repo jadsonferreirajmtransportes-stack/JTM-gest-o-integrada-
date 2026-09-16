@@ -574,6 +574,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                   </label>
                   <input
                     type="text"
+                    data-no-uppercase="true"
                     value={linkLocalizacao}
                     onChange={(e) => setLinkLocalizacao(e.target.value)}
                     placeholder="https://maps.google.com/..."
@@ -586,6 +587,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                 <label className="block text-[11px] text-slate-500 mb-1">Link da Videoconferência</label>
                 <input
                   type="text"
+                  data-no-uppercase="true"
                   value={localOuLink}
                   onChange={(e) => setLocalOuLink(e.target.value)}
                   placeholder="Ex: https://meet.google.com/xxx-xxxx-xxx"
