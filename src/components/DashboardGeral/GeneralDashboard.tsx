@@ -62,6 +62,7 @@ import {
   isColaboradorFarmaRodoviario,
 } from '../../utils/sectorUtils';
 import { StrategicGuidelinesBanner } from '../Common/StrategicGuidelinesBanner';
+import { STRATEGIC_GUIDELINES } from '../../data/strategicGuidelines';
 import { atividadeOcorreEm } from '../Agenda/agendaUtils';
 
 interface GeneralDashboardProps {
@@ -466,7 +467,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                 Dashboard Geral — Jobson de Moraes Transportes
               </h1>
               <p className="text-sm text-slate-500 max-w-3xl font-normal leading-relaxed mt-1">
-                Levar saúde com segurança, do remetente ao destino final. Gestão executiva por indicadores, conformidade regulatória ANVISA RDC 430/BPAD e governança unificada dos 5 módulos integrados da JMT.
+                {STRATEGIC_GUIDELINES.sloganCurto}
               </p>
             </div>
 
