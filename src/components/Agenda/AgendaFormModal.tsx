@@ -32,6 +32,7 @@ import {
   UsuarioLogin,
 } from '../../types';
 import { CATEGORIA_CONFIG, getTipoLocalEfetivo } from './agendaUtils';
+import { ImageViewerModal } from '../Common/ImageViewerModal';
 
 interface AgendaFormModalProps {
   isOpen: boolean;
@@ -79,6 +80,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
   const todayStr = new Date().toISOString().split('T')[0];
   const defaultDate = selectedDate || todayStr;
 
+  const [anexoVisualizando, setAnexoVisualizando] = useState<{ url: string; nome: string } | null>(null);
   const [titulo, setTitulo] = useState(initialData?.titulo || '');
   const [descricao, setDescricao] = useState(initialData?.descricao || '');
   const [categoria, setCategoria] = useState<CategoriaAtividadeGestao>(
@@ -278,6 +280,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
   if (!isOpen) return null;
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl my-6 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150">
         {/* Modal Header */}
@@ -793,15 +796,14 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <a
-                        href={anexo.arquivoUrl}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => setAnexoVisualizando({ url: anexo.arquivoUrl, nome: anexo.nome })}
                         className="p-1 text-slate-400 hover:text-[#8A6A39] transition-colors"
                         title="Visualizar anexo"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+                      </button>
                       <a
                         href={anexo.arquivoUrl}
                         download={anexo.nome}
@@ -850,5 +852,13 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
         </form>
       </div>
     </div>
+    <ImageViewerModal
+      isOpen={!!anexoVisualizando}
+      onClose={() => setAnexoVisualizando(null)}
+      imageUrl={anexoVisualizando?.url}
+      fileName={anexoVisualizando?.nome}
+      title="Visualização de Anexo"
+    />
+    </>
   );
 };
