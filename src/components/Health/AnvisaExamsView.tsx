@@ -128,15 +128,24 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     [ativos]
   );
 
+  // Vencimento padrão = data do exame + 12 meses (periódico padrão) — recalculado sempre que
+  // a data do exame muda, pra acompanhar quando o exame é agendado pra uma data futura.
+  const calcularVencimentoPadrao = (dataExame: string): string => {
+    const venc = new Date(`${dataExame}T00:00:00`);
+    venc.setFullYear(venc.getFullYear() + 1);
+    return venc.toISOString().slice(0, 10);
+  };
+
+  const handleChangeDataExame = (novaData: string) => {
+    setDataUltimoExame(novaData);
+    if (novaData) setDataVencimento(calcularVencimentoPadrao(novaData));
+  };
+
   const handleOpenRenew = (colab: Colaborador) => {
     setSelectedColab(colab);
     const today = new Date().toISOString().slice(0, 10);
     setDataUltimoExame(today);
-
-    // Default +1 year for standard periodic
-    const nextYear = new Date();
-    nextYear.setFullYear(nextYear.getFullYear() + 1);
-    setDataVencimento(nextYear.toISOString().slice(0, 10));
+    setDataVencimento(calcularVencimentoPadrao(today));
 
     setHoraExame(colab.horaUltimoExameOcupacional || '');
     setClinicaMedica(colab.clinicaMedica || 'MedSeg Medicina do Trabalho');
@@ -470,7 +479,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                       type="date"
                       required
                       value={dataUltimoExame}
-                      onChange={(e) => setDataUltimoExame(e.target.value)}
+                      onChange={(e) => handleChangeDataExame(e.target.value)}
                       className="flex-1 min-w-0 p-2 border border-slate-200 rounded-lg text-slate-800 font-bold"
                     />
                     <input
