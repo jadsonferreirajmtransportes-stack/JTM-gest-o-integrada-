@@ -350,6 +350,7 @@ export default function App() {
   const loadUsuarios = useCallback(async (): Promise<UsuarioLogin | null> => {
     try {
       let lista = await getUsuarios();
+      console.log('[debug-chat] getUsuarios() retornou', lista.length, 'usuário(s):', lista.map((u) => u.id));
       if (lista.length === 0) {
         // Primeira vez usando o Supabase pra isso — migra o que já existir neste navegador (ou
         // os dados de fábrica) uma única vez, pra não perder configuração já feita por aqui.
@@ -378,10 +379,12 @@ export default function App() {
       const { data: sessionData } = await supabase.auth.getSession();
       const authUserIdReal = sessionData.session?.user?.id;
       const emailReal = (sessionData.session?.user?.email || '').trim().toLowerCase();
+      console.log('[debug-chat] sessão Supabase Auth:', { authUserIdReal, emailReal });
       const usuarioReal = authUserIdReal
         ? lista.find((u) => u.authUserId === authUserIdReal) ||
           (emailReal ? lista.find((u) => (u.email || '').trim().toLowerCase() === emailReal) : undefined)
         : undefined;
+      console.log('[debug-chat] usuarioReal encontrado:', usuarioReal);
       setUsuarioAutenticadoReal(usuarioReal);
 
       let usuarioEscolhido: UsuarioLogin | null = null;
@@ -393,11 +396,12 @@ export default function App() {
           // ignora
         }
         usuarioEscolhido = usuarioReal || lista.find((u) => u.id === (savedId || prev?.id)) || lista[0] || prev;
+        console.log('[debug-chat] usuarioEscolhido final:', usuarioEscolhido, '| savedId era:', savedId);
         return usuarioEscolhido;
       });
       return usuarioEscolhido;
     } catch (err) {
-      console.error('Erro ao carregar Logins & Acessos (Supabase):', err);
+      console.error('[debug-chat] loadUsuarios FALHOU (por isso o Chat não carrega):', err);
       showToast('Não foi possível carregar os logins do Supabase — usando os dados salvos neste navegador.', 'info');
       return null;
     }
@@ -406,15 +410,17 @@ export default function App() {
   // Chat Interno — carrega as conversas e as últimas leituras do usuário informado. Separado de
   // loadGestaoData porque é dado POR PESSOA (muda ao trocar de usuário), não global.
   const loadChatData = useCallback(async (usuarioId: string) => {
+    console.log('[debug-chat] loadChatData INICIOU com id:', usuarioId);
     try {
       const [conversas, leituras] = await Promise.all([
         getConversasDoUsuario(usuarioId),
         getUltimasLeituras(usuarioId),
       ]);
+      console.log('[debug-chat] loadChatData recebeu', conversas.length, 'conversa(s):', conversas);
       setConversasChat(conversas);
       setUltimasLeiturasChat(leituras);
     } catch (err) {
-      console.error('Erro ao carregar Chat Interno (Supabase):', err);
+      console.error('[debug-chat] loadChatData FALHOU:', err);
       showToast('Não foi possível carregar as conversas do Chat Interno.', 'info');
     }
   }, []);
@@ -970,9 +976,17 @@ export default function App() {
     Promise.all([loadDpData(), loadFarmaAereoData(), loadGestaoData(), loadUsuarios()]).then(
       ([, , , usuarioAtual]) => {
         setDadosIniciaisCarregados(true);
+        // TODO(debug-chat-vazio): log temporário pra descobrir por que loadChatData não
+        // dispara pra alguns logins — remover depois de confirmado o motivo.
+        console.log('[debug-chat] usuarioAtual resolvido:', usuarioAtual);
         // Só depois de saber quem é o usuário de verdade (loadUsuarios já resolveu o vínculo
         // salvo/local) — currentUser do state ainda não teria atualizado a tempo aqui.
-        if (usuarioAtual) loadChatData(usuarioAtual.id);
+        if (usuarioAtual) {
+          console.log('[debug-chat] chamando loadChatData com id:', usuarioAtual.id);
+          loadChatData(usuarioAtual.id);
+        } else {
+          console.log('[debug-chat] usuarioAtual veio nulo/falsy — loadChatData NÃO foi chamado.');
+        }
       }
     );
 
