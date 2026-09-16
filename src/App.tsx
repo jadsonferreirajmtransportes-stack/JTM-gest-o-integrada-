@@ -210,6 +210,7 @@ import {
   primeiraSecaoDpPermitida,
   filtrarColaboradoresDoSupervisor,
   filtrarClientesDoSupervisor,
+  temAcessoGeralDp,
 } from './utils/visibilidadeUtils';
 import { NotasView } from './components/Notas/NotasView';
 import { InstrucoesTrabalhoView } from './components/Instrucoes/InstrucoesTrabalhoView';
@@ -2623,6 +2624,7 @@ export default function App() {
               ocorrencias={ocorrencias}
               alertas={alertas}
               userRole={userRole}
+              temAcessoGeralDp={temAcessoGeralDp(currentUser)}
               onNavigate={setActiveSection}
               onSelectColaborador={(c) => setSelectedColaboradorDetail(c)}
               onOpenNovoColaborador={handleOpenNovoColaborador}
@@ -2721,6 +2723,7 @@ export default function App() {
               supervisores={supervisores}
               ocorrencias={ocorrenciasEquipeVisiveis}
               userRole={userRole}
+              temAcessoGeralDp={temAcessoGeralDp(currentUser)}
               onSaveOcorrencia={handleSaveOcorrencia}
               onOpenPublicFormModal={() => setIsPublicOccurrenceFormOpen(true)}
               onOpenOccurrenceLinkModal={() => setIsOccurrenceLinkModalOpen(true)}

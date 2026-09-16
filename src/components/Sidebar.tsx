@@ -35,7 +35,7 @@ import {
   Download,
 } from 'lucide-react';
 import { UserRole, GlobalModuleId, UsuarioLogin, SecaoDp } from '../types';
-import { podeVerSecaoDp, primeiraSecaoDpPermitida } from '../utils/visibilidadeUtils';
+import { podeVerSecaoDp, primeiraSecaoDpPermitida, temAcessoGeralDp } from '../utils/visibilidadeUtils';
 import { JmtLogo } from './Brand/JmtLogo';
 import { StrategicGuidelinesModal } from './Common/StrategicGuidelinesModal';
 
@@ -529,25 +529,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
             Links Digitais & Campo
           </div>
           <div className="space-y-1.5">
-            <button
-              id="nav-item-form-publico"
-              type="button"
-              onClick={() => {
-                onSelectSection('formulario_publico');
-                onCloseMobile();
-              }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left border ${
-                currentSection === 'formulario_publico'
-                  ? 'bg-amber-100 text-amber-800 border-amber-300'
-                  : 'bg-slate-50 text-slate-500 border-slate-200 hover:text-slate-900 hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <Share2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="truncate">Ocorrência em Campo</span>
-              </div>
-              <span className="text-[10px] text-amber-400 font-semibold">Abrir</span>
-            </button>
+            {/* Mesma restrição do botão "Formulário de Campo" dentro da tela de Ocorrências —
+                acesso GERAL ao DP, não pra quem só tem a seção de Ocorrências liberada. */}
+            {temAcessoGeralDp(currentUser) && (
+              <button
+                id="nav-item-form-publico"
+                type="button"
+                onClick={() => {
+                  onSelectSection('formulario_publico');
+                  onCloseMobile();
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left border ${
+                  currentSection === 'formulario_publico'
+                    ? 'bg-amber-100 text-amber-800 border-amber-300'
+                    : 'bg-slate-50 text-slate-500 border-slate-200 hover:text-slate-900 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Share2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="truncate">Ocorrência em Campo</span>
+                </div>
+                <span className="text-[10px] text-amber-400 font-semibold">Abrir</span>
+              </button>
+            )}
 
             <button
               id="nav-item-form-admissao"

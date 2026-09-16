@@ -29,6 +29,14 @@ export function podeVerSecaoDp(currentUser: UsuarioLogin | undefined, secao: Sec
   return currentUser.secoesDpPermitidas.includes(secao);
 }
 
+/** "Acesso geral" ao módulo DP — sem nenhuma seção específica marcada em secoesDpPermitidas
+ *  (undefined/vazio = acesso a todas). Usado pra recursos sensíveis de todo o setor (ex.: gerar
+ *  link público de ocorrência/admissão) que não fazem sentido pra quem só tem uma seção liberada
+ *  (ex.: um supervisor restrito a "Ocorrências"), mesmo já podendo ver aquela tela específica. */
+export function temAcessoGeralDp(currentUser: UsuarioLogin | undefined): boolean {
+  return !currentUser?.secoesDpPermitidas || currentUser.secoesDpPermitidas.length === 0;
+}
+
 // Mesma ordem usada no menu de DP (ver dpNavItems em Sidebar.tsx) — usada só pra achar a
 // primeira seção permitida, não precisa estar 100% igual visualmente.
 const ORDEM_SECOES_DP: SecaoDp[] = [

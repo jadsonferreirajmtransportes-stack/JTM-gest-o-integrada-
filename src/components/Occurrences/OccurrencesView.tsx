@@ -31,6 +31,11 @@ interface OccurrencesViewProps {
   supervisores: Supervisor[];
   ocorrencias: Ocorrencia[];
   userRole: UserRole;
+  /** Acesso GERAL ao módulo DP (sem restrição de seção — ver temAcessoGeralDp em
+   *  visibilidadeUtils.ts). Controla só os links de compartilhamento abaixo (Gerar Link/WhatsApp,
+   *  Formulário de Campo) — um supervisor restrito só a Ocorrências continua vendo e registrando
+   *  ocorrências normalmente, só não gera esses links públicos. */
+  temAcessoGeralDp: boolean;
   onSaveOcorrencia: (ocorrencia: Ocorrencia) => void;
   onOpenPublicFormModal: () => void;
   onOpenOccurrenceLinkModal?: () => void;
@@ -42,6 +47,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
   supervisores,
   ocorrencias,
   userRole,
+  temAcessoGeralDp,
   onSaveOcorrencia,
   onOpenPublicFormModal,
   onOpenOccurrenceLinkModal,
@@ -139,8 +145,9 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {/* Occurrence Link Generator & WhatsApp Sender */}
-          {onOpenOccurrenceLinkModal && (
+          {/* Links de compartilhamento (QR Code/WhatsApp, Formulário de Campo) — só pra quem tem
+              acesso GERAL ao DP, não pra quem só tem a seção de Ocorrências liberada. */}
+          {temAcessoGeralDp && onOpenOccurrenceLinkModal && (
             <button
               id="generate-occurrence-link-btn"
               type="button"
@@ -153,16 +160,17 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
             </button>
           )}
 
-            {/* Public Form Button (Portal or Modal) */}
-            <button
-              type="button"
-              onClick={onOpenPortalView || onOpenPublicFormModal}
-              className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
-              title="Abrir Formulário de Campo dos Supervisores (Regra 2.14)"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Formulário de Campo</span>
-            </button>
+            {temAcessoGeralDp && (
+              <button
+                type="button"
+                onClick={onOpenPortalView || onOpenPublicFormModal}
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                title="Abrir Formulário de Campo dos Supervisores (Regra 2.14)"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Formulário de Campo</span>
+              </button>
+            )}
 
             <button
               type="button"

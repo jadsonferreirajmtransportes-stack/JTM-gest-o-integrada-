@@ -46,6 +46,9 @@ interface DashboardProps {
   ocorrencias: Ocorrencia[];
   alertas: AlertaItem[];
   userRole: UserRole;
+  /** Acesso GERAL ao módulo DP — ver temAcessoGeralDp em visibilidadeUtils.ts. Controla só o
+   *  botão "Gerar Link de Formulário Público" abaixo, mesma restrição da tela de Ocorrências. */
+  temAcessoGeralDp: boolean;
   onNavigate: (section: NavSection) => void;
   onSelectColaborador: (c: Colaborador) => void;
   onOpenNovoColaborador: () => void;
@@ -59,6 +62,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   ocorrencias,
   alertas,
   userRole,
+  temAcessoGeralDp,
   onNavigate,
   onSelectColaborador,
   onOpenNovoColaborador,
@@ -614,14 +618,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => onNavigate('formulario_publico')}
-              className="w-full mt-5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-colors flex items-center justify-center gap-2"
-            >
-              <Share2 className="w-3.5 h-3.5 text-[#B38F4F]" />
-              <span>Gerar Link de Formulário Público</span>
-            </button>
+            {temAcessoGeralDp && (
+              <button
+                type="button"
+                onClick={() => onNavigate('formulario_publico')}
+                className="w-full mt-5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-colors flex items-center justify-center gap-2"
+              >
+                <Share2 className="w-3.5 h-3.5 text-[#B38F4F]" />
+                <span>Gerar Link de Formulário Público</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
