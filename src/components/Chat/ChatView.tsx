@@ -343,9 +343,14 @@ export const ChatView: React.FC<ChatViewProps> = ({
         </div>
         <div className="flex-1 overflow-y-auto">
           {conversasFiltradas.length === 0 && (
-            <p className="text-[11px] text-slate-400 text-center p-6">
-              Nenhuma conversa ainda. Clique em "Nova Conversa" pra começar.
-            </p>
+            <div className="text-center p-6">
+              <p className="text-[11px] text-slate-400">
+                Nenhuma conversa ainda. Clique em "Nova Conversa" pra começar.
+              </p>
+              {/* Linha técnica pra suporte — se alguém acha que já teve conversa e não aparece
+                  mais, esse ID é o que confirma se a conta logada é mesmo quem deveria. */}
+              <p className="text-[10px] text-slate-300 mt-2">ID da conta: {currentUserId}</p>
+            </div>
           )}
           {conversasFiltradas.map((c) => {
             const nome = nomeDaConversa(c, usuarios, currentUserId);
