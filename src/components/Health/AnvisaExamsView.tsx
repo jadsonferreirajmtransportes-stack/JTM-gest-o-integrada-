@@ -17,6 +17,9 @@ import {
   Eye,
   Image as ImageIcon,
   Paperclip,
+  MessageCircle,
+  Mail,
+  Copy,
 } from 'lucide-react';
 import { Colaborador, Empregador, StatusExame } from '../../types';
 import {
@@ -28,6 +31,12 @@ import {
 import { exportExamesReport } from '../../utils/exportUtils';
 import { AsoImageUploader } from '../Common/AsoImageUploader';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
+import { buildWhatsAppLink, buildMailtoLink } from '../../utils/birthdayUtils';
+import {
+  buildMensagemAgendamentoAso,
+  buildAssuntoEmailAgendamentoAso,
+  buildCorpoEmailAgendamentoAso,
+} from '../../utils/asoComunicacaoUtils';
 
 interface AnvisaExamsViewProps {
   colaboradores: Colaborador[];
@@ -68,6 +77,9 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
 
   // Lightbox
   const [viewingAso, setViewingAso] = useState<{ url: string; name: string; colabName: string } | null>(null);
+
+  // Comunicar agendamento do exame (WhatsApp/e-mail) — mesmo padrão já usado em Férias.
+  const [agendamentoCopiado, setAgendamentoCopiado] = useState(false);
 
   const ativos = useMemo(
     () => colaboradores.filter((c) => c.status !== 'Inativo'),
@@ -145,6 +157,39 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
       asoResultado
     );
     setIsModalOpen(false);
+  };
+
+  const handleEnviarWhatsAppAgendamento = () => {
+    if (!selectedColab?.telefoneWhatsapp || !dataUltimoExame) return;
+    const url = buildWhatsAppLink(
+      selectedColab.telefoneWhatsapp,
+      buildMensagemAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica)
+    );
+    if (url) window.open(url, '_blank');
+  };
+
+  const handleEnviarEmailAgendamento = () => {
+    if (!selectedColab?.email || !dataUltimoExame) return;
+    const url = buildMailtoLink(
+      selectedColab.email,
+      buildAssuntoEmailAgendamentoAso(),
+      buildCorpoEmailAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica)
+    );
+    // mailto: precisa ir por window.location.href (não window.open) — mesmo padrão do resto do app.
+    if (url) window.location.href = url;
+  };
+
+  const handleCopiarMensagemAgendamento = async () => {
+    if (!selectedColab || !dataUltimoExame) return;
+    try {
+      await navigator.clipboard.writeText(
+        buildMensagemAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica)
+      );
+      setAgendamentoCopiado(true);
+      setTimeout(() => setAgendamentoCopiado(false), 2000);
+    } catch {
+      // Clipboard indisponível — sem tratamento adicional, WhatsApp/E-mail continuam funcionando.
+    }
   };
 
   return (
@@ -476,6 +521,63 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                   className="w-full p-2 border border-slate-200 rounded-lg"
                   placeholder="Nome da clínica conveniada"
                 />
+              </div>
+
+              {/* Comunicar agendamento ao colaborador */}
+              <div className="p-3 bg-amber-50/60 border border-amber-200 rounded-xl space-y-2">
+                <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                  <MessageCircle className="w-3.5 h-3.5 text-[#8A6A39]" />
+                  Comunicar Agendamento ao Colaborador
+                </span>
+                <p className="text-[11px] text-slate-500">
+                  Avisa {selectedColab.nomeCompleto.split(' ')[0]} sobre a data e a clínica do exame agendado.
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleEnviarWhatsAppAgendamento}
+                    disabled={!selectedColab.telefoneWhatsapp || !dataUltimoExame}
+                    className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 disabled:text-slate-300 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    title={
+                      selectedColab.telefoneWhatsapp
+                        ? `Enviar por WhatsApp para ${selectedColab.nomeCompleto}`
+                        : 'Colaborador sem WhatsApp cadastrado'
+                    }
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>WhatsApp</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleEnviarEmailAgendamento}
+                    disabled={!selectedColab.email || !dataUltimoExame}
+                    className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-blue-700 hover:bg-blue-50 disabled:text-slate-300 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    title={
+                      selectedColab.email
+                        ? `Enviar por e-mail para ${selectedColab.nomeCompleto}`
+                        : 'Colaborador sem e-mail cadastrado'
+                    }
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>E-mail</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopiarMensagemAgendamento}
+                    disabled={!dataUltimoExame}
+                    className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 hover:bg-slate-50 disabled:text-slate-300 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    title="Copiar mensagem (para colar em outro app)"
+                  >
+                    {agendamentoCopiado ? (
+                      <span className="text-emerald-600">Copiado!</span>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copiar</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* ASO Image / PDF Uploader */}
