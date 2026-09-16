@@ -234,6 +234,7 @@ import { supabase } from './utils/supabaseClient';
 
 // Module: Chat Interno (conversas diretas e em grupo entre Logins & Acessos)
 import { ChatView } from './components/Chat/ChatView';
+import { FloatingChatWidget } from './components/Chat/FloatingChatWidget';
 import {
   getConversasDoUsuario,
   getUltimasLeituras,
@@ -2985,6 +2986,24 @@ export default function App() {
           setActiveSection('projetos');
         }}
       />
+
+      {/* 11. Chat flutuante — visível em qualquer tela do sistema, pra responder uma conversa
+          sem precisar sair do que está fazendo. Escondido só quando já está dentro do módulo
+          Chat Interno (a tela cheia já cobre o mesmo propósito ali). */}
+      {currentUser && activeGlobalModule !== 'chat' && activeSection !== 'chat' && (
+        <FloatingChatWidget
+          usuarios={users}
+          currentUserId={currentUser.id}
+          conversas={conversasChat}
+          ultimasLeituras={ultimasLeiturasChat}
+          onAbrirConversa={handleAbrirConversaChat}
+          onEnviarMensagem={handleEnviarMensagemChat}
+          onAbrirTelaCheia={() => {
+            setActiveGlobalModule('chat');
+            setActiveSection('chat');
+          }}
+        />
+      )}
     </div>
   );
 }
