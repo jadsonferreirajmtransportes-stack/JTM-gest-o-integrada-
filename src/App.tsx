@@ -36,6 +36,7 @@ import {
   SupervisorPublico,
   ColaboradorPublico,
   EmpregadorPublico,
+  AnexoColaborador,
 } from './types';
 import {
   getStoredGlobalModule,
@@ -1840,7 +1841,8 @@ export default function App() {
     asoMedicoEmitente?: string,
     asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições',
     clinicaLocalizacaoLink?: string,
-    horaExame?: string
+    horaExame?: string,
+    anexoAsoAntigoParaArquivar?: AnexoColaborador
   ) => {
     await renovarExameASO(
       colaboradorId,
@@ -1852,7 +1854,8 @@ export default function App() {
       asoMedicoEmitente,
       asoResultado,
       clinicaLocalizacaoLink,
-      horaExame
+      horaExame,
+      anexoAsoAntigoParaArquivar
     );
     await loadDpData();
     showToast('Exame ASO RDC 430 renovado com sucesso!');

@@ -21,7 +21,7 @@ import {
   Mail,
   Copy,
 } from 'lucide-react';
-import { Colaborador, Empregador, StatusExame } from '../../types';
+import { Colaborador, Empregador, StatusExame, AnexoColaborador } from '../../types';
 import {
   formatDate,
   calcExamStatus,
@@ -51,7 +51,8 @@ interface AnvisaExamsViewProps {
     asoMedicoEmitente?: string,
     asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições',
     clinicaLocalizacaoLink?: string,
-    horaExame?: string
+    horaExame?: string,
+    anexoAsoAntigoParaArquivar?: AnexoColaborador
   ) => void;
 }
 
@@ -78,6 +79,9 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
   const [asoNomeArquivo, setAsoNomeArquivo] = useState<string | undefined>(undefined);
   const [asoMedicoEmitente, setAsoMedicoEmitente] = useState('');
   const [asoResultado, setAsoResultado] = useState<'Apto' | 'Inapto' | 'Apto com Restrições'>('Apto');
+  // Comprovante anterior, guardado aqui quando o usuário clica em "Substituir" — vai pro
+  // Dossiê de Anexos do colaborador ao salvar, em vez de ser simplesmente perdido.
+  const [asoAntigoParaArquivar, setAsoAntigoParaArquivar] = useState<AnexoColaborador | undefined>(undefined);
 
   // Lightbox
   const [viewingAso, setViewingAso] = useState<{ url: string; name: string; colabName: string } | null>(null);
@@ -154,7 +158,30 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     setAsoNomeArquivo(colab.asoNomeArquivo);
     setAsoMedicoEmitente(colab.asoMedicoEmitente || '');
     setAsoResultado(colab.asoResultado || 'Apto');
+    setAsoAntigoParaArquivar(undefined);
     setIsModalOpen(true);
+  };
+
+  // Ao trocar o comprovante do ASO (botão "Substituir"), o arquivo que estava anexado até
+  // agora vira um item do Dossiê de Anexos do colaborador — com "categoria" e "descrição"
+  // marcando que é um ASO substituído, pra manter o histórico em vez de perder o arquivo.
+  const handleChangeAsoImagem = (novaUrl: string, novoNome: string) => {
+    if (asoImagemUrl && asoNomeArquivo) {
+      const tamanhoMB = asoImagemUrl.length / (1024 * 1024);
+      const mimeMatch = asoImagemUrl.match(/^data:([^;]+);/);
+      setAsoAntigoParaArquivar({
+        id: `anexo-${Date.now()}`,
+        nome: asoNomeArquivo,
+        categoria: 'Laudo / Exame',
+        dataUpload: new Date().toISOString().slice(0, 10),
+        tamanho: tamanhoMB > 1 ? `${tamanhoMB.toFixed(1)} MB` : `${Math.round(asoImagemUrl.length / 1024)} KB`,
+        tipo: mimeMatch?.[1] || 'application/octet-stream',
+        arquivoUrl: asoImagemUrl,
+        descricao: 'ASO substituído por um comprovante mais recente.',
+      });
+    }
+    setAsoImagemUrl(novaUrl);
+    setAsoNomeArquivo(novoNome);
   };
 
   const handleSaveRenew = (e: React.FormEvent) => {
@@ -171,7 +198,8 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
       asoMedicoEmitente,
       asoResultado,
       clinicaLocalizacaoLink.trim() || undefined,
-      horaExame.trim() || undefined
+      horaExame.trim() || undefined,
+      asoAntigoParaArquivar
     );
     setIsModalOpen(false);
   };
@@ -626,9 +654,10 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                 <AsoImageUploader
                   asoImagemUrl={asoImagemUrl}
                   asoNomeArquivo={asoNomeArquivo}
-                  onImageChange={(url, name) => {
-                    setAsoImagemUrl(url);
-                    setAsoNomeArquivo(name);
+                  onImageChange={handleChangeAsoImagem}
+                  onImageRemove={() => {
+                    setAsoImagemUrl(undefined);
+                    setAsoNomeArquivo(undefined);
                   }}
                   tamanhoOutrosCamposMB={
                     ((selectedColab.documentos || []).reduce((soma, d) => soma + (d.arquivoUrl?.length || 0), 0) +
@@ -636,6 +665,12 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                     (1024 * 1024)
                   }
                 />
+                {asoImagemUrl && (
+                  <p className="text-[10px] text-slate-400 mt-1.5 px-0.5">
+                    Ao clicar em "Substituir", o comprovante atual é guardado automaticamente no
+                    Dossiê de Anexos do colaborador (categoria "Laudo / Exame").
+                  </p>
+                )}
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">

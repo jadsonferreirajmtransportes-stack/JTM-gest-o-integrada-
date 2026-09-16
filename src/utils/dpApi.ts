@@ -36,6 +36,7 @@ import {
   SupervisorPublico,
   ColaboradorPublico,
   EmpregadorPublico,
+  AnexoColaborador,
 } from '../types';
 
 /** '' e undefined viram null — colunas de data/numéricas do Postgres rejeitam string vazia. */
@@ -739,7 +740,8 @@ export async function renovarExameASO(
   asoMedicoEmitente?: string,
   asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições',
   clinicaLocalizacaoLink?: string,
-  horaExame?: string
+  horaExame?: string,
+  anexoAsoAntigoParaArquivar?: AnexoColaborador
 ): Promise<void> {
   const patch: Record<string, any> = {
     data_ultimo_exame_ocupacional: dataUltimoExame,
@@ -753,6 +755,21 @@ export async function renovarExameASO(
   if (asoNomeArquivo !== undefined) patch.aso_nome_arquivo = asoNomeArquivo;
   if (asoMedicoEmitente !== undefined) patch.aso_medico_emitente = asoMedicoEmitente;
   if (asoResultado !== undefined) patch.aso_resultado = asoResultado;
+
+  // Ao substituir o comprovante do ASO, o antigo vai pro Dossiê de Anexos do colaborador em
+  // vez de simplesmente ser perdido — lê a lista atual e regrava com o item novo na frente
+  // (mesmo padrão de leitura-antes-de-regravar já usado em updateOnboardingItem).
+  if (anexoAsoAntigoParaArquivar) {
+    const { data, error: getError } = await supabase
+      .from('colaboradores')
+      .select('anexos')
+      .eq('id', colaboradorId)
+      .single();
+    assertNoError(getError, 'renovarExameASO (leitura anexos)');
+    const anexosAtuais: AnexoColaborador[] = Array.isArray(data?.anexos) ? data.anexos : [];
+    patch.anexos = [anexoAsoAntigoParaArquivar, ...anexosAtuais];
+  }
+
   const { error } = await supabase.from('colaboradores').update(patch).eq('id', colaboradorId);
   assertNoError(error, 'renovarExameASO');
 }
