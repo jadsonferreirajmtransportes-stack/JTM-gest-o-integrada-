@@ -8,12 +8,17 @@ function primeiroNomeDe(nomeCompleto?: string): string {
   return nome.split(' ')[0] || nome;
 }
 
+function dataHoraTexto(dataExame: string, horaExame?: string): string {
+  return horaExame ? `${formatDate(dataExame)} às ${horaExame}` : formatDate(dataExame);
+}
+
 /** Mensagem no formato WhatsApp (com *negrito* e emojis). */
 export function buildMensagemAgendamentoAso(
   colaboradorNome: string,
   dataExame: string,
   clinica?: string,
-  linkLocalizacao?: string
+  linkLocalizacao?: string,
+  horaExame?: string
 ): string {
   const primeiroNome = primeiroNomeDe(colaboradorNome);
   const clinicaTexto = clinica ? `\n🏥 Clínica: ${clinica}` : '';
@@ -22,7 +27,7 @@ export function buildMensagemAgendamentoAso(
 
 Olá, ${primeiroNome}! Seu exame periódico foi agendado:
 
-📅 Data: ${formatDate(dataExame)}${clinicaTexto}${linkTexto}
+📅 Data: ${dataHoraTexto(dataExame, horaExame)}${clinicaTexto}${linkTexto}
 
 Leve um documento com foto. Qualquer dúvida, fale com o Departamento Pessoal.
 
@@ -38,7 +43,8 @@ export function buildCorpoEmailAgendamentoAso(
   colaboradorNome: string,
   dataExame: string,
   clinica?: string,
-  linkLocalizacao?: string
+  linkLocalizacao?: string,
+  horaExame?: string
 ): string {
   const primeiroNome = primeiroNomeDe(colaboradorNome);
   const clinicaTexto = clinica ? `\nClínica: ${clinica}` : '';
@@ -47,7 +53,7 @@ export function buildCorpoEmailAgendamentoAso(
 
 Seu exame periódico foi agendado:
 
-Data: ${formatDate(dataExame)}${clinicaTexto}${linkTexto}
+Data: ${dataHoraTexto(dataExame, horaExame)}${clinicaTexto}${linkTexto}
 
 Leve um documento com foto. Qualquer dúvida, fale com o Departamento Pessoal.
 

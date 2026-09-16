@@ -50,7 +50,8 @@ interface AnvisaExamsViewProps {
     asoNomeArquivo?: string,
     asoMedicoEmitente?: string,
     asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições',
-    clinicaLocalizacaoLink?: string
+    clinicaLocalizacaoLink?: string,
+    horaExame?: string
   ) => void;
 }
 
@@ -70,6 +71,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     new Date().toISOString().slice(0, 10)
   );
   const [dataVencimento, setDataVencimento] = useState('');
+  const [horaExame, setHoraExame] = useState('');
   const [clinicaMedica, setClinicaMedica] = useState('MedSeg Medicina do Trabalho');
   const [clinicaLocalizacaoLink, setClinicaLocalizacaoLink] = useState('');
   const [asoImagemUrl, setAsoImagemUrl] = useState<string | undefined>(undefined);
@@ -136,6 +138,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     nextYear.setFullYear(nextYear.getFullYear() + 1);
     setDataVencimento(nextYear.toISOString().slice(0, 10));
 
+    setHoraExame(colab.horaUltimoExameOcupacional || '');
     setClinicaMedica(colab.clinicaMedica || 'MedSeg Medicina do Trabalho');
     setClinicaLocalizacaoLink(colab.clinicaLocalizacaoLink || '');
     setAsoImagemUrl(colab.asoImagemUrl);
@@ -158,7 +161,8 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
       asoNomeArquivo,
       asoMedicoEmitente,
       asoResultado,
-      clinicaLocalizacaoLink.trim() || undefined
+      clinicaLocalizacaoLink.trim() || undefined,
+      horaExame.trim() || undefined
     );
     setIsModalOpen(false);
   };
@@ -167,7 +171,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     if (!selectedColab?.telefoneWhatsapp || !dataUltimoExame) return;
     const url = buildWhatsAppLink(
       selectedColab.telefoneWhatsapp,
-      buildMensagemAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica, clinicaLocalizacaoLink)
+      buildMensagemAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica, clinicaLocalizacaoLink, horaExame)
     );
     if (url) window.open(url, '_blank');
   };
@@ -177,7 +181,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     const url = buildMailtoLink(
       selectedColab.email,
       buildAssuntoEmailAgendamentoAso(),
-      buildCorpoEmailAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica, clinicaLocalizacaoLink)
+      buildCorpoEmailAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica, clinicaLocalizacaoLink, horaExame)
     );
     // mailto: precisa ir por window.location.href (não window.open) — mesmo padrão do resto do app.
     if (url) window.location.href = url;
@@ -187,7 +191,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     if (!selectedColab || !dataUltimoExame) return;
     try {
       await navigator.clipboard.writeText(
-        buildMensagemAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica, clinicaLocalizacaoLink)
+        buildMensagemAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica, clinicaLocalizacaoLink, horaExame)
       );
       setAgendamentoCopiado(true);
       setTimeout(() => setAgendamentoCopiado(false), 2000);
@@ -461,13 +465,22 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                   <label className="font-semibold text-slate-700 block mb-1">
                     Data da Realização do Novo Exame *
                   </label>
-                  <input
-                    type="date"
-                    required
-                    value={dataUltimoExame}
-                    onChange={(e) => setDataUltimoExame(e.target.value)}
-                    className="w-full p-2 border border-slate-200 rounded-lg text-slate-800 font-bold"
-                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      required
+                      value={dataUltimoExame}
+                      onChange={(e) => setDataUltimoExame(e.target.value)}
+                      className="flex-1 min-w-0 p-2 border border-slate-200 rounded-lg text-slate-800 font-bold"
+                    />
+                    <input
+                      type="time"
+                      value={horaExame}
+                      onChange={(e) => setHoraExame(e.target.value)}
+                      title="Horário do exame — opcional"
+                      className="w-24 p-2 border border-slate-200 rounded-lg text-slate-800 font-bold"
+                    />
+                  </div>
                 </div>
 
                 <div>

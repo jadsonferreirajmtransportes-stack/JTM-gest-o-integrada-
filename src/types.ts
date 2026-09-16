@@ -385,6 +385,7 @@ export interface Colaborador {
   // 2.7 Saúde do Trabalhador (ANVISA / RDC 430)
   dataExameAdmissional?: string;
   dataUltimoExameOcupacional?: string;
+  horaUltimoExameOcupacional?: string;
   dataVencimentoExame?: string;
   dataExameDemissional?: string;
   clinicaMedica?: string;

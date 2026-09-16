@@ -1839,7 +1839,8 @@ export default function App() {
     asoNomeArquivo?: string,
     asoMedicoEmitente?: string,
     asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições',
-    clinicaLocalizacaoLink?: string
+    clinicaLocalizacaoLink?: string,
+    horaExame?: string
   ) => {
     await renovarExameASO(
       colaboradorId,
@@ -1850,7 +1851,8 @@ export default function App() {
       asoNomeArquivo,
       asoMedicoEmitente,
       asoResultado,
-      clinicaLocalizacaoLink
+      clinicaLocalizacaoLink,
+      horaExame
     );
     await loadDpData();
     showToast('Exame ASO RDC 430 renovado com sucesso!');
