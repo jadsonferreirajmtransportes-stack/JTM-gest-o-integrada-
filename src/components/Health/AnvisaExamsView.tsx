@@ -147,11 +147,20 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
 
   const handleOpenRenew = (colab: Colaborador) => {
     setSelectedColab(colab);
-    const today = new Date().toISOString().slice(0, 10);
-    setDataUltimoExame(today);
-    setDataVencimento(calcularVencimentoPadrao(today));
+    const hoje = new Date().toISOString().slice(0, 10);
+    // Se o último exame salvo ainda não aconteceu (agendado pra hoje ou pro futuro), mantém
+    // esse agendamento ao reabrir o modal — só reinicia pra "hoje" quando é mesmo uma renovação
+    // nova (o exame salvo por último já é passado).
+    const agendamentoPendente = !!colab.dataUltimoExameOcupacional && colab.dataUltimoExameOcupacional >= hoje;
+    const dataInicial = agendamentoPendente ? colab.dataUltimoExameOcupacional! : hoje;
+    setDataUltimoExame(dataInicial);
+    setDataVencimento(
+      agendamentoPendente && colab.dataVencimentoExame
+        ? colab.dataVencimentoExame
+        : calcularVencimentoPadrao(dataInicial)
+    );
 
-    setHoraExame(colab.horaUltimoExameOcupacional || '');
+    setHoraExame(agendamentoPendente ? colab.horaUltimoExameOcupacional || '' : '');
     setClinicaMedica(colab.clinicaMedica || 'MedSeg Medicina do Trabalho');
     setClinicaLocalizacaoLink(colab.clinicaLocalizacaoLink || '');
     setAsoImagemUrl(colab.asoImagemUrl);
