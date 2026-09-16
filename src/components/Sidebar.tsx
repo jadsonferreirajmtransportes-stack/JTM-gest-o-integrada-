@@ -596,7 +596,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onSelectSection('clientes');
                 onCloseMobile();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-xs"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs transition-colors"
             >
               <Building2 className="w-4 h-4" />
               Visualizar Todos os Clientes
@@ -621,7 +621,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onSelectSection('farma_aereo');
                 onCloseMobile();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs transition-colors"
             >
               <Plane className="w-4 h-4" />
               Abrir Painel Gerencial
@@ -692,7 +692,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onSelectSection('farma_rodoviario');
                 onCloseMobile();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs transition-colors"
             >
               <Truck className="w-4 h-4" />
               Abrir Painel Gerencial
@@ -764,7 +764,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onSelectSection('usuarios');
                 onCloseMobile();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs transition-colors"
             >
               <ShieldCheck className="w-4 h-4" />
               Gerenciar Logins & Permissões
@@ -803,7 +803,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onSelectSection('agenda_gestao');
                 onCloseMobile();
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs transition-colors"
             >
               <div className="flex items-center gap-2">
                 <CalendarDays className="w-4 h-4" />
@@ -835,7 +835,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onSelectSection('notas');
                 onCloseMobile();
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white shadow-xs transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs transition-colors"
             >
               <div className="flex items-center gap-2">
                 <NotebookPen className="w-4 h-4" />
@@ -900,7 +900,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onSelectSection('projetos');
                 onCloseMobile();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white shadow-xs hover:bg-purple-700 transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] text-white shadow-xs hover:bg-[#8A6A39] transition-colors"
             >
               <FolderKanban className="w-4 h-4" />
               Painel de Projetos & OKRs
