@@ -204,7 +204,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       short: 'Projetos & OKRs',
       icon: FolderKanban,
       badge: counts.projetosAtivos ?? 6,
-      color: 'from-purple-600 to-indigo-800',
+      color: 'from-purple-600 to-[#8A6A39]',
       activeBorder: 'border-purple-500',
     },
     {
@@ -214,8 +214,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       short: 'Governança & Comitês',
       icon: CalendarDays,
       badge: counts.atividadesHoje,
-      color: 'from-indigo-600 to-indigo-900',
-      activeBorder: 'border-indigo-500',
+      color: 'from-[#B38F4F] to-[#5c4526]',
+      activeBorder: 'border-[#B38F4F]',
     },
     {
       id: 'controladoria' as GlobalModuleId,
@@ -481,14 +481,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onSelectSection('agenda_gestao');
                 onCloseMobile();
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors text-left"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-[#8A6A39] border border-amber-200 transition-colors text-left"
             >
               <div className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-indigo-400" />
+                <CalendarDays className="w-4 h-4 text-amber-400" />
                 <span>Agenda da Gestão</span>
               </div>
               {counts.atividadesHoje && counts.atividadesHoje > 0 ? (
-                <span className="px-1.5 py-0.5 text-[10px] bg-indigo-500/30 text-indigo-200 rounded font-bold">
+                <span className="px-1.5 py-0.5 text-[10px] bg-[#B38F4F]/30 text-amber-200 rounded font-bold">
                   {counts.atividadesHoje} hoje
                 </span>
               ) : null}

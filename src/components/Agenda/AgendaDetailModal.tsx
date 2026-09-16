@@ -166,12 +166,12 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
             {/* Data & Hora */}
             <div className="space-y-1">
               <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                <Calendar className="w-3.5 h-3.5 text-[#B38F4F]" />
                 Data do Compromisso
               </span>
               <p className="text-xs font-bold text-slate-800 capitalize">{formattedDate}</p>
               {multiDia && (
-                <span className="inline-block px-2 py-0.5 text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold rounded-md">
+                <span className="inline-block px-2 py-0.5 text-[10px] bg-amber-50 text-[#8A6A39] border border-amber-200 font-bold rounded-md">
                   {getAtividadeDuracaoDias(atividade)} dias de duração
                 </span>
               )}
@@ -186,7 +186,7 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
             {/* Responsável */}
             <div className="space-y-1">
               <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-indigo-600" />
+                <Users className="w-3.5 h-3.5 text-[#B38F4F]" />
                 Responsável Principal
               </span>
               <p className="text-xs font-bold text-slate-800">{atividade.responsavel}</p>
@@ -199,9 +199,9 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
             <div className="sm:col-span-2 pt-2 border-t border-slate-200 space-y-1">
               <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5">
                 {isVideoconferencia ? (
-                  <Video className="w-3.5 h-3.5 text-indigo-600" />
+                  <Video className="w-3.5 h-3.5 text-[#B38F4F]" />
                 ) : (
-                  <MapPin className="w-3.5 h-3.5 text-indigo-600" />
+                  <MapPin className="w-3.5 h-3.5 text-[#B38F4F]" />
                 )}
                 {isVideoconferencia ? 'Videoconferência' : 'Local do Compromisso'}
               </span>
@@ -225,7 +225,7 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md text-[11px] font-medium text-indigo-700 flex items-center gap-1 transition-colors"
+                      className="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md text-[11px] font-medium text-[#8A6A39] flex items-center gap-1 transition-colors"
                     >
                       <ExternalLink className="w-3 h-3" />
                       <span>Entrar na Reunião</span>
@@ -236,7 +236,7 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
                       href={atividade.linkLocalizacao}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md text-[11px] font-medium text-indigo-700 flex items-center gap-1 transition-colors"
+                      className="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md text-[11px] font-medium text-[#8A6A39] flex items-center gap-1 transition-colors"
                     >
                       <Navigation className="w-3 h-3" />
                       <span>Ver no Mapa</span>
@@ -312,7 +312,7 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
           {atividade.pautaAta && (
             <div className="space-y-1.5">
               <span className="font-semibold text-slate-800 flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                <FileText className="w-3.5 h-3.5 text-[#B38F4F]" />
                 Pauta Prévia & Resumo de Ata
               </span>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 font-mono text-[11px] text-slate-700 whitespace-pre-wrap leading-relaxed">
@@ -325,7 +325,7 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
           <div className="space-y-2 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-slate-800 flex items-center gap-1.5">
-                <CheckSquare className="w-3.5 h-3.5 text-indigo-600" />
+                <CheckSquare className="w-3.5 h-3.5 text-[#B38F4F]" />
                 Deliberações e Ações Definidas ({deliberacoes.filter((d) => d.concluido).length}/
                 {deliberacoes.length})
               </span>
@@ -352,7 +352,7 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
                         type="checkbox"
                         checked={item.concluido}
                         onChange={() => handleToggleDeliberacao(item.id)}
-                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        className="rounded border-slate-300 text-[#B38F4F] focus:ring-[#B38F4F]"
                       />
                       <span
                         className={`truncate ${
@@ -381,7 +381,7 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
                 value={novoItem}
                 onChange={(e) => setNovoItem(e.target.value)}
                 placeholder="Adicionar nova deliberação..."
-                className="flex-1 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -394,12 +394,12 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
                 value={novoResp}
                 onChange={(e) => setNovoResp(e.target.value)}
                 placeholder="Responsável"
-                className="w-28 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-28 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
               />
               <button
                 type="button"
                 onClick={handleAddDeliberacao}
-                className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-medium text-xs transition-colors shrink-0"
+                className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-[#8A6A39] rounded-lg font-medium text-xs transition-colors shrink-0"
               >
                 + Ação
               </button>
@@ -410,7 +410,7 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
           {atividade.anexos && atividade.anexos.length > 0 && (
             <div className="space-y-1.5">
               <span className="font-semibold text-slate-800 flex items-center gap-1.5">
-                <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
+                <Paperclip className="w-3.5 h-3.5 text-[#B38F4F]" />
                 Documentos / Anexos ({atividade.anexos.length})
               </span>
               <div className="space-y-1.5">
@@ -419,10 +419,10 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
                     key={anexo.id}
                     href={anexo.arquivoUrl}
                     download={anexo.nome}
-                    className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700 hover:text-indigo-700 hover:border-indigo-300 transition-colors"
+                    className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700 hover:text-[#8A6A39] hover:border-amber-300 transition-colors"
                     title="Baixar anexo"
                   >
-                    <FileText className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    <FileText className="w-3.5 h-3.5 text-[#B38F4F] shrink-0" />
                     <span className="truncate font-medium flex-1">{anexo.nome}</span>
                     {anexo.tamanho && (
                       <span className="text-[10px] text-slate-400 font-mono shrink-0">{anexo.tamanho}</span>
@@ -456,7 +456,7 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
               className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors shadow-2xs"
               title="Baixar arquivo .ICS para Apple Calendar, Google Calendar, Outlook"
             >
-              <Download className="w-3.5 h-3.5 text-indigo-600" />
+              <Download className="w-3.5 h-3.5 text-[#B38F4F]" />
               <span>Exportar (.ics)</span>
             </button>
 

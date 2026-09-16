@@ -165,7 +165,7 @@ export const ProjetosKanbanTab: React.FC<ProjetosKanbanTabProps> = ({
         <button
           type="button"
           onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
-          className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
+          className="px-3.5 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>+ Nova Ação / Tarefa</span>
@@ -176,17 +176,17 @@ export const ProjetosKanbanTab: React.FC<ProjetosKanbanTabProps> = ({
       {isQuickAddOpen && (
         <form
           onSubmit={handleCreateQuickTask}
-          className="p-4 bg-purple-50/70 border border-purple-200 rounded-xl shadow-xs space-y-3 animate-in fade-in duration-150"
+          className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl shadow-xs space-y-3 animate-in fade-in duration-150"
         >
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
-              <Target className="w-4 h-4 text-purple-700" />
+            <h4 className="text-xs font-bold text-[#5c4526] flex items-center gap-1.5">
+              <Target className="w-4 h-4 text-[#8A6A39]" />
               Adicionar Nova Tarefa ao Quadro Kanban
             </h4>
             <button
               type="button"
               onClick={() => setIsQuickAddOpen(false)}
-              className="text-xs text-purple-700 hover:underline"
+              className="text-xs text-[#8A6A39] hover:underline"
             >
               Fechar
             </button>
@@ -196,7 +196,7 @@ export const ProjetosKanbanTab: React.FC<ProjetosKanbanTabProps> = ({
             <select
               value={targetProjectId}
               onChange={(e) => setTargetProjectId(e.target.value)}
-              className="sm:col-span-2 px-3 py-1.5 bg-white border border-purple-300 rounded-lg text-xs font-semibold text-slate-800"
+              className="sm:col-span-2 px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-semibold text-slate-800"
             >
               {projetos.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -211,7 +211,7 @@ export const ProjetosKanbanTab: React.FC<ProjetosKanbanTabProps> = ({
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               placeholder="O que precisa ser feito?"
-              className="sm:col-span-2 px-3 py-1.5 bg-white border border-purple-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+              className="sm:col-span-2 px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
             />
 
             <input
@@ -219,17 +219,17 @@ export const ProjetosKanbanTab: React.FC<ProjetosKanbanTabProps> = ({
               value={newTaskResp}
               onChange={(e) => setNewTaskResp(e.target.value)}
               placeholder="Responsável"
-              className="px-3 py-1.5 bg-white border border-purple-300 rounded-lg text-xs"
+              className="px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs"
             />
           </div>
 
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-3 text-xs">
-              <span className="font-semibold text-purple-900">Coluna Inicial:</span>
+              <span className="font-semibold text-[#5c4526]">Coluna Inicial:</span>
               <select
                 value={newTaskColumn}
                 onChange={(e) => setNewTaskColumn(e.target.value as ColunaKanban)}
-                className="px-2 py-1 bg-white border border-purple-300 rounded-md text-xs font-medium"
+                className="px-2 py-1 bg-white border border-amber-300 rounded-md text-xs font-medium"
               >
                 {COLUMNS.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -241,7 +241,7 @@ export const ProjetosKanbanTab: React.FC<ProjetosKanbanTabProps> = ({
 
             <button
               type="submit"
-              className="px-4 py-1.5 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs rounded-lg shadow-xs"
+              className="px-4 py-1.5 bg-[#8A6A39] hover:bg-[#8A6A39] text-white font-bold text-xs rounded-lg shadow-xs"
             >
               Confirmar e Inserir
             </button>
@@ -287,7 +287,7 @@ export const ProjetosKanbanTab: React.FC<ProjetosKanbanTabProps> = ({
                         <div className="flex items-center justify-between text-[10px]">
                           <span
                             onClick={() => onSelectProjeto(task.projetoObj)}
-                            className="font-mono font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                            className="font-mono font-bold text-[#8A6A39] bg-amber-50 hover:bg-amber-100 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
                           >
                             {task.projetoCodigo}
                           </span>
@@ -327,7 +327,7 @@ export const ProjetosKanbanTab: React.FC<ProjetosKanbanTabProps> = ({
                             <button
                               type="button"
                               onClick={() => handleMoveTask(task.id, task.projetoObj, prevCol)}
-                              className="text-slate-400 hover:text-purple-700 flex items-center gap-0.5 font-medium"
+                              className="text-slate-400 hover:text-[#8A6A39] flex items-center gap-0.5 font-medium"
                               title="Voltar etapa"
                             >
                               <ArrowLeft className="w-3 h-3" />
@@ -341,7 +341,7 @@ export const ProjetosKanbanTab: React.FC<ProjetosKanbanTabProps> = ({
                             <button
                               type="button"
                               onClick={() => handleMoveTask(task.id, task.projetoObj, nextCol)}
-                              className="text-purple-700 hover:text-purple-900 flex items-center gap-0.5 font-bold ml-auto"
+                              className="text-[#8A6A39] hover:text-[#5c4526] flex items-center gap-0.5 font-bold ml-auto"
                               title="Avançar etapa"
                             >
                               Avançar

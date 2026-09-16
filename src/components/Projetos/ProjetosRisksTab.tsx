@@ -120,7 +120,7 @@ export const ProjetosRisksTab: React.FC<ProjetosRisksTabProps> = ({
                     <button
                       type="button"
                       onClick={() => onSelectProjeto(risco.projetoObj)}
-                      className="font-mono font-bold text-purple-700 bg-white px-2 py-0.5 rounded border border-purple-200 hover:bg-purple-100 transition-colors"
+                      className="font-mono font-bold text-[#8A6A39] bg-white px-2 py-0.5 rounded border border-amber-200 hover:bg-amber-100 transition-colors"
                     >
                       {risco.projetoCodigo}
                     </button>

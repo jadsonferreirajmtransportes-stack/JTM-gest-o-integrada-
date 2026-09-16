@@ -196,7 +196,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-purple-700 border border-slate-200">
+                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-[#8A6A39] border border-slate-200">
                   {projeto.codigo}
                 </span>
                 <span className="text-xs text-slate-500">Progresso: <strong>{projeto.progressoPercentual}%</strong></span>
@@ -272,12 +272,12 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                 onClick={() => setTipoModelo('resumo_executivo')}
                 className={`p-2.5 rounded-xl border text-left transition-all ${
                   tipoModelo === 'resumo_executivo'
-                    ? 'border-purple-600 bg-purple-50/70 text-purple-900 ring-2 ring-purple-500/20'
+                    ? 'border-[#B38F4F] bg-amber-50/70 text-[#5c4526] ring-2 ring-[#B38F4F]/20'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
                 <div className="flex items-center gap-1.5 mb-1">
-                  <FolderKanban className="w-3.5 h-3.5 text-purple-600" />
+                  <FolderKanban className="w-3.5 h-3.5 text-[#B38F4F]" />
                   <span className="text-xs font-bold">Resumo Executivo</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-tight">
@@ -290,12 +290,12 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                 onClick={() => setTipoModelo('status_report')}
                 className={`p-2.5 rounded-xl border text-left transition-all ${
                   tipoModelo === 'status_report'
-                    ? 'border-purple-600 bg-purple-50/70 text-purple-900 ring-2 ring-purple-500/20'
+                    ? 'border-[#B38F4F] bg-amber-50/70 text-[#5c4526] ring-2 ring-[#B38F4F]/20'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
                 <div className="flex items-center gap-1.5 mb-1">
-                  <Target className="w-3.5 h-3.5 text-indigo-600" />
+                  <Target className="w-3.5 h-3.5 text-[#B38F4F]" />
                   <span className="text-xs font-bold">Status Report</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-tight">
@@ -308,7 +308,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                 onClick={() => setTipoModelo('marcos_prazos')}
                 className={`p-2.5 rounded-xl border text-left transition-all ${
                   tipoModelo === 'marcos_prazos'
-                    ? 'border-purple-600 bg-purple-50/70 text-purple-900 ring-2 ring-purple-500/20'
+                    ? 'border-[#B38F4F] bg-amber-50/70 text-[#5c4526] ring-2 ring-[#B38F4F]/20'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
@@ -326,7 +326,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                 onClick={() => setTipoModelo('orcamento_custos')}
                 className={`p-2.5 rounded-xl border text-left transition-all ${
                   tipoModelo === 'orcamento_custos'
-                    ? 'border-purple-600 bg-purple-50/70 text-purple-900 ring-2 ring-purple-500/20'
+                    ? 'border-[#B38F4F] bg-amber-50/70 text-[#5c4526] ring-2 ring-[#B38F4F]/20'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
@@ -356,7 +356,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleSelectAll(true)}
-                      className="text-purple-600 hover:underline font-semibold"
+                      className="text-[#B38F4F] hover:underline font-semibold"
                     >
                       Todos
                     </button>
@@ -380,7 +380,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                         key={p.id}
                         className={`p-2.5 rounded-xl border text-xs transition-all ${
                           p.selecionado
-                            ? 'bg-white border-purple-200 shadow-xs'
+                            ? 'bg-white border-amber-200 shadow-xs'
                             : 'bg-slate-100/70 border-slate-200 opacity-60'
                         }`}
                       >
@@ -390,7 +390,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                               type="checkbox"
                               checked={p.selecionado}
                               onChange={() => handleTogglePessoa(p.id)}
-                              className="rounded border-slate-300 text-purple-600 focus:ring-purple-500 h-3.5 w-3.5"
+                              className="rounded border-slate-300 text-[#B38F4F] focus:ring-[#B38F4F] h-3.5 w-3.5"
                             />
                             <div className="min-w-0 truncate">
                               <div className="font-bold text-slate-800 flex items-center gap-1.5">
@@ -398,7 +398,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                                 <span
                                   className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
                                     p.papel === 'lider'
-                                      ? 'bg-purple-100 text-purple-800'
+                                      ? 'bg-amber-100 text-[#8A6A39]'
                                       : 'bg-slate-200 text-slate-700'
                                   }`}
                                 >
@@ -463,7 +463,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
 
                 {/* Adicionar Destinatário Avulso */}
                 {showAddPessoa ? (
-                  <div className="p-3 bg-white rounded-xl border border-purple-200 space-y-2 text-xs">
+                  <div className="p-3 bg-white rounded-xl border border-amber-200 space-y-2 text-xs">
                     <span className="font-bold text-slate-800 text-[11px]">Adicionar Destinatário Extra</span>
                     <input
                       type="text"
@@ -499,7 +499,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                       <button
                         type="button"
                         onClick={handleAddCustomPessoa}
-                        className="px-3 py-1 bg-purple-600 text-white font-bold rounded-lg text-xs"
+                        className="px-3 py-1 bg-[#B38F4F] text-white font-bold rounded-lg text-xs"
                       >
                         Adicionar
                       </button>
@@ -527,7 +527,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                   onChange={(e) => setObservacaoCustom(e.target.value)}
                   rows={3}
                   placeholder="Insira aqui orientações específicas, próximos passos ou recados para a diretoria/equipe..."
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500 focus:bg-white focus:outline-hidden"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#B38F4F] focus:bg-white focus:outline-hidden"
                 />
               </div>
             </div>
@@ -557,7 +557,7 @@ export const ProjetoResumoModal: React.FC<ProjetoResumoModalProps> = ({
                       'preview_text'
                     )
                   }
-                  className="text-xs text-purple-600 hover:text-purple-800 font-bold flex items-center gap-1"
+                  className="text-xs text-[#B38F4F] hover:text-[#8A6A39] font-bold flex items-center gap-1"
                 >
                   {copiedState === 'preview_text' ? (
                     <>

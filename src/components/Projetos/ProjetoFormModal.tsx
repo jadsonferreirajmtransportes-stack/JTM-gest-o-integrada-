@@ -348,13 +348,13 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#B38F4F]">
               <FolderKanban className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 {initialData ? 'Editar Projeto Gerencial' : 'Novo Projeto Estratégico & Gerencial'}
-                <span className="text-xs font-mono font-normal px-2 py-0.5 rounded bg-slate-100 text-purple-700 border border-slate-200">
+                <span className="text-xs font-mono font-normal px-2 py-0.5 rounded bg-slate-100 text-[#8A6A39] border border-slate-200">
                   {codigo || 'PRJ-2026'}
                 </span>
               </h2>
@@ -379,7 +379,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
             onClick={() => setActiveTab('geral')}
             className={`px-3 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'geral'
-                ? 'border-purple-600 text-purple-700 bg-white rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -391,7 +391,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
             onClick={() => setActiveTab('equipe')}
             className={`px-3 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'equipe'
-                ? 'border-purple-600 text-purple-700 bg-white rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -403,7 +403,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
             onClick={() => setActiveTab('cronograma')}
             className={`px-3 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'cronograma'
-                ? 'border-purple-600 text-purple-700 bg-white rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -415,7 +415,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
             onClick={() => setActiveTab('financeiro')}
             className={`px-3 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'financeiro'
-                ? 'border-purple-600 text-purple-700 bg-white rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -427,7 +427,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
             onClick={() => setActiveTab('marcos')}
             className={`px-3 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'marcos'
-                ? 'border-purple-600 text-purple-700 bg-white rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -439,7 +439,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
             onClick={() => setActiveTab('riscos')}
             className={`px-3 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'riscos'
-                ? 'border-purple-600 text-purple-700 bg-white rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -451,7 +451,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
             onClick={() => setActiveTab('anexos')}
             className={`px-3 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'anexos'
-                ? 'border-purple-600 text-purple-700 bg-white rounded-t-lg'
+                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -476,7 +476,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     value={codigo}
                     onChange={(e) => setCodigo(e.target.value)}
                     placeholder="PRJ-2026-001"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono font-bold focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono font-bold focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -489,7 +489,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     value={titulo}
                     onChange={(e) => setTitulo(e.target.value)}
                     placeholder="Ex: Validação Térmica RDC 430 / Mapeamento de Rotas"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -503,7 +503,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                   value={descricao}
                   onChange={(e) => setDescricao(e.target.value)}
                   placeholder="Descreva os objetivos, impacto operacional farmacêutico e entregáveis esperados..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                 />
               </div>
 
@@ -515,7 +515,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                   <select
                     value={categoria}
                     onChange={(e) => setCategoria(e.target.value as CategoriaProjeto)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-purple-500 focus:outline-hidden font-medium"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden font-medium"
                   >
                     {CATEGORIAS.map((c) => (
                       <option key={c} value={c}>
@@ -532,7 +532,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                   <select
                     value={prioridade}
                     onChange={(e) => setPrioridade(e.target.value as PrioridadeProjeto)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-purple-500 focus:outline-hidden font-medium"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden font-medium"
                   >
                     {PRIORIDADES.map((p) => (
                       <option key={p} value={p}>
@@ -549,7 +549,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as StatusProjeto)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-purple-500 focus:outline-hidden font-medium"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden font-medium"
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>
@@ -568,7 +568,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                   <select
                     value={setorImpactado}
                     onChange={(e) => setSetorImpactado(e.target.value as SetorImpactadoProjeto)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   >
                     {SETORES.map((st) => (
                       <option key={st} value={st}>
@@ -587,7 +587,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     value={objetivoEstrategico}
                     onChange={(e) => setObjetivoEstrategico(e.target.value)}
                     placeholder="Ex: Zero desvios de temperatura em auditorias ANVISA"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -635,7 +635,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                       const found = supervisores.find((s) => s.nome === e.target.value);
                       if (found) setLiderCargo(found.cargo || 'Supervisor');
                     }}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-purple-500 focus:outline-hidden font-medium"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden font-medium"
                   >
                     {supervisores.map((s) => (
                       <option key={s.id} value={s.nome}>
@@ -659,7 +659,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     value={liderCargo}
                     onChange={(e) => setLiderCargo(e.target.value)}
                     placeholder="Ex: Farmacêutica Responsável Técnica (RT)"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -673,7 +673,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                   value={equipeMembrosInput}
                   onChange={(e) => setEquipeMembrosInput(e.target.value)}
                   placeholder="Ex: Carlos Eduardo Lima, Ricardo Silveira, Gabriel Santos (TI), Juliana Nogueira"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                 />
                 <p className="text-[11px] text-slate-500 mt-1">
                   Dica: inclua farmacêuticos, operadores, supervisores e técnicos envolvidos no comitê de execução.
@@ -697,7 +697,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                           );
                         }
                       }}
-                      className="px-2.5 py-1 rounded-md text-[11px] bg-slate-100 hover:bg-purple-100 text-slate-700 hover:text-purple-800 border border-slate-200 transition-colors"
+                      className="px-2.5 py-1 rounded-md text-[11px] bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-[#8A6A39] border border-slate-200 transition-colors"
                     >
                       + {sup.nome}
                     </button>
@@ -726,8 +726,8 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                           onClick={() => handleToggleUsuarioMarcado(u.id)}
                           className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
                             marcado
-                              ? 'bg-purple-600 border-purple-600 text-white'
-                              : 'bg-white border-slate-300 text-slate-600 hover:border-purple-300'
+                              ? 'bg-[#B38F4F] border-[#B38F4F] text-white'
+                              : 'bg-white border-slate-300 text-slate-600 hover:border-amber-300'
                           }`}
                         >
                           {u.nome}
@@ -755,7 +755,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     required
                     value={dataInicio}
                     onChange={(e) => setDataInicio(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
 
@@ -768,7 +768,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     required
                     value={dataPrevisaoFim}
                     onChange={(e) => setDataPrevisaoFim(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
 
@@ -780,19 +780,19 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     type="date"
                     value={dataConclusaoReal}
                     onChange={(e) => setDataConclusaoReal(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
               </div>
 
               {/* Progress Slider */}
-              <div className="p-4 bg-purple-50/60 rounded-xl border border-purple-200 space-y-2">
+              <div className="p-4 bg-amber-50/60 rounded-xl border border-amber-200 space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
-                    <Target className="w-4 h-4 text-purple-600" />
+                  <label className="text-xs font-bold text-[#5c4526] flex items-center gap-1.5">
+                    <Target className="w-4 h-4 text-[#B38F4F]" />
                     Progresso Geral Realizado:
                   </label>
-                  <span className="text-sm font-extrabold text-purple-700 font-mono">
+                  <span className="text-sm font-extrabold text-[#8A6A39] font-mono">
                     {progressoPercentual}%
                   </span>
                 </div>
@@ -803,9 +803,9 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                   step="5"
                   value={progressoPercentual}
                   onChange={(e) => setProgressoPercentual(Number(e.target.value))}
-                  className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                  className="w-full h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer accent-[#B38F4F]"
                 />
-                <div className="flex justify-between text-[10px] text-purple-700 font-medium">
+                <div className="flex justify-between text-[10px] text-[#8A6A39] font-medium">
                   <span>0% (Início)</span>
                   <span>25% (Estruturação)</span>
                   <span>50% (Execução)</span>
@@ -830,7 +830,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     step="1000"
                     value={orcamentoPrevisto}
                     onChange={(e) => setOrcamentoPrevisto(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono font-bold focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono font-bold focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
 
@@ -844,7 +844,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     step="500"
                     value={custoRealizado}
                     onChange={(e) => setCustoRealizado(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono font-bold focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono font-bold focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
 
@@ -855,7 +855,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                   <select
                     value={tipoInvestimento}
                     onChange={(e) => setTipoInvestimento(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-purple-500 focus:outline-hidden font-medium"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden font-medium"
                   >
                     <option value="Opex">OPEX (Despesa Operacional / Consultoria)</option>
                     <option value="Capex">CAPEX (Investimento em Ativo / Infra / Frota)</option>
@@ -874,7 +874,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     min="0"
                     value={roiEstimadoMeses}
                     onChange={(e) => setRoiEstimadoMeses(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
 
@@ -887,7 +887,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     value={retornoEsperadoDescricao}
                     onChange={(e) => setRetornoEsperadoDescricao(e.target.value)}
                     placeholder="Ex: Redução de 12% no consumo de diesel e economia de R$ 22.000/mês"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -914,7 +914,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
                 <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <Plus className="w-4 h-4 text-purple-600" />
+                  <Plus className="w-4 h-4 text-[#B38F4F]" />
                   Adicionar Novo Marco / Milestone
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -923,13 +923,13 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     value={novoMarcoTitulo}
                     onChange={(e) => setNovoMarcoTitulo(e.target.value)}
                     placeholder="Título do marco (ex: Concluir QI/QO)"
-                    className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                   <input
                     type="date"
                     value={novoMarcoData}
                     onChange={(e) => setNovoMarcoData(e.target.value)}
-                    className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                   <div className="flex gap-2">
                     <input
@@ -937,12 +937,12 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                       value={novoMarcoResp}
                       onChange={(e) => setNovoMarcoResp(e.target.value)}
                       placeholder="Responsável"
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                     />
                     <button
                       type="button"
                       onClick={handleAddMarco}
-                      className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700 shrink-0"
+                      className="px-3 py-1.5 bg-[#B38F4F] text-white rounded-lg text-xs font-bold hover:bg-[#8A6A39] shrink-0"
                     >
                       + Add
                     </button>
@@ -963,7 +963,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                       className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 font-bold text-[10px] flex items-center justify-center shrink-0">
+                        <span className="w-5 h-5 rounded-full bg-amber-100 text-[#8A6A39] font-bold text-[10px] flex items-center justify-center shrink-0">
                           {idx + 1}
                         </span>
                         <div className="min-w-0">
@@ -1001,7 +1001,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     value={novoRiscoDesc}
                     onChange={(e) => setNovoRiscoDesc(e.target.value)}
                     placeholder="Descrição do risco operacional ou regulatório..."
-                    className="sm:col-span-2 px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="sm:col-span-2 px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                   <select
                     value={novoRiscoProb}
@@ -1028,7 +1028,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     value={novoRiscoMitig}
                     onChange={(e) => setNovoRiscoMitig(e.target.value)}
                     placeholder="Plano de Contingência e Mitigação..."
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                   />
                   <button
                     type="button"
@@ -1087,10 +1087,10 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
           {/* TAB 7: ANEXOS & DOCUMENTOS */}
           {activeTab === 'anexos' && (
             <div className="space-y-4 animate-in fade-in duration-150">
-              <div className="p-4 bg-purple-50/50 border border-purple-100 rounded-xl">
+              <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-xl">
                 <div className="flex items-center gap-2 mb-1">
-                  <Paperclip className="w-4 h-4 text-purple-600" />
-                  <h3 className="text-xs font-bold text-purple-900 uppercase tracking-wide">
+                  <Paperclip className="w-4 h-4 text-[#B38F4F]" />
+                  <h3 className="text-xs font-bold text-[#5c4526] uppercase tracking-wide">
                     Anexar Documentação, POPs e Certificados ao Projeto
                   </h3>
                 </div>
@@ -1109,7 +1109,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                     <select
                       value={novoDocCategoria}
                       onChange={(e) => setNovoDocCategoria(e.target.value as CategoriaDocumentoProjeto)}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                     >
                       {CATEGORIAS_DOCUMENTOS_PROJETO.map((cat) => (
                         <option key={cat} value={cat}>
@@ -1128,7 +1128,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                       value={novoDocObs}
                       onChange={(e) => setNovoDocObs(e.target.value)}
                       placeholder="Ex: Versão aprovada pelo comitê técnico..."
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
                     >
                     </input>
                   </div>
@@ -1151,8 +1151,8 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                   onClick={() => formFileInputRef.current?.click()}
                   className={`p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-colors ${
                     formDragActive
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-slate-300 hover:border-purple-400 bg-white'
+                      ? 'border-[#B38F4F] bg-amber-50'
+                      : 'border-slate-300 hover:border-amber-400 bg-white'
                   }`}
                 >
                   <input
@@ -1167,7 +1167,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                       }
                     }}
                   />
-                  <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mb-2">
+                  <div className="w-10 h-10 rounded-full bg-amber-100 text-[#B38F4F] flex items-center justify-center mb-2">
                     <Upload className="w-5 h-5" />
                   </div>
                   <p className="text-xs font-bold text-slate-800 text-center">
@@ -1244,7 +1244,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
                               <a
                                 href={doc.arquivoUrl || doc.url}
                                 download={doc.nome}
-                                className="p-1.5 text-slate-500 hover:text-purple-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-500 hover:text-[#B38F4F] hover:bg-slate-100 rounded-lg transition-colors"
                                 title="Baixar Arquivo"
                               >
                                 <Download className="w-4 h-4" />
@@ -1279,7 +1279,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all shadow-purple-500/20"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#B38F4F] to-[#B38F4F] hover:from-[#8A6A39] hover:to-[#8A6A39] text-white font-bold text-xs rounded-xl shadow-md transition-all shadow-[#B38F4F]/20"
             >
               <Save className="w-4 h-4" />
               {initialData ? 'Salvar Alterações' : 'Criar Projeto Gerencial'}

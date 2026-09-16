@@ -108,7 +108,7 @@ export const AgendaWeekView: React.FC<AgendaWeekViewProps> = ({
             <div
               key={idx}
               className={`p-3 flex flex-col group transition-colors ${
-                day.isToday ? 'bg-indigo-50/20' : 'bg-white'
+                day.isToday ? 'bg-amber-50/20' : 'bg-white'
               }`}
             >
               {/* Day Header */}
@@ -119,7 +119,7 @@ export const AgendaWeekView: React.FC<AgendaWeekViewProps> = ({
                   </span>
                   <span
                     className={`text-sm font-bold inline-flex items-center justify-center w-7 h-7 rounded-full mt-0.5 ${
-                      day.isToday ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-800'
+                      day.isToday ? 'bg-[#B38F4F] text-white shadow-xs' : 'text-slate-800'
                     }`}
                   >
                     {day.date.getDate()}
@@ -128,7 +128,7 @@ export const AgendaWeekView: React.FC<AgendaWeekViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onNewAtividadeDate(day.dateStr)}
-                  className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors"
+                  className="p-1 text-slate-400 hover:text-[#B38F4F] hover:bg-slate-100 rounded-md transition-colors"
                   title={`Nova atividade em ${day.dateStr}`}
                 >
                   <Plus className="w-4 h-4" />
@@ -161,7 +161,7 @@ export const AgendaWeekView: React.FC<AgendaWeekViewProps> = ({
                           {atv.diaInteiro ? 'Dia Todo' : `${atv.horaInicio} - ${atv.horaFim}`}
                         </span>
                         {multiDia && (
-                          <span className="px-1.5 py-0.2 text-[9px] bg-indigo-100 text-indigo-800 font-bold rounded-sm flex items-center gap-0.5">
+                          <span className="px-1.5 py-0.2 text-[9px] bg-amber-100 text-[#8A6A39] font-bold rounded-sm flex items-center gap-0.5">
                             <ArrowLeftRight className="w-2.5 h-2.5" />
                             {formatAtividadeDateLabel(atv, 'short')}
                           </span>

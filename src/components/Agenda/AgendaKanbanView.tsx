@@ -101,7 +101,7 @@ export const AgendaKanbanView: React.FC<AgendaKanbanViewProps> = ({
                 <button
                   type="button"
                   onClick={onNewAtividade}
-                  className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-200/60 rounded-md transition-colors"
+                  className="p-1 text-slate-400 hover:text-[#B38F4F] hover:bg-slate-200/60 rounded-md transition-colors"
                   title="Nova Atividade"
                 >
                   <Plus className="w-4 h-4" />
@@ -137,7 +137,7 @@ export const AgendaKanbanView: React.FC<AgendaKanbanViewProps> = ({
                     {/* Title */}
                     <h4
                       onClick={() => onSelectAtividade(atv)}
-                      className="text-xs font-bold text-slate-900 hover:text-indigo-600 transition-colors cursor-pointer leading-snug line-clamp-2"
+                      className="text-xs font-bold text-slate-900 hover:text-[#B38F4F] transition-colors cursor-pointer leading-snug line-clamp-2"
                     >
                       {atv.titulo}
                     </h4>
@@ -158,7 +158,7 @@ export const AgendaKanbanView: React.FC<AgendaKanbanViewProps> = ({
 
                     {/* Deliberations progress */}
                     {atv.deliberacoes && atv.deliberacoes.length > 0 && (
-                      <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-indigo-600 font-semibold">
+                      <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-[#B38F4F] font-semibold">
                         <span>Deliberações</span>
                         <span>
                           {atv.deliberacoes.filter((d) => d.concluido).length}/{atv.deliberacoes.length} OK
@@ -185,7 +185,7 @@ export const AgendaKanbanView: React.FC<AgendaKanbanViewProps> = ({
                       <button
                         type="button"
                         onClick={() => onSelectAtividade(atv)}
-                        className="text-[10px] font-semibold text-indigo-600 hover:underline"
+                        className="text-[10px] font-semibold text-[#B38F4F] hover:underline"
                       >
                         Detalhes
                       </button>
@@ -195,7 +195,7 @@ export const AgendaKanbanView: React.FC<AgendaKanbanViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onStatusChange(atv.id, next)}
-                            className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-md transition-colors text-[10px] font-semibold flex items-center gap-0.5"
+                            className="p-1 text-[#B38F4F] hover:text-[#8A6A39] hover:bg-amber-50 rounded-md transition-colors text-[10px] font-semibold flex items-center gap-0.5"
                             title={`Avançar para ${next}`}
                           >
                             <span>Avançar</span>

@@ -142,14 +142,14 @@ export const AgendaMonthView: React.FC<AgendaMonthViewProps> = ({
               key={idx}
               className={`min-h-[110px] p-1.5 sm:p-2 transition-colors flex flex-col group relative ${
                 cell.isCurrentMonth ? 'bg-white' : 'bg-slate-50/60 text-slate-400'
-              } ${cell.isToday ? 'bg-indigo-50/30' : ''}`}
+              } ${cell.isToday ? 'bg-amber-50/30' : ''}`}
             >
               {/* Day Number header */}
               <div className="flex items-center justify-between mb-1">
                 <span
                   className={`text-xs font-semibold inline-flex items-center justify-center w-6 h-6 rounded-full ${
                     cell.isToday
-                      ? 'bg-indigo-600 text-white shadow-xs'
+                      ? 'bg-[#B38F4F] text-white shadow-xs'
                       : cell.isCurrentMonth
                       ? 'text-slate-800'
                       : 'text-slate-400'
@@ -161,7 +161,7 @@ export const AgendaMonthView: React.FC<AgendaMonthViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onNewAtividadeDate(cell.dateStr)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-opacity"
+                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-[#B38F4F] hover:bg-slate-100 rounded-md transition-opacity"
                   title="Adicionar atividade neste dia"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -203,7 +203,7 @@ export const AgendaMonthView: React.FC<AgendaMonthViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onSelectAtividade(dayAtividades[3])}
-                    className="w-full text-center text-[10px] text-indigo-600 font-semibold hover:underline"
+                    className="w-full text-center text-[10px] text-[#B38F4F] font-semibold hover:underline"
                   >
                     +{dayAtividades.length - 3} mais
                   </button>

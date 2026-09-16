@@ -63,12 +63,12 @@ export const ProjetosFinancialTab: React.FC<ProjetosFinancialTabProps> = ({
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             Total Executado / Desembolsado
           </span>
-          <span className="text-2xl font-black text-purple-700 font-mono">
+          <span className="text-2xl font-black text-[#8A6A39] font-mono">
             {totalRealizado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </span>
           <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
             <div
-              className="bg-purple-600 h-full rounded-full"
+              className="bg-[#B38F4F] h-full rounded-full"
               style={{ width: `${totalOrcado > 0 ? (totalRealizado / totalOrcado) * 100 : 0}%` }}
             />
           </div>
@@ -94,7 +94,7 @@ export const ProjetosFinancialTab: React.FC<ProjetosFinancialTabProps> = ({
       {/* Sector Allocation Breakdown */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-purple-600" />
+          <Building2 className="w-4 h-4 text-[#B38F4F]" />
           Alocação Orçamentária por Setor Estratégico
         </h3>
 
@@ -108,10 +108,10 @@ export const ProjetosFinancialTab: React.FC<ProjetosFinancialTabProps> = ({
                   <span className="text-lg font-black text-slate-900 font-mono">
                     {values.orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
                   </span>
-                  <span className="text-[11px] font-bold text-purple-700 font-mono">{execPct}% gasto</span>
+                  <span className="text-[11px] font-bold text-[#8A6A39] font-mono">{execPct}% gasto</span>
                 </div>
                 <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-purple-600 h-full rounded-full" style={{ width: `${Math.min(execPct, 100)}%` }} />
+                  <div className="bg-[#B38F4F] h-full rounded-full" style={{ width: `${Math.min(execPct, 100)}%` }} />
                 </div>
                 <div className="text-[10px] text-slate-500 flex justify-between">
                   <span>Executado: {values.realizado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</span>
@@ -146,9 +146,9 @@ export const ProjetosFinancialTab: React.FC<ProjetosFinancialTabProps> = ({
                   <tr
                     key={p.id}
                     onClick={() => onSelectProjeto(p)}
-                    className="hover:bg-purple-50/40 cursor-pointer transition-colors"
+                    className="hover:bg-amber-50/40 cursor-pointer transition-colors"
                   >
-                    <td className="py-2.5 px-3 font-mono font-bold text-purple-700">{p.codigo}</td>
+                    <td className="py-2.5 px-3 font-mono font-bold text-[#8A6A39]">{p.codigo}</td>
                     <td className="py-2.5 px-3 font-bold text-slate-900">{p.titulo}</td>
                     <td className="py-2.5 px-3 text-slate-600 font-medium">{p.tipoInvestimento || 'OPEX'}</td>
                     <td className="py-2.5 px-3 font-mono text-slate-800">

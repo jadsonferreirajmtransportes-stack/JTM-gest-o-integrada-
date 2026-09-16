@@ -74,7 +74,7 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
       <div className="p-6 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wider">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-[#8A6A39] border border-amber-200 uppercase tracking-wider">
               Governança Corporativa JMT
             </span>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider flex items-center gap-1">
@@ -95,7 +95,7 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
           <button
             type="button"
             onClick={onOpenNovoProjeto}
-            className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-500/30 transition-all flex items-center gap-2"
+            className="px-4 py-2.5 bg-gradient-to-r from-[#B38F4F] to-[#B38F4F] hover:from-[#8A6A39] hover:to-[#8A6A39] text-white font-bold text-xs rounded-xl shadow-lg shadow-[#B38F4F]/30 transition-all flex items-center gap-2"
           >
             <FolderKanban className="w-4 h-4" />
             + Novo Projeto Estratégico
@@ -108,7 +108,7 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
         <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
             <span>Total Projetos</span>
-            <FolderKanban className="w-4 h-4 text-purple-600" />
+            <FolderKanban className="w-4 h-4 text-[#B38F4F]" />
           </div>
           <div className="my-2">
             <span className="text-2xl font-black text-slate-900 font-mono">{totalProjetos}</span>
@@ -123,14 +123,14 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
         <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
             <span>Progresso Médio</span>
-            <TrendingUp className="w-4 h-4 text-indigo-600" />
+            <TrendingUp className="w-4 h-4 text-[#B38F4F]" />
           </div>
           <div className="my-2">
-            <span className="text-2xl font-black text-indigo-600 font-mono">{progressoMedio}%</span>
+            <span className="text-2xl font-black text-[#B38F4F] font-mono">{progressoMedio}%</span>
           </div>
           <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
             <div
-              className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+              className="bg-[#B38F4F] h-full rounded-full transition-all duration-500"
               style={{ width: `${progressoMedio}%` }}
             />
           </div>
@@ -152,7 +152,7 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
         <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
             <span>Custo Realizado</span>
-            <TrendingUp className="w-4 h-4 text-purple-600" />
+            <TrendingUp className="w-4 h-4 text-[#B38F4F]" />
           </div>
           <div className="my-2">
             <span className="text-xl font-black text-slate-900 font-mono">
@@ -189,7 +189,7 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
             <button
               type="button"
               onClick={() => onNavigateTab('portfolio')}
-              className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1"
+              className="text-xs font-bold text-[#8A6A39] hover:text-[#5c4526] flex items-center gap-1"
             >
               Ver Portfólio Completo →
             </button>
@@ -200,14 +200,14 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
               <div
                 key={p.id}
                 onClick={() => onSelectProjeto(p)}
-                className="p-3.5 bg-slate-50/70 hover:bg-purple-50/50 rounded-xl border border-slate-200 hover:border-purple-300 transition-all cursor-pointer space-y-2.5 group"
+                className="p-3.5 bg-slate-50/70 hover:bg-amber-50/50 rounded-xl border border-slate-200 hover:border-amber-300 transition-all cursor-pointer space-y-2.5 group"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-white text-purple-700 border border-slate-200 shadow-2xs">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-white text-[#8A6A39] border border-slate-200 shadow-2xs">
                       {p.codigo}
                     </span>
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-purple-950 truncate max-w-md">
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-[#5c4526] truncate max-w-md">
                       {p.titulo}
                     </span>
                   </div>
@@ -247,12 +247,12 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
                     <span>•</span>
                     <span>Previsão: <strong className="text-slate-700">{p.dataPrevisaoFim}</strong></span>
                   </div>
-                  <span className="font-mono font-bold text-purple-700">{p.progressoPercentual}%</span>
+                  <span className="font-mono font-bold text-[#8A6A39]">{p.progressoPercentual}%</span>
                 </div>
 
                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                   <div
-                    className="bg-purple-600 h-full rounded-full transition-all duration-300"
+                    className="bg-[#B38F4F] h-full rounded-full transition-all duration-300"
                     style={{ width: `${p.progressoPercentual}%` }}
                   />
                 </div>
@@ -265,7 +265,7 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
         <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-4 flex flex-col justify-between">
           <div className="space-y-1">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-purple-600" />
+              <Calendar className="w-4 h-4 text-[#B38F4F]" />
               Próximos Marcos Críticos
             </h3>
             <p className="text-xs text-slate-500">Deadlines regulatórios e operacionais prioritários</p>
@@ -279,10 +279,10 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
                 <div
                   key={marco.id}
                   onClick={() => onSelectProjeto(marco.projetoObj)}
-                  className="p-3 bg-slate-50 hover:bg-purple-50/50 rounded-lg border border-slate-200 hover:border-purple-300 transition-all cursor-pointer space-y-1"
+                  className="p-3 bg-slate-50 hover:bg-amber-50/50 rounded-lg border border-slate-200 hover:border-amber-300 transition-all cursor-pointer space-y-1"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-purple-700 font-bold">
+                    <span className="font-mono text-[10px] text-[#8A6A39] font-bold">
                       {marco.projetoCodigo}
                     </span>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
@@ -303,7 +303,7 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
           <button
             type="button"
             onClick={() => onNavigateTab('cronograma')}
-            className="w-full py-2 bg-slate-100 hover:bg-purple-100 text-purple-800 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+            className="w-full py-2 bg-slate-100 hover:bg-amber-100 text-[#8A6A39] rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
           >
             Ver Cronograma Completo
             <ChevronRight className="w-3.5 h-3.5" />
@@ -322,7 +322,7 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
               <span className="text-xs font-bold text-slate-700 block truncate" title={cat}>
                 {cat}
               </span>
-              <span className="text-lg font-black text-purple-700 font-mono block">
+              <span className="text-lg font-black text-[#8A6A39] font-mono block">
                 {count} {count === 1 ? 'projeto' : 'projetos'}
               </span>
             </div>
