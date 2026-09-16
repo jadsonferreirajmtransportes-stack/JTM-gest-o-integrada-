@@ -499,25 +499,37 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
               {colaborador.documentos?.map((doc) => (
                 <div
                   key={doc.id}
-                  className="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center justify-between"
+                  className="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center justify-between gap-2"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <div className="font-semibold text-slate-800">{doc.tipo}</div>
                     {doc.nomeArquivo && (
                       <div className="text-[10px] text-blue-600 font-mono truncate">{doc.nomeArquivo}</div>
                     )}
                   </div>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      doc.status === 'Recebido'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : doc.status === 'Pendente'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-slate-200 text-slate-700'
-                    }`}
-                  >
-                    {doc.status}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {doc.arquivoUrl && (
+                      <a
+                        href={doc.arquivoUrl}
+                        download={doc.nomeArquivo || doc.tipo}
+                        className="p-1 bg-white border border-slate-200 hover:bg-slate-100 rounded-md text-slate-600"
+                        title="Baixar documento"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        doc.status === 'Recebido'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : doc.status === 'Pendente'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {doc.status}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
