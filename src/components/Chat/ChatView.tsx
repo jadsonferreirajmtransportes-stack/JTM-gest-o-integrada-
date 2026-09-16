@@ -229,8 +229,11 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
     const ehImagem = file.type.startsWith('image/');
     const ehPdf = file.type === 'application/pdf';
-    if (!ehImagem && !ehPdf) {
-      setErroAnexo('Só é possível anexar imagens ou arquivos PDF.');
+    const ehWord =
+      file.type === 'application/msword' ||
+      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    if (!ehImagem && !ehPdf && !ehWord) {
+      setErroAnexo('Só é possível anexar imagens, PDF ou documentos Word (.doc/.docx).');
       return;
     }
     if (file.size > TAMANHO_MAXIMO_ANEXO_MB * 1024 * 1024) {
@@ -442,7 +445,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                       propria ? 'bg-[#B38F4F] text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'
                     }`}>
                       {!propria && conversaAberta.tipo === 'grupo' && (
-                        <p className="text-[10px] font-bold text-indigo-500 mb-0.5">{autor?.nome || 'Alguém'}</p>
+                        <p className="text-[10px] font-bold text-[#B38F4F] mb-0.5">{autor?.nome || 'Alguém'}</p>
                       )}
 
                       {m.anexoUrl && (
@@ -466,7 +469,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                               }`}
                             >
                               <FileText className="w-4 h-4 shrink-0" />
-                              <span className="truncate">{m.anexoNome || 'Documento PDF'}</span>
+                              <span className="truncate">{m.anexoNome || 'Documento'}</span>
                             </span>
                           )}
                         </button>
@@ -537,7 +540,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,application/pdf"
+                accept="image/*,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 onChange={handleSelecionarArquivo}
                 className="hidden"
               />
