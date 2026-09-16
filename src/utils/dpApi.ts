@@ -321,6 +321,7 @@ function rowToColaborador(r: any): Colaborador {
     dataVencimentoExame: u(r.data_vencimento_exame),
     dataExameDemissional: u(r.data_exame_demissional),
     clinicaMedica: u(r.clinica_medica),
+    clinicaLocalizacaoLink: u(r.clinica_localizacao_link),
     observacaoSaude: u(r.observacao_saude),
     asoImagemUrl: u(r.aso_imagem_url),
     asoNomeArquivo: u(r.aso_nome_arquivo),
@@ -428,6 +429,7 @@ export function colaboradorToRow(c: Colaborador) {
     data_vencimento_exame: n(c.dataVencimentoExame),
     data_exame_demissional: n(c.dataExameDemissional),
     clinica_medica: n(c.clinicaMedica),
+    clinica_localizacao_link: n(c.clinicaLocalizacaoLink),
     observacao_saude: n(c.observacaoSaude),
     aso_imagem_url: n(c.asoImagemUrl),
     aso_nome_arquivo: n(c.asoNomeArquivo),
@@ -733,7 +735,8 @@ export async function renovarExameASO(
   asoImagemUrl?: string,
   asoNomeArquivo?: string,
   asoMedicoEmitente?: string,
-  asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições'
+  asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições',
+  clinicaLocalizacaoLink?: string
 ): Promise<void> {
   const patch: Record<string, any> = {
     data_ultimo_exame_ocupacional: dataUltimoExame,
@@ -741,6 +744,7 @@ export async function renovarExameASO(
     atualizado_em: new Date().toISOString(),
   };
   if (clinica !== undefined) patch.clinica_medica = clinica;
+  if (clinicaLocalizacaoLink !== undefined) patch.clinica_localizacao_link = clinicaLocalizacaoLink;
   if (asoImagemUrl !== undefined) patch.aso_imagem_url = asoImagemUrl;
   if (asoNomeArquivo !== undefined) patch.aso_nome_arquivo = asoNomeArquivo;
   if (asoMedicoEmitente !== undefined) patch.aso_medico_emitente = asoMedicoEmitente;

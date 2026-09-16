@@ -49,7 +49,8 @@ interface AnvisaExamsViewProps {
     asoImagemUrl?: string,
     asoNomeArquivo?: string,
     asoMedicoEmitente?: string,
-    asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições'
+    asoResultado?: 'Apto' | 'Inapto' | 'Apto com Restrições',
+    clinicaLocalizacaoLink?: string
   ) => void;
 }
 
@@ -70,6 +71,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
   );
   const [dataVencimento, setDataVencimento] = useState('');
   const [clinicaMedica, setClinicaMedica] = useState('MedSeg Medicina do Trabalho');
+  const [clinicaLocalizacaoLink, setClinicaLocalizacaoLink] = useState('');
   const [asoImagemUrl, setAsoImagemUrl] = useState<string | undefined>(undefined);
   const [asoNomeArquivo, setAsoNomeArquivo] = useState<string | undefined>(undefined);
   const [asoMedicoEmitente, setAsoMedicoEmitente] = useState('');
@@ -135,6 +137,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     setDataVencimento(nextYear.toISOString().slice(0, 10));
 
     setClinicaMedica(colab.clinicaMedica || 'MedSeg Medicina do Trabalho');
+    setClinicaLocalizacaoLink(colab.clinicaLocalizacaoLink || '');
     setAsoImagemUrl(colab.asoImagemUrl);
     setAsoNomeArquivo(colab.asoNomeArquivo);
     setAsoMedicoEmitente(colab.asoMedicoEmitente || '');
@@ -154,7 +157,8 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
       asoImagemUrl,
       asoNomeArquivo,
       asoMedicoEmitente,
-      asoResultado
+      asoResultado,
+      clinicaLocalizacaoLink.trim() || undefined
     );
     setIsModalOpen(false);
   };
@@ -163,7 +167,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     if (!selectedColab?.telefoneWhatsapp || !dataUltimoExame) return;
     const url = buildWhatsAppLink(
       selectedColab.telefoneWhatsapp,
-      buildMensagemAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica)
+      buildMensagemAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica, clinicaLocalizacaoLink)
     );
     if (url) window.open(url, '_blank');
   };
@@ -173,7 +177,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     const url = buildMailtoLink(
       selectedColab.email,
       buildAssuntoEmailAgendamentoAso(),
-      buildCorpoEmailAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica)
+      buildCorpoEmailAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica, clinicaLocalizacaoLink)
     );
     // mailto: precisa ir por window.location.href (não window.open) — mesmo padrão do resto do app.
     if (url) window.location.href = url;
@@ -183,7 +187,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     if (!selectedColab || !dataUltimoExame) return;
     try {
       await navigator.clipboard.writeText(
-        buildMensagemAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica)
+        buildMensagemAgendamentoAso(selectedColab.nomeCompleto, dataUltimoExame, clinicaMedica, clinicaLocalizacaoLink)
       );
       setAgendamentoCopiado(true);
       setTimeout(() => setAgendamentoCopiado(false), 2000);
@@ -520,6 +524,21 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                   onChange={(e) => setClinicaMedica(e.target.value)}
                   className="w-full p-2 border border-slate-200 rounded-lg"
                   placeholder="Nome da clínica conveniada"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-700 block mb-1">
+                  Link de Localização da Clínica (Google Maps){' '}
+                  <span className="text-slate-400 font-normal">— opcional</span>
+                </label>
+                <input
+                  type="text"
+                  data-no-uppercase="true"
+                  value={clinicaLocalizacaoLink}
+                  onChange={(e) => setClinicaLocalizacaoLink(e.target.value)}
+                  className="w-full p-2 border border-slate-200 rounded-lg"
+                  placeholder="https://maps.google.com/..."
                 />
               </div>
 

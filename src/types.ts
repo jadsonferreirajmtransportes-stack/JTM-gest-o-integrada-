@@ -388,6 +388,7 @@ export interface Colaborador {
   dataVencimentoExame?: string;
   dataExameDemissional?: string;
   clinicaMedica?: string;
+  clinicaLocalizacaoLink?: string;
   observacaoSaude?: string;
   asoImagemUrl?: string;
   asoNomeArquivo?: string;

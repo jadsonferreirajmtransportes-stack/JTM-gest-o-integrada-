@@ -12,15 +12,17 @@ function primeiroNomeDe(nomeCompleto?: string): string {
 export function buildMensagemAgendamentoAso(
   colaboradorNome: string,
   dataExame: string,
-  clinica?: string
+  clinica?: string,
+  linkLocalizacao?: string
 ): string {
   const primeiroNome = primeiroNomeDe(colaboradorNome);
   const clinicaTexto = clinica ? `\n🏥 Clínica: ${clinica}` : '';
+  const linkTexto = linkLocalizacao ? `\n📍 Localização: ${linkLocalizacao}` : '';
   return `🩺 *Agendamento de Exame Ocupacional (ASO)*
 
 Olá, ${primeiroNome}! Seu exame periódico foi agendado:
 
-📅 Data: ${formatDate(dataExame)}${clinicaTexto}
+📅 Data: ${formatDate(dataExame)}${clinicaTexto}${linkTexto}
 
 Leve um documento com foto. Qualquer dúvida, fale com o Departamento Pessoal.
 
@@ -35,15 +37,17 @@ export function buildAssuntoEmailAgendamentoAso(): string {
 export function buildCorpoEmailAgendamentoAso(
   colaboradorNome: string,
   dataExame: string,
-  clinica?: string
+  clinica?: string,
+  linkLocalizacao?: string
 ): string {
   const primeiroNome = primeiroNomeDe(colaboradorNome);
   const clinicaTexto = clinica ? `\nClínica: ${clinica}` : '';
+  const linkTexto = linkLocalizacao ? `\nLocalização: ${linkLocalizacao}` : '';
   return `Olá, ${primeiroNome}!
 
 Seu exame periódico foi agendado:
 
-Data: ${formatDate(dataExame)}${clinicaTexto}
+Data: ${formatDate(dataExame)}${clinicaTexto}${linkTexto}
 
 Leve um documento com foto. Qualquer dúvida, fale com o Departamento Pessoal.
 
