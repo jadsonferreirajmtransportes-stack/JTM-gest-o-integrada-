@@ -476,12 +476,12 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
               <button
                 id="btn-agenda-atalho"
                 onClick={() => onNavigateSection('agenda_gestao')}
-                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition-all shadow-xs"
+                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#8A6A39] border border-amber-200 text-xs font-bold transition-all shadow-xs"
               >
-                <CalendarDays className="w-4 h-4 text-indigo-500" />
+                <CalendarDays className="w-4 h-4 text-[#B38F4F]" />
                 <span>Agenda da Gestão</span>
                 {govSummary.atividadesHojeCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold">
+                  <span className="px-1.5 py-0.5 rounded-full bg-[#B38F4F] text-white text-[10px] font-extrabold">
                     {govSummary.atividadesHojeCount} hoje
                   </span>
                 )}
@@ -583,7 +583,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                         {/* Clientes matches */}
                         {searchResults.clientes.length > 0 && (
                           <div>
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-blue-700 px-2 py-1 flex items-center gap-1.5">
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-[#8A6A39] px-2 py-1 flex items-center gap-1.5">
                               <Building2 className="w-3 h-3" />
                               Clientes & Contratos ({searchResults.clientes.length})
                             </div>
@@ -596,13 +596,13 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                                   if (onSelectClienteDetail) onSelectClienteDetail(cli);
                                   setIsLiveSearchFocused(false);
                                 }}
-                                className="px-2.5 py-1.5 hover:bg-blue-50 rounded-lg cursor-pointer flex items-center justify-between text-xs"
+                                className="px-2.5 py-1.5 hover:bg-amber-50 rounded-lg cursor-pointer flex items-center justify-between text-xs"
                               >
                                 <div>
                                   <span className="font-semibold text-slate-900">{cli.nomeFantasia}</span>
                                   <span className="text-slate-500 ml-2 text-[11px]">{cli.cidadeUF} • {formatMoney(cli.faturamentoMensalEstimado)}/mês</span>
                                 </div>
-                                <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">
+                                <span className="text-[10px] font-bold text-[#8A6A39] bg-amber-100 px-1.5 py-0.5 rounded">
                                   {cli.status}
                                 </span>
                               </div>
@@ -613,7 +613,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                         {/* Farma Aéreo matches */}
                         {searchResults.aereo.length > 0 && (
                           <div>
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-sky-700 px-2 py-1 flex items-center gap-1.5">
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-[#8A6A39] px-2 py-1 flex items-center gap-1.5">
                               <Plane className="w-3 h-3" />
                               Farma Aéreo ({searchResults.aereo.length})
                             </div>
@@ -625,13 +625,13 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                                   onNavigateSection('farma_aereo');
                                   setIsLiveSearchFocused(false);
                                 }}
-                                className="px-2.5 py-1.5 hover:bg-sky-50 rounded-lg cursor-pointer flex items-center justify-between text-xs"
+                                className="px-2.5 py-1.5 hover:bg-amber-50 rounded-lg cursor-pointer flex items-center justify-between text-xs"
                               >
                                 <div>
                                   <span className="font-semibold text-slate-900">AWB {emb.codigoAWB}</span>
                                   <span className="text-slate-500 ml-2 text-[11px]">{emb.clienteNome} • {emb.faixaTemperatura}</span>
                                 </div>
-                                <span className="text-[10px] font-bold text-sky-600 bg-sky-100 px-1.5 py-0.5 rounded">
+                                <span className="text-[10px] font-bold text-[#8A6A39] bg-amber-100 px-1.5 py-0.5 rounded">
                                   {emb.status}
                                 </span>
                               </div>
@@ -642,7 +642,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                         {/* Farma Rodoviário matches */}
                         {searchResults.rodo.length > 0 && (
                           <div>
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 px-2 py-1 flex items-center gap-1.5">
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-[#8A6A39] px-2 py-1 flex items-center gap-1.5">
                               <Truck className="w-3 h-3" />
                               Farma Rodoviário ({searchResults.rodo.length})
                             </div>
@@ -654,13 +654,13 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                                   onNavigateSection('farma_rodoviario');
                                   setIsLiveSearchFocused(false);
                                 }}
-                                className="px-2.5 py-1.5 hover:bg-emerald-50 rounded-lg cursor-pointer flex items-center justify-between text-xs"
+                                className="px-2.5 py-1.5 hover:bg-amber-50 rounded-lg cursor-pointer flex items-center justify-between text-xs"
                               >
                                 <div>
                                   <span className="font-semibold text-slate-900">Placa {viagem.veiculoPlaca}</span>
                                   <span className="text-slate-500 ml-2 text-[11px]">Motorista: {viagem.motoristaNome} • {viagem.rotaDestino}</span>
                                 </div>
-                                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">
+                                <span className="text-[10px] font-bold text-[#8A6A39] bg-amber-100 px-1.5 py-0.5 rounded">
                                   {viagem.status}
                                 </span>
                               </div>
@@ -671,7 +671,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                         {/* Projetos matches */}
                         {searchResults.projetos.length > 0 && (
                           <div>
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700 px-2 py-1 flex items-center gap-1.5">
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-[#8A6A39] px-2 py-1 flex items-center gap-1.5">
                               <FolderKanban className="w-3 h-3" />
                               Projetos Gerenciais ({searchResults.projetos.length})
                             </div>
@@ -683,13 +683,13 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                                   onNavigateSection('projetos');
                                   setIsLiveSearchFocused(false);
                                 }}
-                                className="px-2.5 py-1.5 hover:bg-purple-50 rounded-lg cursor-pointer flex items-center justify-between text-xs"
+                                className="px-2.5 py-1.5 hover:bg-amber-50 rounded-lg cursor-pointer flex items-center justify-between text-xs"
                               >
                                 <div>
                                   <span className="font-semibold text-slate-900">{proj.titulo}</span>
                                   <span className="text-slate-500 ml-2 text-[11px]">{proj.codigo} • Líder: {proj.liderNome}</span>
                                 </div>
-                                <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded">
+                                <span className="text-[10px] font-bold text-[#B38F4F] bg-amber-100 px-1.5 py-0.5 rounded">
                                   {proj.progressoPercentual}%
                                 </span>
                               </div>
@@ -737,7 +737,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                     title="Gerar link de pré-admissão digital para novo colaborador"
                     className="group flex flex-col items-center gap-2 py-3.5 px-1.5 rounded-2xl bg-slate-50 hover:bg-white border border-slate-200/70 hover:border-slate-300 hover:shadow-sm transition-all"
                   >
-                    <span className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <span className="w-11 h-11 rounded-2xl bg-amber-50 text-[#B38F4F] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                       <UserCheck className="w-5 h-5" />
                     </span>
                     <span className="text-[11px] font-semibold text-slate-700 text-center leading-tight">
@@ -1001,17 +1001,17 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-100 text-[#8A6A39] flex items-center justify-center font-bold">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Carteira & Contratos</span>
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+                    <span className="text-[10px] font-bold text-[#8A6A39] uppercase tracking-wider">Carteira & Contratos</span>
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#8A6A39] transition-colors">
                       Gestão de Clientes & CRM
                     </h3>
                   </div>
                 </div>
-                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-[#8A6A39] border border-amber-200">
                   {revenueSummary.clientesAtivosCount} ativos
                 </span>
               </div>
@@ -1046,7 +1046,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                   onNavigateModule('clientes');
                   onNavigateSection('clientes');
                 }}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#8A6A39] font-bold text-xs transition-colors"
               >
                 <span>Acessar Clientes</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1069,17 +1069,17 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-100 text-[#8A6A39] flex items-center justify-center font-bold">
                     <Plane className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-sky-700 uppercase tracking-wider">Cadeia Fria & Voos</span>
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-sky-700 transition-colors">
+                    <span className="text-[10px] font-bold text-[#8A6A39] uppercase tracking-wider">Cadeia Fria & Voos</span>
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#8A6A39] transition-colors">
                       Farma Aéreo (AWB & TECA)
                     </h3>
                   </div>
                 </div>
-                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-[#8A6A39] border border-amber-200">
                   {opsSummary.embarquesAereosAtivos} em voo
                 </span>
               </div>
@@ -1098,7 +1098,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
               <div className="space-y-1.5 text-xs text-slate-600">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Cargas Termolábeis:</span>
-                  <span className="font-semibold text-sky-700">{opsSummary.embarquesTermolabeisCount} embarques</span>
+                  <span className="font-semibold text-[#8A6A39]">{opsSummary.embarquesTermolabeisCount} embarques</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Cias Aéreas Integradas:</span>
@@ -1114,7 +1114,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                   onNavigateModule('farma_aereo');
                   onNavigateSection('farma_aereo');
                 }}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-xs transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#8A6A39] font-bold text-xs transition-colors"
               >
                 <span>Acessar Farma Aéreo</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1127,17 +1127,17 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-100 text-[#8A6A39] flex items-center justify-center font-bold">
                     <Truck className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Frota & Telemetria</span>
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                    <span className="text-[10px] font-bold text-[#8A6A39] uppercase tracking-wider">Frota & Telemetria</span>
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#8A6A39] transition-colors">
                       Farma Rodoviário (Frota & MDF-e)
                     </h3>
                   </div>
                 </div>
-                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-[#8A6A39] border border-amber-200">
                   {opsSummary.viagensRodoviariasAtivas} em trânsito
                 </span>
               </div>
@@ -1172,7 +1172,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                   onNavigateModule('farma_rodoviario');
                   onNavigateSection('farma_rodoviario');
                 }}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#8A6A39] font-bold text-xs transition-colors"
               >
                 <span>Acessar Farma Rodoviário</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1257,17 +1257,17 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-100 text-[#8A6A39] flex items-center justify-center font-bold">
                     <FolderKanban className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">Estratégia & OKRs</span>
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-purple-700 transition-colors">
+                    <span className="text-[10px] font-bold text-[#8A6A39] uppercase tracking-wider">Estratégia & OKRs</span>
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#8A6A39] transition-colors">
                       Projetos Gerenciais & OKRs
                     </h3>
                   </div>
                 </div>
-                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-[#8A6A39] border border-amber-200">
                   {govSummary.projetosAtivosCount} projetos
                 </span>
               </div>
@@ -1275,7 +1275,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
               <div className="grid grid-cols-2 gap-2 bg-slate-50/70 p-3.5 rounded-2xl">
                 <div>
                   <span className="text-[10px] text-slate-500 block">Progresso Médio OKRs</span>
-                  <span className="text-xs font-bold text-purple-700">{govSummary.mediaProgressoOkrs}% concluído</span>
+                  <span className="text-xs font-bold text-[#8A6A39]">{govSummary.mediaProgressoOkrs}% concluído</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 block">Orçamento CAPEX/OPEX</span>
@@ -1286,7 +1286,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
               <div className="space-y-1.5 text-xs text-slate-600">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Reuniões / Prazos Hoje:</span>
-                  <span className={`font-semibold ${govSummary.atividadesHojeCount > 0 ? 'text-indigo-600 font-bold' : 'text-slate-800'}`}>
+                  <span className={`font-semibold ${govSummary.atividadesHojeCount > 0 ? 'text-[#B38F4F] font-bold' : 'text-slate-800'}`}>
                     {govSummary.atividadesHojeCount} atividades
                   </span>
                 </div>
@@ -1304,7 +1304,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                   onNavigateModule('projetos');
                   onNavigateSection('projetos');
                 }}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#8A6A39] font-bold text-xs transition-colors"
               >
                 <span>Acessar Projetos & OKRs</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1377,14 +1377,14 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
         <div className="bg-white rounded-3xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <CalendarDays className="w-5 h-5 text-indigo-600" />
+              <CalendarDays className="w-5 h-5 text-[#B38F4F]" />
               <h3 className="font-bold text-slate-900 text-sm">
                 Agenda da Gestão Executiva
               </h3>
             </div>
             <button
               onClick={() => onNavigateSection('agenda_gestao')}
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+              className="text-xs font-semibold text-[#B38F4F] hover:text-[#8A6A39] flex items-center gap-1"
             >
               <span>Ver agenda completa</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -1397,7 +1397,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-slate-900">{ativ.titulo}</span>
-                    <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700">
+                    <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-amber-50 text-[#8A6A39]">
                       {ativ.tipo}
                     </span>
                   </div>
