@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { Lock, AlertCircle, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 import { JmtLogo } from '../Brand/JmtLogo';
 
@@ -11,6 +11,7 @@ import { JmtLogo } from '../Brand/JmtLogo';
 export const DefinirSenhaScreen: React.FC<{ onConcluido: () => void }> = ({ onConcluido }) => {
   const [senha, setSenha] = useState('');
   const [confirmacao, setConfirmacao] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -64,14 +65,22 @@ export const DefinirSenhaScreen: React.FC<{ onConcluido: () => void }> = ({ onCo
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
-                type="password"
+                type={mostrarSenha ? 'text' : 'password'}
                 required
                 autoFocus
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Mínimo 8 caracteres"
-                className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#B38F4F]/40 focus:border-[#B38F4F] outline-hidden"
+                className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#B38F4F]/40 focus:border-[#B38F4F] outline-hidden"
               />
+              <button
+                type="button"
+                onClick={() => setMostrarSenha((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                title={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+              >
+                {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
           <div>
@@ -79,12 +88,12 @@ export const DefinirSenhaScreen: React.FC<{ onConcluido: () => void }> = ({ onCo
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
-                type="password"
+                type={mostrarSenha ? 'text' : 'password'}
                 required
                 value={confirmacao}
                 onChange={(e) => setConfirmacao(e.target.value)}
                 placeholder="Digite novamente"
-                className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#B38F4F]/40 focus:border-[#B38F4F] outline-hidden"
+                className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#B38F4F]/40 focus:border-[#B38F4F] outline-hidden"
               />
             </div>
           </div>
