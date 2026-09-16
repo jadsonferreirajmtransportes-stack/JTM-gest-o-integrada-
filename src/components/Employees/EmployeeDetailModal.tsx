@@ -55,6 +55,11 @@ interface EmployeeDetailModalProps {
   empregadores: Empregador[];
   supervisores: Supervisor[];
   userRole: UserRole;
+  /** Acesso GERAL ao módulo DP — ver temAcessoGeralDp em visibilidadeUtils.ts. Controla os
+   *  botões "Editar" e "Compartilhar" abaixo: só quem tem TODAS as seções de DP liberadas
+   *  (nenhuma restrição em secoesDpPermitidas) pode editar a ficha ou gerar o link externo de
+   *  compartilhamento — ver a ficha e imprimi-la continua liberado normalmente. */
+  temAcessoGeralDp: boolean;
   onEdit: (c: Colaborador) => void;
   onProgramarFerias: (c: Colaborador) => void;
   onRegistrarOcorrencia: (c: Colaborador) => void;
@@ -73,6 +78,7 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
   empregadores,
   supervisores,
   userRole,
+  temAcessoGeralDp,
   onEdit,
   onProgramarFerias,
   onRegistrarOcorrencia,
@@ -174,17 +180,19 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
               <span>Imprimir Ficha</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsShareModalOpen(true)}
-              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-200"
-              title="Compartilhar Ficha Cadastral por link (terceiro externo, sem login)"
-            >
-              <Link2 className="w-4 h-4 text-[#8A6A39]" />
-              <span>Compartilhar</span>
-            </button>
+            {temAcessoGeralDp && (
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(true)}
+                className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-200"
+                title="Compartilhar Ficha Cadastral por link (terceiro externo, sem login)"
+              >
+                <Link2 className="w-4 h-4 text-[#8A6A39]" />
+                <span>Compartilhar</span>
+              </button>
+            )}
 
-            {userRole === 'admin' && (
+            {temAcessoGeralDp && (
               <button
                 type="button"
                 onClick={() => {

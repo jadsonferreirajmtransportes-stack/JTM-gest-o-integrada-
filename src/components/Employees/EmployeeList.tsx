@@ -38,6 +38,10 @@ interface EmployeeListProps {
   empregadores: Empregador[];
   supervisores: Supervisor[];
   userRole: UserRole;
+  /** Acesso GERAL ao módulo DP — ver temAcessoGeralDp em visibilidadeUtils.ts. Só quem tem TODAS
+   *  as seções de DP liberadas pode editar o cadastro por aqui (mesma regra do botão "Editar" em
+   *  EmployeeDetailModal) — ver a ficha continua liberado normalmente. */
+  temAcessoGeralDp: boolean;
   // Esta tela (Departamento Pessoal > Colaboradores) só recebe colaboradores ATIVOS/Férias/Afastado
   // do App.tsx — quem já foi desligado mora em "Arquivo / Demitidos", uma tela separada. Sem essa
   // flag, o filtro de Status abaixo oferecia "Inativo (Demitidos)" nas duas telas, mas como cada
@@ -61,6 +65,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   empregadores,
   supervisores,
   userRole,
+  temAcessoGeralDp,
   apenasInativos = false,
   searchQuery,
   onSearchChange,
@@ -421,8 +426,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                               </button>
                             )}
 
-                            {/* Edit (Admin only) */}
-                            {userRole === 'admin' && (
+                            {/* Editar (só acesso GERAL do DP) */}
+                            {temAcessoGeralDp && (
                               <button
                                 type="button"
                                 onClick={() => onEditColaborador(colab)}
@@ -574,7 +579,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   </button>
 
                   <div className="flex items-center gap-1">
-                    {userRole === 'admin' && (
+                    {temAcessoGeralDp && (
                       <button
                         type="button"
                         onClick={() => onEditColaborador(colab)}

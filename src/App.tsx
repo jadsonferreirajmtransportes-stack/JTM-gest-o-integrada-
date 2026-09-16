@@ -2640,6 +2640,7 @@ export default function App() {
               empregadores={empregadores}
               supervisores={supervisores}
               userRole={userRole}
+              temAcessoGeralDp={temAcessoGeralDp(currentUser)}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               onOpenNovo={handleOpenNovoColaborador}
@@ -2674,6 +2675,7 @@ export default function App() {
               empregadores={empregadores}
               supervisores={supervisores}
               userRole={userRole}
+              temAcessoGeralDp={temAcessoGeralDp(currentUser)}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               onOpenNovo={handleOpenNovoColaborador}
@@ -2793,6 +2795,7 @@ export default function App() {
         empregadores={empregadores}
         supervisores={supervisores}
         userRole={userRole}
+        temAcessoGeralDp={temAcessoGeralDp(currentUser)}
         lancamentosValeAlimentacao={
           selectedColaboradorDetail
             ? lancamentosVA.filter((l) => l.colaboradorId === selectedColaboradorDetail.id)
