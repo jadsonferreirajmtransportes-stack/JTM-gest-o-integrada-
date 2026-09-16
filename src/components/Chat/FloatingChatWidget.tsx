@@ -119,7 +119,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
         type="button"
         onClick={() => setIsOpen(true)}
         title="Chat Interno"
-        className="fixed bottom-5 right-5 z-[60] w-13 h-13 rounded-full bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xl flex items-center justify-center transition-all hover:scale-105"
+        className="fixed bottom-20 right-5 z-[60] w-13 h-13 rounded-full bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xl flex items-center justify-center transition-all hover:scale-105"
         style={{ width: 52, height: 52 }}
       >
         <MessageSquare className="w-5 h-5" />
@@ -133,7 +133,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-[60] w-[340px] h-[460px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-150">
+    <div className="fixed bottom-20 right-5 z-[60] w-[340px] h-[460px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-150">
       {/* Header */}
       <div className="px-3.5 py-2.5 bg-[#B38F4F] text-white flex items-center gap-2 shrink-0">
         {conversaAberta ? (
