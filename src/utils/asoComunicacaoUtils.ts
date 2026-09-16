@@ -12,6 +12,12 @@ function dataHoraTexto(dataExame: string, horaExame?: string): string {
   return horaExame ? `${formatDate(dataExame)} às ${horaExame}` : formatDate(dataExame);
 }
 
+/** Mesmo padrão usado no campo "Clínica Médica Conveniada" da tela — se vier vazio, assume a
+ *  clínica conveniada padrão em vez de simplesmente omitir a linha da mensagem. */
+function clinicaOuPadrao(clinica?: string): string {
+  return clinica?.trim() || 'MedSeg Medicina do Trabalho';
+}
+
 /** Mensagem no formato WhatsApp (com *negrito* e emojis). */
 export function buildMensagemAgendamentoAso(
   colaboradorNome: string,
@@ -21,7 +27,7 @@ export function buildMensagemAgendamentoAso(
   horaExame?: string
 ): string {
   const primeiroNome = primeiroNomeDe(colaboradorNome);
-  const clinicaTexto = clinica ? `\n🏥 Clínica: ${clinica}` : '';
+  const clinicaTexto = `\n🏥 Clínica: ${clinicaOuPadrao(clinica)}`;
   const linkTexto = linkLocalizacao ? `\n📍 Localização: ${linkLocalizacao}` : '';
   return `🩺 *Agendamento de Exame Ocupacional (ASO)*
 
@@ -47,7 +53,7 @@ export function buildCorpoEmailAgendamentoAso(
   horaExame?: string
 ): string {
   const primeiroNome = primeiroNomeDe(colaboradorNome);
-  const clinicaTexto = clinica ? `\nClínica: ${clinica}` : '';
+  const clinicaTexto = `\nClínica: ${clinicaOuPadrao(clinica)}`;
   const linkTexto = linkLocalizacao ? `\nLocalização: ${linkLocalizacao}` : '';
   return `Olá, ${primeiroNome}!
 
