@@ -244,6 +244,7 @@ import {
   assinarMensagensNovas,
   AnexoMensagemChat,
 } from './utils/chatApi';
+import { playNotificationSound } from './utils/notificationSound';
 
 export default function App() {
   // Primary Pages / Modules State
@@ -1040,6 +1041,7 @@ export default function App() {
       if (currentUser && jaEraMinha && msg.autorId !== currentUser.id) {
         const autor = users.find((u) => u.id === msg.autorId);
         showToast(`💬 Nova mensagem${autor ? ` de ${autor.nome}` : ''} no Chat Interno`, 'info');
+        playNotificationSound();
       }
     });
     return cancelarInscricao;
