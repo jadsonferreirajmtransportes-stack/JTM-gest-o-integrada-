@@ -1290,6 +1290,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                             ...d,
                             status: 'Recebido',
                             nomeArquivo: fileName,
+                            arquivoUrl: dataUrl,
                             dataUpload: new Date().toISOString().slice(0, 10),
                           }
                         : d

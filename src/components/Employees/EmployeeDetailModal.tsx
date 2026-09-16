@@ -496,22 +496,30 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
               2.8 Documentos Arquivados (Checklist RDC 430)
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {colaborador.documentos?.map((doc) => (
+              {colaborador.documentos?.map((doc) => {
+                // Cadastros antigos de ASO Admissional foram salvos só no campo do ASO
+                // (colaborador.asoImagemUrl), sem duplicar o arquivo aqui no item do checklist —
+                // usa esse como reserva pra não deixar o download quebrado nesses casos.
+                const arquivoUrl =
+                  doc.arquivoUrl || (doc.tipo === 'ASO Admissional' ? colaborador.asoImagemUrl : undefined);
+                const nomeArquivo =
+                  doc.nomeArquivo || (doc.tipo === 'ASO Admissional' ? colaborador.asoNomeArquivo : undefined);
+                return (
                 <div
                   key={doc.id}
                   className="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
                     <div className="font-semibold text-slate-800">{doc.tipo}</div>
-                    {doc.nomeArquivo && (
-                      <div className="text-[10px] text-blue-600 font-mono truncate">{doc.nomeArquivo}</div>
+                    {nomeArquivo && (
+                      <div className="text-[10px] text-blue-600 font-mono truncate">{nomeArquivo}</div>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {doc.arquivoUrl && (
+                    {arquivoUrl && (
                       <a
-                        href={doc.arquivoUrl}
-                        download={doc.nomeArquivo || doc.tipo}
+                        href={arquivoUrl}
+                        download={nomeArquivo || doc.tipo}
                         className="p-1 bg-white border border-slate-200 hover:bg-slate-100 rounded-md text-slate-600"
                         title="Baixar documento"
                       >
@@ -531,7 +539,8 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
                     </span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
