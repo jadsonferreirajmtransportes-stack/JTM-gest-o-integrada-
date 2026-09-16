@@ -566,6 +566,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                   <label className="block text-[11px] text-slate-500 mb-1">Endereço / Local</label>
                   <input
                     type="text"
+                    autoComplete="off"
                     value={localOuLink}
                     onChange={(e) => setLocalOuLink(e.target.value)}
                     placeholder="Ex: Sala de Reuniões Matriz JMT"
@@ -579,6 +580,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                   <input
                     type="text"
                     data-no-uppercase="true"
+                    autoComplete="off"
                     value={linkLocalizacao}
                     onChange={(e) => setLinkLocalizacao(e.target.value)}
                     placeholder="https://maps.google.com/..."

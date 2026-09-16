@@ -579,6 +579,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                 </label>
                 <input
                   type="text"
+                  autoComplete="off"
                   value={clinicaMedica}
                   onChange={(e) => setClinicaMedica(e.target.value)}
                   className="w-full p-2 border border-slate-200 rounded-lg"
@@ -594,6 +595,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                 <input
                   type="text"
                   data-no-uppercase="true"
+                  autoComplete="off"
                   value={clinicaLocalizacaoLink}
                   onChange={(e) => setClinicaLocalizacaoLink(e.target.value)}
                   className="w-full p-2 border border-slate-200 rounded-lg"
