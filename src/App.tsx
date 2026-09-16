@@ -14,6 +14,7 @@ import {
   PreAdmissao,
   StatusPreAdmissao,
   Cliente,
+  InteracaoCliente,
   GlobalModuleId,
   EmbarqueAereo,
   ViagemRodoviaria,
@@ -161,6 +162,13 @@ import { Dashboard } from './components/Dashboard';
 
 // Module 1: Clientes
 import { ClientsView } from './components/Clients/ClientsView';
+// Ficha cadastral do cliente, usada de forma independente do módulo Carteira de Clientes —
+// ver "abrir ficha" em Empresas Atreladas (Farma Aéreo/Rodoviário) e no Dashboard Geral, pra
+// quem tem acesso a essas telas mas não ao módulo inteiro de Clientes.
+import { ClientDetailModal } from './components/Clients/ClientDetailModal';
+import { ClientFormModal } from './components/Clients/ClientFormModal';
+import { ClientInteractionModal } from './components/Clients/ClientInteractionModal';
+import { PropostaComercialModal } from './components/Clients/PropostaComercialModal';
 
 // Module 2: Farma Aéreo
 import { FarmaAereoView } from './components/FarmaAereo/FarmaAereoView';
@@ -490,6 +498,14 @@ export default function App() {
   const [isEmployeeFormOpen, setIsEmployeeFormOpen] = useState<boolean>(false);
   const [editingColaborador, setEditingColaborador] = useState<Colaborador | null>(null);
   const [selectedColaboradorDetail, setSelectedColaboradorDetail] = useState<Colaborador | null>(null);
+  // Ficha cadastral de cliente aberta de fora do módulo Carteira de Clientes (Empresas
+  // Atreladas do Farma Aéreo/Rodoviário, Dashboard Geral) — quem não tem acesso ao módulo
+  // 'clientes' inteiro ainda precisa conseguir ver/editar o cadastro das empresas que já
+  // aparecem pra ele nessas telas. Espelha o mesmo padrão do selectedColaboradorDetail acima.
+  const [fichaClienteSelecionado, setFichaClienteSelecionado] = useState<Cliente | null>(null);
+  const [fichaClienteEmEdicao, setFichaClienteEmEdicao] = useState<Cliente | null>(null);
+  const [fichaClienteInteracao, setFichaClienteInteracao] = useState<Cliente | null>(null);
+  const [fichaClienteProposta, setFichaClienteProposta] = useState<Cliente | null>(null);
   const [dismissalTargetColaborador, setDismissalTargetColaborador] = useState<Colaborador | null>(null);
   const [isPublicOccurrenceFormOpen, setIsPublicOccurrenceFormOpen] = useState<boolean>(false);
   const [isAdmissionLinkModalOpen, setIsAdmissionLinkModalOpen] = useState<boolean>(false);
@@ -1880,6 +1896,41 @@ export default function App() {
     }
   };
 
+  // Ficha cadastral do cliente aberta fora do módulo Carteira de Clientes — mesma lógica de
+  // ClientsView.tsx (edição, interação, mudança de status, proposta comercial), só que
+  // acionável a partir de Empresas Atreladas/Dashboard Geral sem precisar do módulo inteiro.
+  const handleAbrirFichaCliente = (cliente: Cliente) => setFichaClienteSelecionado(cliente);
+
+  const handleEditarFichaCliente = (cliente: Cliente) => {
+    setFichaClienteSelecionado(null);
+    setFichaClienteEmEdicao(cliente);
+  };
+
+  const handleGerarPropostaFicha = (cliente: Cliente) => {
+    setFichaClienteSelecionado(null);
+    setFichaClienteProposta(cliente);
+  };
+
+  const handleSalvarInteracaoFicha = (clienteId: string, interacao: InteracaoCliente) => {
+    const target = clientes.find((c) => c.id === clienteId);
+    if (!target) return;
+    const updated: Cliente = {
+      ...target,
+      interacoes: [interacao, ...(target.interacoes || [])],
+      atualizadoEm: new Date().toISOString(),
+    };
+    handleSaveCliente(updated);
+    if (fichaClienteSelecionado?.id === clienteId) setFichaClienteSelecionado(updated);
+  };
+
+  const handleAtualizarStatusFicha = (clienteId: string, newStatus: Cliente['status']) => {
+    const target = clientes.find((c) => c.id === clienteId);
+    if (!target) return;
+    const updated: Cliente = { ...target, status: newStatus, atualizadoEm: new Date().toISOString() };
+    handleSaveCliente(updated);
+    if (fichaClienteSelecionado?.id === clienteId) setFichaClienteSelecionado(updated);
+  };
+
   // Farma Aéreo Handlers (Module 2)
   const handleSaveEmbarqueAereo = async (embarque: EmbarqueAereo) => {
     try {
@@ -2284,10 +2335,7 @@ export default function App() {
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
-              onSelectClienteDetail={() => {
-                setActiveGlobalModule('clientes');
-                setActiveSection('clientes');
-              }}
+              onSelectClienteDetail={handleAbrirFichaCliente}
             />
           )}
 
@@ -2325,10 +2373,7 @@ export default function App() {
                 setActiveSection('clientes');
               }}
               onOpenNovoColaborador={handleOpenNovoColaborador}
-              onSelectClienteDetail={() => {
-                setActiveGlobalModule('clientes');
-                setActiveSection('clientes');
-              }}
+              onSelectClienteDetail={handleAbrirFichaCliente}
               onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
               onOpenLinkModal={(mode) => handleOpenSectorLinkModal('farma_aereo', mode)}
               userRole={userRole}
@@ -2364,10 +2409,7 @@ export default function App() {
                 setActiveSection('clientes');
               }}
               onOpenNovoColaborador={handleOpenNovoColaborador}
-              onSelectClienteDetail={() => {
-                setActiveGlobalModule('clientes');
-                setActiveSection('clientes');
-              }}
+              onSelectClienteDetail={handleAbrirFichaCliente}
               onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
               onOpenLinkModal={(mode) => handleOpenSectorLinkModal('farma_rodoviario', mode)}
               userRole={userRole}
@@ -2754,6 +2796,46 @@ export default function App() {
           setDismissalTargetColaborador(c);
         }}
         criadoPor={currentUser?.nome}
+      />
+
+      {/* 2b. Ficha cadastral do Cliente — abre de fora do módulo Carteira de Clientes (Empresas
+          Atreladas do Farma Aéreo/Rodoviário, Dashboard Geral), pra quem tem acesso a essas
+          telas mas não ao módulo 'clientes' inteiro. */}
+      <ClientDetailModal
+        isOpen={!!fichaClienteSelecionado}
+        onClose={() => setFichaClienteSelecionado(null)}
+        cliente={fichaClienteSelecionado}
+        empregadores={empregadores}
+        supervisores={supervisores}
+        userRole={userRole}
+        onEdit={handleEditarFichaCliente}
+        onAddInteraction={(c) => setFichaClienteInteracao(c)}
+        onUpdateStatus={handleAtualizarStatusFicha}
+        onGerarProposta={handleGerarPropostaFicha}
+      />
+      <ClientFormModal
+        isOpen={!!fichaClienteEmEdicao}
+        onClose={() => setFichaClienteEmEdicao(null)}
+        onSave={(c) => {
+          handleSaveCliente(c);
+          setFichaClienteEmEdicao(null);
+        }}
+        initialData={fichaClienteEmEdicao}
+        empregadores={empregadores}
+        supervisores={supervisores}
+        existingClientsCount={clientes.length}
+      />
+      <ClientInteractionModal
+        isOpen={!!fichaClienteInteracao}
+        onClose={() => setFichaClienteInteracao(null)}
+        cliente={fichaClienteInteracao}
+        supervisores={supervisores}
+        onSaveInteraction={handleSalvarInteracaoFicha}
+      />
+      <PropostaComercialModal
+        isOpen={!!fichaClienteProposta}
+        onClose={() => setFichaClienteProposta(null)}
+        cliente={fichaClienteProposta}
       />
 
       {/* 3. Dismissal / Inactivation Modal */}
