@@ -554,7 +554,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                             type="button"
                             onClick={() => handleEnviarConvite(user)}
                             disabled={!user.email || enviandoConviteId === user.id}
-                            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-3 py-1.5 bg-amber-50 hover:bg-[#B38F4F] hover:text-white text-[#8A6A39] text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                             title={
                               user.email
                                 ? 'Envia um e-mail pra esta pessoa criar a própria senha de acesso'

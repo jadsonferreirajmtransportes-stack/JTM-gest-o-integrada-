@@ -194,7 +194,7 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({
           <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
             <div
               className={`h-full transition-all duration-500 rounded-full ${
-                progressPercent === 100 ? 'bg-emerald-500' : 'bg-blue-600'
+                progressPercent === 100 ? 'bg-emerald-500' : 'bg-[#B38F4F]'
               }`}
               style={{ width: `${progressPercent}%` }}
             />
@@ -273,7 +273,7 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({
 
         <button
           onClick={() => onEdit(viagem)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition-colors"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-[#B38F4F] hover:bg-amber-50 border border-slate-200 transition-colors"
           title="Editar Viagem"
         >
           <Edit2 className="w-3.5 h-3.5" />

@@ -232,7 +232,7 @@ export const SectorRevenueTab: React.FC<SectorRevenueTabProps> = ({
 
             <button
               onClick={onOpenLinkModal}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs transition-colors"
             >
               <Building2 className="w-3.5 h-3.5" />
               <span>Vincular Empresa</span>
@@ -294,7 +294,7 @@ export const SectorRevenueTab: React.FC<SectorRevenueTabProps> = ({
                         <div className="inline-flex items-center gap-1.5">
                           <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                             <div
-                              className="bg-blue-600 h-1.5 rounded-full"
+                              className="bg-[#B38F4F] h-1.5 rounded-full"
                               style={{ width: `${Math.min(100, part)}%` }}
                             />
                           </div>

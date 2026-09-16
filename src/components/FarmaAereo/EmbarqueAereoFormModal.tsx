@@ -198,7 +198,7 @@ export const EmbarqueAereoFormModal: React.FC<EmbarqueAereoFormModalProps> = ({
         {/* Header */}
         <div className="px-6 py-4 bg-white flex items-center justify-between border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#B38F4F]">
               <Plane className="w-5 h-5" />
             </div>
             <div>
@@ -223,7 +223,7 @@ export const EmbarqueAereoFormModal: React.FC<EmbarqueAereoFormModalProps> = ({
           {/* Section 1: AWB, Airline & Route */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-4">
             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-              <Plane className="w-4 h-4 text-blue-600" />
+              <Plane className="w-4 h-4 text-[#B38F4F]" />
               Identificação do Voo & AWB
             </h3>
 
@@ -558,7 +558,7 @@ export const EmbarqueAereoFormModal: React.FC<EmbarqueAereoFormModalProps> = ({
           </button>
           <button
             onClick={handleSubmit}
-            className="px-6 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+            className="px-6 py-2 text-xs font-bold text-white bg-[#B38F4F] hover:bg-[#8A6A39] rounded-lg shadow-sm transition-colors flex items-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
             {initialData ? 'Salvar Alterações' : 'Cadastrar Embarque Aéreo'}

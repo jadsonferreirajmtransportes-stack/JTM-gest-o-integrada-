@@ -223,11 +223,11 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 onClick={() => setSetor('farma_aereo')}
                 className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
                   setor === 'farma_aereo'
-                    ? 'border-sky-500 bg-sky-50/70 ring-2 ring-sky-500/30 text-slate-900 font-bold'
+                    ? 'border-[#B38F4F] bg-[#B38F4F]/10 ring-2 ring-[#B38F4F]/30 text-slate-900 font-bold'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className={`p-2 rounded-lg ${setor === 'farma_aereo' ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                <div className={`p-2 rounded-lg ${setor === 'farma_aereo' ? 'bg-[#B38F4F] text-white' : 'bg-slate-100 text-slate-600'}`}>
                   <Plane className="w-4 h-4" />
                 </div>
                 <div>
@@ -241,11 +241,11 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 onClick={() => setSetor('geral')}
                 className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
                   setor === 'geral'
-                    ? 'border-purple-500 bg-purple-50/70 ring-2 ring-purple-500/30 text-slate-900 font-bold'
+                    ? 'border-[#B38F4F] bg-[#B38F4F]/10 ring-2 ring-[#B38F4F]/30 text-slate-900 font-bold'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className={`p-2 rounded-lg ${setor === 'geral' ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                <div className={`p-2 rounded-lg ${setor === 'geral' ? 'bg-[#B38F4F] text-white' : 'bg-slate-100 text-slate-600'}`}>
                   <Building2 className="w-4 h-4" />
                 </div>
                 <div>

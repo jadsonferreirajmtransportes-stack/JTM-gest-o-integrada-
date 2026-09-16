@@ -190,7 +190,7 @@ export const ViagemDetailModal: React.FC<ViagemDetailModalProps> = ({
             {/* Departure Checklist */}
             <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-2">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-blue-600" />
+                <ShieldCheck className="w-4 h-4 text-[#B38F4F]" />
                 Checklist de Partida & ANVISA
               </span>
               <div className="space-y-1 text-xs">
@@ -321,7 +321,7 @@ export const ViagemDetailModal: React.FC<ViagemDetailModalProps> = ({
                       ) : (
                         <button
                           onClick={() => setSelectedPontoId(ponto.id)}
-                          className="px-3 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-xs"
+                          className="px-3 py-1.5 text-xs font-bold bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg transition-colors shadow-xs"
                         >
                           Dar Baixa na Entrega
                         </button>
@@ -331,8 +331,8 @@ export const ViagemDetailModal: React.FC<ViagemDetailModalProps> = ({
 
                   {/* Inline Check-in Form */}
                   {selectedPontoId === ponto.id && (
-                    <div className="mt-4 p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl space-y-3 animate-fade-in">
-                      <span className="text-xs font-bold text-blue-900 block">
+                    <div className="mt-4 p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-3 animate-fade-in">
+                      <span className="text-xs font-bold text-[#5c4526] block">
                         Confirmar Recebimento Farmacêutico RDC 430:
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

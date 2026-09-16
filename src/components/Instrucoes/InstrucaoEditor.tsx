@@ -572,7 +572,7 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
             onClick={() => setShowCompartilhar((v) => !v)}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-[11px] font-medium transition-colors ${
               (form.usuariosMarcadosIds || []).length > 0
-                ? 'bg-teal-50 border-teal-200 text-teal-800'
+                ? 'bg-amber-50 border-amber-200 text-[#8A6A39]'
                 : 'bg-white border-dashed border-slate-300 text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -601,8 +601,8 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
                         onClick={() => handleToggleUsuarioMarcado(u.id)}
                         className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border flex items-center gap-1 transition-colors ${
                           marcado
-                            ? 'bg-teal-600 border-teal-600 text-white'
-                            : 'bg-white border-slate-300 text-slate-600 hover:border-teal-300'
+                            ? 'bg-[#B38F4F] border-[#B38F4F] text-white'
+                            : 'bg-white border-slate-300 text-slate-600 hover:border-amber-300'
                         }`}
                       >
                         {marcado && <Check className="w-3 h-3" />}

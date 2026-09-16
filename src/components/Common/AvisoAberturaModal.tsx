@@ -41,20 +41,20 @@ export const AvisoAberturaModal: React.FC<AvisoAberturaModalProps> = ({
     <div className="fixed inset-0 z-[70] overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Banner */}
-        <div className="bg-gradient-to-r from-indigo-700 to-indigo-600 p-5 text-white flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[#8A6A39] to-[#B38F4F] p-5 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-800/60 border border-indigo-400/30 flex items-center justify-center text-white">
-              <Bell className="w-5 h-5 text-indigo-200" />
+            <div className="w-10 h-10 rounded-xl bg-[#8A6A39]/60 border border-amber-400/30 flex items-center justify-center text-white">
+              <Bell className="w-5 h-5 text-amber-200" />
             </div>
             <div>
               <h2 className="text-base font-bold leading-tight">Avisos do Dia</h2>
-              <p className="text-xs text-indigo-100">Compromissos de hoje e prazos de projetos</p>
+              <p className="text-xs text-amber-100">Compromissos de hoje e prazos de projetos</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-indigo-200 hover:text-white rounded-lg hover:bg-indigo-800/50"
+            className="p-1.5 text-amber-200 hover:text-white rounded-lg hover:bg-[#8A6A39]/50"
           >
             <X className="w-5 h-5" />
           </button>
@@ -158,7 +158,7 @@ export const AvisoAberturaModal: React.FC<AvisoAberturaModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5"
+            className="px-4 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5"
           >
             <span>Ciente</span>
             <ArrowRight className="w-3.5 h-3.5" />

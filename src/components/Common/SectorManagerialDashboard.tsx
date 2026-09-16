@@ -352,7 +352,7 @@ export const SectorManagerialDashboard: React.FC<SectorManagerialDashboardProps>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-indigo-600 h-2 rounded-full"
+                    className="bg-[#B38F4F] h-2 rounded-full"
                     style={{
                       width: `${Math.min(
                         100,
