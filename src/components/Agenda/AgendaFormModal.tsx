@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Calendar,
@@ -13,6 +13,9 @@ import {
   FileText,
   Briefcase,
   Video,
+  Paperclip,
+  Upload,
+  Download,
 } from 'lucide-react';
 import {
   AtividadeGestao,
@@ -24,6 +27,7 @@ import {
   Supervisor,
   Colaborador,
   ItemDeliberacaoAta,
+  AnexoAtividadeGestao,
   UsuarioLogin,
 } from '../../types';
 import { CATEGORIA_CONFIG, getTipoLocalEfetivo } from './agendaUtils';
@@ -120,6 +124,14 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
   const [novoItemDeliberacao, setNovoItemDeliberacao] = useState('');
   const [novoItemResponsavel, setNovoItemResponsavel] = useState('');
 
+  const [anexos, setAnexos] = useState<AnexoAtividadeGestao[]>(initialData?.anexos || []);
+  const [erroAnexo, setErroAnexo] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Mesmo limite por arquivo já usado no anexo do Chat Interno — anexo vira base64 direto na
+  // linha (sem bucket de Storage separado), e um arquivo grande demais arrisca estourar o tempo
+  // limite da gravação no banco (já visto antes com anexos de colaborador).
+  const TAMANHO_MAXIMO_ANEXO_MB = 5;
+
   // Reajusta todos os campos sempre que o modal é reaberto — como o componente nunca é
   // desmontado (apenas o prop `isOpen` alterna), sem isso o formulário mantinha os dados
   // digitados na última vez que foi usado (edição ou criação anterior).
@@ -149,6 +161,8 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
     setDeliberacoes(initialData?.deliberacoes || []);
     setNovoItemDeliberacao('');
     setNovoItemResponsavel('');
+    setAnexos(initialData?.anexos || []);
+    setErroAnexo(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialData, selectedDate]);
 
@@ -179,6 +193,37 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
     setDeliberacoes(
       deliberacoes.map((d) => (d.id === id ? { ...d, concluido: !d.concluido } : d))
     );
+  };
+
+  const handleSelecionarAnexo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    const tamanhoMB = file.size / (1024 * 1024);
+    if (tamanhoMB > TAMANHO_MAXIMO_ANEXO_MB) {
+      setErroAnexo(`"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite por arquivo é ${TAMANHO_MAXIMO_ANEXO_MB}MB.`);
+      return;
+    }
+
+    setErroAnexo(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const novoAnexo: AnexoAtividadeGestao = {
+        id: `anexo-atv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        nome: file.name,
+        tipo: file.type || 'application/octet-stream',
+        tamanho: tamanhoMB >= 1 ? `${tamanhoMB.toFixed(1)} MB` : `${Math.round(file.size / 1024)} KB`,
+        dataUpload: new Date().toISOString(),
+        arquivoUrl: reader.result as string,
+      };
+      setAnexos((prev) => [...prev, novoAnexo]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoverAnexo = (id: string) => {
+    setAnexos((prev) => prev.filter((a) => a.id !== id));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -217,6 +262,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
       linkLocalizacao: tipoLocal === 'presencial' ? linkLocalizacao.trim() || undefined : undefined,
       pautaAta: pautaAta.trim() || undefined,
       deliberacoes,
+      anexos,
       moduloRelacionado,
       recorrencia,
       criadoEm: initialData?.criadoEm || new Date().toISOString(),
@@ -700,6 +746,73 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                 Adicionar
               </button>
             </div>
+          </div>
+
+          {/* Documentos / Anexos */}
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
+                Documentos / Anexos ({anexos.length})
+              </span>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-medium transition-colors flex items-center gap-1.5 shrink-0"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Anexar</span>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleSelecionarAnexo}
+                className="hidden"
+              />
+            </div>
+
+            {erroAnexo && (
+              <p className="text-[11px] text-rose-600 font-medium">{erroAnexo}</p>
+            )}
+
+            {anexos.length > 0 && (
+              <div className="space-y-1.5">
+                {anexos.map((anexo) => (
+                  <div
+                    key={anexo.id}
+                    className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200"
+                  >
+                    <a
+                      href={anexo.arquivoUrl}
+                      download={anexo.nome}
+                      className="flex items-center gap-2 min-w-0 flex-1 text-slate-700 hover:text-indigo-700"
+                      title="Baixar anexo"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span className="truncate font-medium">{anexo.nome}</span>
+                      {anexo.tamanho && (
+                        <span className="text-[10px] text-slate-400 font-mono shrink-0">{anexo.tamanho}</span>
+                      )}
+                      <Download className="w-3 h-3 text-slate-300 shrink-0" />
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoverAnexo(anexo.id)}
+                      className="p-1 text-slate-400 hover:text-rose-500 transition-colors shrink-0"
+                      title="Remover anexo"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {anexos.length === 0 && !erroAnexo && (
+              <p className="text-[11px] text-slate-400 italic">
+                Nenhum documento anexado — ata assinada, pauta em PDF, planilha etc.
+              </p>
+            )}
           </div>
 
           {/* Modal Actions */}

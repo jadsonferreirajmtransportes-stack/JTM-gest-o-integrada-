@@ -23,6 +23,7 @@ import {
   BellRing,
   Video,
   Navigation,
+  Paperclip,
 } from 'lucide-react';
 import { AtividadeGestao, StatusAtividadeGestao, ItemDeliberacaoAta } from '../../types';
 import {
@@ -404,6 +405,34 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Documentos / Anexos */}
+          {atividade.anexos && atividade.anexos.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="font-semibold text-slate-800 flex items-center gap-1.5">
+                <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
+                Documentos / Anexos ({atividade.anexos.length})
+              </span>
+              <div className="space-y-1.5">
+                {atividade.anexos.map((anexo) => (
+                  <a
+                    key={anexo.id}
+                    href={anexo.arquivoUrl}
+                    download={anexo.nome}
+                    className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700 hover:text-indigo-700 hover:border-indigo-300 transition-colors"
+                    title="Baixar anexo"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    <span className="truncate font-medium flex-1">{anexo.nome}</span>
+                    {anexo.tamanho && (
+                      <span className="text-[10px] text-slate-400 font-mono shrink-0">{anexo.tamanho}</span>
+                    )}
+                    <Download className="w-3 h-3 text-slate-400 shrink-0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Modal Footer Actions */}

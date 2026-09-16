@@ -1369,6 +1369,18 @@ export interface ItemDeliberacaoAta {
   prazo?: string;
 }
 
+/** Anexo de documento numa Atividade da Gestão (ata assinada, pauta em PDF, planilha de
+ *  auditoria etc.) — mesmo padrão de data URL base64 direto na linha usado em outros anexos do
+ *  sistema (AnexoColaborador, AnexoDocumentoProjeto), sem bucket de Storage separado. */
+export interface AnexoAtividadeGestao {
+  id: string;
+  nome: string;
+  tipo: string; // mime type
+  tamanho?: string;
+  dataUpload: string;
+  arquivoUrl: string; // Data URL Base64
+}
+
 export interface AtividadeGestao {
   id: string;
   titulo: string;
@@ -1403,6 +1415,7 @@ export interface AtividadeGestao {
   linkLocalizacao?: string;
   pautaAta?: string;
   deliberacoes?: ItemDeliberacaoAta[];
+  anexos?: AnexoAtividadeGestao[];
   moduloRelacionado?: GlobalModuleId | 'geral';
   projetoRelacionadoId?: string;
   lembreteMinutos?: number;
