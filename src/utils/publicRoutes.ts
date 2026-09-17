@@ -24,6 +24,8 @@ export function isRotaPublica(): boolean {
     formParam === 'instrucao' ||
     hash === '#instrucao' ||
     formParam === 'ficha' ||
-    hash === '#ficha'
+    hash === '#ficha' ||
+    formParam === 'nota' ||
+    hash === '#nota'
   );
 }

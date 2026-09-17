@@ -23,8 +23,6 @@ import {
   Eye,
   Share2,
   Check,
-  MessageCircle,
-  Mail,
 } from 'lucide-react';
 import {
   BlocoNota,
@@ -37,8 +35,7 @@ import {
   UsuarioLogin,
 } from '../../types';
 import { BLOCO_CONFIG, ICONES_SUGERIDOS, criarBlocoVazio, getFileKind } from './notasUtils';
-import { buildMensagemNotaWhatsApp, buildAssuntoEmailNota, buildCorpoEmailNota } from './notaComunicacaoUtils';
-import { getWhatsAppShareUrl } from '../Agenda/agendaUtils';
+import { CompartilharNotaModal } from './CompartilharNotaModal';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { FluxogramaBlock } from './FluxogramaBlock';
 import { TabelaBlock } from './TabelaBlock';
@@ -50,6 +47,7 @@ interface NotaEditorProps {
   onOpenVincular: () => void;
   onNavigateToVinculo?: (modulo: GlobalModuleId) => void;
   usuarios: UsuarioLogin[];
+  criadoPor?: string;
 }
 
 const VINCULO_ICON: Record<VinculoNotaModulo['tipoEntidade'], React.ElementType> = {
@@ -61,7 +59,7 @@ const VINCULO_ICON: Record<VinculoNotaModulo['tipoEntidade'], React.ElementType>
   ocorrencia: AlertTriangle,
 };
 
-export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete, onOpenVincular, onNavigateToVinculo, usuarios }) => {
+export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete, onOpenVincular, onNavigateToVinculo, usuarios, criadoPor }) => {
   const [titulo, setTitulo] = useState(pagina.titulo);
   const [icone, setIcone] = useState(pagina.icone || '📄');
   const [blocos, setBlocos] = useState<BlocoNota[]>(pagina.blocos.length ? pagina.blocos : [criarBlocoVazio()]);
@@ -70,6 +68,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
   const [viewingImage, setViewingImage] = useState<{ url: string; nome?: string; titulo: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCompartilhar, setShowCompartilhar] = useState(false);
+  const [showCompartilharLink, setShowCompartilharLink] = useState(false);
 
   useEffect(() => {
     setTitulo(pagina.titulo);
@@ -551,29 +550,16 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
           </span>
         </button>
 
-        {/* Compartilhar por fora do sistema (WhatsApp/e-mail) — converte os blocos em texto
-            simples; sem destinatário fixo, abre o seletor de conversa/o cliente de e-mail. */}
+        {/* Compartilhar por fora do sistema — gera um link de visualização (somente leitura,
+            sem login) e manda por WhatsApp/e-mail a partir dele, em vez de colar o texto puro. */}
         <button
           type="button"
-          onClick={() => window.open(getWhatsAppShareUrl(buildMensagemNotaWhatsApp(pagina)), '_blank')}
-          title="Compartilhar por WhatsApp"
-          className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border border-dashed border-slate-300 rounded-lg text-[11px] font-medium text-slate-500 hover:text-emerald-700 hover:border-emerald-300 transition-colors"
+          onClick={() => setShowCompartilharLink(true)}
+          title="Gerar link de visualização (WhatsApp / e-mail)"
+          className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border border-dashed border-slate-300 rounded-lg text-[11px] font-medium text-slate-500 hover:text-[#8A6A39] hover:border-amber-300 transition-colors"
         >
-          <MessageCircle className="w-3.5 h-3.5" />
-          <span>WhatsApp</span>
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            (window.location.href = `mailto:?subject=${encodeURIComponent(
-              buildAssuntoEmailNota(pagina)
-            )}&body=${encodeURIComponent(buildCorpoEmailNota(pagina))}`)
-          }
-          title="Compartilhar por e-mail"
-          className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border border-dashed border-slate-300 rounded-lg text-[11px] font-medium text-slate-500 hover:text-blue-700 hover:border-blue-300 transition-colors"
-        >
-          <Mail className="w-3.5 h-3.5" />
-          <span>E-mail</span>
+          <Link2 className="w-3.5 h-3.5" />
+          <span>Link de Visualização</span>
         </button>
 
         {showCompartilhar && (
@@ -719,6 +705,13 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
           </div>
         </div>
       )}
+
+      <CompartilharNotaModal
+        isOpen={showCompartilharLink}
+        onClose={() => setShowCompartilharLink(false)}
+        pagina={pagina}
+        criadoPor={criadoPor}
+      />
     </div>
   );
 };

@@ -198,6 +198,7 @@ import { PublicOccurrenceForm } from './components/Occurrences/PublicOccurrenceF
 import { PublicOccurrencePortal } from './components/Occurrences/PublicOccurrencePortal';
 import { PublicInstrucaoForm } from './components/Instrucoes/PublicInstrucaoForm';
 import { FichaCadastralPublicView } from './components/Employees/FichaCadastralPublicView';
+import { NotaPublicView } from './components/Notas/NotaPublicView';
 import { OccurrenceLinkModal } from './components/Occurrences/OccurrenceLinkModal';
 import { AnvisaExamsView } from './components/Health/AnvisaExamsView';
 import { OnboardingView } from './components/Onboarding/OnboardingView';
@@ -517,6 +518,10 @@ export default function App() {
   // Public shared Ficha Cadastral view (read-only, sem login) — via ?form=ficha&token=...
   const [isFichaCadastralPublicaView, setIsFichaCadastralPublicaView] = useState<boolean>(false);
   const [fichaCadastralPublicaToken, setFichaCadastralPublicaToken] = useState<string | undefined>(undefined);
+
+  // Public shared Nota (Notas & Ideias) view (read-only, sem login) — via ?form=nota&token=...
+  const [isNotaPublicaView, setIsNotaPublicaView] = useState<boolean>(false);
+  const [notaPublicaToken, setNotaPublicaToken] = useState<string | undefined>(undefined);
 
   // Modals State
   const [isAvisoAberturaOpen, setIsAvisoAberturaOpen] = useState<boolean>(false);
@@ -868,6 +873,9 @@ export default function App() {
       } else if (formParam === 'ficha' || hash === '#ficha') {
         setIsFichaCadastralPublicaView(true);
         setFichaCadastralPublicaToken(searchParams.get('token') || undefined);
+      } else if (formParam === 'nota' || hash === '#nota') {
+        setIsNotaPublicaView(true);
+        setNotaPublicaToken(searchParams.get('token') || undefined);
       }
     }
   }, []);
@@ -2323,6 +2331,20 @@ export default function App() {
           setIsFichaCadastralPublicaView(false);
           setActiveGlobalModule('dp');
           setActiveSection('colaboradores');
+        }}
+      />
+    );
+  }
+
+  // IF Public shared Nota (Notas & Ideias) view is active (via direct link)
+  if (isNotaPublicaView) {
+    return (
+      <NotaPublicView
+        token={notaPublicaToken}
+        onAdminBack={() => {
+          setIsNotaPublicaView(false);
+          setActiveGlobalModule('notas');
+          setActiveSection('notas');
         }}
       />
     );

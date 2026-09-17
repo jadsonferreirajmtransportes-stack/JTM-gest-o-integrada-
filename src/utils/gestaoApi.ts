@@ -356,6 +356,101 @@ export async function deleteNotaPagina(id: string): Promise<void> {
 }
 
 // ============================================================================
+// LINKS DE COMPARTILHAMENTO DE UMA PÁGINA DE NOTAS (visualização pública, sem
+// login) — mesmo padrão de FichaCompartilhada em dpApi.ts, ver migração
+// 031_notas_compartilhadas.sql.
+// ============================================================================
+export interface NotaCompartilhada {
+  token: string;
+  notaId: string;
+  notaTitulo: string;
+  dados: Record<string, any>;
+  criadoEm: string;
+  criadoPor?: string;
+  expiraEm: string;
+  revogado: boolean;
+}
+
+function gerarTokenNotaCompartilhada(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function rowToNotaCompartilhada(r: any): NotaCompartilhada {
+  return {
+    token: r.token,
+    notaId: r.nota_id,
+    notaTitulo: r.nota_titulo,
+    dados: r.dados,
+    criadoEm: r.criado_em,
+    criadoPor: u(r.criado_por),
+    expiraEm: r.expira_em,
+    revogado: r.revogado,
+  };
+}
+
+/** Gera um link de visualização (foto/snapshot dos blocos agora) — expira sozinho depois de
+ *  `validadeDias` e pode ser revogado antes disso. */
+export async function gerarLinkNotaCompartilhada(
+  pagina: NotaPagina,
+  criadoPor?: string,
+  validadeDias = 7
+): Promise<NotaCompartilhada> {
+  const token = gerarTokenNotaCompartilhada();
+  const dados = { titulo: pagina.titulo, icone: pagina.icone, blocos: pagina.blocos };
+  const expiraEm = new Date(Date.now() + validadeDias * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error } = await supabase.from('notas_compartilhadas').insert({
+    token,
+    nota_id: pagina.id,
+    nota_titulo: pagina.titulo || 'Sem título',
+    dados,
+    criado_por: n(criadoPor),
+    expira_em: expiraEm,
+  });
+  assertNoError(error, 'gerarLinkNotaCompartilhada');
+
+  return {
+    token,
+    notaId: pagina.id,
+    notaTitulo: pagina.titulo || 'Sem título',
+    dados,
+    criadoEm: new Date().toISOString(),
+    criadoPor,
+    expiraEm,
+    revogado: false,
+  };
+}
+
+/** Lista os links já gerados pra uma página (mais recente primeiro). */
+export async function listarLinksNotaCompartilhada(notaId: string): Promise<NotaCompartilhada[]> {
+  const { data, error } = await supabase
+    .from('notas_compartilhadas')
+    .select('*')
+    .eq('nota_id', notaId)
+    .order('criado_em', { ascending: false });
+  assertNoError(error, 'listarLinksNotaCompartilhada');
+  return (data ?? []).map(rowToNotaCompartilhada);
+}
+
+/** Revoga um link antes do prazo — a partir daqui, o token nunca mais é aceito. */
+export async function revogarLinkNotaCompartilhada(token: string): Promise<void> {
+  const { error } = await supabase.from('notas_compartilhadas').update({ revogado: true }).eq('token', token);
+  assertNoError(error, 'revogarLinkNotaCompartilhada');
+}
+
+/** Usada pela tela pública (sem login, papel "anon"). Retorna null se o link for
+ *  inválido/expirado/revogado — a tela decide o que mostrar. */
+export async function obterNotaCompartilhadaPublica(token: string): Promise<Record<string, any> | null> {
+  const { data, error } = await supabase.rpc('obter_nota_compartilhada', { p_token: token });
+  assertNoError(error, 'obterNotaCompartilhadaPublica');
+  return (data as Record<string, any> | null) ?? null;
+}
+
+// ============================================================================
 // INSTRUÇÕES DE TRABALHO
 // ============================================================================
 function rowToInstrucao(r: any): InstrucaoTrabalho {

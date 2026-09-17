@@ -314,6 +314,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
               onOpenVincular={() => setIsVincularOpen(true)}
               onNavigateToVinculo={onNavigateModule}
               usuarios={usuarios}
+              criadoPor={currentUserName}
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center py-16">
