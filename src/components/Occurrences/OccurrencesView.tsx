@@ -296,7 +296,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                 <th className="py-3 px-3">Descrição / Detalhes</th>
                 <th className="py-3 px-3">Anexo / Comprovante</th>
                 <th className="py-3 px-4">Registrado por</th>
-                <th className="py-3 px-4 text-right">Ações</th>
+                <th className="py-3 px-4 text-right sticky right-0 bg-slate-50 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)]">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -311,7 +311,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                   const colab = colaboradores.find((c) => c.id === item.colaboradorId);
 
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={item.id} className="group hover:bg-slate-50/80 transition-colors">
                       <td className="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">
                         {formatDate(item.dataOcorrencia)}
                       </td>
@@ -390,7 +390,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                         {item.registradoPor || 'Departamento Pessoal'}
                       </td>
 
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-right sticky right-0 bg-white group-hover:bg-slate-50/80 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)]">
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(item)}
