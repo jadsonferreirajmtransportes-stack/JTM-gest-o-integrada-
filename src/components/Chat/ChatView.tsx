@@ -11,10 +11,19 @@ import {
   NotebookPen,
   CalendarDays,
   FolderKanban,
+  FileCheck2,
   AtSign,
   Trash2,
 } from 'lucide-react';
-import { ConversaChat, MensagemChat, UsuarioLogin, NotaPagina, AtividadeGestao, ProjetoGerencial } from '../../types';
+import {
+  ConversaChat,
+  MensagemChat,
+  UsuarioLogin,
+  NotaPagina,
+  AtividadeGestao,
+  ProjetoGerencial,
+  InstrucaoTrabalho,
+} from '../../types';
 import { getMensagens, assinarMensagensNovas, AnexoMensagemChat } from '../../utils/chatApi';
 import { NovaConversaModal } from './NovaConversaModal';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
@@ -30,12 +39,13 @@ interface ChatViewProps {
   onCriarConversaGrupo: (nome: string, participantesIds: string[]) => void;
   /** Exclui a conversa (e todo o histórico dela) pra todo mundo que participava. */
   onExcluirConversa: (conversaId: string) => void;
-  /** Pra @mencionar Notas, Atividades da Agenda e Projetos dentro de uma mensagem. */
+  /** Pra @mencionar Notas, Atividades da Agenda, Projetos e Instruções de Trabalho numa mensagem. */
   notas?: NotaPagina[];
   atividades?: AtividadeGestao[];
   projetos?: ProjetoGerencial[];
+  instrucoes?: InstrucaoTrabalho[];
   /** Clicou numa menção dentro de uma mensagem — leva pro módulo correspondente e abre o item. */
-  onAbrirMencao?: (tipo: 'nota' | 'atividade' | 'projeto', id: string) => void;
+  onAbrirMencao?: (tipo: 'nota' | 'atividade' | 'projeto' | 'instrucao', id: string) => void;
 }
 
 // Tamanho máximo de anexo — data URL (base64) direto na linha do banco, sem bucket de Storage;
@@ -46,10 +56,10 @@ const TAMANHO_MAXIMO_ANEXO_MB = 5;
 // Token de menção embutido no texto puro da mensagem: @{tipo:id:título}. O título vai junto (não
 // só o id) pra a mensagem continuar legível mesmo se o item mencionado for renomeado ou
 // arquivado depois — mesmo princípio de "snapshot no momento" que outros chats usam.
-const REGEX_MENCAO = /@\{(nota|atividade|projeto):([^:}]+):([^}]+)\}/g;
+const REGEX_MENCAO = /@\{(nota|atividade|projeto|instrucao):([^:}]+):([^}]+)\}/g;
 
 interface ItemMencionavel {
-  tipo: 'nota' | 'atividade' | 'projeto';
+  tipo: 'nota' | 'atividade' | 'projeto' | 'instrucao';
   id: string;
   titulo: string;
   subtitulo?: string;
@@ -59,13 +69,26 @@ const ICONE_MENCAO: Record<ItemMencionavel['tipo'], React.ElementType> = {
   nota: NotebookPen,
   atividade: CalendarDays,
   projeto: FolderKanban,
+  instrucao: FileCheck2,
 };
 
 const COR_MENCAO: Record<ItemMencionavel['tipo'], string> = {
   nota: 'bg-teal-50 text-teal-700 border-teal-200',
   atividade: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   projeto: 'bg-purple-50 text-purple-700 border-purple-200',
+  instrucao: 'bg-sky-50 text-sky-700 border-sky-200',
 };
+
+// Remove acentos pra buscar "reuniao" e achar "Reunião" (mesmo padrão de normalizeKey em
+// faturamentoAereoUtils.ts) — sem isso, o filtro de @menção rejeitava qualquer busca cujos
+// acentos não batessem exatamente com o título salvo, fazendo itens existentes "nunca aparecerem".
+function normalizarBuscaMencao(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+}
 
 function nomeDaConversa(conversa: ConversaChat, usuarios: UsuarioLogin[], currentUserId: string): string {
   if (conversa.tipo === 'grupo') return conversa.nome || 'Grupo sem nome';
@@ -93,7 +116,7 @@ function formatHora(iso: string): string {
 function renderTextoComMencoes(
   texto: string,
   propria: boolean,
-  onAbrirMencao?: (tipo: 'nota' | 'atividade' | 'projeto', id: string) => void
+  onAbrirMencao?: (tipo: ItemMencionavel['tipo'], id: string) => void
 ): React.ReactNode[] {
   const partes: React.ReactNode[] = [];
   let ultimoIndice = 0;
@@ -143,6 +166,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   notas = [],
   atividades = [],
   projetos = [],
+  instrucoes = [],
   onAbrirMencao,
 }) => {
   const [conversaAbertaId, setConversaAbertaId] = useState<string | null>(null);
@@ -250,7 +274,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   };
 
   // ------------------------------------------------------------------
-  // Menções (@Notas, @Agenda, @Projetos)
+  // Menções (@Notas, @Agenda, @Projetos, @Instruções de Trabalho)
   // ------------------------------------------------------------------
   const itensMencionaveis = useMemo<ItemMencionavel[]>(() => {
     const deNotas: ItemMencionavel[] = notas
@@ -268,14 +292,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
       titulo: p.titulo,
       subtitulo: p.codigo,
     }));
-    return [...deNotas, ...deAtividades, ...deProjetos];
-  }, [notas, atividades, projetos]);
+    const deInstrucoes: ItemMencionavel[] = instrucoes
+      .filter((i) => !i.arquivada)
+      .map((i) => ({ tipo: 'instrucao' as const, id: i.id, titulo: i.titulo, subtitulo: i.codigo }));
+    return [...deNotas, ...deAtividades, ...deProjetos, ...deInstrucoes];
+  }, [notas, atividades, projetos, instrucoes]);
 
   const resultadosMencao = useMemo(() => {
     if (mencaoQuery === null) return [];
-    const termo = mencaoQuery.trim().toLowerCase();
+    const termo = normalizarBuscaMencao(mencaoQuery);
     const filtrados = termo
-      ? itensMencionaveis.filter((i) => i.titulo.toLowerCase().includes(termo))
+      ? itensMencionaveis.filter((i) => normalizarBuscaMencao(i.titulo).includes(termo))
       : itensMencionaveis;
     return filtrados.slice(0, 6);
   }, [mencaoQuery, itensMencionaveis]);
@@ -569,7 +596,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                       handleEnviar();
                     }
                   }}
-                  placeholder="Escreva uma mensagem... (@ pra mencionar Nota, Agenda ou Projeto)"
+                  placeholder="Escreva uma mensagem... (@ pra mencionar Nota, Agenda, Projeto ou Instrução)"
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400"
                 />
                 <AtSign className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />

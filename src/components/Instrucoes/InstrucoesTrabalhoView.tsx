@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FileCheck2, Plus, Search, Star, X, FileText, Layers, Sparkles, Share2 } from 'lucide-react';
 import {
   InstrucaoTrabalho,
@@ -34,6 +34,10 @@ interface InstrucoesTrabalhoViewProps {
   ocorrencias: Ocorrencia[];
   atividadesGestao: AtividadeGestao[];
   usuarios: UsuarioLogin[];
+  /** Id de uma instrução pra abrir automaticamente (ex.: veio de uma menção no Chat). */
+  abrirInstrucaoId?: string;
+  /** Muda a cada clique de menção, mesmo pra mesma instrução, pra forçar reabrir. */
+  abrirInstrucaoSinal?: number;
 }
 
 export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
@@ -50,6 +54,8 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
   ocorrencias,
   atividadesGestao,
   usuarios,
+  abrirInstrucaoId,
+  abrirInstrucaoSinal,
 }) => {
   const instrucoesAtivas = useMemo(() => instrucoes.filter((i) => !i.arquivada), [instrucoes]);
 
@@ -62,6 +68,15 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
   const [categoriaEscolhida, setCategoriaEscolhida] = useState<CategoriaInstrucaoTrabalho | null>(null);
 
   const instrucaoSelecionada = instrucoesAtivas.find((i) => i.id === selectedId) || null;
+
+  // Chegou uma menção do Chat pedindo pra abrir uma instrução específica.
+  useEffect(() => {
+    if (!abrirInstrucaoId) return;
+    setSelectedId(abrirInstrucaoId);
+    setSearchTerm('');
+    setFiltroCategoria('todas');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abrirInstrucaoSinal]);
 
   const listaFiltrada = useMemo(() => {
     return instrucoesAtivas.filter((i) => {

@@ -479,7 +479,7 @@ export default function App() {
   // correspondente usa isso pra abrir o item específico assim que é montada/atualizada.
   // "sinal" muda a cada clique, mesmo pro mesmo item, pra forçar reabrir o detalhe.
   const [mencaoAlvo, setMencaoAlvo] = useState<{
-    tipo: 'nota' | 'atividade' | 'projeto';
+    tipo: 'nota' | 'atividade' | 'projeto' | 'instrucao';
     id: string;
     sinal: number;
   } | null>(null);
@@ -693,13 +693,16 @@ export default function App() {
 
   // Menção a Nota/Atividade/Projeto dentro de uma mensagem do Chat Interno — leva pro módulo
   // certo e pede pra tela abrir o item específico assim que estiver montada.
-  const handleAbrirMencaoChat = (tipo: 'nota' | 'atividade' | 'projeto', id: string) => {
+  const handleAbrirMencaoChat = (tipo: 'nota' | 'atividade' | 'projeto' | 'instrucao', id: string) => {
     if (tipo === 'nota') {
       setActiveGlobalModule('notas');
       setActiveSection('notas');
     } else if (tipo === 'atividade') {
       setActiveGlobalModule('agenda');
       setActiveSection('agenda_gestao');
+    } else if (tipo === 'instrucao') {
+      setActiveGlobalModule('instrucoes');
+      setActiveSection('instrucoes');
     } else {
       setActiveGlobalModule('projetos');
       setActiveSection('projetos');
@@ -1509,9 +1512,15 @@ export default function App() {
   const handleSaveProjeto = async (proj: ProjetoGerencial) => {
     // Carimba quem criou (só na primeira vez) pra podeVerRegistroCompartilhado saber quem, além
     // de admin e quem for marcado, enxerga este projeto — mesma regra da Agenda da Gestão.
+    // Também garante que quem está salvando continue vendo o próprio registro depois — ver
+    // handleSaveAtividadeGestao pra explicação completa do bug que isso corrige.
+    const usuariosMarcadosIds = currentUser?.id
+      ? Array.from(new Set([...(proj.usuariosMarcadosIds || []), currentUser.id]))
+      : proj.usuariosMarcadosIds;
     const registro: ProjetoGerencial = {
       ...proj,
       criadoPorUserId: proj.criadoPorUserId || currentUser?.id,
+      usuariosMarcadosIds,
     };
     await saveProjetoGerencial(registro);
     await loadGestaoData();
@@ -1554,9 +1563,20 @@ export default function App() {
     // Carimba quem criou (só na primeira vez — edições preservam o criador original) pra
     // podeVerAtividade (agendaUtils.ts) saber quem, além de admin e quem for marcado, enxerga
     // esta atividade na Agenda da Gestão.
+    //
+    // Também garante que quem está salvando continue vendo o próprio registro depois: sem isso,
+    // alguém que NÃO criou a atividade (ex.: editou um compromisso de outra pessoa só pra marcar
+    // um colega nela) ficava sem enxergar a própria edição — não era criador nem estava marcado,
+    // então some da lista de @menção do Chat e da própria tela de Agenda pra quem editou. Bug
+    // real reportado: usuário marcou um contato num compromisso e não conseguia mais mencioná-lo
+    // na conversa com esse mesmo contato.
+    const usuariosMarcadosIds = currentUser?.id
+      ? Array.from(new Set([...(item.usuariosMarcadosIds || []), currentUser.id]))
+      : item.usuariosMarcadosIds;
     const registro: AtividadeGestao = {
       ...item,
       criadoPorUserId: item.criadoPorUserId || currentUser?.id,
+      usuariosMarcadosIds,
     };
     await saveAtividadeGestao(registro);
     await loadGestaoData();
@@ -1577,10 +1597,16 @@ export default function App() {
 
   // Notas & Ideias Handlers
   const handleSaveNotaPagina = async (pagina: NotaPagina) => {
-    // Mesma regra de visibilidade da Agenda da Gestão — ver visibilidadeUtils.ts.
+    // Mesma regra de visibilidade da Agenda da Gestão — ver visibilidadeUtils.ts. Também garante
+    // que quem está salvando continue vendo a própria nota depois — ver handleSaveAtividadeGestao
+    // pra explicação completa do bug que isso corrige.
+    const usuariosMarcadosIds = currentUser?.id
+      ? Array.from(new Set([...(pagina.usuariosMarcadosIds || []), currentUser.id]))
+      : pagina.usuariosMarcadosIds;
     const registro: NotaPagina = {
       ...pagina,
       criadoPorUserId: pagina.criadoPorUserId || currentUser?.id,
+      usuariosMarcadosIds,
     };
     await saveNotaPagina(registro);
     await loadGestaoData();
@@ -1594,10 +1620,16 @@ export default function App() {
 
   // Instruções de Trabalho Handlers
   const handleSaveInstrucaoTrabalho = async (instrucao: InstrucaoTrabalho) => {
-    // Mesma regra de visibilidade da Agenda da Gestão — ver visibilidadeUtils.ts.
+    // Mesma regra de visibilidade da Agenda da Gestão — ver visibilidadeUtils.ts. Também garante
+    // que quem está salvando continue vendo a própria instrução depois — ver
+    // handleSaveAtividadeGestao pra explicação completa do bug que isso corrige.
+    const usuariosMarcadosIds = currentUser?.id
+      ? Array.from(new Set([...(instrucao.usuariosMarcadosIds || []), currentUser.id]))
+      : instrucao.usuariosMarcadosIds;
     const registro: InstrucaoTrabalho = {
       ...instrucao,
       criadoPorUserId: instrucao.criadoPorUserId || currentUser?.id,
+      usuariosMarcadosIds,
     };
     await saveInstrucaoTrabalho(registro);
     await loadGestaoData();
@@ -1653,8 +1685,20 @@ export default function App() {
   };
 
   const handleSaveColaborador = async (colab: Colaborador) => {
+    // O cadastro comum (EmployeeFormModal) só tem o dropdown "Status Contratual" e a "Data do
+    // Exame Demissional" — nenhum campo ali escreve em dataDemissao, que é o que a lista, a
+    // ficha e os relatórios de DP realmente exibem como "data de demissão". Resultado: quem
+    // marcava Inativo direto no cadastro (sem passar pela tela dedicada de Desligamento) ficava
+    // com o status mudado mas sem nenhuma data de demissão registrada. Aqui a gente cobre esse
+    // caminho: virou Inativo e ainda não tem dataDemissao? Usa a data do exame demissional (se
+    // foi preenchida) ou hoje. Não sobrescreve quem já passou pela tela de Desligamento (essa já
+    // manda a data certa) nem inventa motivoDemissao, que só a tela dedicada coleta.
+    const registro: Colaborador =
+      colab.status === 'Inativo' && !colab.dataDemissao
+        ? { ...colab, dataDemissao: colab.dataExameDemissional || new Date().toISOString().slice(0, 10) }
+        : colab;
     try {
-      await saveColaborador(colab);
+      await saveColaborador(registro);
     } catch (err) {
       console.error(err);
       // Deixa o formulário aberto (não fecha em caso de erro) — o EmployeeFormModal
@@ -1679,10 +1723,12 @@ export default function App() {
     // e a lista continuava com os dados antigos em memória, dando a falsa impressão de
     // que a edição tinha se perdido.
     setColaboradores((prev) =>
-      prev.some((c) => c.id === colab.id) ? prev.map((c) => (c.id === colab.id ? colab : c)) : [colab, ...prev]
+      prev.some((c) => c.id === registro.id)
+        ? prev.map((c) => (c.id === registro.id ? registro : c))
+        : [registro, ...prev]
     );
     setIsEmployeeFormOpen(false);
-    showToast(`Colaborador ${colab.nomeCompleto} salvo com sucesso!`);
+    showToast(`Colaborador ${registro.nomeCompleto} salvo com sucesso!`);
   };
 
   const handleDeleteColaborador = async (id: string) => {
@@ -1705,11 +1751,13 @@ export default function App() {
 
   const handleConfirmDismissal = async (
     colaboradorId: string,
+    dataDemissao: string,
     motivo: MotivoDemissao,
+    dataExameDemissional?: string,
     observacoes?: string
   ) => {
     try {
-      await inativarColaborador(colaboradorId, motivo, observacoes);
+      await inativarColaborador(colaboradorId, dataDemissao, motivo, dataExameDemissional, observacoes);
       await loadDpData();
       setDismissalTargetColaborador(null);
       if (selectedColaboradorDetail?.id === colaboradorId) {
@@ -2656,6 +2704,7 @@ export default function App() {
               notas={notasVisiveis}
               atividades={atividadesVisiveis}
               projetos={projetosVisiveis}
+              instrucoes={instrucoesVisiveis}
               onAbrirMencao={handleAbrirMencaoChat}
             />
           )}
@@ -2701,6 +2750,8 @@ export default function App() {
               viagensRodoviarias={viagensRodoviarias}
               ocorrencias={ocorrencias}
               atividadesGestao={atividadesVisiveis}
+              abrirInstrucaoId={mencaoAlvo?.tipo === 'instrucao' ? mencaoAlvo.id : undefined}
+              abrirInstrucaoSinal={mencaoAlvo?.tipo === 'instrucao' ? mencaoAlvo.sinal : undefined}
             />
           )}
 
