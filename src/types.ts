@@ -1609,7 +1609,8 @@ export type TipoEntidadeVinculo =
   | 'projeto'
   | 'embarque_aereo'
   | 'viagem_rodoviaria'
-  | 'ocorrencia';
+  | 'ocorrencia'
+  | 'atividade_agenda';
 
 /** Vínculo opcional de uma nota com um registro de outro módulo do sistema (ex: um Cliente, Projeto, Colaborador). */
 export interface VinculoNotaModulo {

@@ -23,6 +23,7 @@ import {
   Eye,
   Share2,
   Check,
+  Calendar,
 } from 'lucide-react';
 import {
   BlocoNota,
@@ -57,6 +58,7 @@ const VINCULO_ICON: Record<VinculoNotaModulo['tipoEntidade'], React.ElementType>
   colaborador: Users,
   projeto: FolderKanban,
   ocorrencia: AlertTriangle,
+  atividade_agenda: Calendar,
 };
 
 export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete, onOpenVincular, onNavigateToVinculo, usuarios, criadoPor }) => {

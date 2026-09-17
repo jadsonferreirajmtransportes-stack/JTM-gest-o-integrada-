@@ -19,6 +19,7 @@ import {
   EmbarqueAereo,
   ViagemRodoviaria,
   Ocorrencia,
+  AtividadeGestao,
   UsuarioLogin,
 } from '../../types';
 import { criarPaginaVazia } from './notasUtils';
@@ -37,6 +38,7 @@ interface NotasViewProps {
   embarquesAereos: EmbarqueAereo[];
   viagensRodoviarias: ViagemRodoviaria[];
   ocorrencias: Ocorrencia[];
+  atividadesGestao: AtividadeGestao[];
   usuarios: UsuarioLogin[];
   /** Id de uma página pra abrir automaticamente (ex.: veio de uma menção no Chat). */
   abrirPaginaId?: string;
@@ -56,6 +58,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
   embarquesAereos,
   viagensRodoviarias,
   ocorrencias,
+  atividadesGestao,
   usuarios,
   abrirPaginaId,
   abrirPaginaSinal,
@@ -349,6 +352,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
           embarquesAereos={embarquesAereos}
           viagensRodoviarias={viagensRodoviarias}
           ocorrencias={ocorrencias}
+          atividadesGestao={atividadesGestao}
         />
       )}
     </div>

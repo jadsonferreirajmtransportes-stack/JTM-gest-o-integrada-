@@ -2660,6 +2660,7 @@ export default function App() {
               embarquesAereos={embarquesAereos}
               viagensRodoviarias={viagensRodoviarias}
               ocorrencias={ocorrencias}
+              atividadesGestao={atividadesVisiveis}
               abrirPaginaId={mencaoAlvo?.tipo === 'nota' ? mencaoAlvo.id : undefined}
               abrirPaginaSinal={mencaoAlvo?.tipo === 'nota' ? mencaoAlvo.sinal : undefined}
             />
@@ -2682,6 +2683,7 @@ export default function App() {
               embarquesAereos={embarquesAereos}
               viagensRodoviarias={viagensRodoviarias}
               ocorrencias={ocorrencias}
+              atividadesGestao={atividadesVisiveis}
             />
           )}
 

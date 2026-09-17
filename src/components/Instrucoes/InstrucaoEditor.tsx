@@ -18,6 +18,7 @@ import {
   Check,
   Lightbulb,
   Share2,
+  Calendar,
 } from 'lucide-react';
 import {
   InstrucaoTrabalho,
@@ -75,6 +76,7 @@ const VINCULO_ICON: Record<VinculoNotaModulo['tipoEntidade'], React.ElementType>
   colaborador: Users,
   projeto: FolderKanban,
   ocorrencia: AlertTriangle,
+  atividade_agenda: Calendar,
 };
 
 const STATUS_OPCOES: StatusInstrucaoTrabalho[] = ['Rascunho', 'Em Revisão', 'Vigente', 'Obsoleta'];

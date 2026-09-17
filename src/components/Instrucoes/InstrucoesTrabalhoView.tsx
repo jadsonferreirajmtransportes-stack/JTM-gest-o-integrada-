@@ -10,6 +10,7 @@ import {
   EmbarqueAereo,
   ViagemRodoviaria,
   Ocorrencia,
+  AtividadeGestao,
   CategoriaInstrucaoTrabalho,
   UsuarioLogin,
 } from '../../types';
@@ -31,6 +32,7 @@ interface InstrucoesTrabalhoViewProps {
   embarquesAereos: EmbarqueAereo[];
   viagensRodoviarias: ViagemRodoviaria[];
   ocorrencias: Ocorrencia[];
+  atividadesGestao: AtividadeGestao[];
   usuarios: UsuarioLogin[];
 }
 
@@ -46,6 +48,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
   embarquesAereos,
   viagensRodoviarias,
   ocorrencias,
+  atividadesGestao,
   usuarios,
 }) => {
   const instrucoesAtivas = useMemo(() => instrucoes.filter((i) => !i.arquivada), [instrucoes]);
@@ -257,6 +260,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
           embarquesAereos={embarquesAereos}
           viagensRodoviarias={viagensRodoviarias}
           ocorrencias={ocorrencias}
+          atividadesGestao={atividadesGestao}
         />
       )}
 

@@ -11,6 +11,7 @@ import {
   Link2,
   ChevronRight,
   Unlink,
+  Calendar,
 } from 'lucide-react';
 import {
   Cliente,
@@ -19,6 +20,7 @@ import {
   EmbarqueAereo,
   ViagemRodoviaria,
   Ocorrencia,
+  AtividadeGestao,
   TipoEntidadeVinculo,
   VinculoNotaModulo,
   GlobalModuleId,
@@ -37,6 +39,7 @@ interface VincularModuloModalProps {
   embarquesAereos: EmbarqueAereo[];
   viagensRodoviarias: ViagemRodoviaria[];
   ocorrencias: Ocorrencia[];
+  atividadesGestao: AtividadeGestao[];
 }
 
 const TIPOS: Array<{ tipo: TipoEntidadeVinculo; label: string; icon: React.ElementType; modulo: GlobalModuleId; color: string }> = [
@@ -46,6 +49,7 @@ const TIPOS: Array<{ tipo: TipoEntidadeVinculo; label: string; icon: React.Eleme
   { tipo: 'colaborador', label: 'Colaborador', icon: Users, modulo: 'dp', color: 'text-amber-600 bg-amber-50 border-amber-200' },
   { tipo: 'projeto', label: 'Projeto Gerencial', icon: FolderKanban, modulo: 'projetos', color: 'text-purple-600 bg-purple-50 border-purple-200' },
   { tipo: 'ocorrencia', label: 'Ocorrência', icon: AlertTriangle, modulo: 'dp', color: 'text-rose-600 bg-rose-50 border-rose-200' },
+  { tipo: 'atividade_agenda', label: 'Compromisso da Agenda', icon: Calendar, modulo: 'agenda', color: 'text-[#8A6A39] bg-amber-50 border-amber-200' },
 ];
 
 export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
@@ -60,6 +64,7 @@ export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
   embarquesAereos,
   viagensRodoviarias,
   ocorrencias,
+  atividadesGestao,
 }) => {
   const [tipoSelecionado, setTipoSelecionado] = useState<TipoEntidadeVinculo | null>(null);
   const [busca, setBusca] = useState('');
@@ -90,10 +95,16 @@ export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
           label: `${o.tipo} — ${o.colaboradorNome || ''}`,
           sub: o.dataOcorrencia ? formatDate(o.dataOcorrencia) : '',
         }));
+      case 'atividade_agenda':
+        return atividadesGestao.map((a) => ({
+          id: a.id,
+          label: a.titulo,
+          sub: `${formatDate(a.data)}${a.diaInteiro ? '' : ` às ${a.horaInicio}`} • ${a.responsavel}`,
+        }));
       default:
         return [];
     }
-  }, [tipoSelecionado, clientes, colaboradores, projetos, embarquesAereos, viagensRodoviarias, ocorrencias]);
+  }, [tipoSelecionado, clientes, colaboradores, projetos, embarquesAereos, viagensRodoviarias, ocorrencias, atividadesGestao]);
 
   const itensFiltrados = itens.filter((i) => i.label.toLowerCase().includes(busca.toLowerCase()));
 
