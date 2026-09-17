@@ -320,9 +320,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
       return;
     }
     const termoAposArroba = trechoAtePosicao.slice(indiceArroba + 1);
-    // Cancela o gatilho se já tem espaço/quebra depois do @ (a menção acabou) ou se o @ faz
-    // parte de um token já inserido (contém "{").
-    if (/[\s{]/.test(termoAposArroba)) {
+    // Cancela o gatilho se tiver quebra de linha ou se o @ fizer parte de um token já inserido
+    // (contém "{"), ou se o termo já ficou longo demais sem achar nada (o usuário desistiu de
+    // mencionar e seguiu escrevendo a frase normal). Importante: espaço NÃO cancela — a imensa
+    // maioria dos títulos de Nota/Agenda/Projeto/Instrução tem várias palavras ("REUNIÃO COM A
+    // F&F"), e cancelar no primeiro espaço impedia buscar por qualquer coisa além da 1ª palavra,
+    // fazendo itens que existem "nunca aparecerem" pra quem tentava digitar o título completo.
+    if (/[\n{]/.test(termoAposArroba) || termoAposArroba.length > 60) {
       setMencaoQuery(null);
       return;
     }
