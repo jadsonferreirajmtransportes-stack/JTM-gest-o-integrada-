@@ -30,7 +30,9 @@ import {
   RegiaoAtendimento,
   FaixaTarifaCidade,
   CustoExtraTarifa,
+  TabelaPrecoFrete,
 } from '../../types';
+import { TabelaFreteEditor, TABELA_FRETE_PADRAO } from './TabelaFreteEditor';
 
 interface ClientFormModalProps {
   isOpen: boolean;
@@ -131,6 +133,11 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   const [tabelaCondicaoPagamento, setTabelaCondicaoPagamento] = useState('Faturamento Quinzenal (15 dias)');
   const [tabelaDiaFechamento, setTabelaDiaFechamento] = useState(15);
   const [tabelaObservacoes, setTabelaObservacoes] = useState('');
+  // Tarifário específico do Rodoviário — opcional, só usado quando o cliente cobra diferente
+  // por modal (hoje só a LUFT: "TARIFARIO - LUFT AEREO" x "TARIFARIO - LUFT RODOVIARIO" no Coda).
+  // Sem isso marcado, lançamentos Rodoviários desse cliente continuam usando a tabelaFrete acima.
+  const [temTarifarioRodoviarioDistinto, setTemTarifarioRodoviarioDistinto] = useState(false);
+  const [tabelaFreteRodoviario, setTabelaFreteRodoviario] = useState<TabelaPrecoFrete>(TABELA_FRETE_PADRAO);
 
   // Contatos & Praças
   const [contatos, setContatos] = useState<ContatoCliente[]>([]);
@@ -192,6 +199,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       setTabelaCondicaoPagamento(initialData.tabelaFrete?.condicaoPagamento || 'Faturamento Quinzenal (15 dias)');
       setTabelaDiaFechamento(initialData.tabelaFrete?.diaFechamento || 15);
       setTabelaObservacoes(initialData.tabelaFrete?.observacoesTarifa || '');
+      setTemTarifarioRodoviarioDistinto(!!initialData.tabelaFreteRodoviario);
+      setTabelaFreteRodoviario(initialData.tabelaFreteRodoviario || TABELA_FRETE_PADRAO);
 
       setContatos(initialData.contatos || []);
       setRegioesAtendidas(initialData.regioesAtendidas || []);
@@ -246,6 +255,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       setTabelaCondicaoPagamento('Faturamento Quinzenal (15 dias)');
       setTabelaDiaFechamento(15);
       setTabelaObservacoes('');
+      setTemTarifarioRodoviarioDistinto(false);
+      setTabelaFreteRodoviario(TABELA_FRETE_PADRAO);
 
       setContatos([
         {
@@ -447,6 +458,15 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
         diaFechamento: Number(tabelaDiaFechamento) || 15,
         observacoesTarifa: tabelaObservacoes.trim() || undefined,
       },
+      tabelaFreteRodoviario: temTarifarioRodoviarioDistinto
+        ? {
+            ...tabelaFreteRodoviario,
+            tarifasPorCidade: (tabelaFreteRodoviario.tarifasPorCidade || []).filter((t) => t.cidade.trim() !== ''),
+            custosExtras: (tabelaFreteRodoviario.custosExtras || []).filter(
+              (c) => c.categoria.trim() !== '' || (c.itemDescricao || '').trim() !== ''
+            ),
+          }
+        : undefined,
 
       contatos: contatos.filter((c) => c.nome.trim() !== ''),
       regioesAtendidas: regioesAtendidas.filter((r) => r.cidadeUF.trim() !== ''),
@@ -1387,6 +1407,37 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
                   />
                 </div>
+              </div>
+
+              {/* Tarifário específico do Rodoviário (opcional) — hoje só usado pela LUFT, que
+                  cobra Aéreo e Rodoviário por tabelas diferentes (ver Cliente.tabelaFreteRodoviario). */}
+              <div className="bg-white p-4 rounded-xl border border-dashed border-slate-300 space-y-3">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={temTarifarioRodoviarioDistinto}
+                    onChange={(e) => setTemTarifarioRodoviarioDistinto(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 text-[#B38F4F] focus:ring-[#B38F4F]"
+                  />
+                  <span>
+                    <span className="block text-xs font-bold text-slate-700">
+                      Este cliente tem um tarifário diferente para o Rodoviário
+                    </span>
+                    <span className="block text-[11px] text-slate-500 mt-0.5">
+                      Marque só quando o cliente cobra valores diferentes por modal (ex.: LUFT — "TARIFARIO AEREO" x
+                      "TARIFARIO RODOVIARIO" do Coda). Sem marcar, lançamentos Rodoviários deste cliente usam a
+                      mesma tabela do Aéreo acima.
+                    </span>
+                  </span>
+                </label>
+
+                {temTarifarioRodoviarioDistinto && (
+                  <TabelaFreteEditor
+                    titulo="Condições Comerciais & Tabela de Frete — Rodoviário"
+                    value={tabelaFreteRodoviario}
+                    onChange={setTabelaFreteRodoviario}
+                  />
+                )}
               </div>
             </div>
           )}
