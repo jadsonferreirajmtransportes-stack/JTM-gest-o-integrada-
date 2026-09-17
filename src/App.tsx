@@ -68,6 +68,7 @@ import {
   saveOcorrencia,
   updateOnboardingItem,
   renovarExameASO,
+  agendarExameASO,
   efetivarPreAdmissao,
   getPreAdmissoes,
   getPreAdmissaoById,
@@ -1861,6 +1862,18 @@ export default function App() {
     showToast('Exame ASO RDC 430 renovado com sucesso!');
   };
 
+  const handleAgendarExame = async (
+    colaboradorId: string,
+    dataAgendada: string,
+    clinica?: string,
+    clinicaLocalizacaoLink?: string,
+    horaAgendada?: string
+  ) => {
+    await agendarExameASO(colaboradorId, dataAgendada, clinica, clinicaLocalizacaoLink, horaAgendada);
+    await loadDpData();
+    showToast('Agendamento salvo — o exame continua pendente até a renovação ser concluída.');
+  };
+
   // Pre-admission handlers
   const handleUpdatePreAdmissaoStatus = async (id: string, status: StatusPreAdmissao, motivoRecusa?: string) => {
     await updatePreAdmissaoStatus(id, status, motivoRecusa);
@@ -2748,6 +2761,7 @@ export default function App() {
               colaboradores={colaboradores}
               empregadores={empregadores}
               onUpdateExame={handleUpdateExame}
+              onAgendarExame={handleAgendarExame}
             />
           )}
 

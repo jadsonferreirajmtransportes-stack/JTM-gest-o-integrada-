@@ -774,6 +774,29 @@ export async function renovarExameASO(
   assertNoError(error, 'renovarExameASO');
 }
 
+/** Só registra o AGENDAMENTO de um exame ASO futuro (data/hora marcada, clínica, link de
+ *  localização) — usado quando o exame ainda VAI acontecer, não quando já aconteceu. Ao
+ *  contrário de `renovarExameASO`, NUNCA mexe em `data_vencimento_exame`/`aso_resultado`/
+ *  comprovante: o colaborador continua "Vencido"/"A Vencer" normalmente até a renovação de
+ *  verdade (com o exame já realizado) ser salva depois. */
+export async function agendarExameASO(
+  colaboradorId: string,
+  dataAgendada: string,
+  clinica?: string,
+  clinicaLocalizacaoLink?: string,
+  horaAgendada?: string
+): Promise<void> {
+  const patch: Record<string, any> = {
+    data_ultimo_exame_ocupacional: dataAgendada,
+    atualizado_em: new Date().toISOString(),
+  };
+  if (clinica !== undefined) patch.clinica_medica = clinica;
+  if (clinicaLocalizacaoLink !== undefined) patch.clinica_localizacao_link = clinicaLocalizacaoLink;
+  if (horaAgendada !== undefined) patch.hora_ultimo_exame_ocupacional = horaAgendada;
+  const { error } = await supabase.from('colaboradores').update(patch).eq('id', colaboradorId);
+  assertNoError(error, 'agendarExameASO');
+}
+
 /** Lê o onboarding atual do colaborador, marca/desmarca o item pelo nome da etapa e regrava —
  *  o Supabase não faz "patch parcial de um item dentro de um JSONB" sozinho, por isso o
  *  read-modify-write aqui. */

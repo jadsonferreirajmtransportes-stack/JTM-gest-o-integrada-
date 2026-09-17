@@ -20,6 +20,7 @@ import {
   MessageCircle,
   Mail,
   Copy,
+  CalendarClock,
 } from 'lucide-react';
 import { Colaborador, Empregador, StatusExame, AnexoColaborador } from '../../types';
 import {
@@ -54,12 +55,22 @@ interface AnvisaExamsViewProps {
     horaExame?: string,
     anexoAsoAntigoParaArquivar?: AnexoColaborador
   ) => void;
+  /** Só registra o agendamento (data/hora/clínica/link) — não mexe no vencimento nem no
+   *  resultado, então o colaborador continua "Vencido"/"A Vencer" até a renovação de verdade. */
+  onAgendarExame: (
+    colaboradorId: string,
+    dataAgendada: string,
+    clinica?: string,
+    clinicaLocalizacaoLink?: string,
+    horaAgendada?: string
+  ) => void;
 }
 
 export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
   colaboradores,
   empregadores,
   onUpdateExame,
+  onAgendarExame,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('todos');
@@ -209,6 +220,21 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
       clinicaLocalizacaoLink.trim() || undefined,
       horaExame.trim() || undefined,
       asoAntigoParaArquivar
+    );
+    setIsModalOpen(false);
+  };
+
+  // Só guarda a data/hora/clínica/link do agendamento — usado quando o exame ainda VAI
+  // acontecer (não mexe no vencimento nem no resultado, então o colaborador continua
+  // "Vencido"/"A Vencer" normalmente até a renovação de verdade ser salva depois).
+  const handleSalvarAgendamento = () => {
+    if (!selectedColab || !dataUltimoExame) return;
+    onAgendarExame(
+      selectedColab.id,
+      dataUltimoExame,
+      clinicaMedica,
+      clinicaLocalizacaoLink.trim() || undefined,
+      horaExame.trim() || undefined
     );
     setIsModalOpen(false);
   };
@@ -684,7 +710,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                 )}
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -693,7 +719,17 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                   Cancelar
                 </button>
                 <button
+                  type="button"
+                  onClick={handleSalvarAgendamento}
+                  title="Guarda a data, hora, clínica e link — sem marcar o exame como concluído nem mudar o status de pendência"
+                  className="px-4 py-2 bg-white border border-amber-300 text-[#8A6A39] hover:bg-amber-50 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5"
+                >
+                  <CalendarClock className="w-4 h-4" />
+                  <span>Salvar Agendamento</span>
+                </button>
+                <button
                   type="submit"
+                  title="Marca o exame como realizado e atualiza o vencimento — use só depois que o exame já tiver acontecido"
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5"
                 >
                   <Save className="w-4 h-4" />
