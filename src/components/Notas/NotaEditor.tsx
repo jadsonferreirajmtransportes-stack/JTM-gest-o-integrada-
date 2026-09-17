@@ -23,6 +23,8 @@ import {
   Eye,
   Share2,
   Check,
+  MessageCircle,
+  Mail,
 } from 'lucide-react';
 import {
   BlocoNota,
@@ -35,6 +37,8 @@ import {
   UsuarioLogin,
 } from '../../types';
 import { BLOCO_CONFIG, ICONES_SUGERIDOS, criarBlocoVazio, getFileKind } from './notasUtils';
+import { buildMensagemNotaWhatsApp, buildAssuntoEmailNota, buildCorpoEmailNota } from './notaComunicacaoUtils';
+import { getWhatsAppShareUrl } from '../Agenda/agendaUtils';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { FluxogramaBlock } from './FluxogramaBlock';
 import { TabelaBlock } from './TabelaBlock';
@@ -545,6 +549,31 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
               ? `Compartilhada com ${(pagina.usuariosMarcadosIds || []).length}`
               : 'Compartilhar'}
           </span>
+        </button>
+
+        {/* Compartilhar por fora do sistema (WhatsApp/e-mail) — converte os blocos em texto
+            simples; sem destinatário fixo, abre o seletor de conversa/o cliente de e-mail. */}
+        <button
+          type="button"
+          onClick={() => window.open(getWhatsAppShareUrl(buildMensagemNotaWhatsApp(pagina)), '_blank')}
+          title="Compartilhar por WhatsApp"
+          className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border border-dashed border-slate-300 rounded-lg text-[11px] font-medium text-slate-500 hover:text-emerald-700 hover:border-emerald-300 transition-colors"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          <span>WhatsApp</span>
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            (window.location.href = `mailto:?subject=${encodeURIComponent(
+              buildAssuntoEmailNota(pagina)
+            )}&body=${encodeURIComponent(buildCorpoEmailNota(pagina))}`)
+          }
+          title="Compartilhar por e-mail"
+          className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border border-dashed border-slate-300 rounded-lg text-[11px] font-medium text-slate-500 hover:text-blue-700 hover:border-blue-300 transition-colors"
+        >
+          <Mail className="w-3.5 h-3.5" />
+          <span>E-mail</span>
         </button>
 
         {showCompartilhar && (
