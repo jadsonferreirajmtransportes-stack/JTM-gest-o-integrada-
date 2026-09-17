@@ -42,7 +42,7 @@ interface PublicOccurrencePortalProps {
   empregadores?: EmpregadorPublico[];
   preselectedSupervisorId?: string;
   preselectedEmpresaId?: string;
-  onSuccessSubmit: (ocorrencia: Ocorrencia) => void;
+  onSuccessSubmit: (ocorrencia: Ocorrencia) => Promise<void>;
   onAdminBack?: () => void;
 }
 
@@ -166,6 +166,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
   const [erroUpload, setErroUpload] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submittedProtocol, setSubmittedProtocol] = useState<string | null>(null);
+  const [erroEnvio, setErroEnvio] = useState<string | null>(null);
   const [submittedData, setSubmittedData] = useState<Ocorrencia | null>(null);
   const botGuard = useBotGuard();
 
@@ -263,6 +264,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
     }
 
     setIsSubmitting(true);
+    setErroEnvio(null);
 
     const protocolNum = `JMT-OCORR-${Date.now().toString().slice(-6)}`;
     const fullSupervisor = selectedSupervisor
@@ -294,11 +296,19 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
       criadoEm: new Date().toISOString(),
     };
 
-    setTimeout(() => {
-      onSuccessSubmit(payload);
-      setSubmittedData(payload);
-      setSubmittedProtocol(protocolNum);
-      setIsSubmitting(false);
+    setTimeout(async () => {
+      try {
+        await onSuccessSubmit(payload);
+        setSubmittedData(payload);
+        setSubmittedProtocol(protocolNum);
+      } catch (err) {
+        // Mantém o formulário aberto e mostra o motivo — sem isso, um erro no salvamento
+        // parecia ter dado certo (a tela de protocolo apareceria mesmo sem nada salvo).
+        console.error(err);
+        setErroEnvio(err instanceof Error ? err.message : String(err));
+      } finally {
+        setIsSubmitting(false);
+      }
     }, 600);
   };
 
@@ -777,6 +787,13 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
                 )}
               </div>
             </div>
+
+            {erroEnvio && (
+              <div className="p-3 bg-rose-950/40 border border-rose-800/60 rounded-xl text-xs text-rose-300 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>Não foi possível enviar: {erroEnvio}</span>
+              </div>
+            )}
 
             {/* Submit Bar */}
             <div className="flex items-center justify-end gap-3 pt-2">

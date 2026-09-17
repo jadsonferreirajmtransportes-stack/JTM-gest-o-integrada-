@@ -1735,7 +1735,14 @@ export default function App() {
   };
 
   const handleSaveOcorrencia = async (ocorrencia: Ocorrencia) => {
-    await saveOcorrencia(ocorrencia);
+    try {
+      await saveOcorrencia(ocorrencia);
+    } catch (err) {
+      console.error(err);
+      const motivo = err instanceof Error ? err.message : String(err);
+      showToast(`Não foi possível salvar a ocorrência. Detalhe técnico: ${motivo}`, 'error');
+      throw err; // deixa o formulário aberto (ver handleSaveModal em OccurrencesView.tsx)
+    }
     await loadDpData();
     setIsPublicOccurrenceFormOpen(false);
     showToast('Ocorrência registrada com sucesso no prontuário do colaborador!');
@@ -2306,10 +2313,7 @@ export default function App() {
         empregadores={empregadoresPublico}
         preselectedSupervisorId={occurrenceUrlParams.supervisor}
         preselectedEmpresaId={occurrenceUrlParams.empresa}
-        onSuccessSubmit={(ocorr) => {
-          handleSaveOcorrencia(ocorr);
-          showToast('Ocorrência de campo registrada com sucesso!');
-        }}
+        onSuccessSubmit={handleSaveOcorrencia}
         onAdminBack={() => {
           setIsOccurrencePortalView(false);
           setActiveGlobalModule('dp');
@@ -3022,10 +3026,7 @@ export default function App() {
         onClose={() => setIsPublicOccurrenceFormOpen(false)}
         colaboradores={colaboradores}
         supervisores={supervisores}
-        onSuccessSubmit={(ocorr) => {
-          handleSaveOcorrencia(ocorr);
-          showToast('Ocorrência de campo registrada pelo supervisor com sucesso!');
-        }}
+        onSuccessSubmit={handleSaveOcorrencia}
       />
 
       {/* 5. Admission Link Generator & WhatsApp Sender Modal */}

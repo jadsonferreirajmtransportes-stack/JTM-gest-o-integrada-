@@ -38,7 +38,7 @@ interface OccurrencesViewProps {
    *  Formulário de Campo) — um supervisor restrito só a Ocorrências continua vendo e registrando
    *  ocorrências normalmente, só não gera esses links públicos. */
   temAcessoGeralDp: boolean;
-  onSaveOcorrencia: (ocorrencia: Ocorrencia) => void;
+  onSaveOcorrencia: (ocorrencia: Ocorrencia) => Promise<void>;
   onDeleteOcorrencia: (id: string) => void;
   onOpenPublicFormModal: () => void;
   onOpenOccurrenceLinkModal?: () => void;
@@ -60,6 +60,8 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTipo, setSelectedTipo] = useState('todos');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
 
   // Modal Form State
   const [selectedColabId, setSelectedColabId] = useState('');
@@ -111,6 +113,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
     setArquivoNome('');
     setArquivoUrl('');
     setErroUpload(null);
+    setErroSalvar(null);
     setIsModalOpen(true);
   };
 
@@ -130,6 +133,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
     setArquivoNome(item.comprovanteAnexo || '');
     setArquivoUrl(item.comprovanteArquivoUrl || '');
     setErroUpload(null);
+    setErroSalvar(null);
     setIsModalOpen(true);
   };
 
@@ -144,7 +148,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
     }
   };
 
-  const handleSaveModal = (e: React.FormEvent) => {
+  const handleSaveModal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedColabId) {
       alert('Selecione um colaborador.');
@@ -167,8 +171,18 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
       criadoEm: editingOcorrencia?.criadoEm || new Date().toISOString(),
     };
 
-    onSaveOcorrencia(payload);
-    setIsModalOpen(false);
+    setErroSalvar(null);
+    setSalvando(true);
+    try {
+      await onSaveOcorrencia(payload);
+      setIsModalOpen(false);
+    } catch (err) {
+      // Mantém o modal aberto e mostra o motivo — sem isso, um erro do banco (ex.: coluna nova
+      // ainda sem migração) fechava o modal em silêncio, como se tivesse salvo.
+      setErroSalvar(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const LIMITE_ANEXO_MB = 5;
@@ -615,20 +629,31 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                 )}
               </div>
 
+              {erroSalvar && (
+                <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-[11px] text-rose-700 font-semibold flex items-start gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>Não foi possível salvar: {erroSalvar}</span>
+                </div>
+              )}
+
               <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-semibold"
+                  disabled={salvando}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-semibold disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5"
+                  disabled={salvando}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save className="w-4 h-4" />
-                  <span>{editingOcorrencia ? 'Salvar Alterações' : 'Registrar Ocorrência'}</span>
+                  <span>
+                    {salvando ? 'Salvando...' : editingOcorrencia ? 'Salvar Alterações' : 'Registrar Ocorrência'}
+                  </span>
                 </button>
               </div>
             </form>

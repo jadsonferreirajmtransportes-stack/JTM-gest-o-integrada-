@@ -23,7 +23,7 @@ interface PublicOccurrenceFormProps {
   onClose: () => void;
   colaboradores: Colaborador[];
   supervisores: Supervisor[];
-  onSuccessSubmit: (ocorrencia: Ocorrencia) => void;
+  onSuccessSubmit: (ocorrencia: Ocorrencia) => Promise<void>;
 }
 
 // Tipos que podem durar mais de um dia — mesmo conjunto usado em PublicOccurrencePortal.tsx e
@@ -59,6 +59,8 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
   const [arquivoUrl, setArquivoUrl] = useState('');
   const [erroUpload, setErroUpload] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erroEnvio, setErroEnvio] = useState<string | null>(null);
   const botGuard = useBotGuard();
 
   if (!isOpen) return null;
@@ -74,7 +76,7 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
     return diffDias + 1;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (botGuard.isLikelyBot()) {
       // Automated submission detected (honeypot filled or submitted too fast) — drop silently.
@@ -103,12 +105,23 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
       criadoEm: new Date().toISOString(),
     };
 
-    onSuccessSubmit(payload);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      onClose();
-    }, 2000);
+    setEnviando(true);
+    setErroEnvio(null);
+    try {
+      await onSuccessSubmit(payload);
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        onClose();
+      }, 2000);
+    } catch (err) {
+      // Mantém o formulário aberto e mostra o motivo — sem isso, um erro no salvamento parecia
+      // ter dado certo (a tela de "enviado" apareceria mesmo sem nada salvo de verdade).
+      console.error(err);
+      setErroEnvio(err instanceof Error ? err.message : String(err));
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const LIMITE_ANEXO_MB = 5;
@@ -354,21 +367,30 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
               )}
             </div>
 
+            {erroEnvio && (
+              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-[11px] text-rose-700 font-semibold flex items-start gap-2">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span>Não foi possível enviar: {erroEnvio}</span>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-semibold"
+                disabled={enviando}
+                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-semibold disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5"
+                disabled={enviando}
+                className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Enviar para o DP</span>
+                <span>{enviando ? 'Enviando...' : 'Enviar para o DP'}</span>
               </button>
             </div>
           </form>
