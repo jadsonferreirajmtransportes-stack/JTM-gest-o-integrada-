@@ -389,7 +389,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                 <th className="py-3 px-4">Colaborador</th>
                 <th className="py-3 px-3">Cargo / Setor</th>
                 <th className="py-3 px-3">Exame Admissional</th>
-                <th className="py-3 px-3">Último Periódico</th>
+                <th className="py-3 px-3">Último / Próx. Periódico</th>
                 <th className="py-3 px-3">Data de Vencimento</th>
                 <th className="py-3 px-3">Status ANVISA</th>
                 <th className="py-3 px-3">Comprovante ASO</th>
@@ -409,6 +409,10 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                   const status = calcExamStatus(c.dataVencimentoExame);
                   const days = calcDaysRemaining(c.dataVencimentoExame);
                   const countdown = formatDaysCountdown(days);
+                  const hoje = new Date().toISOString().slice(0, 10);
+                  // Um "Último Periódico" no futuro é um agendamento ainda não realizado
+                  // (ver "Salvar Agendamento") — não um exame já feito, então mostra diferente.
+                  const examAgendado = !!c.dataUltimoExameOcupacional && c.dataUltimoExameOcupacional >= hoje;
 
                   return (
                     <tr
@@ -434,7 +438,18 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                       </td>
 
                       <td className="py-3 px-3 text-slate-700">
-                        {formatDate(c.dataUltimoExameOcupacional)}
+                        {examAgendado ? (
+                          <>
+                            <div className="flex items-center gap-1 text-[#8A6A39] font-semibold">
+                              <CalendarClock className="w-3 h-3" />
+                              <span>{formatDate(c.dataUltimoExameOcupacional)}</span>
+                              {c.horaUltimoExameOcupacional && <span>{c.horaUltimoExameOcupacional}</span>}
+                            </div>
+                            <span className="text-[9px] font-bold text-[#8A6A39] uppercase">Agendado</span>
+                          </>
+                        ) : (
+                          formatDate(c.dataUltimoExameOcupacional)
+                        )}
                       </td>
 
                       <td className="py-3 px-3">
