@@ -68,6 +68,7 @@ import {
   updateStatusFerias,
   getOcorrencias,
   saveOcorrencia,
+  deleteOcorrencia,
   updateOnboardingItem,
   renovarExameASO,
   agendarExameASO,
@@ -1740,6 +1741,18 @@ export default function App() {
     showToast('Ocorrência registrada com sucesso no prontuário do colaborador!');
   };
 
+  const handleDeleteOcorrencia = async (id: string) => {
+    try {
+      await deleteOcorrencia(id);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível excluir a ocorrência. Tente novamente.', 'error');
+      return;
+    }
+    await loadDpData();
+    showToast('Ocorrência excluída.', 'info');
+  };
+
   const handleSaveQuinzenaVA = async (quinzena: QuinzenaValeAlimentacao) => {
     await saveQuinzenaValeAlimentacao(quinzena);
     await loadDpData();
@@ -2855,6 +2868,7 @@ export default function App() {
               userRole={userRole}
               temAcessoGeralDp={temAcessoGeralDp(currentUser)}
               onSaveOcorrencia={handleSaveOcorrencia}
+              onDeleteOcorrencia={handleDeleteOcorrencia}
               onOpenPublicFormModal={() => setIsPublicOccurrenceFormOpen(true)}
               onOpenOccurrenceLinkModal={() => setIsOccurrenceLinkModalOpen(true)}
               onOpenPortalView={() => setIsOccurrencePortalView(true)}

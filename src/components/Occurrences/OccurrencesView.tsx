@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Upload,
   Edit2,
+  Trash2,
 } from 'lucide-react';
 import {
   Colaborador,
@@ -38,6 +39,7 @@ interface OccurrencesViewProps {
    *  ocorrências normalmente, só não gera esses links públicos. */
   temAcessoGeralDp: boolean;
   onSaveOcorrencia: (ocorrencia: Ocorrencia) => void;
+  onDeleteOcorrencia: (id: string) => void;
   onOpenPublicFormModal: () => void;
   onOpenOccurrenceLinkModal?: () => void;
   onOpenPortalView?: () => void;
@@ -50,6 +52,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
   userRole,
   temAcessoGeralDp,
   onSaveOcorrencia,
+  onDeleteOcorrencia,
   onOpenPublicFormModal,
   onOpenOccurrenceLinkModal,
   onOpenPortalView,
@@ -128,6 +131,17 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
     setArquivoUrl(item.comprovanteArquivoUrl || '');
     setErroUpload(null);
     setIsModalOpen(true);
+  };
+
+  const handleDelete = (item: Ocorrencia) => {
+    const colab = colaboradores.find((c) => c.id === item.colaboradorId);
+    if (
+      window.confirm(
+        `Excluir a ocorrência "${item.tipo}" de ${colab?.nomeCompleto || 'colaborador'}? Essa ação não pode ser desfeita.`
+      )
+    ) {
+      onDeleteOcorrencia(item.id);
+    }
   };
 
   const handleSaveModal = (e: React.FormEvent) => {
@@ -391,14 +405,24 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                       </td>
 
                       <td className="py-3 px-4 text-right sticky right-0 bg-white group-hover:bg-slate-50/80 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)]">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(item)}
-                          className="p-1.5 text-slate-400 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
-                          title="Editar ocorrência"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(item)}
+                            className="p-1.5 text-slate-400 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
+                            title="Editar ocorrência"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Excluir ocorrência"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
