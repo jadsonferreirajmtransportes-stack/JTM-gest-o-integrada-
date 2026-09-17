@@ -32,6 +32,7 @@ import {
   UsuarioLogin,
 } from '../../types';
 import { CATEGORIA_CONFIG, getTipoLocalEfetivo } from './agendaUtils';
+import { OPCOES_LEMBRETE_MINUTOS } from '../../utils/lembretesAgendaUtils';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 
 interface AgendaFormModalProps {
@@ -119,6 +120,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
   const [recorrencia, setRecorrencia] = useState<RecorrenciaAtividade>(
     initialData?.recorrencia || 'Nenhuma'
   );
+  const [lembreteMinutos, setLembreteMinutos] = useState<number | ''>(initialData?.lembreteMinutos ?? '');
   const [pautaAta, setPautaAta] = useState(initialData?.pautaAta || '');
   const [deliberacoes, setDeliberacoes] = useState<ItemDeliberacaoAta[]>(
     initialData?.deliberacoes || []
@@ -160,6 +162,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
     setLinkLocalizacao(initialData?.linkLocalizacao || '');
     setModuloRelacionado(initialData?.moduloRelacionado || 'geral');
     setRecorrencia(initialData?.recorrencia || 'Nenhuma');
+    setLembreteMinutos(initialData?.lembreteMinutos ?? '');
     setPautaAta(initialData?.pautaAta || '');
     setDeliberacoes(initialData?.deliberacoes || []);
     setNovoItemDeliberacao('');
@@ -268,6 +271,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
       anexos,
       moduloRelacionado,
       recorrencia,
+      lembreteMinutos: lembreteMinutos === '' ? undefined : lembreteMinutos,
       criadoEm: initialData?.criadoEm || new Date().toISOString(),
       atualizadoEm: new Date().toISOString(),
       concluidaEm: status === 'Concluída' ? initialData?.concluidaEm || new Date().toISOString() : undefined,
@@ -461,7 +465,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
             )}
 
             {/* Recorrência */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-slate-200">
               <div>
                 <label className="block text-[11px] text-slate-500 mb-1">Recorrência da Atividade</label>
                 <select
@@ -472,6 +476,23 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                   {RECORRENCIAS.map((rec) => (
                     <option key={rec} value={rec}>
                       {rec}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">
+                  Avisar-me <span className="text-slate-400 font-normal">(notificação no navegador)</span>
+                </label>
+                <select
+                  value={lembreteMinutos}
+                  onChange={(e) => setLembreteMinutos(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                >
+                  {OPCOES_LEMBRETE_MINUTOS.map((opt) => (
+                    <option key={opt.valor} value={opt.valor}>
+                      {opt.label}
                     </option>
                   ))}
                 </select>

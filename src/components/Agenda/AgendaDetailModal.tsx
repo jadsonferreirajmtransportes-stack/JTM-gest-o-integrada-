@@ -37,6 +37,7 @@ import {
   getTipoLocalEfetivo,
 } from './agendaUtils';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
+import { rotuloLembrete } from '../../utils/lembretesAgendaUtils';
 
 interface AgendaDetailModalProps {
   isOpen: boolean;
@@ -184,6 +185,12 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
                   ? 'Dia Inteiro'
                   : `${atividade.horaInicio} às ${atividade.horaFim}`}
               </p>
+              {!!atividade.lembreteMinutos && (
+                <p className="text-[11px] text-[#8A6A39] flex items-center gap-1 font-semibold">
+                  <BellRing className="w-3 h-3" />
+                  {rotuloLembrete(atividade.lembreteMinutos)}
+                </p>
+              )}
             </div>
 
             {/* Responsável */}

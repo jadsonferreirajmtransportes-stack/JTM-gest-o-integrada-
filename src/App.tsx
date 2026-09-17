@@ -249,6 +249,7 @@ import {
   AnexoMensagemChat,
 } from './utils/chatApi';
 import { playNotificationSound } from './utils/notificationSound';
+import { verificarEMarcarLembretesPendentes, formatarTextoLembrete } from './utils/lembretesAgendaUtils';
 
 export default function App() {
   // Primary Pages / Modules State
@@ -1050,6 +1051,33 @@ export default function App() {
     });
     return cancelarInscricao;
   }, [currentUser, loadChatData, users]);
+
+  // Lembretes automáticos da Agenda da Gestão: a cada 30s, checa se algum compromisso com
+  // "avisar-me X minutos antes" entrou na janela de disparo — só funciona com o sistema aberto
+  // numa aba (é um alarme local, não um envio de servidor). Pede permissão de notificação do
+  // navegador uma vez ao carregar (se ainda não foi decidida); sem permissão, cai pra um toast.
+  useEffect(() => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+
+    const verificar = () => {
+      const pendentes = verificarEMarcarLembretesPendentes(atividadesGestao);
+      pendentes.forEach((atividade) => {
+        const { titulo, corpo } = formatarTextoLembrete(atividade);
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          new Notification(titulo, { body: corpo });
+        } else {
+          showToast(`⏰ ${titulo} — ${corpo}`, 'info');
+        }
+        playNotificationSound();
+      });
+    };
+
+    verificar();
+    const intervalId = setInterval(verificar, 30000);
+    return () => clearInterval(intervalId);
+  }, [atividadesGestao]);
 
   // Keep detail view synchronized with updated store
   useEffect(() => {
