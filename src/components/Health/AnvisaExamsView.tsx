@@ -64,6 +64,10 @@ interface AnvisaExamsViewProps {
     clinicaLocalizacaoLink?: string,
     horaAgendada?: string
   ) => Promise<void>;
+  /** A lista em `colaboradores` é a versão leve (sem ASO/documentos/anexos de verdade — ver
+   *  getColaboradoresResumo em dpApi.ts). Busca o registro completo de UM colaborador antes de
+   *  abrir o modal de renovação, senão salvar reescreveria o cadastro com esses campos vazios. */
+  onCarregarColaboradorCompleto: (id: string) => Promise<Colaborador | null>;
 }
 
 export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
@@ -71,6 +75,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
   empregadores,
   onUpdateExame,
   onAgendarExame,
+  onCarregarColaboradorCompleto,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('todos');
@@ -161,7 +166,19 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     if (novaData) setDataVencimento(calcularVencimentoPadrao(novaData));
   };
 
-  const handleOpenRenew = (colab: Colaborador) => {
+  const handleOpenRenew = async (colabLeve: Colaborador) => {
+    // A linha da tabela vem da lista leve — busca o registro completo (com o ASO/documentos/
+    // anexos de verdade) antes de preencher o formulário, senão "Salvar" reescreveria o
+    // cadastro com esses campos vazios.
+    let colab = colabLeve;
+    try {
+      const completo = await onCarregarColaboradorCompleto(colabLeve.id);
+      if (completo) colab = completo;
+    } catch (err) {
+      console.error(err);
+      // Segue com a versão leve mesmo assim — os campos de ASO/documentos ficam vazios até
+      // reabrir o modal, mas o resto (data, clínica, link) continua funcionando.
+    }
     setSelectedColab(colab);
     const hoje = new Date().toISOString().slice(0, 10);
     // Se o último exame salvo ainda não aconteceu (agendado pra hoje ou pro futuro), mantém

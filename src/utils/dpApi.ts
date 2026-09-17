@@ -462,6 +462,26 @@ export async function getColaboradores(): Promise<Colaborador[]> {
   assertNoError(error, 'getColaboradores');
   return (data ?? []).map(rowToColaborador);
 }
+
+/** Mesma lista de sempre, mas sem os arquivos em base64 embutidos (foto/PDF do ASO e o
+ *  conteúdo de cada documento/anexo) — só o essencial pra tabelas, dropdowns e badges. Evita
+ *  baixar dezenas/centenas de MB toda vez que o módulo de DP carrega; ver migração
+ *  030_colaboradores_resumo_leve.sql. Quem precisa do arquivo de verdade usa
+ *  getColaboradorCompleto(id) na hora de abrir a ficha/edição/renovação. */
+export async function getColaboradoresResumo(): Promise<Colaborador[]> {
+  const { data, error } = await supabase.rpc('obter_colaboradores_resumo');
+  assertNoError(error, 'getColaboradoresResumo');
+  return (data ?? []).map(rowToColaborador);
+}
+
+/** Registro completo de UM colaborador, com os arquivos de verdade (foto/PDF do ASO,
+ *  documentos, anexos do dossiê) — usar só ao abrir a ficha, editar o cadastro ou renovar o
+ *  ASO; nunca pra montar listas (ver getColaboradoresResumo). */
+export async function getColaboradorCompleto(id: string): Promise<Colaborador | null> {
+  const { data, error } = await supabase.from('colaboradores').select('*').eq('id', id).maybeSingle();
+  assertNoError(error, 'getColaboradorCompleto');
+  return data ? rowToColaborador(data) : null;
+}
 export async function saveColaborador(colaborador: Colaborador): Promise<void> {
   const isNovo = !colaborador.id;
   const item: Colaborador = isNovo

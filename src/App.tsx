@@ -50,6 +50,8 @@ import {
 // vêm mais do localStorage. Ver src/utils/dpApi.ts.
 import {
   getColaboradores,
+  getColaboradoresResumo,
+  getColaboradorCompleto,
   saveColaborador,
   deleteColaborador,
   inativarColaborador,
@@ -940,7 +942,7 @@ export default function App() {
       const [
         colabs, emps, sups, crgs, ferds, fer, ocos, quinz, lancs, preAdm,
       ] = await Promise.all([
-        getColaboradores(),
+        getColaboradoresResumo(),
         getEmpregadores(),
         getSupervisores(),
         getCargos(),
@@ -1079,12 +1081,25 @@ export default function App() {
     return () => clearInterval(intervalId);
   }, [atividadesGestao]);
 
-  // Keep detail view synchronized with updated store
+  // Keep detail view synchronized with updated store — `colaboradores` é a lista LEVE (sem
+  // os arquivos base64, ver getColaboradoresResumo), então preserva o que já tinha sido
+  // carregado de verdade (ASO/documentos/anexos) e só atualiza o resto dos campos; senão isso
+  // apagaria da tela (e arriscaria salvar vazio) o que handleSelecionarColaboradorDetail buscou.
   useEffect(() => {
     if (selectedColaboradorDetail) {
       const refreshed = colaboradores.find((c) => c.id === selectedColaboradorDetail.id);
       if (refreshed) {
-        setSelectedColaboradorDetail(refreshed);
+        setSelectedColaboradorDetail((prev) =>
+          prev
+            ? {
+                ...refreshed,
+                asoImagemUrl: prev.asoImagemUrl,
+                asoNomeArquivo: prev.asoNomeArquivo,
+                documentos: prev.documentos,
+                anexos: prev.anexos,
+              }
+            : refreshed
+        );
       }
     }
   }, [colaboradores]);
@@ -1599,8 +1614,32 @@ export default function App() {
     setIsEmployeeFormOpen(true);
   };
 
-  const handleEditColaborador = (colab: Colaborador) => {
-    setEditingColaborador(colab);
+  // Mesmo motivo do handleEditColaborador: a lista é a versão leve, sem os arquivos de
+  // verdade. A ficha do colaborador tem ações que regravam o cadastro (anotações, anexos do
+  // dossiê, observações) — buscar o completo ANTES de abrir evita que uma dessas ações salve
+  // o cadastro com ASO/documentos/anexos vazios por engano.
+  const handleSelecionarColaboradorDetail = async (colab: Colaborador) => {
+    try {
+      const completo = await getColaboradorCompleto(colab.id);
+      setSelectedColaboradorDetail(completo || colab);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível carregar os dados completos do colaborador. Tente novamente.', 'error');
+    }
+  };
+
+  const handleEditColaborador = async (colab: Colaborador) => {
+    // A lista carregada no módulo de DP é a versão leve (sem os arquivos de verdade — ver
+    // getColaboradoresResumo) — busca o registro completo antes de abrir a edição, senão salvar
+    // reescreveria o cadastro com o ASO/documentos/anexos vazios.
+    try {
+      const completo = await getColaboradorCompleto(colab.id);
+      setEditingColaborador(completo || colab);
+    } catch (err) {
+      console.error(err);
+      showToast('Não foi possível carregar os dados completos do colaborador. Tente novamente.', 'error');
+      return;
+    }
     setIsEmployeeFormOpen(true);
   };
 
@@ -2419,7 +2458,7 @@ export default function App() {
               onResetDatabase={handleResetDatabase}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
+              onSelectColaboradorDetail={handleSelecionarColaboradorDetail}
               onSelectClienteDetail={handleAbrirFichaCliente}
             />
           )}
@@ -2459,7 +2498,7 @@ export default function App() {
               }}
               onOpenNovoColaborador={handleOpenNovoColaborador}
               onSelectClienteDetail={handleAbrirFichaCliente}
-              onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
+              onSelectColaboradorDetail={handleSelecionarColaboradorDetail}
               onOpenLinkModal={(mode) => handleOpenSectorLinkModal('farma_aereo', mode)}
               userRole={userRole}
               currentUser={currentUser}
@@ -2495,7 +2534,7 @@ export default function App() {
               }}
               onOpenNovoColaborador={handleOpenNovoColaborador}
               onSelectClienteDetail={handleAbrirFichaCliente}
-              onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
+              onSelectColaboradorDetail={handleSelecionarColaboradorDetail}
               onOpenLinkModal={(mode) => handleOpenSectorLinkModal('farma_rodoviario', mode)}
               userRole={userRole}
               currentUser={currentUser}
@@ -2690,7 +2729,7 @@ export default function App() {
               userRole={userRole}
               temAcessoGeralDp={temAcessoGeralDp(currentUser)}
               onNavigate={setActiveSection}
-              onSelectColaborador={(c) => setSelectedColaboradorDetail(c)}
+              onSelectColaborador={handleSelecionarColaboradorDetail}
               onOpenNovoColaborador={handleOpenNovoColaborador}
               onOpenAdmissionLink={() => setIsAdmissionLinkModalOpen(true)}
               onOpenNovaOcorrencia={() => setIsPublicOccurrenceFormOpen(true)}
@@ -2707,7 +2746,7 @@ export default function App() {
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               onOpenNovo={handleOpenNovoColaborador}
-              onSelectColaborador={(c) => setSelectedColaboradorDetail(c)}
+              onSelectColaborador={handleSelecionarColaboradorDetail}
               onEditColaborador={handleEditColaborador}
               onDeleteColaborador={handleDeleteColaborador}
               onOpenDemissaoModal={(c) => setDismissalTargetColaborador(c)}
@@ -2727,7 +2766,7 @@ export default function App() {
               onEfetivarAdmissao={handleEfetivarAdmissao}
               onUpdateStatus={handleUpdatePreAdmissaoStatus}
               onDeletePreAdmissao={handleDeletePreAdmissao}
-              onSelectColaboradorDetail={(c) => setSelectedColaboradorDetail(c)}
+              onSelectColaboradorDetail={handleSelecionarColaboradorDetail}
             />
           )}
 
@@ -2742,7 +2781,7 @@ export default function App() {
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               onOpenNovo={handleOpenNovoColaborador}
-              onSelectColaborador={(c) => setSelectedColaboradorDetail(c)}
+              onSelectColaborador={handleSelecionarColaboradorDetail}
               onEditColaborador={handleEditColaborador}
               onDeleteColaborador={handleDeleteColaborador}
               onOpenDemissaoModal={(c) => setDismissalTargetColaborador(c)}
@@ -2804,6 +2843,7 @@ export default function App() {
               empregadores={empregadores}
               onUpdateExame={handleUpdateExame}
               onAgendarExame={handleAgendarExame}
+              onCarregarColaboradorCompleto={getColaboradorCompleto}
             />
           )}
 
@@ -2832,7 +2872,7 @@ export default function App() {
             <BirthdaysView
               colaboradores={colaboradoresEquipeVisiveis}
               empregadores={empregadores}
-              onSelectColaborador={(c) => setSelectedColaboradorDetail(c)}
+              onSelectColaborador={handleSelecionarColaboradorDetail}
               onNotifySuccess={(msg) => showToast(msg, 'success')}
             />
           )}
