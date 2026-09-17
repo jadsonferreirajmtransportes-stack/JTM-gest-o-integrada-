@@ -41,6 +41,27 @@ const deveIgnorar = (el: HTMLInputElement | HTMLTextAreaElement): boolean => {
   return false;
 };
 
+// O React "marca" a propriedade .value de todo input controlado com um setter próprio, só pra
+// conseguir perceber quando o valor muda por fora dele (ex.: autofill do navegador) — e esse
+// setter também atualiza um "valor rastreado" interno usado pra decidir se dispara o onChange.
+// Se a gente fizer `el.value = X` do jeito normal, cai nesse setter do React, que já marca
+// internamente "o valor mudou pra X" — e quando o evento chega no onChange do React logo em
+// seguida, ele compara o valor atual com esse "valor rastreado" (os dois já viraram X) e conclui
+// que NADA mudou, então NUNCA chama o onChange do componente. Resultado: o campo mostra o texto
+// maiúsculo certinho na tela, mas o estado do React (o que realmente é salvo) fica preso no
+// valor de antes da transformação — exatamente o bug visto no campo "Clínica Médica Conveniada".
+// A saída documentada é usar o setter ORIGINAL do próprio navegador (via o protótipo), que não
+// passa pelo rastreador do React — assim o React ainda percebe a diferença e dispara o onChange.
+function setValueSemQuebrarRastreioDoReact(el: HTMLInputElement | HTMLTextAreaElement, valor: string): void {
+  const prototype = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+  const nativeSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+  if (nativeSetter) {
+    nativeSetter.call(el, valor);
+  } else {
+    el.value = valor;
+  }
+}
+
 export const ativarMaiusculoAutomatico = () => {
   document.addEventListener(
     'input',
@@ -52,14 +73,19 @@ export const ativarMaiusculoAutomatico = () => {
       const maiusculo = el.value.toUpperCase();
       if (maiusculo === el.value) return;
 
-      // Maiúsculo não muda a quantidade de caracteres, mas setar `.value` via JS reseta o
-      // cursor pro final — por isso salvamos e restauramos a posição manualmente.
+      // Maiúsculo não muda a quantidade de caracteres, mas setar o valor reseta o cursor pro
+      // final — por isso salvamos e restauramos a posição manualmente.
       const inicio = el.selectionStart;
       const fim = el.selectionEnd;
-      el.value = maiusculo;
+      setValueSemQuebrarRastreioDoReact(el, maiusculo);
       if (inicio !== null && fim !== null) {
         el.setSelectionRange(inicio, fim);
       }
+
+      // Como usamos o setter nativo (não o do React) de propósito, o React não fica sabendo
+      // sozinho que o valor mudou — precisamos disparar um novo evento "input" pra ele reagir
+      // e chamar o onChange do componente com o valor já em maiúsculo.
+      el.dispatchEvent(new Event('input', { bubbles: true }));
     },
     true // fase de captura — roda antes do listener (bubbling) do React
   );
