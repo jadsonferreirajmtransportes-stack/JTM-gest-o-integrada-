@@ -1845,19 +1845,26 @@ export default function App() {
     horaExame?: string,
     anexoAsoAntigoParaArquivar?: AnexoColaborador
   ) => {
-    await renovarExameASO(
-      colaboradorId,
-      dataUltimoExame,
-      novoVencimento,
-      clinica,
-      asoImagemUrl,
-      asoNomeArquivo,
-      asoMedicoEmitente,
-      asoResultado,
-      clinicaLocalizacaoLink,
-      horaExame,
-      anexoAsoAntigoParaArquivar
-    );
+    try {
+      await renovarExameASO(
+        colaboradorId,
+        dataUltimoExame,
+        novoVencimento,
+        clinica,
+        asoImagemUrl,
+        asoNomeArquivo,
+        asoMedicoEmitente,
+        asoResultado,
+        clinicaLocalizacaoLink,
+        horaExame,
+        anexoAsoAntigoParaArquivar
+      );
+    } catch (err) {
+      console.error(err);
+      const motivo = err instanceof Error ? err.message : String(err);
+      showToast(`Não foi possível salvar a renovação do exame. Detalhe técnico: ${motivo}`, 'error');
+      throw err; // deixa o modal aberto (ver handleSaveRenew em AnvisaExamsView.tsx)
+    }
     await loadDpData();
     showToast('Exame ASO RDC 430 renovado com sucesso!');
   };
@@ -1869,7 +1876,14 @@ export default function App() {
     clinicaLocalizacaoLink?: string,
     horaAgendada?: string
   ) => {
-    await agendarExameASO(colaboradorId, dataAgendada, clinica, clinicaLocalizacaoLink, horaAgendada);
+    try {
+      await agendarExameASO(colaboradorId, dataAgendada, clinica, clinicaLocalizacaoLink, horaAgendada);
+    } catch (err) {
+      console.error(err);
+      const motivo = err instanceof Error ? err.message : String(err);
+      showToast(`Não foi possível salvar o agendamento. Detalhe técnico: ${motivo}`, 'error');
+      throw err; // deixa o modal aberto (ver handleSalvarAgendamento em AnvisaExamsView.tsx)
+    }
     await loadDpData();
     showToast('Agendamento salvo — o exame continua pendente até a renovação ser concluída.');
   };

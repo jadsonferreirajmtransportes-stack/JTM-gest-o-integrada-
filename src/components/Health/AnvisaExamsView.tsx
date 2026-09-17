@@ -54,7 +54,7 @@ interface AnvisaExamsViewProps {
     clinicaLocalizacaoLink?: string,
     horaExame?: string,
     anexoAsoAntigoParaArquivar?: AnexoColaborador
-  ) => void;
+  ) => Promise<void>;
   /** Só registra o agendamento (data/hora/clínica/link) — não mexe no vencimento nem no
    *  resultado, então o colaborador continua "Vencido"/"A Vencer" até a renovação de verdade. */
   onAgendarExame: (
@@ -63,7 +63,7 @@ interface AnvisaExamsViewProps {
     clinica?: string,
     clinicaLocalizacaoLink?: string,
     horaAgendada?: string
-  ) => void;
+  ) => Promise<void>;
 }
 
 export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
@@ -99,6 +99,11 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
 
   // Comunicar agendamento do exame (WhatsApp/e-mail) — mesmo padrão já usado em Férias.
   const [agendamentoCopiado, setAgendamentoCopiado] = useState(false);
+
+  // Erro ao salvar (renovação ou agendamento) — mantém o modal aberto e mostra o motivo, em vez
+  // de fechar silenciosamente como se tivesse dado certo (ex.: coluna nova ainda sem migração).
+  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
 
   const ativos = useMemo(
     () => colaboradores.filter((c) => c.status !== 'Inativo'),
@@ -179,6 +184,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     setAsoMedicoEmitente(colab.asoMedicoEmitente || '');
     setAsoResultado(colab.asoResultado || 'Apto');
     setAsoAntigoParaArquivar(undefined);
+    setErroSalvar(null);
     setIsModalOpen(true);
   };
 
@@ -204,39 +210,57 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     setAsoNomeArquivo(novoNome);
   };
 
-  const handleSaveRenew = (e: React.FormEvent) => {
+  const handleSaveRenew = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedColab || !dataVencimento) return;
 
-    onUpdateExame(
-      selectedColab.id,
-      dataUltimoExame,
-      dataVencimento,
-      clinicaMedica,
-      asoImagemUrl,
-      asoNomeArquivo,
-      asoMedicoEmitente,
-      asoResultado,
-      clinicaLocalizacaoLink.trim() || undefined,
-      horaExame.trim() || undefined,
-      asoAntigoParaArquivar
-    );
-    setIsModalOpen(false);
+    setErroSalvar(null);
+    setSalvando(true);
+    try {
+      await onUpdateExame(
+        selectedColab.id,
+        dataUltimoExame,
+        dataVencimento,
+        clinicaMedica,
+        asoImagemUrl,
+        asoNomeArquivo,
+        asoMedicoEmitente,
+        asoResultado,
+        clinicaLocalizacaoLink.trim() || undefined,
+        horaExame.trim() || undefined,
+        asoAntigoParaArquivar
+      );
+      setIsModalOpen(false);
+    } catch (err) {
+      // Mantém o modal aberto e mostra o motivo — sem isso, um erro do banco (ex.: coluna
+      // nova ainda sem migração) fechava o modal em silêncio, como se tivesse dado certo.
+      setErroSalvar(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSalvando(false);
+    }
   };
 
   // Só guarda a data/hora/clínica/link do agendamento — usado quando o exame ainda VAI
   // acontecer (não mexe no vencimento nem no resultado, então o colaborador continua
   // "Vencido"/"A Vencer" normalmente até a renovação de verdade ser salva depois).
-  const handleSalvarAgendamento = () => {
+  const handleSalvarAgendamento = async () => {
     if (!selectedColab || !dataUltimoExame) return;
-    onAgendarExame(
-      selectedColab.id,
-      dataUltimoExame,
-      clinicaMedica,
-      clinicaLocalizacaoLink.trim() || undefined,
-      horaExame.trim() || undefined
-    );
-    setIsModalOpen(false);
+    setErroSalvar(null);
+    setSalvando(true);
+    try {
+      await onAgendarExame(
+        selectedColab.id,
+        dataUltimoExame,
+        clinicaMedica,
+        clinicaLocalizacaoLink.trim() || undefined,
+        horaExame.trim() || undefined
+      );
+      setIsModalOpen(false);
+    } catch (err) {
+      setErroSalvar(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const handleEnviarWhatsAppAgendamento = () => {
@@ -725,30 +749,40 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                 )}
               </div>
 
+              {erroSalvar && (
+                <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-[11px] text-rose-700 font-semibold flex items-start gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>Não foi possível salvar: {erroSalvar}</span>
+                </div>
+              )}
+
               <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-semibold"
+                  disabled={salvando}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-semibold disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={handleSalvarAgendamento}
+                  disabled={salvando}
                   title="Guarda a data, hora, clínica e link — sem marcar o exame como concluído nem mudar o status de pendência"
-                  className="px-4 py-2 bg-white border border-amber-300 text-[#8A6A39] hover:bg-amber-50 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5"
+                  className="px-4 py-2 bg-white border border-amber-300 text-[#8A6A39] hover:bg-amber-50 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CalendarClock className="w-4 h-4" />
-                  <span>Salvar Agendamento</span>
+                  <span>{salvando ? 'Salvando...' : 'Salvar Agendamento'}</span>
                 </button>
                 <button
                   type="submit"
+                  disabled={salvando}
                   title="Marca o exame como realizado e atualiza o vencimento — use só depois que o exame já tiver acontecido"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save className="w-4 h-4" />
-                  <span>Salvar Renovação</span>
+                  <span>{salvando ? 'Salvando...' : 'Salvar Renovação'}</span>
                 </button>
               </div>
             </form>
