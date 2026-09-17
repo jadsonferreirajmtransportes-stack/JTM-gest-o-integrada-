@@ -162,6 +162,8 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
   const [clinicaHospital, setClinicaHospital] = useState<string>('');
   const [descricao, setDescricao] = useState<string>('');
   const [arquivoNome, setArquivoNome] = useState<string>('');
+  const [arquivoUrl, setArquivoUrl] = useState<string>('');
+  const [erroUpload, setErroUpload] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submittedProtocol, setSubmittedProtocol] = useState<string | null>(null);
   const [submittedData, setSubmittedData] = useState<Ocorrencia | null>(null);
@@ -194,11 +196,28 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
     [supervisores, supervisorId]
   );
 
+  const LIMITE_ANEXO_MB = 5;
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setArquivoNome(file.name);
+    if (!file) return;
+    setErroUpload(null);
+
+    const tamanhoMB = file.size / (1024 * 1024);
+    if (tamanhoMB > LIMITE_ANEXO_MB) {
+      setErroUpload(
+        `"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite é ${LIMITE_ANEXO_MB}MB. Tire uma foto em resolução menor.`
+      );
+      e.target.value = '';
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setArquivoNome(file.name);
+      setArquivoUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   // Quantidade de dias entre Início e Término, ambos inclusive (ex.: início e término no mesmo
@@ -270,6 +289,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
       diasAfastamento: TIPOS_COM_DURACAO.has(tipo) ? calcularDiasAfastamento() : undefined,
       descricao: fullDescricao,
       comprovanteAnexo: arquivoNome || undefined,
+      comprovanteArquivoUrl: arquivoUrl || undefined,
       registradoPor: fullSupervisor,
       criadoEm: new Date().toISOString(),
     };
@@ -739,7 +759,10 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
                       <span className="font-mono truncate max-w-xs">{arquivoNome}</span>
                       <button
                         type="button"
-                        onClick={() => setArquivoNome('')}
+                        onClick={() => {
+                          setArquivoNome('');
+                          setArquivoUrl('');
+                        }}
                         className="text-slate-400 hover:text-white ml-2"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -747,6 +770,11 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
                     </div>
                   )}
                 </div>
+                {erroUpload && (
+                  <p className="text-[11px] text-rose-400 bg-rose-950/40 border border-rose-800/60 rounded-lg p-2 mt-2">
+                    {erroUpload}
+                  </p>
+                )}
               </div>
             </div>
 

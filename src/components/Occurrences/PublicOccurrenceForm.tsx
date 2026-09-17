@@ -56,6 +56,8 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
   const [horaFim, setHoraFim] = useState('');
   const [descricao, setDescricao] = useState('');
   const [arquivoNome, setArquivoNome] = useState('');
+  const [arquivoUrl, setArquivoUrl] = useState('');
+  const [erroUpload, setErroUpload] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const botGuard = useBotGuard();
 
@@ -96,6 +98,7 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
       horaFim: tipo === 'Comparecimento' ? horaFim || undefined : undefined,
       descricao,
       comprovanteAnexo: arquivoNome || undefined,
+      comprovanteArquivoUrl: arquivoUrl || undefined,
       registradoPor: sup ? `${sup.nome} (${sup.cargo})` : 'Supervisor de Campo',
       criadoEm: new Date().toISOString(),
     };
@@ -108,11 +111,28 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
     }, 2000);
   };
 
+  const LIMITE_ANEXO_MB = 5;
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) {
-      setArquivoNome(f.name);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setErroUpload(null);
+
+    const tamanhoMB = file.size / (1024 * 1024);
+    if (tamanhoMB > LIMITE_ANEXO_MB) {
+      setErroUpload(
+        `"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite é ${LIMITE_ANEXO_MB}MB. Tire uma foto em resolução menor.`
+      );
+      e.target.value = '';
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setArquivoNome(file.name);
+      setArquivoUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -327,6 +347,11 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
                   </span>
                 )}
               </div>
+              {erroUpload && (
+                <p className="text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2 mt-1.5">
+                  {erroUpload}
+                </p>
+              )}
             </div>
 
             {/* Actions */}

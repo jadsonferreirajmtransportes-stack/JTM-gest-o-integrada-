@@ -503,6 +503,10 @@ export interface Ocorrencia {
   status?: StatusOcorrencia;
   acaoTomada?: string;
   comprovanteAnexo?: string;
+  /** Arquivo de verdade (Data URL base64) do comprovante — `comprovanteAnexo` guarda só o nome
+   *  do arquivo; mesmo padrão já usado nos anexos do ASO/admissão/colaborador. Sem isso, o nome
+   *  aparecia na tela mas não tinha como baixar o arquivo de fato. */
+  comprovanteArquivoUrl?: string;
   registradoPor?: string;
   origem?: string;
   criadoEm?: string;
