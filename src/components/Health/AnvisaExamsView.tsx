@@ -170,11 +170,10 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
     const agendamentoPendente = !!colab.dataUltimoExameOcupacional && colab.dataUltimoExameOcupacional >= hoje;
     const dataInicial = agendamentoPendente ? colab.dataUltimoExameOcupacional! : hoje;
     setDataUltimoExame(dataInicial);
-    setDataVencimento(
-      agendamentoPendente && colab.dataVencimentoExame
-        ? colab.dataVencimentoExame
-        : calcularVencimentoPadrao(dataInicial)
-    );
+    // Sempre recalcula a +12m a partir da data do exame (agendada ou de hoje) — usar o
+    // vencimento antigo salvo aqui só confundia (não recalculava sozinho ao reabrir um
+    // agendamento pendente, já que "Salvar Agendamento" propositalmente não mexe nele).
+    setDataVencimento(calcularVencimentoPadrao(dataInicial));
 
     setHoraExame(agendamentoPendente ? colab.horaUltimoExameOcupacional || '' : '');
     setClinicaMedica(colab.clinicaMedica || 'MedSeg Medicina do Trabalho');
