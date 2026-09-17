@@ -64,6 +64,8 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
     new Date().toISOString().slice(0, 10)
   );
   const [diasAfastamento, setDiasAfastamento] = useState(1);
+  const [horaInicio, setHoraInicio] = useState('');
+  const [horaFim, setHoraFim] = useState('');
   const [descricao, setDescricao] = useState('');
   const [supervisorId, setSupervisorId] = useState('');
   const [arquivoNome, setArquivoNome] = useState('');
@@ -92,6 +94,8 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
     setTipo('Atestado médico');
     setDataOcorrencia(new Date().toISOString().slice(0, 10));
     setDiasAfastamento(1);
+    setHoraInicio('');
+    setHoraFim('');
     setDescricao('');
     setSupervisorId(supervisores[0]?.id || '');
     setArquivoNome('');
@@ -111,6 +115,8 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
       tipo,
       dataOcorrencia,
       diasAfastamento: diasAfastamento > 0 ? diasAfastamento : undefined,
+      horaInicio: tipo === 'Comparecimento' ? horaInicio || undefined : undefined,
+      horaFim: tipo === 'Comparecimento' ? horaFim || undefined : undefined,
       descricao,
       comprovanteAnexo: arquivoNome || undefined,
       registradoPor: supervisorId ? supervisores.find((s) => s.id === supervisorId)?.nome : 'DP / RH JMT',
@@ -292,6 +298,10 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                           <span className="font-bold text-slate-800">
                             {item.diasAfastamento} dia{item.diasAfastamento > 1 ? 's' : ''}
                           </span>
+                        ) : item.horaInicio && item.horaFim ? (
+                          <span className="font-bold text-slate-800">
+                            {item.horaInicio} às {item.horaFim}
+                          </span>
                         ) : (
                           <span className="text-slate-400">-</span>
                         )}
@@ -407,6 +417,34 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                     onChange={(e) => setDiasAfastamento(parseInt(e.target.value, 10) || 1)}
                     className="w-full p-2 border border-slate-200 rounded-lg font-bold"
                   />
+                </div>
+              )}
+
+              {tipo === 'Comparecimento' && (
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1">Horário de Início *</label>
+                    <input
+                      type="time"
+                      required
+                      value={horaInicio}
+                      onChange={(e) => setHoraInicio(e.target.value)}
+                      className="w-full p-2 border border-slate-200 rounded-lg font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1">Horário de Término *</label>
+                    <input
+                      type="time"
+                      required
+                      value={horaFim}
+                      onChange={(e) => setHoraFim(e.target.value)}
+                      className="w-full p-2 border border-slate-200 rounded-lg font-bold"
+                    />
+                  </div>
+                  <p className="col-span-2 text-[11px] text-slate-500">
+                    Período de ausência pelo comparecimento — não conta como falta do dia todo.
+                  </p>
                 </div>
               )}
 

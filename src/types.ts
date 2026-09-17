@@ -492,6 +492,11 @@ export interface Ocorrencia {
   dataOcorrencia?: string; // YYYY-MM-DD
   tipo: TipoOcorrencia;
   diasAfastamento?: number;
+  /** Só usado no tipo "Comparecimento" (ex.: consulta médica no meio do expediente) — um
+   *  comparecimento não é falta o dia todo, então registra o horário de ausência dentro do
+   *  próprio dia em vez de contar como um dia inteiro afastado. */
+  horaInicio?: string; // HH:mm
+  horaFim?: string; // HH:mm
   descricao: string;
   supervisorId?: string;
   supervisorNome?: string;

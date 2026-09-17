@@ -52,6 +52,8 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
   const [dataTermino, setDataTermino] = useState(
     new Date().toISOString().slice(0, 10)
   );
+  const [horaInicio, setHoraInicio] = useState('');
+  const [horaFim, setHoraFim] = useState('');
   const [descricao, setDescricao] = useState('');
   const [arquivoNome, setArquivoNome] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -90,6 +92,8 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
       tipo,
       dataOcorrencia,
       diasAfastamento: TIPOS_COM_DURACAO.has(tipo) ? calcularDiasAfastamento() : undefined,
+      horaInicio: tipo === 'Comparecimento' ? horaInicio || undefined : undefined,
+      horaFim: tipo === 'Comparecimento' ? horaFim || undefined : undefined,
       descricao,
       comprovanteAnexo: arquivoNome || undefined,
       registradoPor: sup ? `${sup.nome} (${sup.cargo})` : 'Supervisor de Campo',
@@ -257,6 +261,36 @@ export const PublicOccurrenceForm: React.FC<PublicOccurrenceFormProps> = ({
                 />
                 <p className="text-[11px] text-slate-500 mt-1">
                   {calcularDiasAfastamento()} dia(s) de afastamento
+                </p>
+              </div>
+            )}
+
+            {/* Horário de ausência dentro do dia — só pra Comparecimento, que não é falta o dia
+                todo (ex.: saiu pra uma consulta médica e voltou depois). */}
+            {tipo === 'Comparecimento' && (
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Horário de Início *</label>
+                  <input
+                    type="time"
+                    required
+                    value={horaInicio}
+                    onChange={(e) => setHoraInicio(e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg text-slate-800 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Horário de Término *</label>
+                  <input
+                    type="time"
+                    required
+                    value={horaFim}
+                    onChange={(e) => setHoraFim(e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg text-slate-800 font-bold"
+                  />
+                </div>
+                <p className="col-span-2 text-[11px] text-slate-500">
+                  Período em que o colaborador esteve ausente pelo comparecimento — não conta como falta do dia todo.
                 </p>
               </div>
             )}
