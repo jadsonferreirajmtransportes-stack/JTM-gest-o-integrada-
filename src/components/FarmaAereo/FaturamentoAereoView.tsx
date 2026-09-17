@@ -35,6 +35,8 @@ import {
   STATUS_FATURA_CONFIG,
   TIPOS_CUSTO_EXTRA,
   normalizeKey,
+  ehModalRodoviario,
+  tabelaFreteParaModal,
 } from './faturamentoAereoUtils';
 import { ImportFaturamentoAereoModal } from './ImportFaturamentoAereoModal';
 
@@ -143,8 +145,12 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
 }) => {
   const valorCalculado = computeValorACobrar(l, cliente);
   const tituloValorACobrar = tituloValorACobrarDetalhado(l, cliente);
-  const cidadesTarifario = cliente?.tabelaFrete?.tarifasPorCidade;
+  // Cidades do tarifário certo pra ESTE lançamento (Aéreo ou Rodoviário) — antes sempre
+  // mostrava as cidades da tabelaFrete (Aéreo) mesmo pra um lançamento Rodoviário, já que a
+  // LUFT é hoje o único cliente com as duas tabelas distintas (ver tabelaFreteParaModal).
+  const cidadesTarifario = tabelaFreteParaModal(cliente, l.modal)?.tarifasPorCidade;
   const usaTarifaPorCidade = !!cidadesTarifario && cidadesTarifario.length > 0;
+  const clienteTemDuasTabelas = !!cliente?.tabelaFreteRodoviario;
 
   return (
     <tr className="align-middle">
@@ -163,6 +169,21 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
       )}
       <td className="px-2 py-1.5 text-slate-700 whitespace-nowrap">{l.notaFiscal || l.numeroCte || '—'}</td>
       <td className="px-2 py-1.5 text-slate-600 max-w-[120px] truncate">{l.destinatario || '—'}</td>
+      <td className="px-2 py-1.5">
+        <select
+          value={ehModalRodoviario(l.modal) ? 'Rodoviário' : 'Aéreo'}
+          onChange={(e) => onFieldChange({ modal: e.target.value })}
+          className={inputCls + ' min-w-[90px]'}
+          title={
+            clienteTemDuasTabelas
+              ? 'Este cliente tem tarifários diferentes para Aéreo e Rodoviário — o Valor a Cobrar usa o tarifário certo conforme este campo.'
+              : 'Modal de transporte deste lançamento.'
+          }
+        >
+          <option value="Aéreo">Aéreo</option>
+          <option value="Rodoviário">Rodoviário</option>
+        </select>
+      </td>
       <td className="px-2 py-1.5">
         {usaTarifaPorCidade ? (
           // <input list> + <datalist> em vez de <select>: dá pra digitar (filtra a lista
@@ -1211,6 +1232,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                                   <tr className="text-left text-slate-500">
                                     <th className="px-2 py-2">NF / CT-e</th>
                                     <th className="px-2 py-2">Destinatário</th>
+                                    <th className="px-2 py-2">Modal</th>
                                     <th className="px-2 py-2">Cidade</th>
                                     <th className="px-2 py-2">Peso</th>
                                     <th className="px-2 py-2">Tipo Custo Extra</th>
@@ -1363,6 +1385,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                   <th className="px-2 py-2">Cliente</th>
                   <th className="px-2 py-2">NF / CT-e</th>
                   <th className="px-2 py-2">Destinatário</th>
+                  <th className="px-2 py-2">Modal</th>
                   <th className="px-2 py-2">Cidade</th>
                   <th className="px-2 py-2">Peso</th>
                   <th className="px-2 py-2">Tipo Custo Extra</th>

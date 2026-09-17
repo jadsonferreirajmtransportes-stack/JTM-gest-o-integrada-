@@ -56,7 +56,7 @@ export function findClienteById(clientes: Cliente[], clienteId?: string): Client
  * `tabelaFreteRodoviario` cadastrado no cliente é usado quando o lançamento é Rodoviário; sem
  * esse campo (o caso comum), sempre cai em `tabelaFrete`, preservando o comportamento anterior.
  */
-function tabelaFreteParaModal(cliente: Cliente | undefined, modal?: string): TabelaPrecoFrete | undefined {
+export function tabelaFreteParaModal(cliente: Cliente | undefined, modal?: string): TabelaPrecoFrete | undefined {
   if (!cliente) return undefined;
   const ehRodoviario = normalizeKey(modal || '').includes('rodoviari');
   if (ehRodoviario && cliente.tabelaFreteRodoviario) return cliente.tabelaFreteRodoviario;
