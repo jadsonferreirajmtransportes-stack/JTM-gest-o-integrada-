@@ -624,6 +624,79 @@ const TEMPLATE_TEMPLOG: TemplateExportacaoFatura = {
   }),
 };
 
+/** Modelo UNICARGO — mesmas colunas da planilha real de conferência do cliente ("UNICARGO -
+ *  FEVEREIRO 2026 (2ºQ).xlsx"). Várias colunas do modelo (PESO CUBADO, CUSTO R$ AGENTE, PESO
+ *  CONSOLIDADO, % CONSOLIDADO, VALOR AD VALOREM, FRETE AGENTE, VALOR CONSOLIDADO, FRETE
+ *  RATEADO, DIFERENÇA) são de um fluxo de conferência de custo de agente que o sistema não
+ *  detalha hoje como campo próprio do lançamento — saem em branco, mesmo raciocínio de
+ *  "não inventar valor" já usado nos modelos TRANS MODEL/BOMI. "CIDADE DESTINO" e "CIDADE" são
+ *  colunas repetidas no arquivo original (mesmo valor nas duas) — replicado aqui do jeito que é.
+ *  TX MÍNIMA/PREÇO POR KG/% AD VALOREM vêm do tarifário cadastrado no cliente, mesmo padrão do
+ *  modelo TEMPLOG. */
+const TEMPLATE_UNICARGO: TemplateExportacaoFatura = {
+  id: 'unicargo',
+  nomeExibicao: 'UNICARGO',
+  colunaTotal: 'valorAPagar',
+  colunas: [
+    { header: 'CTE', key: 'cte', width: 10 },
+    { header: 'EMISSAO', key: 'emissao', width: 13 },
+    { header: 'N.F.', key: 'nf', width: 12 },
+    { header: 'REMETENTE', key: 'remetente', width: 28 },
+    { header: 'DESTINATARIO', key: 'destinatario', width: 28 },
+    { header: 'CIDADE DESTINO', key: 'cidadeDestino', width: 18 },
+    { header: 'DATA ENTREGA', key: 'dataEntrega', width: 13 },
+    { header: 'PESO REAL', key: 'pesoReal', width: 11 },
+    { header: 'PESO CUBADO', key: 'pesoCubado', width: 12 },
+    { header: 'PESO TAXADO', key: 'pesoTaxado', width: 12 },
+    { header: 'VOL.', key: 'vol', width: 8 },
+    { header: 'CUSTO R$ AGENTE', key: 'custoAgente', width: 15, moeda: true },
+    { header: 'CIDADE', key: 'cidade', width: 18 },
+    { header: 'UF', key: 'uf', width: 6 },
+    { header: 'PESO TAXADO', key: 'pesoTaxado2', width: 12 },
+    { header: 'PESO CONSOLIDADO', key: 'pesoConsolidado', width: 16 },
+    { header: '% CONSOLIDADO', key: 'percConsolidado', width: 13 },
+    { header: 'TX MÍNIMA', key: 'txMinima', width: 12, moeda: true },
+    { header: 'PREÇO POR KG', key: 'precoPorKg', width: 13, moeda: true },
+    { header: '% AD VALOREM', key: 'percAdValorem', width: 13 },
+    { header: 'VALOR AD VALOREM', key: 'valorAdValorem', width: 16, moeda: true },
+    { header: 'FRETE AGENTE', key: 'freteAgente', width: 13, moeda: true },
+    { header: 'VALOR CONSOLIDADO', key: 'valorConsolidado', width: 17, moeda: true },
+    { header: 'FRETE RATEADO', key: 'freteRateado', width: 14, moeda: true },
+    { header: 'VALOR A PAGAR', key: 'valorAPagar', width: 14, moeda: true },
+    { header: 'DIFERENÇA', key: 'diferenca', width: 12, moeda: true },
+    { header: 'OBS', key: 'observacao', width: 36 },
+  ],
+  montarLinha: (l, cliente, valorACobrar) => ({
+    cte: l.numeroCte || '',
+    emissao: l.dataEmissao ? formatDateBR(l.dataEmissao) : '',
+    nf: l.notaFiscal || '',
+    remetente: l.remetenteLab || '',
+    destinatario: l.destinatario || '',
+    cidadeDestino: cidadeUf(l.cidadeDestino, l.estadoDestino),
+    dataEntrega: l.dataConclusao ? formatDateBR(l.dataConclusao) : '',
+    pesoReal: l.pesoKg ?? null,
+    pesoCubado: null,
+    pesoTaxado: l.pesoTaxado ?? l.pesoKg ?? null,
+    vol: l.volumes ?? null,
+    custoAgente: null,
+    cidade: cidadeUf(l.cidadeDestino, l.estadoDestino),
+    uf: l.estadoDestino || '',
+    pesoTaxado2: l.pesoTaxado ?? l.pesoKg ?? null,
+    pesoConsolidado: null,
+    percConsolidado: null,
+    txMinima: cliente?.tabelaFrete?.valorBase ?? null,
+    precoPorKg: cliente?.tabelaFrete?.valorKgExcedente ?? null,
+    percAdValorem: cliente?.tabelaFrete?.percentualAdValoremNF ?? null,
+    valorAdValorem: null,
+    freteAgente: null,
+    valorConsolidado: null,
+    freteRateado: null,
+    valorAPagar: valorACobrar,
+    diferenca: null,
+    observacao: l.observacao || '',
+  }),
+};
+
 /** Modelo TRANS MODEL — mesmas colunas da planilha "Trans Model Padrão" que a própria empresa
  *  usa para conferência ("TRANSMODEL - FATURAMENTO DE ABRIL 2ºQ.xlsx"). O sistema hoje não
  *  detalha GRIS/Agendamento/Outros como lançamentos separados — essas colunas saem em branco
@@ -864,6 +937,7 @@ const TEMPLATE_POR_NOME: { teste: (nomeNormalizado: string) => boolean; template
   { teste: (n) => n.includes('BLS') || n.includes('BIOTHERMAL'), template: TEMPLATE_BLS },
   { teste: (n) => n.includes('TEMPLOG') || n.includes('TGT'), template: TEMPLATE_TEMPLOG },
   { teste: (n) => n.includes('TRANS MODEL') || n.includes('TRANSMODEL'), template: TEMPLATE_TRANSMODEL },
+  { teste: (n) => n.includes('UNICARGO'), template: TEMPLATE_UNICARGO },
 ];
 
 /** Resolve qual modelo de exportação usar para uma fatura: id do cliente cadastrado > nome do
