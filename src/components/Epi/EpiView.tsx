@@ -28,10 +28,11 @@ export const EpiView: React.FC<EpiViewProps> = ({
   const [busca, setBusca] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEntrega, setEditingEntrega] = useState<EntregaEpi | null>(null);
-  // A ficha de EPI é corrida por colaborador (acumula TODAS as entregas dele) — não um recibo
-  // de um evento só. Guarda o COLABORADOR, não a entrega clicada, pra EpiPrintModal/
-  // CompartilharEpiModal juntarem tudo que já foi entregue a essa pessoa.
-  const [colaboradorParaFicha, setColaboradorParaFicha] = useState<Colaborador | null>(null);
+  // A ficha de EPI é corrida por PESSOA (acumula TODAS as entregas dela) — não um recibo de um
+  // evento só. "alvoFicha" guarda o nome/função de quem vai aparecer na ficha, seja um
+  // Colaborador cadastrado ou alguém sem cadastro (recebedorNomeLivre) — nesse 2º caso não há
+  // Colaborador nenhum pra passar, só o nome digitado.
+  const [alvoFicha, setAlvoFicha] = useState<{ nome: string; funcaoCargo?: string } | null>(null);
   const [colaboradorParaCompartilhar, setColaboradorParaCompartilhar] = useState<Colaborador | null>(null);
   const [entregaComprovante, setEntregaComprovante] = useState<EntregaEpi | null>(null);
 
@@ -41,17 +42,31 @@ export const EpiView: React.FC<EpiViewProps> = ({
     return map;
   }, [colaboradores]);
 
+  /** Nome de quem recebeu — do cadastro quando há colaboradorId, senão o nome digitado
+   *  (recebedorNomeLivre, colaborador de verdade que a empresa optou por não cadastrar). */
+  const nomeRecebedor = (entrega: EntregaEpi): string =>
+    (entrega.colaboradorId && colaboradorPorId.get(entrega.colaboradorId)?.nomeCompleto) ||
+    entrega.recebedorNomeLivre ||
+    'Recebedor não identificado';
+
   const entregasFiltradas = useMemo(() => {
     const ordenadas = [...entregas].sort((a, b) => b.data.localeCompare(a.data));
     const termo = busca.trim().toLowerCase();
     if (!termo) return ordenadas;
-    return ordenadas.filter((e) => (colaboradorPorId.get(e.colaboradorId)?.nomeCompleto || '').toLowerCase().includes(termo));
+    return ordenadas.filter((e) => nomeRecebedor(e).toLowerCase().includes(termo));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entregas, busca, colaboradorPorId]);
 
-  const entregasDoColaboradorDaFicha = useMemo(
-    () => (colaboradorParaFicha ? entregas.filter((e) => e.colaboradorId === colaboradorParaFicha.id) : []),
-    [entregas, colaboradorParaFicha]
-  );
+  /** Todas as entregas da mesma pessoa que está na ficha aberta — por colaboradorId quando
+   *  existe; por nome digitado (só entre quem também não tem colaboradorId) quando não. */
+  const entregasDoAlvoFicha = useMemo(() => {
+    if (!alvoFicha) return [];
+    return entregas.filter((e) =>
+      e.colaboradorId
+        ? colaboradorPorId.get(e.colaboradorId)?.nomeCompleto === alvoFicha.nome
+        : e.recebedorNomeLivre === alvoFicha.nome
+    );
+  }, [entregas, alvoFicha, colaboradorPorId]);
 
   const handleNovaEntrega = () => {
     setEditingEntrega(null);
@@ -62,8 +77,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
     setIsFormOpen(true);
   };
   const handleExcluir = (entrega: EntregaEpi) => {
-    const colab = colaboradorPorId.get(entrega.colaboradorId);
-    if (window.confirm(`Excluir o registro de entrega de EPI de ${colab?.nomeCompleto || 'colaborador'} em ${formatDate(entrega.data)}?`)) {
+    if (window.confirm(`Excluir o registro de entrega de EPI de ${nomeRecebedor(entrega)} em ${formatDate(entrega.data)}?`)) {
       onDeleteEntrega(entrega.id);
     }
   };
@@ -120,10 +134,18 @@ export const EpiView: React.FC<EpiViewProps> = ({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {entregasFiltradas.map((entrega) => {
-                const colab = colaboradorPorId.get(entrega.colaboradorId);
+                const colab = entrega.colaboradorId ? colaboradorPorId.get(entrega.colaboradorId) : undefined;
+                const nome = nomeRecebedor(entrega);
                 return (
                   <tr key={entrega.id} className="group hover:bg-slate-50/80">
-                    <td className="py-3 px-4 font-semibold text-slate-800">{colab?.nomeCompleto || 'Colaborador não encontrado'}</td>
+                    <td className="py-3 px-4 font-semibold text-slate-800">
+                      {nome}
+                      {!entrega.colaboradorId && (
+                        <span className="ml-1.5 text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full align-middle">
+                          NÃO CADASTRADO
+                        </span>
+                      )}
+                    </td>
                     <td className="py-3 px-4 text-slate-600">{formatDate(entrega.data)}</td>
                     <td className="py-3 px-4 text-slate-600">
                       {entrega.itens.map((i) => `${i.descricao} (${i.quantidade})`).join(', ')}
@@ -149,10 +171,9 @@ export const EpiView: React.FC<EpiViewProps> = ({
                       <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
-                          onClick={() => setColaboradorParaFicha(colab || null)}
-                          disabled={!colab}
-                          className="p-1.5 text-slate-400 hover:text-[#8A6A39] hover:bg-slate-100 rounded-lg disabled:opacity-30"
-                          title="Ver ficha de EPI do colaborador (todas as entregas)"
+                          onClick={() => setAlvoFicha({ nome, funcaoCargo: colab?.funcaoCargo })}
+                          className="p-1.5 text-slate-400 hover:text-[#8A6A39] hover:bg-slate-100 rounded-lg"
+                          title="Ver ficha de EPI (todas as entregas dessa pessoa)"
                         >
                           <FileText className="w-3.5 h-3.5" />
                         </button>
@@ -161,7 +182,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
                           onClick={() => setColaboradorParaCompartilhar(colab || null)}
                           disabled={!colab}
                           className="p-1.5 text-slate-400 hover:text-[#8A6A39] hover:bg-slate-100 rounded-lg disabled:opacity-30"
-                          title="Compartilhar ficha por link"
+                          title={colab ? 'Compartilhar ficha por link' : 'Só disponível pra colaboradores cadastrados no sistema'}
                         >
                           <Share2 className="w-3.5 h-3.5" />
                         </button>
@@ -207,11 +228,12 @@ export const EpiView: React.FC<EpiViewProps> = ({
         onSave={onSaveEntrega}
       />
 
-      {colaboradorParaFicha && (
+      {alvoFicha && (
         <EpiPrintModal
-          colaborador={colaboradorParaFicha}
-          entregas={entregasDoColaboradorDaFicha}
-          onClose={() => setColaboradorParaFicha(null)}
+          nome={alvoFicha.nome}
+          funcaoCargo={alvoFicha.funcaoCargo}
+          entregas={entregasDoAlvoFicha}
+          onClose={() => setAlvoFicha(null)}
         />
       )}
 
@@ -234,9 +256,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
                 <Paperclip className="w-5 h-5 text-amber-600 shrink-0" />
                 <div className="min-w-0">
                   <h2 className="text-base font-bold text-slate-900 truncate">Recibo de EPI Assinado</h2>
-                  <p className="text-[11px] text-slate-500 truncate">
-                    {colaboradorPorId.get(entregaComprovante.colaboradorId)?.nomeCompleto || 'Colaborador não encontrado'}
-                  </p>
+                  <p className="text-[11px] text-slate-500 truncate">{nomeRecebedor(entregaComprovante)}</p>
                 </div>
               </div>
               <button

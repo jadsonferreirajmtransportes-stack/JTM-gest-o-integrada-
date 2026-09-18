@@ -7,6 +7,10 @@ export interface LinhaFichaEpi {
   ca: string;
   entrega: string; // YYYY-MM-DD
   devolucao?: string; // YYYY-MM-DD
+  /** Assinatura desenhada na tela (data URL) no momento dessa entrega — ver
+   *  AssinaturaDigitalPad.tsx/Formulário Público de Entrega de EPI. Ausente = a linha fica em
+   *  branco pra assinatura no papel (fluxo tradicional, imprimir e assinar depois). */
+  assinaturaDigitalUrl?: string;
 }
 
 interface EpiFichaDocumentoProps {
@@ -114,7 +118,11 @@ export const EpiFichaDocumento: React.FC<EpiFichaDocumentoProps> = ({
               <td className="border border-black px-2 py-1.5 text-center">
                 {linha.devolucao ? formatDate(linha.devolucao) : '—'}
               </td>
-              <td className="border border-black px-2 py-1.5" />
+              <td className="border border-black px-2 py-1.5">
+                {linha.assinaturaDigitalUrl && (
+                  <img src={linha.assinaturaDigitalUrl} alt="Assinatura digital" className="h-6" />
+                )}
+              </td>
             </tr>
           ))}
           {linhas.length === 0 && (

@@ -606,26 +606,30 @@ export async function deleteFerias(id: string): Promise<void> {
 function rowToEntregaEpi(r: any): EntregaEpi {
   return {
     id: r.id,
-    colaboradorId: r.colaborador_id,
+    colaboradorId: u(r.colaborador_id),
+    recebedorNomeLivre: u(r.recebedor_nome_livre),
     data: r.data,
     responsavelEntrega: u(r.responsavel_entrega),
     itens: j(r.itens),
     observacoes: u(r.observacoes),
     comprovanteAssinadoUrl: u(r.comprovante_assinado_url),
     comprovanteAssinadoNomeArquivo: u(r.comprovante_assinado_nome_arquivo),
+    assinaturaDigitalUrl: u(r.assinatura_digital_url),
     criadoEm: u(r.criado_em),
   };
 }
 export function entregaEpiToRow(e: EntregaEpi) {
   return {
     id: e.id,
-    colaborador_id: e.colaboradorId,
+    colaborador_id: n(e.colaboradorId),
+    recebedor_nome_livre: n(e.recebedorNomeLivre),
     data: e.data,
     responsavel_entrega: n(e.responsavelEntrega),
     itens: j(e.itens),
     observacoes: n(e.observacoes),
     comprovante_assinado_url: n(e.comprovanteAssinadoUrl),
     comprovante_assinado_nome_arquivo: n(e.comprovanteAssinadoNomeArquivo),
+    assinatura_digital_url: n(e.assinaturaDigitalUrl),
   };
 }
 export async function getEntregasEpi(): Promise<EntregaEpi[]> {

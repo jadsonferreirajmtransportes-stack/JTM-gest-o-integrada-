@@ -49,6 +49,7 @@ export const CompartilharEpiModal: React.FC<CompartilharEpiModalProps> = ({
             ca: item.ca,
             entrega: entrega.data,
             devolucao: item.devolucao,
+            assinaturaDigitalUrl: entrega.assinaturaDigitalUrl,
           }))
         ),
     [entregasDoColaborador]

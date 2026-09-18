@@ -473,13 +473,24 @@ export interface ItemEntregaEpi {
 
 export interface EntregaEpi {
   id: string;
-  colaboradorId: string;
+  /** Ausente quando o recebedor não é (por opção da empresa) um Colaborador cadastrado no
+   *  sistema — nesse caso `recebedorNomeLivre` é quem identifica a entrega. */
+  colaboradorId?: string;
+  /** Nome de quem recebeu, usado só quando NÃO há colaboradorId — colaborador de verdade que a
+   *  empresa optou por não cadastrar no sistema. Ficha/PDF continuam funcionando (agrupando
+   *  pelo mesmo nome); o link de compartilhamento exige colaboradorId (precisa de um
+   *  Colaborador cadastrado, é o FK da tabela de links). */
+  recebedorNomeLivre?: string;
   data: string; // YYYY-MM-DD
   responsavelEntrega?: string; // quem entregou (nome, texto livre)
   itens: ItemEntregaEpi[];
   observacoes?: string;
   comprovanteAssinadoUrl?: string; // foto/PDF do recibo escaneado já assinado pelo recebedor
   comprovanteAssinadoNomeArquivo?: string;
+  /** Assinatura desenhada na tela (data URL PNG) — preenchida quando a entrega é registrada
+   *  pelo Formulário Público de Entrega de EPI (assinatura digital, sem precisar imprimir e
+   *  assinar no papel). Aparece na ficha impressa/PDF na coluna "Assinatura do funcionário". */
+  assinaturaDigitalUrl?: string;
   criadoEm?: string;
 }
 

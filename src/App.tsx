@@ -199,6 +199,7 @@ import { MonthlyCostView } from './components/Cost/MonthlyCostView';
 import { VacationView } from './components/Vacation/VacationView';
 import { EpiView } from './components/Epi/EpiView';
 import { EpiPublicView } from './components/Epi/EpiPublicView';
+import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
 import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
 import { OccurrencesView } from './components/Occurrences/OccurrencesView';
 import { PublicOccurrenceForm } from './components/Occurrences/PublicOccurrenceForm';
@@ -532,6 +533,7 @@ export default function App() {
   const [notaPublicaToken, setNotaPublicaToken] = useState<string | undefined>(undefined);
   const [isEpiPublicaView, setIsEpiPublicaView] = useState<boolean>(false);
   const [epiPublicaToken, setEpiPublicaToken] = useState<string | undefined>(undefined);
+  const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
 
   // Modals State
   const [isAvisoAberturaOpen, setIsAvisoAberturaOpen] = useState<boolean>(false);
@@ -892,6 +894,8 @@ export default function App() {
       } else if (formParam === 'epi' || hash === '#epi') {
         setIsEpiPublicaView(true);
         setEpiPublicaToken(searchParams.get('token') || undefined);
+      } else if (formParam === 'epi_entrega' || hash === '#epi_entrega') {
+        setIsEpiFormularioPublicoView(true);
       }
     }
   }, []);
@@ -899,9 +903,10 @@ export default function App() {
   // Carrega os dados do Formulário Público de Ocorrências (ver comentário nos states
   // supervisoresPublico/colaboradoresPublico/empregadoresPublico acima) sempre que essa tela
   // for aberta — tanto pelo link público de verdade (isOccurrencePortalView) quanto pelo botão
-  // "Testar Formulário" de dentro do sistema (activeSection === 'formulario_publico').
+  // "Testar Formulário" de dentro do sistema (activeSection === 'formulario_publico'). O
+  // Formulário Público de Entrega de EPI reaproveita a mesma lista de colaboradores.
   useEffect(() => {
-    if (isOccurrencePortalView || activeSection === 'formulario_publico') {
+    if (isOccurrencePortalView || activeSection === 'formulario_publico' || isEpiFormularioPublicoView) {
       Promise.all([getSupervisoresPublico(), getColaboradoresAtivosPublico(), getEmpregadoresPublico()])
         .then(([sups, colabs, emps]) => {
           setSupervisoresPublico(sups);
@@ -912,7 +917,7 @@ export default function App() {
           console.error('Erro ao carregar dados públicos do Formulário de Ocorrências:', err);
         });
     }
-  }, [isOccurrencePortalView, activeSection]);
+  }, [isOccurrencePortalView, activeSection, isEpiFormularioPublicoView]);
 
   // A Agenda da Gestão é um módulo próprio: qualquer atalho que selecione a
   // seção 'agenda_gestao' (dashboard geral, painel DP...) deve refletir
@@ -2453,6 +2458,11 @@ export default function App() {
         }}
       />
     );
+  }
+
+  // IF Public Entrega de EPI filling form is active (link genérico, ?form=epi_entrega)
+  if (isEpiFormularioPublicoView) {
+    return <PublicEpiEntregaView colaboradores={colaboradoresPublico} onSuccessSubmit={handleSaveEntregaEpi} />;
   }
 
   return (

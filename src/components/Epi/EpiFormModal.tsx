@@ -36,6 +36,8 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
   onSave,
 }) => {
   const [colaboradorId, setColaboradorId] = useState('');
+  const [recebedorNaoCadastrado, setRecebedorNaoCadastrado] = useState(false);
+  const [recebedorNomeLivre, setRecebedorNomeLivre] = useState('');
   const [data, setData] = useState(new Date().toISOString().slice(0, 10));
   const [responsavelEntrega, setResponsavelEntrega] = useState('');
   const [itens, setItens] = useState<ItemEntregaEpi[]>([criarItemVazio()]);
@@ -44,6 +46,8 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     setColaboradorId(initialData?.colaboradorId || '');
+    setRecebedorNaoCadastrado(!initialData?.colaboradorId && !!initialData?.recebedorNomeLivre);
+    setRecebedorNomeLivre(initialData?.recebedorNomeLivre || '');
     setData(initialData?.data || new Date().toISOString().slice(0, 10));
     setResponsavelEntrega(initialData?.responsavelEntrega || currentUserName || '');
     setItens(initialData?.itens && initialData.itens.length > 0 ? initialData.itens : [criarItemVazio()]);
@@ -63,10 +67,12 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const itensValidos = itens.filter((it) => it.descricao.trim());
-    if (!colaboradorId || itensValidos.length === 0) return;
+    if (itensValidos.length === 0) return;
+    if (recebedorNaoCadastrado ? !recebedorNomeLivre.trim() : !colaboradorId) return;
     onSave({
       id: initialData?.id || '',
-      colaboradorId,
+      colaboradorId: recebedorNaoCadastrado ? undefined : colaboradorId,
+      recebedorNomeLivre: recebedorNaoCadastrado ? recebedorNomeLivre.trim() : undefined,
       data,
       responsavelEntrega: responsavelEntrega.trim() || undefined,
       itens: itensValidos,
@@ -101,20 +107,49 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
         <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="font-semibold text-slate-700 block mb-1">Colaborador (Recebedor) *</label>
-              <select
-                required
-                value={colaboradorId}
-                onChange={(e) => setColaboradorId(e.target.value)}
-                className="w-full p-2 border border-slate-200 rounded-lg font-bold text-slate-800"
-              >
-                <option value="">Selecione o Colaborador</option>
-                {activeEmployees.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nomeCompleto} ({c.funcaoCargo} — {c.setor})
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-semibold text-slate-700">Colaborador (Recebedor) *</label>
+                <label className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={recebedorNaoCadastrado}
+                    onChange={(e) => setRecebedorNaoCadastrado(e.target.checked)}
+                    className="w-3.5 h-3.5"
+                  />
+                  Colaborador não cadastrado no sistema
+                </label>
+              </div>
+              {recebedorNaoCadastrado ? (
+                <input
+                  type="text"
+                  data-no-uppercase="true"
+                  required
+                  value={recebedorNomeLivre}
+                  onChange={(e) => setRecebedorNomeLivre(e.target.value)}
+                  placeholder="Nome completo do recebedor"
+                  className="w-full p-2 border border-slate-200 rounded-lg font-bold text-slate-800"
+                />
+              ) : (
+                <select
+                  required
+                  value={colaboradorId}
+                  onChange={(e) => setColaboradorId(e.target.value)}
+                  className="w-full p-2 border border-slate-200 rounded-lg font-bold text-slate-800"
+                >
+                  <option value="">Selecione o Colaborador</option>
+                  {activeEmployees.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nomeCompleto} ({c.funcaoCargo} — {c.setor})
+                    </option>
+                  ))}
+                </select>
+              )}
+              {recebedorNaoCadastrado && (
+                <p className="text-[10px] text-slate-400 mt-1">
+                  A ficha e o PDF continuam funcionando pra essa pessoa; o link de compartilhamento por WhatsApp/e-mail
+                  só está disponível pra colaboradores cadastrados no sistema.
+                </p>
+              )}
             </div>
             <div>
               <label className="font-semibold text-slate-700 block mb-1">Data da Entrega *</label>
