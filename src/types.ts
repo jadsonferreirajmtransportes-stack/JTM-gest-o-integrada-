@@ -464,6 +464,7 @@ export interface ItemEntregaEpi {
   id: string;
   descricao: string; // Ex.: "Luva de Proteção", "Colete Refletivo"
   ca: string; // Certificado de Aprovação (CA) do EPI — exigido pela NR-6
+  tamanho?: string; // Ex.: "42", "M", "GG" — só faz sentido pra EPIs com numeração/tamanho
   quantidade: number;
   motivo: MotivoEntregaEpi;
   /** Data em que este item específico foi devolvido/trocado (YYYY-MM-DD) — mesma coluna

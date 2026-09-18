@@ -196,7 +196,7 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
                     placeholder="Descrição do EPI (ex.: Luva de Proteção)"
                     value={item.descricao}
                     onChange={(e) => handleUpdateItem(idx, 'descricao', e.target.value)}
-                    className="col-span-4 p-1.5 border border-slate-200 rounded-md text-[11px]"
+                    className="col-span-5 p-1.5 border border-slate-200 rounded-md text-[11px]"
                   />
                   <input
                     type="text"
@@ -206,6 +206,15 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
                     onChange={(e) => handleUpdateItem(idx, 'ca', e.target.value)}
                     title="Certificado de Aprovação (CA) do EPI"
                     className="col-span-2 p-1.5 border border-slate-200 rounded-md text-[11px]"
+                  />
+                  <input
+                    type="text"
+                    data-no-uppercase="true"
+                    placeholder="Tam."
+                    value={item.tamanho || ''}
+                    onChange={(e) => handleUpdateItem(idx, 'tamanho', e.target.value || undefined)}
+                    title="Tamanho/numeração do EPI (ex.: 42, M, GG) — deixe em branco se não se aplica"
+                    className="col-span-1 p-1.5 border border-slate-200 rounded-md text-[11px]"
                   />
                   <input
                     type="number"
@@ -225,13 +234,6 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
                       </option>
                     ))}
                   </select>
-                  <input
-                    type="date"
-                    value={item.devolucao || ''}
-                    onChange={(e) => handleUpdateItem(idx, 'devolucao', e.target.value || undefined)}
-                    title="Data de devolução/troca deste item (preencher quando o colaborador devolver)"
-                    className="col-span-2 p-1.5 border border-slate-200 rounded-md text-[11px]"
-                  />
                   <button
                     type="button"
                     onClick={() => handleRemoveItem(idx)}
@@ -241,12 +243,23 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
+                  <div className="col-span-11">
+                    <label className="text-[10px] text-slate-400 block mb-0.5">Devolução (preencher quando devolver)</label>
+                    <input
+                      type="date"
+                      value={item.devolucao || ''}
+                      onChange={(e) => handleUpdateItem(idx, 'devolucao', e.target.value || undefined)}
+                      title="Data de devolução/troca deste item (preencher quando o colaborador devolver)"
+                      className="w-full p-1.5 border border-slate-200 rounded-md text-[11px]"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
             <p className="text-[10px] text-slate-400 mt-1">
-              CA = Certificado de Aprovação do EPI (exigido pela NR-6). Preencha "Devolução" quando o colaborador
-              devolver/trocar este item específico (pode editar depois).
+              CA = Certificado de Aprovação do EPI (exigido pela NR-6). "Tam." = tamanho/numeração (ex.: 42, M, GG) —
+              deixe em branco se não se aplica. Preencha "Devolução" quando o colaborador devolver/trocar este item
+              específico (pode editar depois).
             </p>
           </div>
 

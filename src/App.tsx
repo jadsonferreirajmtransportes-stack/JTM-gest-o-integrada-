@@ -200,6 +200,7 @@ import { VacationView } from './components/Vacation/VacationView';
 import { EpiView } from './components/Epi/EpiView';
 import { EpiPublicView } from './components/Epi/EpiPublicView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
+import { EpiFormularioLinkModal } from './components/Epi/EpiFormularioLinkModal';
 import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
 import { OccurrencesView } from './components/Occurrences/OccurrencesView';
 import { PublicOccurrenceForm } from './components/Occurrences/PublicOccurrenceForm';
@@ -534,6 +535,7 @@ export default function App() {
   const [isEpiPublicaView, setIsEpiPublicaView] = useState<boolean>(false);
   const [epiPublicaToken, setEpiPublicaToken] = useState<string | undefined>(undefined);
   const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
+  const [isEpiLinkModalOpen, setIsEpiLinkModalOpen] = useState<boolean>(false);
 
   // Modals State
   const [isAvisoAberturaOpen, setIsAvisoAberturaOpen] = useState<boolean>(false);
@@ -2997,6 +2999,7 @@ export default function App() {
               currentUserName={currentUser?.nome}
               onSaveEntrega={handleSaveEntregaEpi}
               onDeleteEntrega={handleDeleteEntregaEpi}
+              onOpenEpiLinkModal={() => setIsEpiLinkModalOpen(true)}
             />
           )}
 
@@ -3175,6 +3178,13 @@ export default function App() {
         supervisores={supervisores}
         empregadores={empregadores}
         onOpenPortalView={() => setIsOccurrencePortalView(true)}
+      />
+
+      {/* 6b. Entrega de EPI — Link Generator & WhatsApp Sender Modal */}
+      <EpiFormularioLinkModal
+        isOpen={isEpiLinkModalOpen}
+        onClose={() => setIsEpiLinkModalOpen(false)}
+        onOpenPortalView={() => setIsEpiFormularioPublicoView(true)}
       />
 
       {/* 7. Custo Operacional Form Modal (Torre de Controle & Gestão Geral) */}

@@ -218,7 +218,7 @@ export const PublicEpiEntregaView: React.FC<PublicEpiEntregaViewProps> = ({ cola
                         placeholder="Descrição do EPI"
                         value={item.descricao}
                         onChange={(e) => handleUpdateItem(idx, 'descricao', e.target.value)}
-                        className="col-span-5 p-1.5 border border-slate-200 rounded-md text-[11px]"
+                        className="col-span-4 p-1.5 border border-slate-200 rounded-md text-[11px]"
                       />
                       <input
                         type="text"
@@ -227,6 +227,14 @@ export const PublicEpiEntregaView: React.FC<PublicEpiEntregaViewProps> = ({ cola
                         onChange={(e) => handleUpdateItem(idx, 'ca', e.target.value)}
                         title="Certificado de Aprovação (CA) do EPI"
                         className="col-span-2 p-1.5 border border-slate-200 rounded-md text-[11px]"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Tam."
+                        value={item.tamanho || ''}
+                        onChange={(e) => handleUpdateItem(idx, 'tamanho', e.target.value || undefined)}
+                        title="Tamanho/numeração do EPI (ex.: 42, M, GG) — deixe em branco se não se aplica"
+                        className="col-span-1 p-1.5 border border-slate-200 rounded-md text-[11px]"
                       />
                       <input
                         type="number"
@@ -258,7 +266,9 @@ export const PublicEpiEntregaView: React.FC<PublicEpiEntregaViewProps> = ({ cola
                     </div>
                   ))}
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">CA = Certificado de Aprovação do EPI (exigido pela NR-6).</p>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  CA = Certificado de Aprovação do EPI (exigido pela NR-6). "Tam." = tamanho/numeração (ex.: 42, M, GG).
+                </p>
               </div>
 
               <div>

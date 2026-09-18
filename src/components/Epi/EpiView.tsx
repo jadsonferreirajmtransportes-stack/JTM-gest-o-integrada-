@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { HardHat, Plus, Search, FileText, Share2, Paperclip, Edit2, Trash2, CheckCircle2, X } from 'lucide-react';
+import { HardHat, Plus, Search, FileText, Share2, Link2, Paperclip, Edit2, Trash2, CheckCircle2, X } from 'lucide-react';
 import { Colaborador, EntregaEpi } from '../../types';
 import { formatDate } from '../../utils/formatters';
 import { EpiFormModal } from './EpiFormModal';
@@ -13,6 +13,10 @@ interface EpiViewProps {
   currentUserName?: string;
   onSaveEntrega: (entrega: EntregaEpi) => void;
   onDeleteEntrega: (id: string) => void;
+  /** Abre o modal com o link fixo do Formulário Público de Entrega de EPI (?form=epi_entrega)
+   *  — vive em App.tsx (EpiFormularioLinkModal), mesmo padrão de onOpenOccurrenceLinkModal em
+   *  OccurrencesView.tsx. */
+  onOpenEpiLinkModal?: () => void;
 }
 
 /** Entrega de EPI (Equipamento de Proteção Individual) — lista de entregas registradas +
@@ -24,6 +28,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
   currentUserName,
   onSaveEntrega,
   onDeleteEntrega,
+  onOpenEpiLinkModal,
 }) => {
   const [busca, setBusca] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -95,14 +100,27 @@ export const EpiView: React.FC<EpiViewProps> = ({
             Registro escrito de entrega/troca de Equipamento de Proteção Individual, exigido pela NR-6.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleNovaEntrega}
-          className="px-4 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nova Entrega</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {onOpenEpiLinkModal && (
+            <button
+              type="button"
+              onClick={onOpenEpiLinkModal}
+              className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5"
+              title="Link do Formulário Público de Entrega de EPI (sem login)"
+            >
+              <Link2 className="w-4 h-4 text-[#8A6A39]" />
+              <span>Link do Formulário</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleNovaEntrega}
+            className="px-4 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nova Entrega</span>
+          </button>
+        </div>
       </div>
 
       {/* Busca */}
@@ -148,7 +166,9 @@ export const EpiView: React.FC<EpiViewProps> = ({
                     </td>
                     <td className="py-3 px-4 text-slate-600">{formatDate(entrega.data)}</td>
                     <td className="py-3 px-4 text-slate-600">
-                      {entrega.itens.map((i) => `${i.descricao} (${i.quantidade})`).join(', ')}
+                      {entrega.itens
+                        .map((i) => `${i.descricao}${i.tamanho ? ` — Tam. ${i.tamanho}` : ''} (${i.quantidade})`)
+                        .join(', ')}
                     </td>
                     <td className="py-3 px-4 text-slate-600">{entrega.responsavelEntrega || '—'}</td>
                     <td className="py-3 px-4">

@@ -28,7 +28,7 @@ export const EpiPrintModal: React.FC<EpiPrintModalProps> = ({ nome, funcaoCargo,
       .sort((a, b) => a.data.localeCompare(b.data))
       .flatMap((entrega) =>
         entrega.itens.map((item) => ({
-          descricao: item.descricao,
+          descricao: item.tamanho ? `${item.descricao} — Tam. ${item.tamanho}` : item.descricao,
           ca: item.ca,
           entrega: entrega.data,
           devolucao: item.devolucao,
