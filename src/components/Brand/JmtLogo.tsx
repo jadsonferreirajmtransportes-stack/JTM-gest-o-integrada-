@@ -1,4 +1,5 @@
 import React from 'react';
+import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 
 export interface JmtLogoProps {
   variant?: 'full' | 'compact' | 'icon' | 'seal';
@@ -137,6 +138,20 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
     );
   }
 
+  // Em tema claro (documentos gerados: fichas impressas/PDF, exportações, telas públicas
+  // sobre fundo branco), usa a imagem oficial da marca (fornecida pela empresa) em vez de
+  // recriar o logotipo com CSS — garante que "JOBSON DE MORAES / TRANSPORTES" saia idêntico
+  // ao original, incluindo a tipografia própria da marca que não dá pra replicar com fontes
+  // web. Tema escuro continua usando o símbolo desenhado (não temos uma versão clara da
+  // imagem oficial pra fundos escuros, como o cabeçalho do sidebar).
+  if (!isDark && (variant === 'compact' || variant === 'full')) {
+    return (
+      <div className={`inline-flex items-center ${className}`}>
+        <img src={JMT_LOGO_BASE64} alt="Jobson de Moraes Transportes" style={{ height: iconSize }} className="w-auto select-none" />
+      </div>
+    );
+  }
+
   if (variant === 'compact') {
     return (
       <div className={`inline-flex items-center gap-2.5 ${className}`}>
@@ -158,7 +173,7 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
     );
   }
 
-  // variant === 'full'
+  // variant === 'full' (tema escuro)
   return (
     <div className={`inline-flex items-center gap-3 ${className}`}>
       <JmtLogoSymbol size={iconSize} isDark={isDark} />
