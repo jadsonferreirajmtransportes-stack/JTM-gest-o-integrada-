@@ -558,12 +558,25 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     return undefined;
   }, [nomeClienteSelecionadoUnico, selecionados, lancamentos]);
 
+  // Casa por clienteId OU por nome (normalizado) — nunca só um dos dois. Só por nome (como
+  // era antes) falha quando a fatura foi criada a partir do CADASTRO do cliente (clienteNome
+  // vem de cliente.nomeFantasia/razaoSocial, ver handleCriarFatura) mas o lançamento importado
+  // tem um texto de cliente diferente (abreviação, sem sufixo LTDA etc.) mesmo já resolvido pro
+  // MESMO clienteId — nesse caso a fatura existe e está correta, só o texto bate diferente, e o
+  // dropdown "Vincular à fatura existente" ficava vazio (bug relatado: fatura já criada não
+  // aparecia pra vincular). Só por clienteId (a alternativa óbvia) reintroduziria o problema que
+  // o name-match resolveu antes (caso BOMI): lançamento sem clienteId resolvido nunca acharia a
+  // fatura certa mesmo com o nome idêntico na tela.
   const faturasDoClienteSelecionado = useMemo(
     () =>
       nomeClienteSelecionadoUnico
-        ? faturas.filter((f) => normalizeKey(f.clienteNome || '') === nomeClienteSelecionadoUnico)
+        ? faturas.filter(
+            (f) =>
+              (clienteUnicoSelecionado && f.clienteId === clienteUnicoSelecionado) ||
+              normalizeKey(f.clienteNome || '') === nomeClienteSelecionadoUnico
+          )
         : [],
-    [faturas, nomeClienteSelecionadoUnico]
+    [faturas, nomeClienteSelecionadoUnico, clienteUnicoSelecionado]
   );
 
   const totalSelecionado = useMemo(() => {
