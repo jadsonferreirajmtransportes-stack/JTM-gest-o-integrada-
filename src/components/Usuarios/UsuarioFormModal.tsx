@@ -37,6 +37,7 @@ const SECOES_DP: { id: SecaoDp; label: string }[] = [
   { id: 'vale_alimentacao', label: 'Programação VA (Quinzenas)' },
   { id: 'ferias', label: 'Férias & Ausências CLT' },
   { id: 'saude', label: 'Exames ASO (RDC 430)' },
+  { id: 'epis', label: 'Entrega de EPI' },
   { id: 'onboarding', label: 'EPI & Checklist Admissão' },
   { id: 'ocorrencias', label: 'Ocorrências & Advertências' },
   { id: 'aniversariantes', label: 'Aniversariantes do Mês' },

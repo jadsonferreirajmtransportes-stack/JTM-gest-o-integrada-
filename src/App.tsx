@@ -6,6 +6,7 @@ import {
   CargoSalario,
   FeriadoEmpresa,
   ProgramacaoFerias,
+  EntregaEpi,
   Ocorrencia,
   AlertaItem,
   UserRole,
@@ -66,6 +67,9 @@ import {
   getFerias,
   saveFerias,
   updateStatusFerias,
+  getEntregasEpi,
+  saveEntregaEpi,
+  deleteEntregaEpi,
   getOcorrencias,
   saveOcorrencia,
   deleteOcorrencia,
@@ -193,6 +197,7 @@ import { EmployeeDetailModal } from './components/Employees/EmployeeDetailModal'
 import { DismissalModal } from './components/Employees/DismissalModal';
 import { MonthlyCostView } from './components/Cost/MonthlyCostView';
 import { VacationView } from './components/Vacation/VacationView';
+import { EpiView } from './components/Epi/EpiView';
 import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
 import { OccurrencesView } from './components/Occurrences/OccurrencesView';
 import { PublicOccurrenceForm } from './components/Occurrences/PublicOccurrenceForm';
@@ -459,6 +464,7 @@ export default function App() {
   const [cargos, setCargos] = useState<CargoSalario[]>([]);
   const [feriados, setFeriados] = useState<FeriadoEmpresa[]>([]);
   const [feriasList, setFeriasList] = useState<ProgramacaoFerias[]>([]);
+  const [entregasEpi, setEntregasEpi] = useState<EntregaEpi[]>([]);
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
   const [quinzenasVA, setQuinzenasVA] = useState<QuinzenaValeAlimentacao[]>([]);
   const [lancamentosVA, setLancamentosVA] = useState<LancamentoValeAlimentacao[]>([]);
@@ -952,7 +958,7 @@ export default function App() {
   const loadDpData = useCallback(async () => {
     try {
       const [
-        colabs, emps, sups, crgs, ferds, fer, ocos, quinz, lancs, preAdm,
+        colabs, emps, sups, crgs, ferds, fer, epis, ocos, quinz, lancs, preAdm,
       ] = await Promise.all([
         getColaboradoresResumo(),
         getEmpregadores(),
@@ -960,6 +966,7 @@ export default function App() {
         getCargos(),
         getFeriados(),
         getFerias(),
+        getEntregasEpi(),
         getOcorrencias(),
         getQuinzenasValeAlimentacao(),
         getLancamentosValeAlimentacao(),
@@ -971,6 +978,7 @@ export default function App() {
       setCargos(crgs);
       setFeriados(ferds);
       setFeriasList(fer);
+      setEntregasEpi(epis);
       setOcorrencias(ocos);
       setQuinzenasVA(quinz);
       setLancamentosVA(lancs);
@@ -1780,6 +1788,18 @@ export default function App() {
     await updateStatusFerias(feriasId, novoStatus);
     await loadDpData();
     showToast(`Status das férias alterado para ${novoStatus}!`);
+  };
+
+  const handleSaveEntregaEpi = async (entrega: EntregaEpi) => {
+    await saveEntregaEpi(entrega);
+    await loadDpData();
+    showToast('Entrega de EPI registrada com sucesso!');
+  };
+
+  const handleDeleteEntregaEpi = async (id: string) => {
+    await deleteEntregaEpi(id);
+    await loadDpData();
+    showToast('Registro de entrega de EPI excluído.', 'info');
   };
 
   const handleSaveOcorrencia = async (ocorrencia: Ocorrencia) => {
@@ -2937,6 +2957,16 @@ export default function App() {
               onUpdateExame={handleUpdateExame}
               onAgendarExame={handleAgendarExame}
               onCarregarColaboradorCompleto={getColaboradorCompleto}
+            />
+          )}
+
+          {activeGlobalModule === 'dp' && activeSection === 'epis' && podeVerSecaoDp(currentUser, 'epis') && (
+            <EpiView
+              colaboradores={colaboradores}
+              entregas={entregasEpi}
+              currentUserName={currentUser?.nome}
+              onSaveEntrega={handleSaveEntregaEpi}
+              onDeleteEntrega={handleDeleteEntregaEpi}
             />
           )}
 

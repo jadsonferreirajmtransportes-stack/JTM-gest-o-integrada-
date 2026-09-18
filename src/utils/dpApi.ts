@@ -26,6 +26,7 @@ import {
   FeriadoEmpresa,
   Colaborador,
   ProgramacaoFerias,
+  EntregaEpi,
   Ocorrencia,
   QuinzenaValeAlimentacao,
   LancamentoValeAlimentacao,
@@ -597,6 +598,49 @@ export async function updateStatusFerias(id: string, newStatus: StatusFerias): P
 export async function deleteFerias(id: string): Promise<void> {
   const { error } = await supabase.from('programacao_ferias').delete().eq('id', id);
   assertNoError(error, 'deleteFerias');
+}
+
+// ============================================================================
+// ENTREGA DE EPI
+// ============================================================================
+function rowToEntregaEpi(r: any): EntregaEpi {
+  return {
+    id: r.id,
+    colaboradorId: r.colaborador_id,
+    data: r.data,
+    responsavelEntrega: u(r.responsavel_entrega),
+    itens: j(r.itens),
+    observacoes: u(r.observacoes),
+    comprovanteAssinadoUrl: u(r.comprovante_assinado_url),
+    comprovanteAssinadoNomeArquivo: u(r.comprovante_assinado_nome_arquivo),
+    criadoEm: u(r.criado_em),
+  };
+}
+export function entregaEpiToRow(e: EntregaEpi) {
+  return {
+    id: e.id,
+    colaborador_id: e.colaboradorId,
+    data: e.data,
+    responsavel_entrega: n(e.responsavelEntrega),
+    itens: j(e.itens),
+    observacoes: n(e.observacoes),
+    comprovante_assinado_url: n(e.comprovanteAssinadoUrl),
+    comprovante_assinado_nome_arquivo: n(e.comprovanteAssinadoNomeArquivo),
+  };
+}
+export async function getEntregasEpi(): Promise<EntregaEpi[]> {
+  const { data, error } = await supabase.from('entregas_epi').select('*').order('data', { ascending: false });
+  assertNoError(error, 'getEntregasEpi');
+  return (data ?? []).map(rowToEntregaEpi);
+}
+export async function saveEntregaEpi(entrega: EntregaEpi): Promise<void> {
+  const item = entrega.id ? entrega : { ...entrega, id: `epi-${Date.now()}` };
+  const { error } = await supabase.from('entregas_epi').upsert(entregaEpiToRow(item));
+  assertNoError(error, 'saveEntregaEpi');
+}
+export async function deleteEntregaEpi(id: string): Promise<void> {
+  const { error } = await supabase.from('entregas_epi').delete().eq('id', id);
+  assertNoError(error, 'deleteEntregaEpi');
 }
 
 // ============================================================================

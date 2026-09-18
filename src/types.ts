@@ -28,6 +28,7 @@ export type SecaoDp =
   | 'beneficios'
   | 'vale_alimentacao'
   | 'saude'
+  | 'epis'
   | 'ocorrencias'
   | 'onboarding'
   | 'arquivo'
@@ -447,6 +448,36 @@ export interface ProgramacaoFerias {
   comprovanteAssinadoUrl?: string; // data URL (imagem/PDF) do recibo/aviso de férias assinado
   comprovanteAssinadoNomeArquivo?: string;
   observacoes?: string;
+}
+
+// 2.13 Entrega de EPI (Equipamento de Proteção Individual) — registro escrito exigido pela
+// NR-6 (Portaria 3.214/78, §6.7.1) a cada entrega/troca de EPI a um colaborador.
+export type MotivoEntregaEpi =
+  | 'Entrega Inicial'
+  | 'Troca por Desgaste'
+  | 'Reposição por Perda'
+  | 'Reposição por Dano'
+  | 'Substituição Periódica'
+  | 'Outro';
+
+export interface ItemEntregaEpi {
+  id: string;
+  descricao: string; // Ex.: "Luva de Proteção", "Colete Refletivo"
+  ca: string; // Certificado de Aprovação (CA) do EPI — exigido pela NR-6
+  quantidade: number;
+  motivo: MotivoEntregaEpi;
+}
+
+export interface EntregaEpi {
+  id: string;
+  colaboradorId: string;
+  data: string; // YYYY-MM-DD
+  responsavelEntrega?: string; // quem entregou (nome, texto livre)
+  itens: ItemEntregaEpi[];
+  observacoes?: string;
+  comprovanteAssinadoUrl?: string; // foto/PDF do recibo escaneado já assinado pelo recebedor
+  comprovanteAssinadoNomeArquivo?: string;
+  criadoEm?: string;
 }
 
 // 2.12.1 Programação do Vale Alimentação (réplica do painel do Coda: quinzenas fixas do ano +

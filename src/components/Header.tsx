@@ -101,6 +101,10 @@ const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = 
     title: 'Saúde do Trabalhador & ANVISA',
     subtitle: 'Rastreabilidade de ASOs, exames periódicos e conformidade RDC 430',
   },
+  epis: {
+    title: 'Entrega de EPI',
+    subtitle: 'Registro escrito de entrega e troca de Equipamento de Proteção Individual — conformidade NR-6',
+  },
   ferias: {
     title: 'Programação de Férias CLT',
     subtitle: 'Controle de períodos aquisitivos, limite de 11 meses e emissão de avisos',

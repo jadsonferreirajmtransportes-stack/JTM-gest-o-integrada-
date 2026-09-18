@@ -41,7 +41,7 @@ export function temAcessoGeralDp(currentUser: UsuarioLogin | undefined): boolean
 // primeira seção permitida, não precisa estar 100% igual visualmente.
 const ORDEM_SECOES_DP: SecaoDp[] = [
   'dashboard', 'colaboradores', 'preadmissoes', 'custos', 'beneficios', 'vale_alimentacao',
-  'ferias', 'saude', 'onboarding', 'ocorrencias', 'aniversariantes', 'arquivo', 'cargos', 'supervisores',
+  'ferias', 'saude', 'epis', 'onboarding', 'ocorrencias', 'aniversariantes', 'arquivo', 'cargos', 'supervisores',
 ];
 
 /** Primeira seção de DP que o login atual pode ver — usar toda vez que o app entra ou volta

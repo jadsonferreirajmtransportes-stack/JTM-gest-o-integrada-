@@ -20,6 +20,7 @@ import {
   Plane,
   Truck,
   ShieldCheck,
+  HardHat,
   Thermometer,
   Layers,
   FileText,
@@ -59,6 +60,7 @@ export type NavSection =
   | 'beneficios'
   | 'vale_alimentacao'
   | 'saude'
+  | 'epis'
   | 'ocorrencias'
   | 'onboarding'
   | 'arquivo'
@@ -341,6 +343,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Stethoscope,
       badge: counts.examesVencendo > 0 ? counts.examesVencendo : undefined,
       badgeColor: 'bg-rose-100 text-rose-700 font-bold border border-rose-300 animate-pulse',
+      roles: ['admin', 'supervisor'],
+      group: 'operacional',
+    },
+    {
+      id: 'epis',
+      label: 'Entrega de EPI',
+      icon: HardHat,
       roles: ['admin', 'supervisor'],
       group: 'operacional',
     },
