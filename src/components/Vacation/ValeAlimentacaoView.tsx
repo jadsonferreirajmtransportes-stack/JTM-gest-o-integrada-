@@ -15,6 +15,7 @@ import {
   Mail,
   Copy,
   Printer,
+  Search,
 } from 'lucide-react';
 import {
   Colaborador,
@@ -91,6 +92,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
   const [novaIdentificacao, setNovaIdentificacao] = useState('');
   const [novaDataInicio, setNovaDataInicio] = useState('');
   const [novaDataTermino, setNovaDataTermino] = useState('');
+  const [buscaColaborador, setBuscaColaborador] = useState('');
 
   const ativos = useMemo(() => colaboradores.filter((c) => c.status !== 'Inativo'), [colaboradores]);
   const colaboradoresPorId = useMemo(() => {
@@ -106,6 +108,21 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
         : [],
     [lancamentos, quinzenaAtual]
   );
+
+  // Busca por colaborador na tabela — mesmo padrão de "separe vários com vírgula" já usado na
+  // busca de "Sem Fatura Vinculada" (FaturamentoAereoView.tsx): qualquer termo bate, comparação
+  // sem distinguir maiúsculas/minúsculas.
+  const lancamentosFiltrados = useMemo(() => {
+    const termos = buscaColaborador
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+    if (termos.length === 0) return lancamentosDaQuinzena;
+    return lancamentosDaQuinzena.filter((l) => {
+      const nome = (l.colaboradorNome || '').toLowerCase();
+      return termos.some((termo) => nome.includes(termo));
+    });
+  }, [lancamentosDaQuinzena, buscaColaborador]);
 
   const colaboradoresSemLancamento = useMemo(() => {
     if (!quinzenaAtual) return [];
@@ -405,6 +422,34 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
         </div>
       </div>
 
+      {/* Busca por colaborador */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+        <input
+          type="text"
+          data-no-uppercase="true"
+          value={buscaColaborador}
+          onChange={(e) => setBuscaColaborador(e.target.value)}
+          placeholder="Buscar por colaborador — separe vários com vírgula..."
+          className="w-full pl-8 pr-7 py-1.5 border border-slate-200 rounded-lg text-[11px] bg-white focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+        />
+        {buscaColaborador && (
+          <button
+            type="button"
+            onClick={() => setBuscaColaborador('')}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"
+            title="Limpar busca"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      {buscaColaborador && (
+        <p className="text-[10px] text-slate-400 -mt-2">
+          {lancamentosFiltrados.length} de {lancamentosDaQuinzena.length} colaborador(es) encontrados
+        </p>
+      )}
+
       {/* Tabela de lançamentos */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
         <table className="w-full text-xs">
@@ -431,7 +476,14 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                 </td>
               </tr>
             )}
-            {lancamentosDaQuinzena
+            {lancamentosDaQuinzena.length > 0 && lancamentosFiltrados.length === 0 && (
+              <tr>
+                <td colSpan={10} className="px-3 py-6 text-center text-slate-400">
+                  Nenhum colaborador encontrado para "{buscaColaborador}".
+                </td>
+              </tr>
+            )}
+            {lancamentosFiltrados
               .slice()
               .sort((a, b) => (a.colaboradorNome || '').localeCompare(b.colaboradorNome || ''))
               .map((l) => {
