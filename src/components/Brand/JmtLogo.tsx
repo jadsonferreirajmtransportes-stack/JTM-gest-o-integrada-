@@ -145,9 +145,19 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
   // web. Tema escuro continua usando o símbolo desenhado (não temos uma versão clara da
   // imagem oficial pra fundos escuros, como o cabeçalho do sidebar).
   if (!isDark && (variant === 'compact' || variant === 'full')) {
+    // `iconSize` antes media só o símbolo (ícone), com o texto "JOBSON DE MORAES/TRANSPORTES"
+    // desenhado ao lado em fonte própria — por isso tinha peso visual bem maior que o número
+    // sozinho sugere. A imagem real já traz o texto dentro dela, então precisa de uma altura
+    // bem maior que `iconSize` pra manter o mesmo tamanho aparente de antes (proporção da logo
+    // oficial: ~2.66:1 largura/altura).
     return (
       <div className={`inline-flex items-center ${className}`}>
-        <img src={JMT_LOGO_BASE64} alt="Jobson de Moraes Transportes" style={{ height: iconSize }} className="w-auto select-none" />
+        <img
+          src={JMT_LOGO_BASE64}
+          alt="Jobson de Moraes Transportes"
+          style={{ height: iconSize * 1.8 }}
+          className="w-auto select-none"
+        />
       </div>
     );
   }
