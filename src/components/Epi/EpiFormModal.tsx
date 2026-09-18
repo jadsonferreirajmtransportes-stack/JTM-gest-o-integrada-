@@ -79,6 +79,10 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
       observacoes: observacoes.trim() || undefined,
       comprovanteAssinadoUrl: initialData?.comprovanteAssinadoUrl,
       comprovanteAssinadoNomeArquivo: initialData?.comprovanteAssinadoNomeArquivo,
+      // Preserva a assinatura digital (desenhada no Formulário Público) ao editar — sem isso,
+      // salvar uma entrega já assinada por ali apagava a assinatura, porque esse formulário
+      // interno não tem campo de assinatura próprio e reconstrói o registro do zero.
+      assinaturaDigitalUrl: initialData?.assinaturaDigitalUrl,
       criadoEm: initialData?.criadoEm,
     });
     onClose();
