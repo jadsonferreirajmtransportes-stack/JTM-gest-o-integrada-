@@ -642,6 +642,19 @@ export async function saveEntregaEpi(entrega: EntregaEpi): Promise<void> {
   const { error } = await supabase.from('entregas_epi').upsert(entregaEpiToRow(item));
   assertNoError(error, 'saveEntregaEpi');
 }
+
+/** Usada só pelo Formulário Público de Entrega de EPI (papel "anon", sem login) — sempre um
+ *  INSERT puro, nunca upsert. `saveEntregaEpi` usa `.upsert()`, que gera um `ON CONFLICT DO
+ *  UPDATE` no Postgres — mesmo sem conflito de verdade, isso exige uma política de UPDATE pra
+ *  quem está gravando, e "anon" só tem política de INSERT (de propósito: sem login não deveria
+ *  dar pra editar um registro já existente). Resultado: o upsert violava RLS mesmo criando um
+ *  registro novo. Como o formulário público só cria, nunca edita, o INSERT puro resolve sem
+ *  abrir mão dessa restrição de segurança. */
+export async function salvarEntregaEpiPublica(entrega: EntregaEpi): Promise<void> {
+  const item = { ...entrega, id: entrega.id || `epi-pub-${Date.now()}` };
+  const { error } = await supabase.from('entregas_epi').insert(entregaEpiToRow(item));
+  assertNoError(error, 'salvarEntregaEpiPublica');
+}
 export async function deleteEntregaEpi(id: string): Promise<void> {
   const { error } = await supabase.from('entregas_epi').delete().eq('id', id);
   assertNoError(error, 'deleteEntregaEpi');

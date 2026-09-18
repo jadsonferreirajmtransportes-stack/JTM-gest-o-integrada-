@@ -69,6 +69,7 @@ import {
   updateStatusFerias,
   getEntregasEpi,
   saveEntregaEpi,
+  salvarEntregaEpiPublica,
   deleteEntregaEpi,
   getOcorrencias,
   saveOcorrencia,
@@ -1809,6 +1810,15 @@ export default function App() {
     showToast('Entrega de EPI registrada com sucesso!');
   };
 
+  // Formulário Público de Entrega de EPI (papel "anon", sem login) — ver salvarEntregaEpiPublica
+  // em dpApi.ts pra por que isso não pode reaproveitar handleSaveEntregaEpi (upsert falha RLS
+  // pra quem só tem política de INSERT). loadDpData() também não faz sentido aqui: essa tela é
+  // isolada, roda sem sessão autenticada, e recarregar dados de DP protegidos por RLS só
+  // devolveria listas vazias sem nenhuma utilidade pra essa página.
+  const handleSalvarEntregaEpiPublica = async (entrega: EntregaEpi) => {
+    await salvarEntregaEpiPublica(entrega);
+  };
+
   const handleDeleteEntregaEpi = async (id: string) => {
     await deleteEntregaEpi(id);
     await loadDpData();
@@ -2464,7 +2474,7 @@ export default function App() {
 
   // IF Public Entrega de EPI filling form is active (link genérico, ?form=epi_entrega)
   if (isEpiFormularioPublicoView) {
-    return <PublicEpiEntregaView colaboradores={colaboradoresPublico} onSuccessSubmit={handleSaveEntregaEpi} />;
+    return <PublicEpiEntregaView colaboradores={colaboradoresPublico} onSuccessSubmit={handleSalvarEntregaEpiPublica} />;
   }
 
   return (
