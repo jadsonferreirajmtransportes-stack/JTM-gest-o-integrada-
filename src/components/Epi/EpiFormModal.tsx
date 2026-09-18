@@ -161,7 +161,7 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
                     placeholder="Descrição do EPI (ex.: Luva de Proteção)"
                     value={item.descricao}
                     onChange={(e) => handleUpdateItem(idx, 'descricao', e.target.value)}
-                    className="col-span-5 p-1.5 border border-slate-200 rounded-md text-[11px]"
+                    className="col-span-4 p-1.5 border border-slate-200 rounded-md text-[11px]"
                   />
                   <input
                     type="text"
@@ -182,7 +182,7 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
                   <select
                     value={item.motivo}
                     onChange={(e) => handleUpdateItem(idx, 'motivo', e.target.value as MotivoEntregaEpi)}
-                    className="col-span-3 p-1.5 border border-slate-200 rounded-md text-[11px]"
+                    className="col-span-2 p-1.5 border border-slate-200 rounded-md text-[11px]"
                   >
                     {MOTIVOS_ENTREGA_EPI.map((m) => (
                       <option key={m} value={m}>
@@ -190,6 +190,13 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
                       </option>
                     ))}
                   </select>
+                  <input
+                    type="date"
+                    value={item.devolucao || ''}
+                    onChange={(e) => handleUpdateItem(idx, 'devolucao', e.target.value || undefined)}
+                    title="Data de devolução/troca deste item (preencher quando o colaborador devolver)"
+                    className="col-span-2 p-1.5 border border-slate-200 rounded-md text-[11px]"
+                  />
                   <button
                     type="button"
                     onClick={() => handleRemoveItem(idx)}
@@ -202,7 +209,10 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
                 </div>
               ))}
             </div>
-            <p className="text-[10px] text-slate-400 mt-1">CA = Certificado de Aprovação do EPI (exigido pela NR-6).</p>
+            <p className="text-[10px] text-slate-400 mt-1">
+              CA = Certificado de Aprovação do EPI (exigido pela NR-6). Preencha "Devolução" quando o colaborador
+              devolver/trocar este item específico (pode editar depois).
+            </p>
           </div>
 
           <div>

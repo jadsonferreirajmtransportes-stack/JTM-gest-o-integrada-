@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { HardHat, Plus, Search, Printer, Paperclip, Edit2, Trash2, CheckCircle2, X } from 'lucide-react';
+import { HardHat, Plus, Search, FileText, Share2, Paperclip, Edit2, Trash2, CheckCircle2, X } from 'lucide-react';
 import { Colaborador, EntregaEpi } from '../../types';
 import { formatDate } from '../../utils/formatters';
 import { EpiFormModal } from './EpiFormModal';
 import { EpiPrintModal } from './EpiPrintModal';
+import { CompartilharEpiModal } from './CompartilharEpiModal';
 import { EpiComprovanteUploader } from './EpiComprovanteUploader';
 
 interface EpiViewProps {
@@ -27,7 +28,11 @@ export const EpiView: React.FC<EpiViewProps> = ({
   const [busca, setBusca] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEntrega, setEditingEntrega] = useState<EntregaEpi | null>(null);
-  const [entregaParaImprimir, setEntregaParaImprimir] = useState<EntregaEpi | null>(null);
+  // A ficha de EPI é corrida por colaborador (acumula TODAS as entregas dele) — não um recibo
+  // de um evento só. Guarda o COLABORADOR, não a entrega clicada, pra EpiPrintModal/
+  // CompartilharEpiModal juntarem tudo que já foi entregue a essa pessoa.
+  const [colaboradorParaFicha, setColaboradorParaFicha] = useState<Colaborador | null>(null);
+  const [colaboradorParaCompartilhar, setColaboradorParaCompartilhar] = useState<Colaborador | null>(null);
   const [entregaComprovante, setEntregaComprovante] = useState<EntregaEpi | null>(null);
 
   const colaboradorPorId = useMemo(() => {
@@ -42,6 +47,11 @@ export const EpiView: React.FC<EpiViewProps> = ({
     if (!termo) return ordenadas;
     return ordenadas.filter((e) => (colaboradorPorId.get(e.colaboradorId)?.nomeCompleto || '').toLowerCase().includes(termo));
   }, [entregas, busca, colaboradorPorId]);
+
+  const entregasDoColaboradorDaFicha = useMemo(
+    () => (colaboradorParaFicha ? entregas.filter((e) => e.colaboradorId === colaboradorParaFicha.id) : []),
+    [entregas, colaboradorParaFicha]
+  );
 
   const handleNovaEntrega = () => {
     setEditingEntrega(null);
@@ -139,11 +149,21 @@ export const EpiView: React.FC<EpiViewProps> = ({
                       <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
-                          onClick={() => setEntregaParaImprimir(entrega)}
-                          className="p-1.5 text-slate-400 hover:text-[#8A6A39] hover:bg-slate-100 rounded-lg"
-                          title="Imprimir recibo"
+                          onClick={() => setColaboradorParaFicha(colab || null)}
+                          disabled={!colab}
+                          className="p-1.5 text-slate-400 hover:text-[#8A6A39] hover:bg-slate-100 rounded-lg disabled:opacity-30"
+                          title="Ver ficha de EPI do colaborador (todas as entregas)"
                         >
-                          <Printer className="w-3.5 h-3.5" />
+                          <FileText className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setColaboradorParaCompartilhar(colab || null)}
+                          disabled={!colab}
+                          className="p-1.5 text-slate-400 hover:text-[#8A6A39] hover:bg-slate-100 rounded-lg disabled:opacity-30"
+                          title="Compartilhar ficha por link"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           type="button"
@@ -187,10 +207,22 @@ export const EpiView: React.FC<EpiViewProps> = ({
         onSave={onSaveEntrega}
       />
 
-      <EpiPrintModal
-        entrega={entregaParaImprimir}
-        colaborador={entregaParaImprimir ? colaboradorPorId.get(entregaParaImprimir.colaboradorId) || null : null}
-        onClose={() => setEntregaParaImprimir(null)}
+      {colaboradorParaFicha && (
+        <EpiPrintModal
+          colaborador={colaboradorParaFicha}
+          entregas={entregasDoColaboradorDaFicha}
+          onClose={() => setColaboradorParaFicha(null)}
+        />
+      )}
+
+      <CompartilharEpiModal
+        isOpen={!!colaboradorParaCompartilhar}
+        onClose={() => setColaboradorParaCompartilhar(null)}
+        colaborador={colaboradorParaCompartilhar}
+        entregasDoColaborador={
+          colaboradorParaCompartilhar ? entregas.filter((e) => e.colaboradorId === colaboradorParaCompartilhar.id) : []
+        }
+        criadoPor={currentUserName}
       />
 
       {/* Modal: Recibo de EPI Assinado */}

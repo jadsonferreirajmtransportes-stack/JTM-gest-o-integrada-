@@ -466,6 +466,9 @@ export interface ItemEntregaEpi {
   ca: string; // Certificado de Aprovação (CA) do EPI — exigido pela NR-6
   quantidade: number;
   motivo: MotivoEntregaEpi;
+  /** Data em que este item específico foi devolvido/trocado (YYYY-MM-DD) — mesma coluna
+   *  "Devolução" da ficha física de controle de EPI da JMT. Ausente = ainda não devolvido. */
+  devolucao?: string;
 }
 
 export interface EntregaEpi {

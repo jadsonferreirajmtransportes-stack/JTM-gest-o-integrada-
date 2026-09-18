@@ -1130,3 +1130,82 @@ export async function obterFichaCompartilhadaPublica(token: string): Promise<Rec
   assertNoError(error, 'obterFichaCompartilhadaPublica');
   return (data as Record<string, any> | null) ?? null;
 }
+
+// ============================================================================
+// LINKS DE COMPARTILHAMENTO DA FICHA DE EPI (mesmo raciocínio da Ficha Cadastral
+// acima — token de 256 bits, snapshot no momento da geração, expira em 7 dias,
+// revogável). Ver supabase/migrations/035_entregas_epi_compartilhadas.sql.
+// ============================================================================
+
+export interface EpiCompartilhada {
+  token: string;
+  colaboradorId: string;
+  colaboradorNome: string;
+  dados: Record<string, any>;
+  criadoEm: string;
+  criadoPor?: string;
+  expiraEm: string;
+  revogado: boolean;
+}
+
+function rowToEpiCompartilhada(r: any): EpiCompartilhada {
+  return {
+    token: r.token,
+    colaboradorId: r.colaborador_id,
+    colaboradorNome: r.colaborador_nome,
+    dados: r.dados,
+    criadoEm: r.criado_em,
+    criadoPor: u(r.criado_por),
+    expiraEm: r.expira_em,
+    revogado: !!r.revogado,
+  };
+}
+
+/** Gera um novo link de compartilhamento da ficha de EPI de um colaborador — `dados` já vem
+ *  achatado pela tela (colaboradorNome/funcaoCargo/linhas, mesma forma que EpiFichaDocumento
+ *  espera) porque é só uma "foto" do que existe agora, não reflete entregas futuras. */
+export async function gerarLinkEpiCompartilhado(
+  colaboradorId: string,
+  colaboradorNome: string,
+  dados: Record<string, any>,
+  criadoPor?: string,
+  validadeDias = 7
+): Promise<EpiCompartilhada> {
+  const token = gerarTokenFichaCompartilhada();
+  const expiraEm = new Date(Date.now() + validadeDias * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error } = await supabase.from('entregas_epi_compartilhadas').insert({
+    token,
+    colaborador_id: colaboradorId,
+    colaborador_nome: colaboradorNome,
+    dados,
+    criado_por: n(criadoPor),
+    expira_em: expiraEm,
+  });
+  assertNoError(error, 'gerarLinkEpiCompartilhado');
+
+  return { token, colaboradorId, colaboradorNome, dados, criadoEm: new Date().toISOString(), criadoPor, expiraEm, revogado: false };
+}
+
+export async function listarLinksEpiCompartilhado(colaboradorId: string): Promise<EpiCompartilhada[]> {
+  const { data, error } = await supabase
+    .from('entregas_epi_compartilhadas')
+    .select('*')
+    .eq('colaborador_id', colaboradorId)
+    .order('criado_em', { ascending: false });
+  assertNoError(error, 'listarLinksEpiCompartilhado');
+  return (data ?? []).map(rowToEpiCompartilhada);
+}
+
+export async function revogarLinkEpiCompartilhado(token: string): Promise<void> {
+  const { error } = await supabase.from('entregas_epi_compartilhadas').update({ revogado: true }).eq('token', token);
+  assertNoError(error, 'revogarLinkEpiCompartilhado');
+}
+
+/** Usada pela tela pública (sem login): só devolve algo se o token bater com um link válido,
+ *  não revogado e ainda não expirado — ver obter_entrega_epi_compartilhada no banco. */
+export async function obterEpiCompartilhadaPublica(token: string): Promise<Record<string, any> | null> {
+  const { data, error } = await supabase.rpc('obter_entrega_epi_compartilhada', { p_token: token });
+  assertNoError(error, 'obterEpiCompartilhadaPublica');
+  return (data as Record<string, any> | null) ?? null;
+}

@@ -198,6 +198,7 @@ import { DismissalModal } from './components/Employees/DismissalModal';
 import { MonthlyCostView } from './components/Cost/MonthlyCostView';
 import { VacationView } from './components/Vacation/VacationView';
 import { EpiView } from './components/Epi/EpiView';
+import { EpiPublicView } from './components/Epi/EpiPublicView';
 import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
 import { OccurrencesView } from './components/Occurrences/OccurrencesView';
 import { PublicOccurrenceForm } from './components/Occurrences/PublicOccurrenceForm';
@@ -529,6 +530,8 @@ export default function App() {
   // Public shared Nota (Notas & Ideias) view (read-only, sem login) — via ?form=nota&token=...
   const [isNotaPublicaView, setIsNotaPublicaView] = useState<boolean>(false);
   const [notaPublicaToken, setNotaPublicaToken] = useState<string | undefined>(undefined);
+  const [isEpiPublicaView, setIsEpiPublicaView] = useState<boolean>(false);
+  const [epiPublicaToken, setEpiPublicaToken] = useState<string | undefined>(undefined);
 
   // Modals State
   const [isAvisoAberturaOpen, setIsAvisoAberturaOpen] = useState<boolean>(false);
@@ -886,6 +889,9 @@ export default function App() {
       } else if (formParam === 'nota' || hash === '#nota') {
         setIsNotaPublicaView(true);
         setNotaPublicaToken(searchParams.get('token') || undefined);
+      } else if (formParam === 'epi' || hash === '#epi') {
+        setIsEpiPublicaView(true);
+        setEpiPublicaToken(searchParams.get('token') || undefined);
       }
     }
   }, []);
@@ -2430,6 +2436,20 @@ export default function App() {
           setIsNotaPublicaView(false);
           setActiveGlobalModule('notas');
           setActiveSection('notas');
+        }}
+      />
+    );
+  }
+
+  // IF Public shared Ficha de EPI view is active (via direct link)
+  if (isEpiPublicaView) {
+    return (
+      <EpiPublicView
+        token={epiPublicaToken}
+        onAdminBack={() => {
+          setIsEpiPublicaView(false);
+          setActiveGlobalModule('dp');
+          setActiveSection('epis');
         }}
       />
     );
