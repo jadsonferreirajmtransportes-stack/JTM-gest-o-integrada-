@@ -519,7 +519,12 @@ export interface LancamentoValeAlimentacao {
   /** Dias úteis do período em que o colaborador estava de férias (Programação de Férias) — não
    *  gera diária de VA, igual a uma falta, mas contado à parte para deixar claro o motivo. */
   diasFerias?: number;
-  /** Dias úteis (seg-sex) do período menos faltas e dias de férias — calculado, não editável diretamente. */
+  /** Diárias extras somadas manualmente (ex.: dia trabalhado num sábado/feriado, correção
+   *  pontual) — ao contrário de faltas/diasFerias, não vem de nenhum cálculo automático nem é
+   *  zerada ao Sincronizar; fica por conta de quem lança até ser editada de novo. */
+  diariasExtras?: number;
+  /** Dias úteis (seg-sex) do período menos faltas e dias de férias, mais diariasExtras —
+   *  calculado, não editável diretamente (edite faltas/diasFerias/diariasExtras). */
   quantidadeDiarias: number;
   /** quantidadeDiarias * valorDiaria — calculado, não editável diretamente. */
   valorDisponibilizado: number;

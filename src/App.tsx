@@ -1935,13 +1935,11 @@ export default function App() {
         // Recalcula já aqui (não só no map seguinte) — precisa entrar na comparação de "mudou
         // algo?" abaixo, senão um feriado cadastrado depois do lançamento existir nunca reflete
         // no "Sincronizar" quando faltas/diasFerias/valorDiaria continuam iguais.
-        const quantidadeDiarias = calcQuantidadeDiariasVA(
-          quinzena.dataInicio,
-          quinzena.dataTermino,
-          faltas,
-          diasFerias,
-          feriados
-        );
+        // + diariasExtras: soma manual (dia trabalhado num sábado/feriado etc.) que Sincronizar
+        // nunca recalcula nem apaga, só preserva por cima do que vem de Ocorrências/Férias.
+        const quantidadeDiarias =
+          calcQuantidadeDiariasVA(quinzena.dataInicio, quinzena.dataTermino, faltas, diasFerias, feriados) +
+          (l.diariasExtras || 0);
         return { l, faltas, diasFerias, valorDiaria, quantidadeDiarias };
       })
       .filter(

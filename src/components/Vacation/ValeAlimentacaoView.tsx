@@ -141,7 +141,8 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
   };
 
   const handleFaltasChange = (l: LancamentoValeAlimentacao, faltas: number) => {
-    const quantidadeDiarias = calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, faltas, l.diasFerias || 0);
+    const quantidadeDiarias =
+      calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, faltas, l.diasFerias || 0) + (l.diariasExtras || 0);
     const valorDisponibilizado = calcValorDisponibilizadoVA(quantidadeDiarias, l.valorDiaria);
     onSaveLancamento({
       ...l,
@@ -153,11 +154,25 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
   };
 
   const handleDiasFeriasChange = (l: LancamentoValeAlimentacao, diasFerias: number) => {
-    const quantidadeDiarias = calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, l.faltas, diasFerias);
+    const quantidadeDiarias =
+      calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, l.faltas, diasFerias) + (l.diariasExtras || 0);
     const valorDisponibilizado = calcValorDisponibilizadoVA(quantidadeDiarias, l.valorDiaria);
     onSaveLancamento({
       ...l,
       diasFerias,
+      quantidadeDiarias,
+      valorDisponibilizado,
+      atualizadoEm: new Date().toISOString(),
+    });
+  };
+
+  const handleDiariasExtrasChange = (l: LancamentoValeAlimentacao, diariasExtras: number) => {
+    const quantidadeDiarias =
+      calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, l.faltas, l.diasFerias || 0) + diariasExtras;
+    const valorDisponibilizado = calcValorDisponibilizadoVA(quantidadeDiarias, l.valorDiaria);
+    onSaveLancamento({
+      ...l,
+      diariasExtras,
       quantidadeDiarias,
       valorDisponibilizado,
       atualizadoEm: new Date().toISOString(),
@@ -399,6 +414,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
               <th className="px-3 py-2 text-right">Valor da Diária</th>
               <th className="px-3 py-2 text-right">Faltas</th>
               <th className="px-3 py-2 text-right">Dias de Férias</th>
+              <th className="px-3 py-2 text-right">Extras</th>
               <th className="px-3 py-2 text-right">Diárias</th>
               <th className="px-3 py-2 text-right">Valor a Disponibilizar</th>
               <th className="px-3 py-2">Observações</th>
@@ -409,7 +425,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
           <tbody className="divide-y divide-slate-100">
             {lancamentosDaQuinzena.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-slate-400">
+                <td colSpan={10} className="px-3 py-6 text-center text-slate-400">
                   Nenhum lançamento nesta quinzena ainda. Clique em "Gerar Lançamentos" para criar
                   um para cada colaborador ativo.
                 </td>
@@ -473,6 +489,18 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                         className={inputCls + ' w-16 text-right'}
                       />
                     </div>
+                  </td>
+                  <td className="px-3 py-1.5 text-right">
+                    <input
+                      type="number"
+                      min={0}
+                      value={l.diariasExtras || 0}
+                      onChange={(e) =>
+                        handleDiariasExtrasChange(l, e.target.value ? parseInt(e.target.value, 10) : 0)
+                      }
+                      title="Diárias extras somadas manualmente (ex.: dia trabalhado num sábado/feriado) — não é recalculado automaticamente"
+                      className={inputCls + ' w-16 text-right'}
+                    />
                   </td>
                   <td className="px-3 py-1.5 text-right font-semibold text-slate-700">
                     {l.quantidadeDiarias}
