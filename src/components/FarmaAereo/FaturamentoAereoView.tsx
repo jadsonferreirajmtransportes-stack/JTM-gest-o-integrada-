@@ -381,6 +381,14 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   // já usado pra busca por fatura (evita um estado por linha e mantém cada edição isolada).
   const [nfEmEdicaoId, setNfEmEdicaoId] = useState<string | null>(null);
   const [nfDraft, setNfDraft] = useState('');
+
+  // Mesmo padrão da edição de NF, pra o nome/identificação (numeroFatura) e a descrição
+  // (observacao) da fatura — campos que hoje só eram preenchidos na criação e ficavam travados
+  // depois disso.
+  const [nomeEmEdicaoId, setNomeEmEdicaoId] = useState<string | null>(null);
+  const [nomeDraft, setNomeDraft] = useState('');
+  const [descricaoEmEdicaoId, setDescricaoEmEdicaoId] = useState<string | null>(null);
+  const [descricaoDraft, setDescricaoDraft] = useState('');
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [faturaDestinoSelecao, setFaturaDestinoSelecao] = useState('');
   const [buscaSemFatura, setBuscaSemFatura] = useState('');
@@ -692,6 +700,47 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     });
     setNfEmEdicaoId(null);
     setNfDraft('');
+  };
+
+  const handleAbrirEdicaoNome = (fatura: FaturaAereo) => {
+    setNomeEmEdicaoId(fatura.id);
+    setNomeDraft(fatura.numeroFatura);
+  };
+
+  const handleCancelarEdicaoNome = () => {
+    setNomeEmEdicaoId(null);
+    setNomeDraft('');
+  };
+
+  const handleSalvarNome = (fatura: FaturaAereo) => {
+    if (!nomeDraft.trim()) return;
+    onUpdateFatura?.({
+      ...fatura,
+      numeroFatura: nomeDraft.trim(),
+      atualizadoEm: new Date().toISOString(),
+    });
+    setNomeEmEdicaoId(null);
+    setNomeDraft('');
+  };
+
+  const handleAbrirEdicaoDescricao = (fatura: FaturaAereo) => {
+    setDescricaoEmEdicaoId(fatura.id);
+    setDescricaoDraft(fatura.observacao || '');
+  };
+
+  const handleCancelarEdicaoDescricao = () => {
+    setDescricaoEmEdicaoId(null);
+    setDescricaoDraft('');
+  };
+
+  const handleSalvarDescricao = (fatura: FaturaAereo) => {
+    onUpdateFatura?.({
+      ...fatura,
+      observacao: descricaoDraft.trim() || undefined,
+      atualizadoEm: new Date().toISOString(),
+    });
+    setDescricaoEmEdicaoId(null);
+    setDescricaoDraft('');
   };
 
   // Um .xlsx por fatura (mesmas colunas da tabela de CT-e do Coda) — igual ao que sairia
@@ -1053,9 +1102,49 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                         <span className="text-xs font-bold text-slate-800 truncate max-w-[220px]">
                           {fatura.clienteNome}
                         </span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
-                          {fatura.numeroFatura}
-                        </span>
+                        {nomeEmEdicaoId === fatura.id ? (
+                          <span className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="text"
+                              autoFocus
+                              value={nomeDraft}
+                              onChange={(e) => setNomeDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSalvarNome(fatura);
+                                if (e.key === 'Escape') handleCancelarEdicaoNome();
+                              }}
+                              className="min-w-0 w-32 px-1.5 py-0.5 border border-indigo-300 rounded-md text-[10px] font-mono focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSalvarNome(fatura)}
+                              className="p-0.5 text-emerald-600 hover:bg-emerald-50 rounded-md shrink-0"
+                              title="Salvar"
+                            >
+                              <Check className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelarEdicaoNome}
+                              className="p-0.5 text-slate-400 hover:bg-slate-100 rounded-md shrink-0"
+                              title="Cancelar"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAbrirEdicaoNome(fatura);
+                            }}
+                            title="Clique para editar o nome/identificação da fatura"
+                            className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded hover:bg-indigo-100 hover:text-indigo-700 transition-colors"
+                          >
+                            {fatura.numeroFatura}
+                          </button>
+                        )}
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${statusCfg.badge}`}
                         >
@@ -1192,6 +1281,55 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                             </button>
                           )}
                         </div>
+                      </div>
+
+                      {/* Descrição livre da fatura (observação) — full-width porque, ao contrário
+                          dos outros campos, o texto tende a ser mais longo que cabe num card. */}
+                      <div className="p-2 bg-white rounded-lg border border-slate-200 mb-3 text-[11px]">
+                        <span className="block text-slate-400 mb-0.5">Descrição</span>
+                        {descricaoEmEdicaoId === fatura.id ? (
+                          <div className="flex items-start gap-1">
+                            <textarea
+                              autoFocus
+                              rows={2}
+                              value={descricaoDraft}
+                              onChange={(e) => setDescricaoDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Escape') handleCancelarEdicaoDescricao();
+                              }}
+                              placeholder="Ex: observações internas sobre esta fatura..."
+                              className="w-full min-w-0 px-1.5 py-1 border border-indigo-300 rounded-md text-[11px] focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSalvarDescricao(fatura)}
+                              className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md shrink-0"
+                              title="Salvar"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelarEdicaoDescricao}
+                              className="p-1 text-slate-400 hover:bg-slate-100 rounded-md shrink-0"
+                              title="Cancelar"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleAbrirEdicaoDescricao(fatura)}
+                            className="font-medium text-slate-700 hover:text-indigo-600 transition-colors text-left w-full"
+                          >
+                            {fatura.observacao || (
+                              <span className="text-indigo-500 font-bold inline-flex items-center gap-1">
+                                <Plus className="w-3 h-3" /> Adicionar descrição
+                              </span>
+                            )}
+                          </button>
+                        )}
                       </div>
 
                       {lancamentosDaFatura.length === 0 ? (
