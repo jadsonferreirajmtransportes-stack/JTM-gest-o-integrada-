@@ -1133,6 +1133,10 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                               value={nomeDraft}
                               onChange={(e) => setNomeDraft(e.target.value)}
                               onKeyDown={(e) => {
+                                // Impede que a tecla (inclusive espaço) borbulhe até o onKeyDown
+                                // da linha do cabeçalho (que trata Espaço como "expandir/recolher"
+                                // por acessibilidade do role="button") e engula o caractere.
+                                e.stopPropagation();
                                 if (e.key === 'Enter') handleSalvarNome(fatura);
                                 if (e.key === 'Escape') handleCancelarEdicaoNome();
                               }}
@@ -1189,6 +1193,9 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                             value={periodoDraft}
                             onChange={(e) => setPeriodoDraft(e.target.value)}
                             onKeyDown={(e) => {
+                              // Mesmo motivo do campo de nome: sem isso, o espaço nunca chega a
+                              // virar caractere — o onKeyDown do cabeçalho intercepta antes.
+                              e.stopPropagation();
                               if (e.key === 'Enter') handleSalvarPeriodo(fatura);
                               if (e.key === 'Escape') handleCancelarEdicaoPeriodo();
                             }}
