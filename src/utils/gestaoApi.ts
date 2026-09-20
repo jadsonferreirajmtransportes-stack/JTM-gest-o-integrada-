@@ -132,6 +132,8 @@ function rowToProjeto(r: any): ProjetoGerencial {
     atualizadoEm: u(r.atualizado_em),
     criadoPorUserId: u(r.criado_por_user_id),
     usuariosMarcadosIds: j(r.usuarios_marcados_ids),
+    lembreteVesperaEnviadoEm: u(r.lembrete_vespera_enviado_em),
+    lembreteDiaEnviadoEm: u(r.lembrete_dia_enviado_em),
   };
 }
 function projetoToRow(p: ProjetoGerencial) {
@@ -225,6 +227,8 @@ function rowToAtividade(r: any): AtividadeGestao {
     recorrencia: u(r.recorrencia),
     ultimoAlertaEnviadoEm: u(r.ultimo_alerta_enviado_em),
     ultimoAlertaCanal: u(r.ultimo_alerta_canal),
+    lembreteVesperaEnviadoEm: u(r.lembrete_vespera_enviado_em),
+    lembreteDiaEnviadoEm: u(r.lembrete_dia_enviado_em),
     criadoEm: r.criado_em,
     atualizadoEm: u(r.atualizado_em),
     concluidaEm: u(r.concluida_em),

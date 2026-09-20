@@ -1,5 +1,8 @@
 // Types for JMT (Jobson de Moraes Transportes) System
 
+// Além dos módulos fixos abaixo, qualquer id de `Operacao` cadastrada (ver operacoesApi.ts)
+// também é um GlobalModuleId válido em tempo de execução — por isso o `| string` no fim. Os
+// literais continuam documentando os módulos que sempre existem, independente de cadastro.
 export type GlobalModuleId =
   | 'visao_geral'
   | 'clientes'
@@ -12,7 +15,8 @@ export type GlobalModuleId =
   | 'chat'
   | 'notas'
   | 'instrucoes'
-  | 'usuarios';
+  | 'usuarios'
+  | string;
 
 // Seções de dentro do módulo DP (Departamento Pessoal) que podem ser restringidas
 // individualmente — ver UsuarioLogin.secoesDpPermitidas. DP mistura, sob um único módulo,
@@ -47,6 +51,27 @@ export type SecaoOperacoes =
   | 'faturamento'
   | 'controle_financeiro'
   | 'custos';
+
+/** Cadastro de uma "operação"/setor (Farma Aéreo, Farma Rodoviário, e qualquer outra que a
+ *  empresa venha a abrir, ex.: Unimed) — generaliza o que antes só existia hardcoded pros 2
+ *  setores originais. Alimenta o Sidebar, o seletor de setor do Custo Operacional e o painel
+ *  gerencial genérico (OperacaoView). Farma Aéreo/Rodoviário continuam com suas telas próprias
+ *  (não usam OperacaoView) — o cadastro deles aqui serve só pra Sidebar/permissões/rateio de
+ *  custo "Geral" enxergarem as 3 (ou mais) operações de forma uniforme. */
+export interface Operacao {
+  id: string;
+  nome: string;
+  nomeCurto?: string;
+  /** Nome de um ícone do lucide-react (ex.: "Plane") — ver src/utils/iconResolver.ts. */
+  icone: string;
+  corDe: string;
+  corAte: string;
+  corBorda: string;
+  ordem: number;
+  ativo: boolean;
+  criadoEm?: string;
+  atualizadoEm?: string;
+}
 
 // Sistema de Autenticação e Permissão de Módulos por Login
 export interface UsuarioLogin {
@@ -329,7 +354,7 @@ export interface Colaborador {
   status: StatusColaborador;
   funcaoCargo: string;
   setor: string;
-  setoresAtuacao?: ('farma_aereo' | 'farma_rodoviario' | 'dp')[];
+  setoresAtuacao?: string[]; // ids de Operacao (ex.: 'farma_aereo') e/ou 'dp'
   setorPrincipal?: 'farma_aereo' | 'farma_rodoviario' | 'dp' | 'ambos' | string;
   dataAdmissao: string; // YYYY-MM-DD
   dataDemissao?: string; // YYYY-MM-DD
@@ -824,7 +849,7 @@ export interface Cliente {
   inscricaoEstadual?: string;
   segmento: SegmentoCliente;
   status: StatusCliente;
-  setoresVinculados?: ('farma_aereo' | 'farma_rodoviario')[];
+  setoresVinculados?: string[]; // ids de Operacao (ex.: 'farma_aereo', 'unimed')
   setorAtuacao?: 'farma_aereo' | 'farma_rodoviario' | 'ambos' | string;
   empresaFaturamentoId?: string; // ID da filial JMT que emite os CT-es / faturas
   gerenteContaResponsavel: string; // Nome do supervisor ou gestor comercial JMT
@@ -1398,6 +1423,10 @@ export interface ProjetoGerencial {
   /** Mesma regra de visibilidade da Agenda da Gestão — ver src/utils/visibilidadeUtils.ts. */
   criadoPorUserId?: string;
   usuariosMarcadosIds?: string[];
+  /** Carimbados pela Edge Function `lembretes-diarios` (envio automático por e-mail quando o
+   *  prazo previsto do projeto está a 1 dia ou chegou) — mesma lógica de AtividadeGestao. */
+  lembreteVesperaEnviadoEm?: string;
+  lembreteDiaEnviadoEm?: string;
 }
 
 // ==========================================
@@ -1484,6 +1513,12 @@ export interface AtividadeGestao {
   recorrencia?: RecorrenciaAtividade;
   ultimoAlertaEnviadoEm?: string;
   ultimoAlertaCanal?: 'whatsapp' | 'email' | 'ambos';
+  /** Carimbados pela Edge Function `lembretes-diarios` (envio automático por e-mail, sem
+   *  clique de ninguém) — distintos de `ultimoAlertaEnviadoEm`, que é só o alerta manual
+   *  disparado pelo AgendaAlertaModal. Evitam reenviar o mesmo lembrete automático mais de
+   *  uma vez (a função roda todo dia e reprocessaria a mesma atividade sem essa marcação). */
+  lembreteVesperaEnviadoEm?: string;
+  lembreteDiaEnviadoEm?: string;
   criadoEm: string;
   atualizadoEm?: string;
   concluidaEm?: string;
@@ -1492,7 +1527,7 @@ export interface AtividadeGestao {
 // ==========================================
 // CUSTOS OPERACIONAIS (ENTRADAS & DESPESAS)
 // ==========================================
-export type SetorCustoOperacional = 'farma_aereo' | 'farma_rodoviario' | 'geral';
+export type SetorCustoOperacional = 'farma_aereo' | 'farma_rodoviario' | 'geral' | string;
 
 export type CategoriaCustoOperacional =
   | 'Combustível & Abastecimento'

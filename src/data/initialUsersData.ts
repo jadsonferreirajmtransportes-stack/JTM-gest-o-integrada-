@@ -1,4 +1,4 @@
-import { UsuarioLogin, GlobalModuleId } from '../types';
+import { UsuarioLogin, GlobalModuleId, Operacao } from '../types';
 
 export interface ModuloInfo {
   id: GlobalModuleId;
@@ -9,6 +9,23 @@ export interface ModuloInfo {
   corBorda: string;
   iconeNome: string;
   categoria: 'Operações' | 'Corporativo' | 'Administração';
+}
+
+/** Transforma uma Operação cadastrada dinamicamente (ex.: Unimed) num ModuloInfo, pra poder
+ *  liberar acesso a ela num login do mesmo jeito que qualquer módulo fixo — ver
+ *  `modulosDisponiveis` nos componentes de Usuários/Logins. Farma Aéreo/Rodoviário já têm
+ *  entrada própria abaixo e não passam por aqui (o caller filtra por id antes). */
+export function operacaoParaModuloInfo(op: Operacao): ModuloInfo {
+  return {
+    id: op.id,
+    nome: op.nome,
+    sigla: (op.nomeCurto || op.nome).slice(0, 3).toUpperCase(),
+    descricao: `Empresas, equipe, faturamento e custos da operação ${op.nome}.`,
+    corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
+    corBorda: op.corBorda,
+    iconeNome: op.icone,
+    categoria: 'Operações',
+  };
 }
 
 export const MODULOS_SISTEMA: ModuloInfo[] = [

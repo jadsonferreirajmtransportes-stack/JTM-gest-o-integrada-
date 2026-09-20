@@ -1,6 +1,15 @@
 import { Cliente, Colaborador, CustoOperacional, LancamentoFaturamentoAereo } from '../types';
 
-export type SetorModuloId = 'farma_aereo' | 'farma_rodoviario';
+// Os 2 literais continuam documentando os setores originais; `| string` abre espaço pra
+// qualquer operação cadastrada dinamicamente (ver types.ts `Operacao` / operacoesApi.ts).
+export type SetorModuloId = 'farma_aereo' | 'farma_rodoviario' | string;
+
+/** Vínculo genérico por array explícito — único critério usado pra qualquer operação NOVA
+ *  (sem o histórico de heurísticas por palavra-chave que os 2 setores originais acumularam
+ *  só pra dar conta de dados antigos sem vínculo explícito). */
+export function isVinculadoAoSetor(setoresVinculados: string[] | undefined, setor: string): boolean {
+  return Array.isArray(setoresVinculados) && setoresVinculados.includes(setor);
+}
 
 // ==========================================
 // FATURAMENTO REAL (a partir dos lançamentos do Controle Financeiro)
@@ -253,7 +262,7 @@ export function vincularColaboradorAoSetor(
   setor: SetorModuloId,
   vincular: boolean
 ): Colaborador {
-  const currentSetores = new Set<'farma_aereo' | 'farma_rodoviario' | 'dp'>(
+  const currentSetores = new Set<string>(
     colaborador.setoresAtuacao || [
       ...(isColaboradorFarmaAereo(colaborador) ? (['farma_aereo'] as const) : []),
       ...(isColaboradorFarmaRodoviario(colaborador) ? (['farma_rodoviario'] as const) : []),
@@ -353,7 +362,11 @@ export function calcFinancialsSetor(
 ): SectorManagerialMetrics {
   // 1. Clientes do Setor
   const clientesDoSetor = (allClientes || []).filter((c) =>
-    setor === 'farma_aereo' ? isClienteFarmaAereo(c) : isClienteFarmaRodoviario(c)
+    setor === 'farma_aereo'
+      ? isClienteFarmaAereo(c)
+      : setor === 'farma_rodoviario'
+      ? isClienteFarmaRodoviario(c)
+      : isVinculadoAoSetor(c.setoresVinculados, setor)
   );
   const clientesAtivos = clientesDoSetor.filter((c) => c.status === 'Ativo');
 
@@ -377,7 +390,11 @@ export function calcFinancialsSetor(
   const colaboradoresDoSetor = (allColaboradores || []).filter(
     (c) =>
       c.status !== 'Inativo' &&
-      (setor === 'farma_aereo' ? isColaboradorFarmaAereo(c) : isColaboradorFarmaRodoviario(c))
+      (setor === 'farma_aereo'
+        ? isColaboradorFarmaAereo(c)
+        : setor === 'farma_rodoviario'
+        ? isColaboradorFarmaRodoviario(c)
+        : isVinculadoAoSetor(c.setoresAtuacao, setor))
   );
 
   let totalSalariosBase = 0;
@@ -518,7 +535,7 @@ export function calcFinancialsSetor(
         tipo: 'Fretes & Cias',
       },
     ];
-  } else {
+  } else if (setor === 'farma_rodoviario') {
     // Estimativas padrão Farma Rodoviário se nenhum custo cadastrado
     const custoCombustivel = faturamentoMensalTotal * 0.22;
     const custoManutencaoFrota = faturamentoMensalTotal * 0.085;
@@ -563,6 +580,11 @@ export function calcFinancialsSetor(
         tipo: 'Regulatório RDC 430',
       },
     ];
+  } else {
+    // Operação sem estimativa padrão cadastrada (qualquer setor além dos 2 originais) —
+    // fica zerado até o usuário registrar custos reais, em vez de inventar uma composição
+    // percentual fictícia que não faz sentido pra um negócio desconhecido.
+    custosOperacionaisDiretos = [];
   }
 
   const custoTotalOperacionalDireto = custosOperacionaisDiretos.reduce(
@@ -613,9 +635,8 @@ export function calcFinancialsSetor(
 // botão do próprio módulo (Farma Aéreo / Farma Rodoviário).
 // ==========================================
 
-const RELATORIO_GERENCIAL_LABELS: Record<
-  SetorModuloId,
-  { identificacao: string; custosDiretosObservacao: string; arquivo: string }
+const RELATORIO_GERENCIAL_LABELS: Partial<
+  Record<string, { identificacao: string; custosDiretosObservacao: string; arquivo: string }>
 > = {
   farma_aereo: {
     identificacao: 'Farma Aéreo & TECA RDC 430',
@@ -632,8 +653,15 @@ const RELATORIO_GERENCIAL_LABELS: Record<
 /** Gera e baixa o CSV do relatório gerencial (DRE resumido) de um setor, a partir das
  *  métricas já calculadas por `calcFinancialsSetor`. Compartilhado entre o painel do
  *  setor e o atalho do menu lateral para não duplicar as mesmas linhas em dois lugares. */
-export function gerarRelatorioGerencialSetorCSV(metrics: SectorManagerialMetrics): void {
-  const labels = RELATORIO_GERENCIAL_LABELS[metrics.setor];
+export function gerarRelatorioGerencialSetorCSV(
+  metrics: SectorManagerialMetrics,
+  nomeOperacao?: string
+): void {
+  const labels = RELATORIO_GERENCIAL_LABELS[metrics.setor] ?? {
+    identificacao: nomeOperacao || metrics.setor,
+    custosDiretosObservacao: 'Custos operacionais registrados',
+    arquivo: `relatorio_gerencial_${metrics.setor}`,
+  };
   const headers = ['Métrica Gerencial / Conta', 'Categoria', 'Valor / Quantidade', 'Observação'];
   const rows = [
     ['Setor', 'Identificação', labels.identificacao, 'Gestão Gerencial JMT'],

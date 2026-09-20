@@ -12,14 +12,16 @@ import {
   Briefcase,
   ChevronRight,
 } from 'lucide-react';
-import { Cliente, Colaborador } from '../../types';
+import { Cliente, Colaborador, Operacao } from '../../types';
 import {
   isClienteFarmaAereo,
   isClienteFarmaRodoviario,
   isColaboradorFarmaAereo,
   isColaboradorFarmaRodoviario,
+  isVinculadoAoSetor,
   SetorModuloId,
 } from '../../utils/sectorUtils';
+import { resolveOperacaoIcon } from '../../utils/iconResolver';
 
 interface SectorLinkModalProps {
   isOpen: boolean;
@@ -32,6 +34,9 @@ interface SectorLinkModalProps {
   onToggleColaboradorLink: (colaborador: Colaborador, vincular: boolean) => void;
   onOpenNovoCliente?: () => void;
   onOpenNovoColaborador?: () => void;
+  /** Cadastro de operações — usado só pra achar nome/ícone de qualquer setor além dos 2
+   *  originais (Farma Aéreo/Rodoviário continuam com nome/ícone fixos de sempre). */
+  operacoes?: Operacao[];
 }
 
 export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
@@ -45,14 +50,22 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
   onToggleColaboradorLink,
   onOpenNovoCliente,
   onOpenNovoColaborador,
+  operacoes,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   if (!isOpen) return null;
 
   const isAereo = setor === 'farma_aereo';
-  const setorNome = isAereo ? 'Farma Aéreo (AWB / RDC 430)' : 'Farma Rodoviário (Frota / MDF-e)';
-  const SetorIcon = isAereo ? Plane : Truck;
+  const isRodoviario = setor === 'farma_rodoviario';
+  const operacaoGenerica = operacoes?.find((o) => o.id === setor);
+  const setorNomeCurto = isAereo ? 'Aéreo' : isRodoviario ? 'Rodoviário' : operacaoGenerica?.nome || setor;
+  const setorNome = isAereo
+    ? 'Farma Aéreo (AWB / RDC 430)'
+    : isRodoviario
+    ? 'Farma Rodoviário (Frota / MDF-e)'
+    : operacaoGenerica?.nome || setor;
+  const SetorIcon = isAereo ? Plane : isRodoviario ? Truck : resolveOperacaoIcon(operacaoGenerica?.icone);
   const themeBg = 'from-[#C48229] to-[#5c4526]';
 
   return (
@@ -141,7 +154,9 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                 .map((cliente) => {
                   const isLinked = isAereo
                     ? isClienteFarmaAereo(cliente)
-                    : isClienteFarmaRodoviario(cliente);
+                    : isRodoviario
+                    ? isClienteFarmaRodoviario(cliente)
+                    : isVinculadoAoSetor(cliente.setoresVinculados, setor);
 
                   return (
                     <div
@@ -172,7 +187,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                             </span>
                             {isLinked && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#92611F]">
-                                Vinculada ao {isAereo ? 'Aéreo' : 'Rodoviário'}
+                                Vinculada ao {setorNomeCurto}
                               </span>
                             )}
                           </div>
@@ -223,7 +238,9 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                 .map((colab) => {
                   const isLinked = isAereo
                     ? isColaboradorFarmaAereo(colab)
-                    : isColaboradorFarmaRodoviario(colab);
+                    : isRodoviario
+                    ? isColaboradorFarmaRodoviario(colab)
+                    : isVinculadoAoSetor(colab.setoresAtuacao, setor);
 
                   return (
                     <div
@@ -254,7 +271,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                             </span>
                             {isLinked && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#92611F]">
-                                Alocado ao {isAereo ? 'Aéreo' : 'Rodoviário'}
+                                Alocado ao {setorNomeCurto}
                               </span>
                             )}
                           </div>

@@ -20,7 +20,9 @@ import {
   CategoriaCustoOperacional,
   StatusCustoOperacional,
   PeriodicidadeCusto,
+  Operacao,
 } from '../../types';
+import { resolveOperacaoIcon } from '../../utils/iconResolver';
 
 interface CustoOperacionalFormModalProps {
   isOpen: boolean;
@@ -28,6 +30,9 @@ interface CustoOperacionalFormModalProps {
   onSave: (custo: CustoOperacional) => void;
   initialData?: CustoOperacional | null;
   defaultSetor?: SetorCustoOperacional;
+  /** Operações além de Farma Aéreo/Rodoviário (ex.: Unimed) — cada uma ganha um botão de
+   *  setor igual aos 2 fixos abaixo. */
+  operacoesExtras?: Operacao[];
 }
 
 const CATEGORIAS_PRESETS: { categoria: CategoriaCustoOperacional; icon: string; setorHint?: SetorCustoOperacional }[] = [
@@ -53,6 +58,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
   onSave,
   initialData,
   defaultSetor = 'farma_rodoviario',
+  operacoesExtras = [],
 }) => {
   const [setor, setSetor] = useState<SetorCustoOperacional>(defaultSetor);
   const [categoria, setCategoria] = useState<string>('Combustível & Abastecimento');
@@ -96,8 +102,10 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
       setSetor(defaultSetor);
       if (defaultSetor === 'farma_aereo') {
         setCategoria('Fretes & Tarifas Aéreas (Cias)');
-      } else {
+      } else if (defaultSetor === 'farma_rodoviario') {
         setCategoria('Combustível & Abastecimento');
+      } else {
+        setCategoria('Outros Custos Operacionais');
       }
       setDescricao('');
       setValor('');
@@ -199,7 +207,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
               Setor / Centro de Custo Vinculado *
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => setSetor('farma_rodoviario')}
@@ -236,6 +244,31 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 </div>
               </button>
 
+              {operacoesExtras.map((op) => {
+                const OpIcon = resolveOperacaoIcon(op.icone);
+                const selecionado = setor === op.id;
+                return (
+                  <button
+                    key={op.id}
+                    type="button"
+                    onClick={() => setSetor(op.id)}
+                    className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
+                      selecionado
+                        ? 'border-[#C48229] bg-[#C48229]/10 ring-2 ring-[#C48229]/30 text-slate-900 font-bold'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg ${selecionado ? 'bg-[#C48229] text-white' : 'bg-slate-100 text-slate-600'}`}>
+                      <OpIcon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">{op.nome}</div>
+                      <div className="text-[10px] text-slate-500">{op.nomeCurto || op.nome}</div>
+                    </div>
+                  </button>
+                );
+              })}
+
               <button
                 type="button"
                 onClick={() => setSetor('geral')}
@@ -250,7 +283,9 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 </div>
                 <div>
                   <div className="text-xs font-bold">Geral / Rateado</div>
-                  <div className="text-[10px] text-slate-500">50% Aéreo / 50% Rodoviário</div>
+                  <div className="text-[10px] text-slate-500">
+                    Rateado igualmente entre as {2 + operacoesExtras.length} operações ativas
+                  </div>
                 </div>
               </button>
             </div>

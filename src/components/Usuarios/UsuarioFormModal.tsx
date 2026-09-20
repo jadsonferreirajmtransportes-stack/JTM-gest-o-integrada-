@@ -22,8 +22,8 @@ import {
   NotebookPen,
   UserCog,
 } from 'lucide-react';
-import { UsuarioLogin, GlobalModuleId, UserRole, SecaoDp, SecaoOperacoes, Supervisor } from '../../types';
-import { MODULOS_SISTEMA } from '../../data/initialUsersData';
+import { UsuarioLogin, GlobalModuleId, UserRole, SecaoDp, SecaoOperacoes, Supervisor, Operacao } from '../../types';
+import { MODULOS_SISTEMA, operacaoParaModuloInfo } from '../../data/initialUsersData';
 
 // Seções de dentro do módulo DP (Departamento Pessoal) que podem ser restringidas
 // individualmente — mesma lista de src/components/Sidebar.tsx (renderModuleSubNav 'dp'),
@@ -66,6 +66,9 @@ interface UsuarioFormModalProps {
   usuarioToEdit?: UsuarioLogin | null;
   existingUsers: UsuarioLogin[];
   supervisores: Supervisor[];
+  /** Operações cadastradas além dos módulos fixos (ex.: Unimed) — cada uma vira um módulo
+   *  marcável aqui igual Farma Aéreo/DP/etc. */
+  operacoesExtras?: Operacao[];
 }
 
 export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
@@ -75,7 +78,17 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
   usuarioToEdit,
   existingUsers,
   supervisores,
+  operacoesExtras = [],
 }) => {
+  // Módulos fixos + qualquer operação cadastrada dinamicamente que ainda não tenha entrada
+  // própria na lista fixa (Farma Aéreo/Rodoviário já têm) — mesma lista usada em todo o
+  // formulário no lugar de MODULOS_SISTEMA cru.
+  const modulosDisponiveis = [
+    ...MODULOS_SISTEMA,
+    ...operacoesExtras
+      .filter((op) => !MODULOS_SISTEMA.some((m) => m.id === op.id))
+      .map(operacaoParaModuloInfo),
+  ];
   const [nome, setNome] = useState('');
   const [login, setLogin] = useState('');
   const [email, setEmail] = useState('');
@@ -188,7 +201,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
   };
 
   const selectAllModules = () => {
-    setModulosPermitidos(MODULOS_SISTEMA.map((m) => m.id));
+    setModulosPermitidos(modulosDisponiveis.map((m) => m.id));
   };
 
   const toggleSecaoDp = (secaoId: SecaoDp) => {
@@ -223,7 +236,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
         setModulosPermitidos(['visao_geral', 'dp', 'projetos']);
         break;
       case 'diretoria':
-        setModulosPermitidos(MODULOS_SISTEMA.map((m) => m.id));
+        setModulosPermitidos(modulosDisponiveis.map((m) => m.id));
         break;
     }
   };
@@ -601,7 +614,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#C48229]" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  2. Módulos com Acesso Permitido ({modulosPermitidos.length} de {MODULOS_SISTEMA.length})
+                  2. Módulos com Acesso Permitido ({modulosPermitidos.length} de {modulosDisponiveis.length})
                 </h4>
               </div>
 
@@ -651,7 +664,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
 
             {/* Modules Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {MODULOS_SISTEMA.map((modulo) => {
+              {modulosDisponiveis.map((modulo) => {
                 const isChecked = modulosPermitidos.includes(modulo.id);
                 const Icon = getModuleIcon(modulo.id);
 

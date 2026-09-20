@@ -35,7 +35,8 @@ import {
   MessageSquare,
   Download,
 } from 'lucide-react';
-import { UserRole, GlobalModuleId, UsuarioLogin, SecaoDp } from '../types';
+import { UserRole, GlobalModuleId, UsuarioLogin, SecaoDp, Operacao } from '../types';
+import { resolveOperacaoIcon } from '../utils/iconResolver';
 import { podeVerSecaoDp, primeiraSecaoDpPermitida, temAcessoGeralDp } from '../utils/visibilidadeUtils';
 import { JmtLogo } from './Brand/JmtLogo';
 import { StrategicGuidelinesModal } from './Common/StrategicGuidelinesModal';
@@ -92,6 +93,9 @@ interface SidebarProps {
     viagensRodoviariasAtivas?: number;
     clientesFarmaAereo?: number;
     clientesFarmaRodoviario?: number;
+    /** Contagem genérica por id de operação — só usada pra operações além das 2 originais
+     *  (que continuam com os campos dedicados acima). */
+    clientesPorOperacao?: Record<string, number>;
     headcountFarmaAereo?: number;
     headcountFarmaRodoviario?: number;
     projetosAtivos?: number;
@@ -114,6 +118,9 @@ interface SidebarProps {
   onOpenSectorLinkModal?: (setor: 'farma_aereo' | 'farma_rodoviario', mode: 'clientes' | 'colaboradores') => void;
   /** Baixa o CSV do relatório gerencial do setor — mesmo atalho suspenso abaixo do botão do módulo. */
   onExportSectorReport?: (setor: 'farma_aereo' | 'farma_rodoviario') => void;
+  /** Cadastro de Operações (Farma Aéreo/Rodoviário + qualquer nova, ex.: Unimed) — define os
+   *  módulos de operação exibidos aqui. */
+  operacoes?: Operacao[];
 }
 
 interface NavItemDef {
@@ -144,6 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenOccurrenceLinkModal,
   onOpenSectorLinkModal,
   onExportSectorReport,
+  operacoes = [],
 }) => {
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
   // No mobile a barra é uma gaveta que abre por cima do conteúdo — nunca deve aparecer
@@ -151,11 +159,50 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // (equivale, na prática, a "estamos em tela grande").
   const collapsed = isCollapsed && !isMobileOpen;
 
+  // Módulos de Operação (Farma Aéreo, Farma Rodoviário, e qualquer outra cadastrada em
+  // Configurações > Operações, ex.: Unimed) — gerados a partir do cadastro em vez de
+  // hardcoded, pra uma operação nova aparecer aqui sozinha assim que for cadastrada e
+  // ativada. As 2 originais preservam exatamente o ícone/cor/badge de sempre; qualquer
+  // outra usa o que estiver no cadastro (ícone resolvido por nome, cor Tailwind salva).
+  const operacoesAtivas = (operacoes || []).filter((o) => o.ativo).sort((a, b) => a.ordem - b.ordem);
+  const modulosOperacoes = operacoesAtivas.map((op) => {
+    if (op.id === 'farma_aereo') {
+      return {
+        id: 'farma_aereo' as GlobalModuleId,
+        title: 'Farma Aéreo',
+        short: 'AWB & TECA',
+        icon: Plane,
+        badge: counts.clientesFarmaAereo,
+        color: 'from-sky-600 to-blue-800',
+        activeBorder: 'border-sky-500',
+      };
+    }
+    if (op.id === 'farma_rodoviario') {
+      return {
+        id: 'farma_rodoviario' as GlobalModuleId,
+        title: 'Farma Rodoviário',
+        short: 'Frota & MDF-e',
+        icon: Truck,
+        badge: counts.clientesFarmaRodoviario,
+        color: 'from-emerald-600 to-teal-800',
+        activeBorder: 'border-emerald-500',
+      };
+    }
+    return {
+      id: op.id as GlobalModuleId,
+      title: op.nome,
+      short: op.nomeCurto || op.nome,
+      icon: resolveOperacaoIcon(op.icone),
+      badge: counts.clientesPorOperacao?.[op.id] ?? 0,
+      color: `${op.corDe} ${op.corAte}`,
+      activeBorder: op.corBorda,
+    };
+  });
+
   // System Modules
-  const globalModules = [
+  const globalModulesSemNumero = [
     {
       id: 'clientes' as GlobalModuleId,
-      number: '1',
       title: 'Gestão de Clientes',
       short: 'Clientes & CRM',
       icon: Building2,
@@ -163,35 +210,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       color: 'from-blue-600 to-blue-800',
       activeBorder: 'border-blue-500',
     },
-    {
-      id: 'farma_aereo' as GlobalModuleId,
-      number: '2',
-      title: 'Farma Aéreo',
-      short: 'AWB & TECA',
-      icon: Plane,
-      // Empresas vinculadas ao setor (mesmo número mostrado em "Empresas Atreladas" dentro
-      // do próprio painel do Aéreo) — não a contagem de embarques em trânsito, que hoje é
-      // sempre 0 (recurso de rastreamento de embarques ainda não tem dado real) e por isso
-      // nunca aparecia nenhum número aqui.
-      badge: counts.clientesFarmaAereo,
-      color: 'from-sky-600 to-blue-800',
-      activeBorder: 'border-sky-500',
-    },
-    {
-      id: 'farma_rodoviario' as GlobalModuleId,
-      number: '3',
-      title: 'Farma Rodoviário',
-      short: 'Frota & MDF-e',
-      icon: Truck,
-      // Mesmo raciocínio do Aéreo acima: empresas vinculadas ao setor, não viagens ativas
-      // (hoje sempre 0 — módulo de viagens/telemetria ainda sem dado real).
-      badge: counts.clientesFarmaRodoviario,
-      color: 'from-emerald-600 to-teal-800',
-      activeBorder: 'border-emerald-500',
-    },
+    ...modulosOperacoes,
     {
       id: 'dp' as GlobalModuleId,
-      number: '4',
       title: 'Departamento Pessoal',
       short: 'RH, CLT & ASO',
       icon: Users,
@@ -201,7 +222,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'projetos' as GlobalModuleId,
-      number: '5',
       title: 'Projetos Gerenciais',
       short: 'Projetos & OKRs',
       icon: FolderKanban,
@@ -211,7 +231,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'agenda' as GlobalModuleId,
-      number: '6',
       title: 'Agenda da Gestão',
       short: 'Governança & Comitês',
       icon: CalendarDays,
@@ -221,7 +240,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'controladoria' as GlobalModuleId,
-      number: '7',
       title: 'Controladoria',
       short: 'DRE & Orçado x Realizado',
       icon: Calculator,
@@ -231,7 +249,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'chat' as GlobalModuleId,
-      number: '8',
       title: 'Chat Interno',
       short: 'Conversas Diretas & Grupos',
       icon: MessageSquare,
@@ -241,7 +258,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'notas' as GlobalModuleId,
-      number: '9',
       title: 'Notas & Ideias',
       short: 'Anotações & Brainstorm',
       icon: NotebookPen,
@@ -251,7 +267,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'instrucoes' as GlobalModuleId,
-      number: '10',
       title: 'Instruções de Trabalho',
       short: 'Procedimentos & Checklists',
       icon: FileCheck2,
@@ -261,7 +276,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'usuarios' as GlobalModuleId,
-      number: '11',
       title: 'Logins & Acessos',
       short: 'Usuários & Permissões',
       icon: ShieldCheck,
@@ -270,6 +284,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       activeBorder: 'border-rose-500',
     },
   ];
+  // Numeração é só cosmética (não é armazenada em lugar nenhum) — segue a ordem final da
+  // lista, então uma operação nova cadastrada entra na numeração sem precisar renumerar
+  // os módulos fixos à mão.
+  const globalModules = globalModulesSemNumero.map((mod, idx) => ({ ...mod, number: String(idx + 1) }));
 
   // Filter modules based on current user's assigned permissions
   const accessibleGlobalModules = globalModules.filter(

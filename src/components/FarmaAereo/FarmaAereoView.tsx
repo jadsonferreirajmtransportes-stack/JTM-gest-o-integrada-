@@ -22,6 +22,7 @@ import {
   StatusCustoOperacional,
   LancamentoFaturamentoAereo,
   FaturaAereo,
+  Operacao,
 } from '../../types';
 import { podeVerAbaOperacoes } from '../../utils/visibilidadeUtils';
 import { FaturamentoAereoView } from './FaturamentoAereoView';
@@ -69,6 +70,9 @@ interface FarmaAereoViewProps {
   onDeleteFaturaAereo?: (id: string) => void;
   onUpdateLancamentoFaturamentoAereo?: (lancamento: LancamentoFaturamentoAereo) => void;
   onDeleteLancamentoFaturamentoAereo?: (id: string) => void;
+  /** Operações cadastradas além de Farma Aéreo/Rodoviário (ex.: Unimed) — repassadas só pro
+   *  seletor de setor do Custo Operacional, pra poder marcar um custo como de outra operação. */
+  operacoesExtras?: Operacao[];
 }
 
 export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
@@ -95,6 +99,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
   onDeleteFaturaAereo = () => {},
   onUpdateLancamentoFaturamentoAereo = () => {},
   onDeleteLancamentoFaturamentoAereo = () => {},
+  operacoesExtras = [],
 }) => {
   // Managerial sub-tabs — a aba inicial é a primeira permitida (ver secoesOperacoesPermitidas),
   // não sempre "visao_geral": alguém sem acesso a ela (ex.: só Empresas/Equipe) não pode abrir
@@ -337,6 +342,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           metrics={metrics}
           colaboradores={sectorColaboradores}
           custosOperacionais={custosOperacionais}
+          totalOperacoesAtivas={2 + operacoesExtras.length}
           onOpenNovoCusto={() => {
             setSelectedCustoEdit(null);
             setIsCustoModalOpen(true);
@@ -376,6 +382,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
         }}
         initialData={selectedCustoEdit}
         defaultSetor="farma_aereo"
+        operacoesExtras={operacoesExtras}
       />
     </div>
   );

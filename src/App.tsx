@@ -25,6 +25,7 @@ import {
   StatusAtividadeGestao,
   ItemDeliberacaoAta,
   CustoOperacional,
+  Operacao,
   UsuarioLogin,
   NotaPagina,
   InstrucaoTrabalho,
@@ -135,6 +136,7 @@ import {
   getOrcamentos,
   saveOrcamentoItem,
 } from './utils/gestaoApi';
+import { getOperacoes, saveOperacao, deleteOperacao } from './utils/operacoesApi';
 // Farma Rodoviário (viagens/telemetria) também já migrado para o Supabase — ver
 // src/utils/viagensApi.ts.
 import {
@@ -160,6 +162,7 @@ import {
   vincularClienteAoSetor,
   vincularColaboradorAoSetor,
   gerarRelatorioGerencialSetorCSV,
+  isVinculadoAoSetor,
   SetorModuloId,
 } from './utils/sectorUtils';
 import { ehModalRodoviario } from './components/FarmaAereo/faturamentoAereoUtils';
@@ -185,6 +188,7 @@ import { FarmaAereoView } from './components/FarmaAereo/FarmaAereoView';
 
 // Module 3: Farma Rodoviário
 import { FarmaRodoviarioView } from './components/FarmaRodoviario/FarmaRodoviarioView';
+import { OperacaoView } from './components/Common/OperacaoView';
 
 // Module 5: Projetos Gerenciais
 import { ProjetosView } from './components/Projetos/ProjetosView';
@@ -496,6 +500,13 @@ export default function App() {
   const [notasPaginas, setNotasPaginas] = useState<NotaPagina[]>([]);
   const [instrucoesTrabalho, setInstrucoesTrabalho] = useState<InstrucaoTrabalho[]>([]);
   const [custosOperacionais, setCustosOperacionais] = useState<CustoOperacional[]>([]);
+  const [operacoes, setOperacoes] = useState<Operacao[]>([]);
+  // Qualquer operação cadastrada além das 2 originais (Farma Aéreo/Rodoviário continuam com
+  // suas próprias telas) — cada uma ganha um <OperacaoView> genérico automaticamente.
+  const operacoesExtrasAtivas = useMemo(
+    () => operacoes.filter((o) => o.ativo && o.id !== 'farma_aereo' && o.id !== 'farma_rodoviario'),
+    [operacoes]
+  );
 
   // Public candidate self-service mode (via ?form=admissao or direct testing)
   const [isCandidatePortalView, setIsCandidatePortalView] = useState<boolean>(false);
@@ -944,7 +955,7 @@ export default function App() {
   // forma assíncrona.
   const loadGestaoData = useCallback(async () => {
     try {
-      const [custos, projetos, atividades, notas, instrucoes, viagens, orcamentosCarregados] = await Promise.all([
+      const [custos, projetos, atividades, notas, instrucoes, viagens, orcamentosCarregados, ops] = await Promise.all([
         getCustosOperacionais(),
         getProjetosGerenciais(),
         getAtividadesGestao(),
@@ -952,6 +963,7 @@ export default function App() {
         getInstrucoesTrabalho(),
         getViagensRodoviarias(),
         getOrcamentos(),
+        getOperacoes(),
       ]);
       setCustosOperacionais(custos);
       setProjetos(projetos);
@@ -960,6 +972,7 @@ export default function App() {
       setInstrucoesTrabalho(instrucoes);
       setViagensRodoviarias(viagens);
       setOrcamentos(orcamentosCarregados);
+      setOperacoes(ops);
     } catch (err) {
       console.error('Erro ao carregar Custos/Projetos/Agenda/Notas/Instruções/Viagens/Orçamentos (Supabase):', err);
       showToast('Não foi possível carregar alguns dados de gestão. Verifique sua conexão.', 'info');
@@ -1431,6 +1444,14 @@ export default function App() {
       return !ultima || c.atualizadoEm > ultima;
     }).length;
 
+    // Contagem genérica pra qualquer operação além de Aéreo/Rodoviário (ex.: Unimed) —
+    // alimenta o badge do módulo dela no menu lateral.
+    const clientesPorOperacao: Record<string, number> = {};
+    operacoes.forEach((op) => {
+      if (op.id === 'farma_aereo' || op.id === 'farma_rodoviario') return;
+      clientesPorOperacao[op.id] = clientesVisiveis.filter((c) => isVinculadoAoSetor(c.setoresVinculados, op.id)).length;
+    });
+
     return {
       ativos,
       examesVencendo,
@@ -1444,6 +1465,7 @@ export default function App() {
       viagensRodoviariasAtivas,
       clientesFarmaAereo,
       clientesFarmaRodoviario,
+      clientesPorOperacao,
       headcountFarmaAereo,
       headcountFarmaRodoviario,
       projetosAtivos,
@@ -1468,6 +1490,7 @@ export default function App() {
     users,
     conversasChat,
     ultimasLeiturasChat,
+    operacoes,
   ]);
 
   // Dados do "Aviso de Abertura" (compromissos de hoje + prazos de projetos) — mesmo critério de
@@ -2312,6 +2335,19 @@ export default function App() {
     showToast('Custo operacional removido com sucesso.', 'info');
   };
 
+  // Operações (Farma Aéreo/Rodoviário + novas, ex.: Unimed) Handlers
+  const handleSaveOperacao = async (operacao: Operacao) => {
+    await saveOperacao(operacao);
+    await loadGestaoData();
+    showToast(`Operação "${operacao.nome}" salva com sucesso!`, 'success');
+  };
+
+  const handleDeleteOperacao = async (id: string) => {
+    await deleteOperacao(id);
+    await loadGestaoData();
+    showToast('Operação removida com sucesso.', 'info');
+  };
+
   // Settings Handlers
   const handleAddEmpregador = async (emp: Empregador) => {
     await saveEmpregador(emp);
@@ -2515,6 +2551,7 @@ export default function App() {
         onOpenOccurrenceLinkModal={() => setIsOccurrenceLinkModalOpen(true)}
         onOpenSectorLinkModal={handleOpenSectorLinkModal}
         onExportSectorReport={handleExportSectorReport}
+        operacoes={operacoes}
       />
 
       {/* Main Content Area */}
@@ -2657,6 +2694,7 @@ export default function App() {
               onDeleteFaturaAereo={handleDeleteFaturaAereo}
               onUpdateLancamentoFaturamentoAereo={handleUpdateLancamentoFaturamentoAereo}
               onDeleteLancamentoFaturamentoAereo={handleDeleteLancamentoFaturamentoAereo}
+              operacoesExtras={operacoesExtrasAtivas}
             />
           )}
 
@@ -2693,8 +2731,40 @@ export default function App() {
               onDeleteFaturaAereo={handleDeleteFaturaAereo}
               onUpdateLancamentoFaturamentoAereo={handleUpdateLancamentoFaturamentoAereo}
               onDeleteLancamentoFaturamentoAereo={handleDeleteLancamentoFaturamentoAereo}
+              operacoesExtras={operacoesExtrasAtivas}
             />
           )}
+
+          {/* ========================================================================= */}
+          {/* OPERAÇÕES ADICIONAIS (cadastro dinâmico — ex.: Unimed) */}
+          {/* ========================================================================= */}
+          {operacoesExtrasAtivas
+            .filter((op) => activeGlobalModule === op.id || activeSection === op.id)
+            .map((op) => (
+              <OperacaoView
+                key={op.id}
+                operacao={op}
+                clientes={clientes}
+                colaboradores={colaboradores}
+                custosOperacionais={custosOperacionais}
+                operacoesExtras={operacoesExtrasAtivas}
+                totalOperacoesAtivas={2 + operacoesExtrasAtivas.length}
+                onSaveCliente={handleSaveCliente}
+                onSaveColaborador={handleSaveColaborador}
+                onSaveCusto={handleSaveCustoOperacional}
+                onDeleteCusto={handleDeleteCustoOperacional}
+                onOpenNovoCliente={() => {
+                  setActiveGlobalModule('clientes');
+                  setActiveSection('clientes');
+                }}
+                onOpenNovoColaborador={handleOpenNovoColaborador}
+                onSelectClienteDetail={handleAbrirFichaCliente}
+                onSelectColaboradorDetail={handleSelecionarColaboradorDetail}
+                onOpenLinkModal={(mode) => handleOpenSectorLinkModal(op.id, mode)}
+                userRole={userRole}
+                currentUser={currentUser}
+              />
+            ))}
 
           {/* ========================================================================= */}
           {/* MODULE 5: PROJETOS GERENCIAIS & OKRs */}
@@ -2828,6 +2898,7 @@ export default function App() {
               onToggleUserModuleAccess={handleToggleUserModuleAccess}
               onEnviarConvite={handleEnviarConvite}
               supervisores={supervisores}
+              operacoesExtras={operacoesExtrasAtivas}
             />
           )}
 
@@ -3024,11 +3095,14 @@ export default function App() {
               cargos={cargos}
               supervisores={supervisores}
               feriados={feriados}
+              operacoes={operacoes}
               userRole={userRole}
               onAddEmpregador={handleAddEmpregador}
               onAddCargo={handleAddCargo}
               onAddSupervisor={handleAddSupervisor}
               onAddFeriado={handleAddFeriado}
+              onSaveOperacao={handleSaveOperacao}
+              onDeleteOperacao={handleDeleteOperacao}
             />
           )}
 
@@ -3177,6 +3251,7 @@ export default function App() {
           setActiveSection('clientes');
         }}
         onOpenNovoColaborador={handleOpenNovoColaborador}
+        operacoes={operacoes}
       />
 
       {/* 6. Occurrence Link Generator & WhatsApp Sender Modal */}
@@ -3210,6 +3285,7 @@ export default function App() {
           }}
           initialData={selectedCustoEdit}
           defaultSetor="geral"
+          operacoesExtras={operacoesExtrasAtivas}
         />
       )}
 
@@ -3224,6 +3300,7 @@ export default function App() {
           setIsSwitchUserModalOpen(false);
           handleOpenCreateUser();
         }}
+        operacoesExtras={operacoesExtrasAtivas}
       />
 
       {/* 9. User Login & Permissions Form Modal */}
@@ -3237,6 +3314,7 @@ export default function App() {
         usuarioToEdit={editingUser}
         existingUsers={users}
         supervisores={supervisores}
+        operacoesExtras={operacoesExtrasAtivas}
       />
 
       {/* 10. Aviso de Abertura (compromissos de hoje + prazos de projetos) */}

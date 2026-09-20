@@ -21,6 +21,7 @@ import { Colaborador, UserRole } from '../../types';
 import {
   isColaboradorFarmaAereo,
   isColaboradorFarmaRodoviario,
+  isVinculadoAoSetor,
   vincularColaboradorAoSetor,
   SetorModuloId,
 } from '../../utils/sectorUtils';
@@ -33,6 +34,9 @@ interface SectorEmployeesTabProps {
   onOpenLinkModal?: () => void;
   onSelectColaboradorDetail?: (colaborador: Colaborador) => void;
   userRole?: UserRole;
+  /** Ver mesmo par de props em SectorClientsTab. */
+  nomeSetorGenerico?: string;
+  iconeSetorGenerico?: React.ElementType;
 }
 
 export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
@@ -43,22 +47,29 @@ export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
   onOpenLinkModal,
   onSelectColaboradorDetail,
   userRole = 'admin',
+  nomeSetorGenerico,
+  iconeSetorGenerico,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [funcaoFilter, setFuncaoFilter] = useState<string>('todos');
 
   const isAereo = setor === 'farma_aereo';
-  const setorNome = isAereo ? 'Farma Aéreo' : 'Farma Rodoviário';
-  const SetorIcon = isAereo ? Plane : Truck;
+  const isRodoviario = setor === 'farma_rodoviario';
+  const setorNome = isAereo ? 'Farma Aéreo' : isRodoviario ? 'Farma Rodoviário' : nomeSetorGenerico || setor;
+  const SetorIcon = isAereo ? Plane : isRodoviario ? Truck : iconeSetorGenerico || Users;
 
   // Filter employees allocated to this sector
   const linkedColaboradores = useMemo(() => {
     return allColaboradores
       .filter((c) => c.status !== 'Inativo')
       .filter((c) =>
-        isAereo ? isColaboradorFarmaAereo(c) : isColaboradorFarmaRodoviario(c)
+        isAereo
+          ? isColaboradorFarmaAereo(c)
+          : isRodoviario
+          ? isColaboradorFarmaRodoviario(c)
+          : isVinculadoAoSetor(c.setoresAtuacao, setor)
       );
-  }, [allColaboradores, isAereo]);
+  }, [allColaboradores, isAereo, isRodoviario, setor]);
 
   // Unique functions in this sector
   const uniqueFuncoes = useMemo(() => {

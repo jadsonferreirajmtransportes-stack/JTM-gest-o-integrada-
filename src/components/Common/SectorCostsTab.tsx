@@ -39,6 +39,12 @@ interface SectorCostsTabProps {
   onToggleStatusCusto?: (id: string, newStatus: StatusCustoOperacional) => void;
   onOpenLinkModal: () => void;
   onOpenNovoColaborador?: () => void;
+  /** Quantas operações ativas existem hoje — define a fração do rateio de um custo "Geral"
+   *  (1/N). Com as 2 operações originais isso já dá 50%, então o padrão preserva o
+   *  comportamento de sempre quando nenhuma 3ª operação ainda foi cadastrada. */
+  totalOperacoesAtivas?: number;
+  nomeSetorGenerico?: string;
+  iconeSetorGenerico?: React.ElementType;
 }
 
 export const SectorCostsTab: React.FC<SectorCostsTabProps> = ({
@@ -52,8 +58,13 @@ export const SectorCostsTab: React.FC<SectorCostsTabProps> = ({
   onToggleStatusCusto,
   onOpenLinkModal,
   onOpenNovoColaborador,
+  totalOperacoesAtivas = 2,
+  nomeSetorGenerico,
+  iconeSetorGenerico,
 }) => {
   const isAereo = setor === 'farma_aereo';
+  const isRodoviario = setor === 'farma_rodoviario';
+  const fracaoRateio = 1 / Math.max(totalOperacoesAtivas, 1);
   const [activeTab, setActiveTab] = useState<'lancamentos' | 'composicao'>('lancamentos');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'Todos' | StatusCustoOperacional>('Todos');
@@ -87,20 +98,20 @@ export const SectorCostsTab: React.FC<SectorCostsTabProps> = ({
 
   // Totais dos custos cadastrados
   const totalLancado = useMemo(() => {
-    return sectorCosts.reduce((acc, c) => acc + (c.setor === 'geral' ? c.valor * 0.5 : c.valor), 0);
-  }, [sectorCosts]);
+    return sectorCosts.reduce((acc, c) => acc + (c.setor === 'geral' ? c.valor * fracaoRateio : c.valor), 0);
+  }, [sectorCosts, fracaoRateio]);
 
   const totalPago = useMemo(() => {
     return sectorCosts
       .filter((c) => c.status === 'Pago')
-      .reduce((acc, c) => acc + (c.setor === 'geral' ? c.valor * 0.5 : c.valor), 0);
-  }, [sectorCosts]);
+      .reduce((acc, c) => acc + (c.setor === 'geral' ? c.valor * fracaoRateio : c.valor), 0);
+  }, [sectorCosts, fracaoRateio]);
 
   const totalAPagar = useMemo(() => {
     return sectorCosts
       .filter((c) => c.status === 'A Pagar' || c.status === 'Provisionado')
-      .reduce((acc, c) => acc + (c.setor === 'geral' ? c.valor * 0.5 : c.valor), 0);
-  }, [sectorCosts]);
+      .reduce((acc, c) => acc + (c.setor === 'geral' ? c.valor * fracaoRateio : c.valor), 0);
+  }, [sectorCosts, fracaoRateio]);
 
   const handleExportCSV = () => {
     const headers = [
@@ -117,7 +128,13 @@ export const SectorCostsTab: React.FC<SectorCostsTabProps> = ({
     ];
 
     const rows = sectorCosts.map((c) => [
-      c.setor === 'farma_aereo' ? 'Farma Aéreo' : c.setor === 'farma_rodoviario' ? 'Farma Rodoviário' : 'Geral / Compartilhado',
+      c.setor === 'farma_aereo'
+        ? 'Farma Aéreo'
+        : c.setor === 'farma_rodoviario'
+        ? 'Farma Rodoviário'
+        : c.setor === 'geral'
+        ? 'Geral / Compartilhado'
+        : c.setor,
       c.categoria,
       c.descricao,
       c.valor.toFixed(2),
@@ -216,10 +233,16 @@ export const SectorCostsTab: React.FC<SectorCostsTabProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="p-2 rounded-xl bg-[#C48229]/15 text-[#92611F]">
-                  {isAereo ? <Plane className="w-4 h-4" /> : <Truck className="w-4 h-4" />}
+                  {isAereo ? (
+                    <Plane className="w-4 h-4" />
+                  ) : isRodoviario ? (
+                    <Truck className="w-4 h-4" />
+                  ) : (
+                    React.createElement(iconeSetorGenerico || Building2, { className: 'w-4 h-4' })
+                  )}
                 </span>
                 <h3 className="text-base font-bold text-slate-900">
-                  Custos Operacionais & Despesas ({isAereo ? 'Farma Aéreo' : 'Farma Rodoviário'})
+                  Custos Operacionais & Despesas ({isAereo ? 'Farma Aéreo' : isRodoviario ? 'Farma Rodoviário' : nomeSetorGenerico || setor})
                 </h3>
               </div>
               <p className="text-xs text-slate-500 mt-1">
@@ -352,7 +375,7 @@ export const SectorCostsTab: React.FC<SectorCostsTabProps> = ({
                 <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
                   {filteredCosts.map((item) => {
                     const isGeral = item.setor === 'geral';
-                    const valorEfetivo = isGeral ? item.valor * 0.5 : item.valor;
+                    const valorEfetivo = isGeral ? item.valor * fracaoRateio : item.valor;
 
                     return (
                       <div
@@ -366,7 +389,7 @@ export const SectorCostsTab: React.FC<SectorCostsTabProps> = ({
                             </span>
                             {isGeral && (
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
-                                Geral (Rateado 50%)
+                                Geral (Rateado {Math.round(fracaoRateio * 100)}%)
                               </span>
                             )}
                             <span

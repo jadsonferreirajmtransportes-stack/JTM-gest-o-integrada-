@@ -21,6 +21,7 @@ import { Cliente, UserRole } from '../../types';
 import {
   isClienteFarmaAereo,
   isClienteFarmaRodoviario,
+  isVinculadoAoSetor,
   vincularClienteAoSetor,
   SetorModuloId,
 } from '../../utils/sectorUtils';
@@ -33,6 +34,10 @@ interface SectorClientsTabProps {
   onOpenLinkModal?: () => void;
   onSelectClienteDetail?: (cliente: Cliente) => void;
   userRole?: UserRole;
+  /** Nome/ícone de exibição pra qualquer operação além das 2 originais (cadastro dinâmico
+   *  de Operações) — Farma Aéreo/Rodoviário continuam com o nome/ícone fixo de sempre. */
+  nomeSetorGenerico?: string;
+  iconeSetorGenerico?: React.ElementType;
 }
 
 export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
@@ -43,20 +48,27 @@ export const SectorClientsTab: React.FC<SectorClientsTabProps> = ({
   onOpenLinkModal,
   onSelectClienteDetail,
   userRole = 'admin',
+  nomeSetorGenerico,
+  iconeSetorGenerico,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [segmentoFilter, setSegmentoFilter] = useState<string>('todos');
 
   const isAereo = setor === 'farma_aereo';
-  const setorNome = isAereo ? 'Farma Aéreo' : 'Farma Rodoviário';
-  const SetorIcon = isAereo ? Plane : Truck;
+  const isRodoviario = setor === 'farma_rodoviario';
+  const setorNome = isAereo ? 'Farma Aéreo' : isRodoviario ? 'Farma Rodoviário' : nomeSetorGenerico || setor;
+  const SetorIcon = isAereo ? Plane : isRodoviario ? Truck : iconeSetorGenerico || Building2;
 
   // Filter clients that belong to this sector
   const linkedClientes = useMemo(() => {
     return allClientes.filter((c) =>
-      isAereo ? isClienteFarmaAereo(c) : isClienteFarmaRodoviario(c)
+      isAereo
+        ? isClienteFarmaAereo(c)
+        : isRodoviario
+        ? isClienteFarmaRodoviario(c)
+        : isVinculadoAoSetor(c.setoresVinculados, setor)
     );
-  }, [allClientes, isAereo]);
+  }, [allClientes, isAereo, isRodoviario, setor]);
 
   // Filtered by search & segment
   const displayedClientes = useMemo(() => {

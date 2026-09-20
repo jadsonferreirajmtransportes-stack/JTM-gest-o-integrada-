@@ -27,20 +27,34 @@ import {
   Supervisor,
   FeriadoEmpresa,
   UserRole,
+  Operacao,
 } from '../../types';
 import { formatMoney, formatDate, calcDaysRemaining } from '../../utils/formatters';
 import { CCT_PISOS_SALARIAIS, CCT_METADATA } from '../../data/cctData';
+import { ICON_OPTIONS, resolveOperacaoIcon } from '../../utils/iconResolver';
+
+const CORES_OPERACAO = [
+  { de: 'from-sky-600', ate: 'to-blue-800', borda: 'border-sky-500', label: 'Azul' },
+  { de: 'from-emerald-600', ate: 'to-teal-800', borda: 'border-emerald-500', label: 'Verde' },
+  { de: 'from-[#C48229]', ate: 'to-[#5c4526]', borda: 'border-[#C48229]', label: 'Bronze' },
+  { de: 'from-purple-600', ate: 'to-purple-900', borda: 'border-purple-500', label: 'Roxo' },
+  { de: 'from-rose-600', ate: 'to-rose-900', borda: 'border-rose-500', label: 'Rosa' },
+  { de: 'from-slate-700', ate: 'to-slate-900', borda: 'border-slate-500', label: 'Grafite' },
+];
 
 interface SettingsViewProps {
   empregadores: Empregador[];
   cargos: CargoSalario[];
   supervisores: Supervisor[];
   feriados: FeriadoEmpresa[];
+  operacoes: Operacao[];
   userRole: UserRole;
   onAddEmpregador: (e: Empregador) => void;
   onAddCargo: (c: CargoSalario) => void;
   onAddSupervisor: (s: Supervisor) => void;
   onAddFeriado: (f: FeriadoEmpresa) => void;
+  onSaveOperacao: (o: Operacao) => void;
+  onDeleteOperacao: (id: string) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -48,13 +62,47 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   cargos,
   supervisores,
   feriados,
+  operacoes,
   userRole,
   onAddEmpregador,
   onAddCargo,
   onAddSupervisor,
   onAddFeriado,
+  onSaveOperacao,
+  onDeleteOperacao,
 }) => {
-  const [activeTab, setActiveTab] = useState<'cct' | 'cargos' | 'supervisores' | 'empregadores' | 'feriados'>('cct');
+  const [activeTab, setActiveTab] = useState<
+    'cct' | 'cargos' | 'supervisores' | 'empregadores' | 'feriados' | 'operacoes'
+  >('cct');
+
+  // New Operação Form
+  const [opNome, setOpNome] = useState('');
+  const [opNomeCurto, setOpNomeCurto] = useState('');
+  const [opIcone, setOpIcone] = useState('Building2');
+  const [opCorIdx, setOpCorIdx] = useState(0);
+  const [opOrdem, setOpOrdem] = useState(100);
+
+  const handleSaveOperacaoForm = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cor = CORES_OPERACAO[opCorIdx];
+    onSaveOperacao({
+      id: opNome.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''),
+      nome: opNome.trim(),
+      nomeCurto: opNomeCurto.trim() || undefined,
+      icone: opIcone,
+      corDe: cor.de,
+      corAte: cor.ate,
+      corBorda: cor.borda,
+      ordem: opOrdem,
+      ativo: true,
+    });
+    setOpNome('');
+    setOpNomeCurto('');
+    setOpIcone('Building2');
+    setOpCorIdx(0);
+    setOpOrdem(100);
+    setIsAddModalOpen(false);
+  };
 
   // Aviso de renovação da CCT — a convenção vigente tem prazo de validade (Cláusula de vigência)
   // e hoje é só um arquivo estático (src/data/cctData.ts): quando vencer, alguém (o usuário) tem
@@ -180,7 +228,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           >
             <Plus className="w-4 h-4" />
             <span>
-              Adicionar {activeTab === 'cargos' ? 'Cargo' : activeTab === 'supervisores' ? 'Supervisor' : activeTab === 'empregadores' ? 'Empregador' : 'Feriado'}
+              Adicionar{' '}
+              {activeTab === 'cargos'
+                ? 'Cargo'
+                : activeTab === 'supervisores'
+                ? 'Supervisor'
+                : activeTab === 'empregadores'
+                ? 'Empregador'
+                : activeTab === 'operacoes'
+                ? 'Operação'
+                : 'Feriado'}
             </span>
           </button>
         )}
@@ -251,6 +308,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         >
           <Calendar className="w-4 h-4" />
           <span>2.18 Feriados / Calendário ({feriados.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('operacoes')}
+          className={`pb-2.5 px-3 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+            activeTab === 'operacoes'
+              ? 'border-[#C48229] text-[#C48229]'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Building2 className="w-4 h-4" />
+          <span>Operações / Setores ({operacoes.length})</span>
         </button>
       </div>
 
@@ -536,6 +606,82 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </table>
           </div>
         )}
+
+        {/* OPERAÇÕES / SETORES */}
+        {activeTab === 'operacoes' && (
+          <div className="overflow-x-auto">
+            <p className="text-[11px] text-slate-500 mb-3">
+              Cada operação ativa vira um módulo próprio no menu lateral (Empresas, Equipe,
+              Faturamento e Custos) — Farma Aéreo e Farma Rodoviário são as 2 originais e
+              continuam com suas telas completas (inclui Controle Financeiro); qualquer outra
+              ganha o painel genérico.
+            </p>
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
+                <tr>
+                  <th className="py-2.5 px-3">Operação</th>
+                  <th className="py-2.5 px-3">Ícone</th>
+                  <th className="py-2.5 px-3">Cor</th>
+                  <th className="py-2.5 px-3">Ordem</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {operacoes.map((op) => {
+                  const OpIcon = resolveOperacaoIcon(op.icone);
+                  const ehOriginal = op.id === 'farma_aereo' || op.id === 'farma_rodoviario';
+                  return (
+                    <tr key={op.id} className="hover:bg-slate-50">
+                      <td className="py-2.5 px-3">
+                        <div className="font-semibold text-slate-900">{op.nome}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">{op.id}</div>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`inline-flex p-1.5 rounded-lg bg-linear-to-r ${op.corDe} ${op.corAte} text-white`}>
+                          <OpIcon className="w-3.5 h-3.5" />
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`w-4 h-4 inline-block rounded bg-linear-to-r ${op.corDe} ${op.corAte}`} />
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-600 font-mono">{op.ordem}</td>
+                      <td className="py-2.5 px-3">
+                        <button
+                          type="button"
+                          onClick={() => onSaveOperacao({ ...op, ativo: !op.ativo })}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            op.ativo
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-slate-100 text-slate-500 border-slate-200'
+                          }`}
+                        >
+                          {op.ativo ? 'Ativa' : 'Inativa'}
+                        </button>
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        {!ehOriginal && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Excluir a operação "${op.nome}"? Isso não afeta clientes/colaboradores já vinculados, só remove o módulo do menu.`)) {
+                                onDeleteOperacao(op.id);
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
+                            title="Excluir operação"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Add Modal */}
@@ -544,7 +690,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <h3 className="font-bold text-slate-900 text-sm">
-                Adicionar {activeTab === 'cargos' ? 'Cargo' : activeTab === 'supervisores' ? 'Supervisor' : activeTab === 'empregadores' ? 'Empregador' : 'Feriado'}
+                Adicionar{' '}
+                {activeTab === 'cargos'
+                  ? 'Cargo'
+                  : activeTab === 'supervisores'
+                  ? 'Supervisor'
+                  : activeTab === 'empregadores'
+                  ? 'Empregador'
+                  : activeTab === 'operacoes'
+                  ? 'Operação'
+                  : 'Feriado'}
               </h3>
               <button
                 type="button"
@@ -749,6 +904,84 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg"
                   >
                     Salvar
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {activeTab === 'operacoes' && (
+              <form onSubmit={handleSaveOperacaoForm} className="p-5 space-y-3 text-xs">
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Nome da Operação *</label>
+                  <input
+                    type="text"
+                    required
+                    value={opNome}
+                    onChange={(e) => setOpNome(e.target.value)}
+                    placeholder="Ex: Unimed"
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Nome Curto (opcional)</label>
+                  <input
+                    type="text"
+                    value={opNomeCurto}
+                    onChange={(e) => setOpNomeCurto(e.target.value)}
+                    placeholder="Ex: Plano de Saúde"
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Ícone</label>
+                  <select
+                    value={opIcone}
+                    onChange={(e) => setOpIcone(e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                  >
+                    {Object.keys(ICON_OPTIONS).map((nome) => (
+                      <option key={nome} value={nome}>
+                        {nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Cor</label>
+                  <select
+                    value={opCorIdx}
+                    onChange={(e) => setOpCorIdx(Number(e.target.value))}
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                  >
+                    {CORES_OPERACAO.map((cor, idx) => (
+                      <option key={cor.label} value={idx}>
+                        {cor.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Ordem no Menu</label>
+                  <input
+                    type="number"
+                    value={opOrdem}
+                    onChange={(e) => setOpOrdem(Number(e.target.value))}
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                  />
+                </div>
+                <div className="pt-3 border-t flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="px-3 py-1.5 text-slate-600 rounded-lg"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold rounded-lg transition-colors shadow-xs"
+                  >
+                    Salvar Operação
                   </button>
                 </div>
               </form>

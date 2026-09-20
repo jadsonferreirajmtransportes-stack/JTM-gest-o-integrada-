@@ -9,8 +9,8 @@ import {
   Sparkles,
   Lock,
 } from 'lucide-react';
-import { UsuarioLogin, GlobalModuleId } from '../../types';
-import { MODULOS_SISTEMA } from '../../data/initialUsersData';
+import { UsuarioLogin, GlobalModuleId, Operacao } from '../../types';
+import { MODULOS_SISTEMA, operacaoParaModuloInfo } from '../../data/initialUsersData';
 
 interface SwitchUserModalProps {
   isOpen: boolean;
@@ -19,6 +19,9 @@ interface SwitchUserModalProps {
   currentUser: UsuarioLogin;
   onSelectUser: (user: UsuarioLogin) => void;
   onOpenNewUserModal: () => void;
+  /** Operações cadastradas além dos módulos fixos (ex.: Unimed) — só pra mostrar a sigla
+   *  certa em vez do id cru. */
+  operacoesExtras?: Operacao[];
 }
 
 export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
@@ -28,10 +31,18 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
   currentUser,
   onSelectUser,
   onOpenNewUserModal,
+  operacoesExtras = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   if (!isOpen) return null;
+
+  const modulosDisponiveis = [
+    ...MODULOS_SISTEMA,
+    ...operacoesExtras
+      .filter((op) => !MODULOS_SISTEMA.some((m) => m.id === op.id))
+      .map(operacaoParaModuloInfo),
+  ];
 
   const filteredUsers = users.filter(
     (u) =>
@@ -42,7 +53,7 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
   );
 
   const getModuleName = (id: GlobalModuleId) => {
-    const found = MODULOS_SISTEMA.find((m) => m.id === id);
+    const found = modulosDisponiveis.find((m) => m.id === id);
     return found ? found.sigla : id;
   };
 

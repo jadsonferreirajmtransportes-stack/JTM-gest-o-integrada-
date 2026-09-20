@@ -32,8 +32,9 @@ import {
   Send,
   Loader2,
 } from 'lucide-react';
-import { UsuarioLogin, GlobalModuleId, Supervisor } from '../../types';
-import { MODULOS_SISTEMA } from '../../data/initialUsersData';
+import { UsuarioLogin, GlobalModuleId, Supervisor, Operacao } from '../../types';
+import { MODULOS_SISTEMA, operacaoParaModuloInfo } from '../../data/initialUsersData';
+import { resolveOperacaoIcon } from '../../utils/iconResolver';
 import { UsuarioFormModal } from './UsuarioFormModal';
 import { SwitchUserModal } from './SwitchUserModal';
 import { StrategicGuidelinesBanner } from '../Common/StrategicGuidelinesBanner';
@@ -47,6 +48,8 @@ interface UsuariosViewProps {
   onToggleUserModuleAccess: (userId: string, moduleId: GlobalModuleId) => void;
   onEnviarConvite: (email: string) => Promise<void>;
   supervisores: Supervisor[];
+  /** Operações cadastradas além dos módulos fixos (ex.: Unimed). */
+  operacoesExtras?: Operacao[];
 }
 
 export const UsuariosView: React.FC<UsuariosViewProps> = ({
@@ -58,7 +61,14 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
   onToggleUserModuleAccess,
   onEnviarConvite,
   supervisores,
+  operacoesExtras = [],
 }) => {
+  const modulosDisponiveis = [
+    ...MODULOS_SISTEMA,
+    ...operacoesExtras
+      .filter((op) => !MODULOS_SISTEMA.some((m) => m.id === op.id))
+      .map(operacaoParaModuloInfo),
+  ];
   const [activeTab, setActiveTab] = useState<'lista' | 'matriz' | 'seguranca'>('lista');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'Todos' | 'Ativo' | 'Inativo' | 'Bloqueado'>('Todos');
@@ -154,7 +164,9 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
       case 'usuarios':
         return ShieldCheck;
       default:
-        return LayoutDashboard;
+        // Qualquer operação cadastrada dinamicamente (ex.: Unimed) não tem um case fixo
+        // acima — usa o ícone escolhido no cadastro em vez de um genérico.
+        return resolveOperacaoIcon(modulosDisponiveis.find((m) => m.id === id)?.iconeNome);
     }
   };
 
@@ -234,7 +246,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
               Módulos do Sistema
             </span>
-            <div className="text-2xl font-black text-[#C48229] mt-0.5">{MODULOS_SISTEMA.length}</div>
+            <div className="text-2xl font-black text-[#C48229] mt-0.5">{modulosDisponiveis.length}</div>
             <div className="text-[11px] text-slate-500 font-medium mt-0.5">
               Controle individual por usuário
             </div>
@@ -356,7 +368,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                 className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-hidden focus:ring-2 focus:ring-[#C48229]"
               >
                 <option value="todos">Todos os Módulos</option>
-                {MODULOS_SISTEMA.map((m) => (
+                {modulosDisponiveis.map((m) => (
                   <option key={m.id} value={m.id}>
                     Liberados para: {m.nome}
                   </option>
@@ -492,12 +504,12 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                             Módulos com Acesso Liberado:
                           </span>
                           <span className="text-[#92611F]">
-                            {user.modulosPermitidos.length} de {MODULOS_SISTEMA.length}
+                            {user.modulosPermitidos.length} de {modulosDisponiveis.length}
                           </span>
                         </div>
 
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          {MODULOS_SISTEMA.map((modulo) => {
+                          {modulosDisponiveis.map((modulo) => {
                             const hasAccess = user.modulosPermitidos.includes(modulo.id);
                             const Icon = getModuleIcon(modulo.id);
 
@@ -622,7 +634,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                 <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[10px] tracking-wider">
                   <th className="py-3 px-4 min-w-[220px]">Colaborador / Login</th>
                   <th className="py-3 px-3 min-w-[140px]">Cargo / Setor</th>
-                  {MODULOS_SISTEMA.map((m) => {
+                  {modulosDisponiveis.map((m) => {
                     const Icon = getModuleIcon(m.id);
                     return (
                       <th key={m.id} className="py-3 px-3 text-center min-w-[110px]">
@@ -681,7 +693,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                       </td>
 
                       {/* Checkbox columns for each module */}
-                      {MODULOS_SISTEMA.map((modulo) => {
+                      {modulosDisponiveis.map((modulo) => {
                         const hasAccess = u.modulosPermitidos.includes(modulo.id);
 
                         return (
@@ -793,6 +805,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
         usuarioToEdit={editingUser}
         existingUsers={users}
         supervisores={supervisores}
+        operacoesExtras={operacoesExtras}
       />
 
       {/* Modal: Trocar de Login / Simular Sessão */}
@@ -806,6 +819,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
           setIsSwitchModalOpen(false);
           handleOpenCreateModal();
         }}
+        operacoesExtras={operacoesExtras}
       />
 
       {/* Modal de Confirmação de Exclusão */}
