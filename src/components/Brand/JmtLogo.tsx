@@ -1,5 +1,5 @@
 import React from 'react';
-import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
+import { JMT_LOGO_BASE64, JMT_ICON_BASE64 } from '../../data/jmtLogoBase64';
 
 export interface JmtLogoProps {
   variant?: 'full' | 'compact' | 'icon' | 'seal';
@@ -109,6 +109,20 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
   const subTextColor = isDark ? 'text-slate-300' : 'text-[#111111]';
 
   if (variant === 'icon') {
+    // Em tema claro, mesmo recorte oficial usado no "full"/"compact" (só o símbolo, sem o
+    // texto) — todo uso hoje de variant="icon" é sobre fundo claro (login, sidebar recolhida,
+    // badge mobile do Header). Tema escuro não tem uma versão clara desse recorte ainda, então
+    // continua com o símbolo desenhado à mão.
+    if (!isDark) {
+      return (
+        <img
+          src={JMT_ICON_BASE64}
+          alt="Jobson de Moraes Transportes"
+          style={{ height: iconSize }}
+          className={`w-auto select-none ${className}`}
+        />
+      );
+    }
     return <JmtLogoSymbol size={iconSize} isDark={isDark} className={className} />;
   }
 
