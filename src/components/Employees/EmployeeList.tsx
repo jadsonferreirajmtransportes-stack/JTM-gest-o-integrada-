@@ -239,7 +239,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               id="employee-list-add-btn"
               type="button"
               onClick={onOpenNovo}
-              className="px-3.5 py-1.5 bg-[#B38F4F] hover:opacity-90 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-xs transition-opacity"
+              className="px-3.5 py-1.5 bg-[#C48229] hover:opacity-90 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-xs transition-opacity"
             >
               <Plus className="w-4 h-4" />
               <span>Novo Cadastro</span>

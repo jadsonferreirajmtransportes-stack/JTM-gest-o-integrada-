@@ -143,7 +143,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({
 
         {/* Client Name & Segment */}
         <div className="cursor-pointer" onClick={() => onSelect(cliente)}>
-          <h3 className="text-base font-bold text-slate-900 group-hover:text-[#B38F4F] transition-colors line-clamp-1">
+          <h3 className="text-base font-bold text-slate-900 group-hover:text-[#C48229] transition-colors line-clamp-1">
             {cliente.nomeFantasia || cliente.razaoSocial}
           </h3>
           <p className="text-xs text-slate-400 font-mono mt-0.5 line-clamp-1">
@@ -181,7 +181,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({
             <span className="text-xs font-semibold text-slate-700 mt-0.5 block truncate">
               {cliente.tabelaFrete?.tipoCobranca || 'Valor por Ponto'}
             </span>
-            <span className="text-[10px] text-[#8A6A39] font-medium">
+            <span className="text-[10px] text-[#92611F] font-medium">
               {cliente.tabelaFrete?.tipoCobranca === '% sobre Nota Fiscal (Ad Valorem)'
                 ? `${cliente.tabelaFrete?.percentualAdValoremNF ?? cliente.tabelaFrete?.valorBase ?? 0}% sobre NF`
                 : cliente.tabelaFrete?.valorKgExcedente
@@ -248,7 +248,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({
           onClick={() => onAddInteraction(cliente)}
           className="text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 px-2.5 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1"
         >
-          <Clock className="w-3.5 h-3.5 text-[#B38F4F]" />
+          <Clock className="w-3.5 h-3.5 text-[#C48229]" />
           <span>+ Interação</span>
         </button>
 
@@ -256,7 +256,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({
           id={`btn-view-dossier-${cliente.id}`}
           type="button"
           onClick={() => onSelect(cliente)}
-          className="text-xs text-[#8A6A39] hover:text-[#B38F4F] hover:bg-[#B38F4F]/10 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1"
+          className="text-xs text-[#92611F] hover:text-[#C48229] hover:bg-[#C48229]/10 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1"
         >
           <span>Ficha Completa</span>
           <ChevronRight className="w-3.5 h-3.5" />

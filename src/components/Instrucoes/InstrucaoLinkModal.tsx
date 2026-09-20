@@ -86,7 +86,7 @@ Qualquer dúvida, me chame!
     <div className="fixed inset-0 z-[80] overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
       <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#B38F4F] via-[#8A6A39] to-[#5c4526] p-6 text-white flex items-center justify-between relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#C48229] via-[#92611F] to-[#5c4526] p-6 text-white flex items-center justify-between relative overflow-hidden">
           <div className="flex items-center gap-3.5 relative z-10 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-black/20 border border-white/20 flex items-center justify-center text-white shadow-inner shrink-0">
               <FileCheck2 className="w-6 h-6 text-amber-100" />
@@ -124,7 +124,7 @@ Qualquer dúvida, me chame!
 
           {/* Link */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#8A6A39] uppercase tracking-wider">
+            <label className="block text-xs font-bold text-[#92611F] uppercase tracking-wider">
               Link Direto de Preenchimento
             </label>
             <div className="flex items-center gap-2">
@@ -136,7 +136,7 @@ Qualquer dúvida, me chame!
                 type="button"
                 onClick={handleCopyLink}
                 className={`px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
-                  copied ? 'bg-emerald-600 text-white' : 'bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs'
+                  copied ? 'bg-emerald-600 text-white' : 'bg-[#C48229] hover:bg-[#92611F] text-white shadow-xs'
                 }`}
               >
                 {copied ? (
@@ -197,7 +197,7 @@ Qualquer dúvida, me chame!
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                  <QrCode className="w-4 h-4 text-[#8A6A39]" />
+                  <QrCode className="w-4 h-4 text-[#92611F]" />
                   <span>QR Code</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
@@ -224,7 +224,7 @@ Qualquer dúvida, me chame!
           <button
             type="button"
             onClick={() => window.open(generatedLink, '_blank')}
-            className="px-4 py-2 bg-white hover:bg-slate-100 text-[#8A6A39] rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-200 transition-colors"
+            className="px-4 py-2 bg-white hover:bg-slate-100 text-[#92611F] rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-200 transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             <span>Testar / Abrir Formulário Agora</span>

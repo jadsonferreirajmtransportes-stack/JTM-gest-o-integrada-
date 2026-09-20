@@ -233,10 +233,10 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
               id="generate-occurrence-link-btn"
               type="button"
               onClick={onOpenOccurrenceLinkModal}
-              className="px-3 py-1.5 bg-[#F4EEE1] hover:bg-[#B38F4F]/20 text-[#111111] border border-[#B38F4F]/40 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all"
+              className="px-3 py-1.5 bg-[#F4EEE1] hover:bg-[#C48229]/20 text-[#111111] border border-[#C48229]/40 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all"
               title="Gerar link de ocorrência com QR Code e envio pelo WhatsApp para supervisores"
             >
-              <Share2 className="w-3.5 h-3.5 text-[#B38F4F]" />
+              <Share2 className="w-3.5 h-3.5 text-[#C48229]" />
               <span>Gerar Link / WhatsApp</span>
             </button>
           )}
@@ -266,7 +266,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
               <button
                 type="button"
                 onClick={() => handleOpenNew()}
-                className="px-3.5 py-1.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+                className="px-3.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 <span>Nova Ocorrência</span>

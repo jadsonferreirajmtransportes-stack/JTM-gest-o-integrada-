@@ -109,7 +109,7 @@ export const CompartilharFichaModal: React.FC<CompartilharFichaModalProps> = ({
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div>
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Link2 className="w-4 h-4 text-[#8A6A39]" />
+              <Link2 className="w-4 h-4 text-[#92611F]" />
               Compartilhar Ficha Cadastral
             </h2>
             <p className="text-[11px] text-slate-500 mt-0.5">{colaborador.nomeCompleto}</p>

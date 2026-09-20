@@ -52,7 +52,7 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
         {/* Header */}
         <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#B38F4F] flex items-center justify-center text-white shrink-0 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-[#C48229] flex items-center justify-center text-white shrink-0 shadow-sm">
               <UserCheck className="w-5 h-5" />
             </div>
             <div>
@@ -76,7 +76,7 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
         {/* Current Active User Banner */}
         <div className="px-6 py-3 bg-amber-50/70 border-b border-amber-200/60 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#B38F4F] text-white font-extrabold text-xs flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#C48229] text-white font-extrabold text-xs flex items-center justify-center shrink-0">
               {currentUser.nome.substring(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0">
@@ -102,7 +102,7 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
               placeholder="Buscar por nome, login, cargo ou setor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden"
+              className="w-full pl-9 pr-4 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#C48229] focus:border-transparent outline-hidden"
               autoFocus
             />
           </div>
@@ -130,17 +130,17 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
                   }}
                   className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
                     isCurrent
-                      ? 'bg-amber-50/80 border-[#B38F4F] shadow-xs ring-1 ring-[#B38F4F]/30'
+                      ? 'bg-amber-50/80 border-[#C48229] shadow-xs ring-1 ring-[#C48229]/30'
                       : isBlocked
                       ? 'bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed'
-                      : 'bg-white border-slate-200 hover:border-[#B38F4F]/60 hover:bg-slate-50/80 cursor-pointer'
+                      : 'bg-white border-slate-200 hover:border-[#C48229]/60 hover:bg-slate-50/80 cursor-pointer'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                         isCurrent
-                          ? 'bg-[#B38F4F] text-white shadow-xs'
+                          ? 'bg-[#C48229] text-white shadow-xs'
                           : 'bg-slate-200 text-slate-700'
                       }`}
                     >
@@ -182,7 +182,7 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
 
                   <div className="shrink-0">
                     {isCurrent ? (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-[#B38F4F]">
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-[#C48229]">
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
                         <span>Ativo</span>
                       </span>
@@ -193,7 +193,7 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
                     ) : (
                       <button
                         type="button"
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-[#B38F4F] hover:text-white text-slate-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-[#C48229] hover:text-white text-slate-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
                       >
                         <span>Entrar</span>
                         <ArrowRight className="w-3 h-3" />
@@ -214,7 +214,7 @@ export const SwitchUserModal: React.FC<SwitchUserModalProps> = ({
               onClose();
               onOpenNewUserModal();
             }}
-            className="text-xs font-bold text-[#8A6A39] hover:text-[#B38F4F] hover:underline flex items-center gap-1"
+            className="text-xs font-bold text-[#92611F] hover:text-[#C48229] hover:underline flex items-center gap-1"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Criar outro login agora</span>

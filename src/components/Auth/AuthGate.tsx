@@ -63,7 +63,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
   if (session === undefined) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-[#B38F4F] animate-spin" />
+        <Loader2 className="w-6 h-6 text-[#C48229] animate-spin" />
       </div>
     );
   }
@@ -98,7 +98,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
         title={`Sair (${session.user.email})`}
         className="fixed bottom-3 right-3 z-[9999] flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-[11px] font-semibold px-3 py-2 rounded-full shadow-lg"
       >
-        {saindo ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#B38F4F]" /> : <LogOut className="w-3.5 h-3.5 text-slate-500" />}
+        {saindo ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C48229]" /> : <LogOut className="w-3.5 h-3.5 text-slate-500" />}
         Sair
       </button>
       {children}

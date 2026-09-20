@@ -135,7 +135,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
       {/* Hero */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#8A6A39] text-xs font-semibold border border-amber-200">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
             <FileCheck2 className="w-3.5 h-3.5" />
             <span>Instruções de Trabalho (IT)</span>
           </div>
@@ -150,7 +150,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
         <button
           type="button"
           onClick={() => setIsNovaOpen(true)}
-          className="px-4 py-2 rounded-xl bg-[#B38F4F] hover:bg-[#8A6A39] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0"
+          className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Instrução</span>
@@ -169,7 +169,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por código, título ou conteúdo..."
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/30"
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]/30"
               />
             </div>
             <select
@@ -203,7 +203,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
                   type="button"
                   onClick={() => setSelectedId(i.id)}
                   className={`w-full text-left p-2.5 rounded-xl border transition-colors ${
-                    selecionado ? 'bg-amber-50 border-[#B38F4F]/50' : 'border-transparent hover:bg-slate-50'
+                    selecionado ? 'bg-amber-50 border-[#C48229]/50' : 'border-transparent hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1.5 mb-1">
@@ -252,7 +252,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsNovaOpen(true)}
-                className="px-4 py-2 text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg shadow-xs inline-flex items-center gap-2 transition-colors"
+                className="px-4 py-2 text-xs font-semibold bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg shadow-xs inline-flex items-center gap-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 <span>Nova Instrução</span>
@@ -293,7 +293,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
             <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileCheck2 className="w-4 h-4 text-[#B38F4F]" />
+                <FileCheck2 className="w-4 h-4 text-[#C48229]" />
                 <h3 className="text-sm font-bold text-slate-800">
                   {categoriaEscolhida ? `Modelo para ${getCategoriaConfig(categoriaEscolhida).label}` : 'Nova Instrução de Trabalho'}
                 </h3>
@@ -360,10 +360,10 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
                       key={tpl.id}
                       type="button"
                       onClick={() => handleCriarComTemplate(tpl.gerarPreenchimento())}
-                      className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:bg-amber-50 hover:border-[#B38F4F]/40 transition-colors text-left"
+                      className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:bg-amber-50 hover:border-[#C48229]/40 transition-colors text-left"
                     >
-                      <div className="w-8 h-8 rounded-lg border border-[#B38F4F]/30 bg-amber-50 flex items-center justify-center shrink-0">
-                        <Layers className="w-4 h-4 text-[#8A6A39]" />
+                      <div className="w-8 h-8 rounded-lg border border-[#C48229]/30 bg-amber-50 flex items-center justify-center shrink-0">
+                        <Layers className="w-4 h-4 text-[#92611F]" />
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs font-semibold text-slate-700 block truncate">{tpl.nome}</span>

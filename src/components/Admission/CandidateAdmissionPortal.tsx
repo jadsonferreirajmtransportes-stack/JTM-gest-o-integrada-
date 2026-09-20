@@ -402,10 +402,10 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
   // SUCCESS SCREEN
   if (submittedProtocol && submittedData) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 selection:bg-[#B38F4F] selection:text-white">
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 selection:bg-[#C48229] selection:text-white">
         <div className="jmt-print-doc w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden text-center">
           {/* Top Gold Accent */}
-          <div className="print:hidden absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#B38F4F] via-amber-400 to-[#B38F4F]" />
+          <div className="print:hidden absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#C48229] via-amber-400 to-[#C48229]" />
           <PrintDocumentHeader
             titulo="COMPROVANTE DE ADMISSÃO DIGITAL"
             subtitulo="Departamento Pessoal — JMT"
@@ -417,7 +417,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <CheckCircle2 className="w-10 h-10 text-emerald-400" />
           </div>
 
-          <span className="inline-block px-3 py-1 bg-amber-500/10 border border-[#B38F4F]/30 rounded-full text-xs font-semibold text-amber-300 uppercase tracking-wider mb-2">
+          <span className="inline-block px-3 py-1 bg-amber-500/10 border border-[#C48229]/30 rounded-full text-xs font-semibold text-amber-300 uppercase tracking-wider mb-2">
             Admissão Digital Concluída
           </span>
 
@@ -435,7 +435,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
               <div>
                 <span className="text-xs text-slate-500 block">Número do Protocolo</span>
-                <span className="text-lg font-mono font-bold text-[#B38F4F]">{submittedProtocol}</span>
+                <span className="text-lg font-mono font-bold text-[#C48229]">{submittedProtocol}</span>
               </div>
               <div className="text-right">
                 <span className="text-xs text-slate-500 block">Data e Hora de Envio</span>
@@ -477,7 +477,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             </h3>
             <ul className="space-y-2.5 text-xs text-slate-300">
               <li className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-[#B38F4F]/20 text-amber-300 font-bold flex items-center justify-center shrink-0 text-[10px] mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-[#C48229]/20 text-amber-300 font-bold flex items-center justify-center shrink-0 text-[10px] mt-0.5">
                   1
                 </div>
                 <span>
@@ -485,7 +485,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-[#B38F4F]/20 text-amber-300 font-bold flex items-center justify-center shrink-0 text-[10px] mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-[#C48229]/20 text-amber-300 font-bold flex items-center justify-center shrink-0 text-[10px] mt-0.5">
                   2
                 </div>
                 <span>
@@ -493,7 +493,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-[#B38F4F]/20 text-amber-300 font-bold flex items-center justify-center shrink-0 text-[10px] mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-[#C48229]/20 text-amber-300 font-bold flex items-center justify-center shrink-0 text-[10px] mt-0.5">
                   3
                 </div>
                 <span>
@@ -520,7 +520,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
               <button
                 type="button"
                 onClick={onAdminBack}
-                className="w-full sm:w-auto px-6 py-3 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-md shadow-amber-900/30"
+                className="w-full sm:w-auto px-6 py-3 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-md shadow-amber-900/30"
               >
                 <Building2 className="w-4 h-4" />
                 Acessar Painel do DP (Administrador)
@@ -538,7 +538,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
   }
 
   return (
-    <div className="min-h-screen bg-[#111111] text-slate-100 flex flex-col selection:bg-[#B38F4F] selection:text-white">
+    <div className="min-h-screen bg-[#111111] text-slate-100 flex flex-col selection:bg-[#C48229] selection:text-white">
       {/* Top Banner Header */}
       <header className="bg-[#0c0c0c] border-b border-[#262626] sticky top-0 z-30 shadow-md">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -546,7 +546,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <JmtLogo variant="compact" theme="dark" iconSize={32} />
             <div className="hidden sm:block pl-3 border-l border-[#262626]">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-[#B38F4F]/15 text-[#B38F4F] rounded text-[10px] font-bold border border-[#B38F4F]/30 uppercase tracking-wider">
+                <span className="px-2 py-0.5 bg-[#C48229]/15 text-[#C48229] rounded text-[10px] font-bold border border-[#C48229]/30 uppercase tracking-wider">
                   RDC 430
                 </span>
               </div>
@@ -555,7 +555,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#B38F4F] bg-[#161616] border border-[#2a2a2a] px-2.5 py-1 rounded-full">
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#C48229] bg-[#161616] border border-[#2a2a2a] px-2.5 py-1 rounded-full">
               <Lock className="w-3.5 h-3.5" />
               <span>Ambiente Seguro & LGPD</span>
             </div>
@@ -567,7 +567,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                 className="text-xs bg-[#181818] hover:bg-[#222222] text-slate-300 hover:text-white px-3 py-1.5 rounded-lg transition-colors border border-[#2a2a2a] flex items-center gap-1.5"
                 title="Voltar para o painel de administração do DP"
               >
-                <Building2 className="w-3.5 h-3.5 text-[#B38F4F]" />
+                <Building2 className="w-3.5 h-3.5 text-[#C48229]" />
                 <span className="hidden sm:inline">Painel DP</span>
               </button>
             )}
@@ -617,7 +617,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             {/* Progress line */}
             <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
               <div
-                className="bg-gradient-to-r from-[#B38F4F] to-amber-400 h-full rounded-full transition-all duration-300 ease-out"
+                className="bg-gradient-to-r from-[#C48229] to-amber-400 h-full rounded-full transition-all duration-300 ease-out"
                 style={{ width: `${((currentStep + 1) / TABS.length) * 100}%` }}
               />
             </div>
@@ -640,7 +640,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     }}
                     className={`flex flex-col items-center p-2 rounded-xl text-center transition-all ${
                       isCurrent
-                        ? 'bg-[#B38F4F]/20 border border-amber-500/40 text-amber-300'
+                        ? 'bg-[#C48229]/20 border border-amber-500/40 text-amber-300'
                         : isCompleted
                         ? 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white'
                         : 'bg-slate-950/40 border border-slate-800/40 text-slate-600'
@@ -649,7 +649,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     <div
                       className={`w-7 h-7 rounded-lg flex items-center justify-center mb-1 text-xs font-bold ${
                         isCurrent
-                          ? 'bg-[#B38F4F] text-white shadow-xs'
+                          ? 'bg-[#C48229] text-white shadow-xs'
                           : isCompleted
                           ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                           : 'bg-slate-800 text-slate-500'
@@ -680,7 +680,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="border-b border-slate-800 pb-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <User className="w-5 h-5 text-[#B38F4F]" />
+                  <User className="w-5 h-5 text-[#C48229]" />
                   1. Dados Pessoais & Documentos de Identificação
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -700,7 +700,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={dadosPessoais.nomeCompleto}
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, nomeCompleto: e.target.value })}
                     placeholder="Ex: Gabriel Henrique de Souza"
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] transition-all ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229] transition-all ${
                       errors.nomeCompleto ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -721,7 +721,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, cpf: maskCPF(e.target.value) })}
                     placeholder="000.000.000-00"
                     maxLength={14}
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] transition-all ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#C48229] transition-all ${
                       errors.cpf ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -738,7 +738,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     required
                     value={dadosPessoais.dataNascimento}
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, dataNascimento: e.target.value })}
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] transition-all ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229] transition-all ${
                       errors.dataNascimento ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -757,7 +757,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={dadosPessoais.rg}
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, rg: e.target.value })}
                     placeholder="Ex: 38.912.445-1"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
 
@@ -771,7 +771,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={dadosPessoais.orgaoEmissorUF}
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, orgaoEmissorUF: e.target.value })}
                     placeholder="Ex: SSP/SP ou DETRAN/SP"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
 
@@ -781,7 +781,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <select
                     value={dadosPessoais.genero}
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, genero: e.target.value as Genero })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   >
                     <option value="Masculino">Masculino</option>
                     <option value="Feminino">Feminino</option>
@@ -795,7 +795,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <select
                     value={dadosPessoais.estadoCivil}
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, estadoCivil: e.target.value as EstadoCivil })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   >
                     <option value="Solteiro(a)">Solteiro(a)</option>
                     <option value="Casado(a)">Casado(a)</option>
@@ -811,7 +811,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <select
                     value={dadosPessoais.racaCor}
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, racaCor: e.target.value as RacaCor })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   >
                     <option value="Branca">Branca</option>
                     <option value="Preta">Preta</option>
@@ -828,7 +828,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <select
                     value={dadosPessoais.grauInstrucao}
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, grauInstrucao: e.target.value as GrauInstrucao })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   >
                     <option value="Ensino Fundamental Incompleto">Ensino Fundamental Incompleto</option>
                     <option value="Ensino Fundamental Completo">Ensino Fundamental Completo</option>
@@ -851,7 +851,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={dadosPessoais.nomeMae}
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, nomeMae: e.target.value })}
                     placeholder="Nome completo da mãe"
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229] ${
                       errors.nomeMae ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -868,7 +868,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={dadosPessoais.nomePai}
                     onChange={(e) => setDadosPessoais({ ...dadosPessoais, nomePai: e.target.value })}
                     placeholder="Nome completo do pai"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
 
@@ -879,7 +879,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                       type="checkbox"
                       checked={dadosPessoais.portadorDeficiencia}
                       onChange={(e) => setDadosPessoais({ ...dadosPessoais, portadorDeficiencia: e.target.checked })}
-                      className="w-4 h-4 rounded text-[#B38F4F] focus:ring-[#B38F4F] bg-slate-900 border-slate-700"
+                      className="w-4 h-4 rounded text-[#C48229] focus:ring-[#C48229] bg-slate-900 border-slate-700"
                     />
                     <span className="text-xs font-semibold text-slate-200">
                       É Pessoa com Deficiência (PCD)?
@@ -906,7 +906,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="border-b border-slate-800 pb-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-[#B38F4F]" />
+                  <MapPin className="w-5 h-5 text-[#C48229]" />
                   2. Contato & Endereço Residencial
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -927,7 +927,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     onChange={(e) => setContatoEndereco({ ...contatoEndereco, telefoneWhatsapp: maskPhone(e.target.value) })}
                     placeholder="(11) 98765-4321"
                     maxLength={15}
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229] ${
                       errors.telefoneWhatsapp ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -947,7 +947,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={contatoEndereco.email}
                     onChange={(e) => setContatoEndereco({ ...contatoEndereco, email: e.target.value })}
                     placeholder="seu.email@exemplo.com"
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229] ${
                       errors.email ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -970,7 +970,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     onBlur={handleCepBlur}
                     placeholder="00000-000"
                     maxLength={9}
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#C48229] ${
                       errors.cep ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -988,7 +988,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={contatoEndereco.cidadeUF}
                     onChange={(e) => setContatoEndereco({ ...contatoEndereco, cidadeUF: e.target.value })}
                     placeholder="Ex: São Paulo - SP ou Guarulhos - SP"
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229] ${
                       errors.cidadeUF ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -1005,7 +1005,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={contatoEndereco.enderecoCompleto}
                     onChange={(e) => setContatoEndereco({ ...contatoEndereco, enderecoCompleto: e.target.value })}
                     placeholder="Ex: Rua das Flores"
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229] ${
                       errors.enderecoCompleto ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -1019,7 +1019,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={contatoEndereco.numero}
                     onChange={(e) => setContatoEndereco({ ...contatoEndereco, numero: e.target.value })}
                     placeholder="Ex: 120"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
 
@@ -1031,7 +1031,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={contatoEndereco.bairro}
                     onChange={(e) => setContatoEndereco({ ...contatoEndereco, bairro: e.target.value })}
                     placeholder="Ex: Centro / Vila Mariana"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
 
@@ -1043,7 +1043,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={contatoEndereco.complemento}
                     onChange={(e) => setContatoEndereco({ ...contatoEndereco, complemento: e.target.value })}
                     placeholder="Ex: Apto 42 Bloco B"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
               </div>
@@ -1055,7 +1055,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="border-b border-slate-800 pb-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-[#B38F4F]" />
+                  <CreditCard className="w-5 h-5 text-[#C48229]" />
                   3. Dados Bancários & PIX para Recebimento de Salário
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -1072,7 +1072,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <select
                     value={dadosBancarios.banco}
                     onChange={(e) => setDadosBancarios({ ...dadosBancarios, banco: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   >
                     <option value="Banco Itaú Unibanco S.A. (341)">Banco Itaú Unibanco S.A. (341)</option>
                     <option value="Banco Bradesco S.A. (237)">Banco Bradesco S.A. (237)</option>
@@ -1097,7 +1097,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={dadosBancarios.agencia}
                     onChange={(e) => setDadosBancarios({ ...dadosBancarios, agencia: e.target.value })}
                     placeholder="Ex: 0452"
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229] ${
                       errors.agencia ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -1110,7 +1110,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <select
                     value={dadosBancarios.tipoConta}
                     onChange={(e) => setDadosBancarios({ ...dadosBancarios, tipoConta: e.target.value as TipoConta })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   >
                     <option value="Corrente">Conta Corrente</option>
                     <option value="Salário">Conta Salário</option>
@@ -1129,7 +1129,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={dadosBancarios.numeroConta}
                     onChange={(e) => setDadosBancarios({ ...dadosBancarios, numeroConta: e.target.value })}
                     placeholder="Ex: 12345-6"
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229] ${
                       errors.numeroConta ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -1144,7 +1144,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <select
                     value={dadosBancarios.tipoChavePix}
                     onChange={(e) => setDadosBancarios({ ...dadosBancarios, tipoChavePix: e.target.value as TipoChavePix })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   >
                     <option value="CPF">CPF</option>
                     <option value="E-mail">E-mail</option>
@@ -1164,7 +1164,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     value={dadosBancarios.chavePix}
                     onChange={(e) => setDadosBancarios({ ...dadosBancarios, chavePix: e.target.value })}
                     placeholder="Informe sua chave PIX"
-                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] ${
+                    className={`w-full bg-slate-950 border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229] ${
                       errors.chavePix ? 'border-rose-500' : 'border-slate-800'
                     }`}
                   />
@@ -1181,7 +1181,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="border-b border-slate-800 pb-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Bus className="w-5 h-5 text-[#B38F4F]" />
+                  <Bus className="w-5 h-5 text-[#C48229]" />
                   4. Opção de Vale Transporte & Trajeto
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -1198,7 +1198,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <label
                     className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
                       transporte.utilizaVT
-                        ? 'bg-[#B38F4F]/15 border-amber-500/50 text-white'
+                        ? 'bg-[#C48229]/15 border-amber-500/50 text-white'
                         : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                   >
@@ -1207,7 +1207,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                       name="opcaoVT"
                       checked={transporte.utilizaVT}
                       onChange={() => setTransporte({ ...transporte, utilizaVT: true })}
-                      className="w-4 h-4 text-[#B38F4F] focus:ring-[#B38F4F]"
+                      className="w-4 h-4 text-[#C48229] focus:ring-[#C48229]"
                     />
                     <div>
                       <span className="text-sm font-semibold block text-white">Sim, opto pelo Vale Transporte</span>
@@ -1229,7 +1229,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                       name="opcaoVT"
                       checked={!transporte.utilizaVT}
                       onChange={() => setTransporte({ ...transporte, utilizaVT: false })}
-                      className="w-4 h-4 text-[#B38F4F] focus:ring-[#B38F4F]"
+                      className="w-4 h-4 text-[#C48229] focus:ring-[#C48229]"
                     />
                     <div>
                       <span className="text-sm font-semibold block text-white">Não utilizarei (Veículo Próprio / A pé)</span>
@@ -1293,7 +1293,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="border-b border-slate-800 pb-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <UsersIcon className="w-5 h-5 text-[#B38F4F]" />
+                  <UsersIcon className="w-5 h-5 text-[#C48229]" />
                   5. Dependentes para Fins de IR e Salário-Família
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -1359,7 +1359,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     <button
                       type="button"
                       onClick={handleAddDependente}
-                      className="w-full bg-[#B38F4F] hover:bg-[#8A6A39] text-white font-semibold py-2 px-3 rounded-xl text-xs transition-colors shadow-xs"
+                      className="w-full bg-[#C48229] hover:bg-[#92611F] text-white font-semibold py-2 px-3 rounded-xl text-xs transition-colors shadow-xs"
                     >
                       + Adicionar
                     </button>
@@ -1407,7 +1407,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="border-b border-slate-800 pb-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Shirt className="w-5 h-5 text-[#B38F4F]" />
+                  <Shirt className="w-5 h-5 text-[#C48229]" />
                   6. Tamanhos de Fardamento & EPI (Uniforme JMT)
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -1425,7 +1425,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <select
                     value={fardamento.tamanhoCamisa}
                     onChange={(e) => setFardamento({ ...fardamento, tamanhoCamisa: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-semibold text-center focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-semibold text-center focus:ring-2 focus:ring-[#C48229]"
                   >
                     <option value="PP">PP</option>
                     <option value="P">P</option>
@@ -1446,7 +1446,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <select
                     value={fardamento.numeroCalca}
                     onChange={(e) => setFardamento({ ...fardamento, numeroCalca: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-semibold text-center focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-semibold text-center focus:ring-2 focus:ring-[#C48229]"
                   >
                     {['36', '38', '40', '42', '44', '46', '48', '50', '52', '54', '56'].map((tam) => (
                       <option key={tam} value={tam}>
@@ -1465,7 +1465,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                   <select
                     value={fardamento.numeroCalcado}
                     onChange={(e) => setFardamento({ ...fardamento, numeroCalcado: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-semibold text-center focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-semibold text-center focus:ring-2 focus:ring-[#C48229]"
                   >
                     {['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'].map((tam) => (
                       <option key={tam} value={tam}>
@@ -1483,7 +1483,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="border-b border-slate-800 pb-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Paperclip className="w-5 h-5 text-[#B38F4F]" />
+                  <Paperclip className="w-5 h-5 text-[#C48229]" />
                   7. Envio de Fotos & Documentos Digitalizados
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -1574,7 +1574,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                             Remover
                           </button>
                         ) : (
-                          <label className="px-4 py-2 bg-slate-800 hover:bg-[#B38F4F] text-slate-200 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors border border-slate-700 shadow-xs">
+                          <label className="px-4 py-2 bg-slate-800 hover:bg-[#C48229] text-slate-200 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors border border-slate-700 shadow-xs">
                             <Upload className="w-3.5 h-3.5" />
                             <span>Anexar / Tirar Foto</span>
                             <input
@@ -1598,7 +1598,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="border-b border-slate-800 pb-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-[#B38F4F]" />
+                  <ShieldCheck className="w-5 h-5 text-[#C48229]" />
                   8. Declaração de Veracidade & Envio Final
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -1627,9 +1627,9 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
               </div>
 
               {/* Norteadores Estratégicos JMT Welcome Box */}
-              <div className="bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-[#B38F4F]/40 space-y-3">
+              <div className="bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-[#C48229]/40 space-y-3">
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#B38F4F]/20 text-[#D8B97E] text-[10px] font-bold uppercase tracking-wider border border-[#B38F4F]/30">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#C48229]/20 text-[#D8B97E] text-[10px] font-bold uppercase tracking-wider border border-[#C48229]/30">
                     Nossa Cultura • JMT
                   </span>
                   <span className="text-xs text-slate-400 font-medium">Norteadores Estratégicos</span>
@@ -1652,7 +1652,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     required
                     checked={declaracaoVeracidade}
                     onChange={(e) => setDeclaracaoVeracidade(e.target.checked)}
-                    className="w-5 h-5 rounded text-[#B38F4F] focus:ring-[#B38F4F] bg-slate-900 border-slate-700 mt-0.5"
+                    className="w-5 h-5 rounded text-[#C48229] focus:ring-[#C48229] bg-slate-900 border-slate-700 mt-0.5"
                   />
                   <div className="text-xs text-slate-300">
                     <strong className="text-white block mb-0.5">Declaração de Veracidade das Informações</strong>
@@ -1669,7 +1669,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
                     required
                     checked={aceiteLgpd}
                     onChange={(e) => setAceiteLgpd(e.target.checked)}
-                    className="w-5 h-5 rounded text-[#B38F4F] focus:ring-[#B38F4F] bg-slate-900 border-slate-700 mt-0.5"
+                    className="w-5 h-5 rounded text-[#C48229] focus:ring-[#C48229] bg-slate-900 border-slate-700 mt-0.5"
                   />
                   <div className="text-xs text-slate-300">
                     <strong className="text-white block mb-0.5">Autorização de Tratamento de Dados (LGPD)</strong>
@@ -1711,7 +1711,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-6 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-md shadow-amber-900/20"
+                className="px-6 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-md shadow-amber-900/20"
               >
                 <span>Próximo Passo</span>
                 <ChevronRight className="w-4 h-4" />
@@ -1720,7 +1720,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-8 py-3 bg-gradient-to-r from-[#B38F4F] to-amber-500 hover:from-amber-600 hover:to-amber-500 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50"
+                className="px-8 py-3 bg-gradient-to-r from-[#C48229] to-amber-500 hover:from-amber-600 hover:to-amber-500 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>

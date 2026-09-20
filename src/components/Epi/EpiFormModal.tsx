@@ -92,7 +92,7 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="p-4 bg-[#B38F4F] text-white flex items-center justify-between">
+        <div className="p-4 bg-[#C48229] text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-white/15 rounded-lg">
               <HardHat className="w-5 h-5" />
@@ -185,7 +185,7 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
               <button
                 type="button"
                 onClick={handleAddItem}
-                className="text-[11px] font-bold text-[#8A6A39] hover:text-[#6b5029] flex items-center gap-1"
+                className="text-[11px] font-bold text-[#92611F] hover:text-[#6b5029] flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" /> Adicionar item
               </button>
@@ -286,7 +286,7 @@ export const EpiFormModal: React.FC<EpiFormModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+              className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold shadow-sm transition-all"
             >
               Salvar Entrega
             </button>

@@ -75,7 +75,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
         {/* Top Header Banner */}
         <div className="print:hidden px-6 py-5 border-b border-slate-100 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#8A6A39] shrink-0 mt-0.5">
+            <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#92611F] shrink-0 mt-0.5">
               <Building2 className="w-6 h-6" />
             </div>
             <div>
@@ -107,7 +107,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             <select
               value={cliente.status}
               onChange={(e) => onUpdateStatus(cliente.id, e.target.value as Cliente['status'])}
-              className="bg-white border border-slate-200 text-xs text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg focus:outline-hidden focus:border-[#B38F4F]"
+              className="bg-white border border-slate-200 text-xs text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg focus:outline-hidden focus:border-[#C48229]"
             >
               <option value="Ativo">Status: Ativo</option>
               <option value="Em Negociação">Status: Em Negociação</option>
@@ -128,7 +128,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             <button
               type="button"
               onClick={() => onGerarProposta(cliente)}
-              className="px-3 py-1.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Gerar Proposta Comercial em PDF a partir deste cadastro"
             >
               <FileSignature className="w-3.5 h-3.5" />
@@ -166,11 +166,11 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             onClick={() => setActiveTab('geral')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'geral'
-                ? 'border-[#B38F4F] text-slate-900'
+                ? 'border-[#C48229] text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            <Building2 className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <Building2 className="w-3.5 h-3.5 text-[#C48229]" />
             <span>Visão Geral & Cadastro</span>
           </button>
 
@@ -179,7 +179,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             onClick={() => setActiveTab('operacao')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'operacao'
-                ? 'border-[#B38F4F] text-slate-900'
+                ? 'border-[#C48229] text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -192,7 +192,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             onClick={() => setActiveTab('contrato')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'contrato'
-                ? 'border-[#B38F4F] text-slate-900'
+                ? 'border-[#C48229] text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -205,7 +205,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             onClick={() => setActiveTab('rotas')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'rotas'
-                ? 'border-[#B38F4F] text-slate-900'
+                ? 'border-[#C48229] text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -218,7 +218,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             onClick={() => setActiveTab('contatos')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'contatos'
-                ? 'border-[#B38F4F] text-slate-900'
+                ? 'border-[#C48229] text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -231,7 +231,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             onClick={() => setActiveTab('crm')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'crm'
-                ? 'border-[#B38F4F] text-slate-900'
+                ? 'border-[#C48229] text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -277,8 +277,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                   <span className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider block">
                     Satisfação (NPS)
                   </span>
-                  <span className="text-base sm:text-lg font-bold text-[#8A6A39] mt-1 block flex items-center gap-1">
-                    <Award className="w-4 h-4 text-[#B38F4F]" />
+                  <span className="text-base sm:text-lg font-bold text-[#92611F] mt-1 block flex items-center gap-1">
+                    <Award className="w-4 h-4 text-[#C48229]" />
                     {cliente.satisfacaoNPS || 10} / 10
                   </span>
                   <span className="text-[11px] text-slate-400">Índice de Qualidade JMT</span>
@@ -298,7 +298,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
               {/* Informações Cadastrais */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                 <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[#B38F4F]" />
+                  <Building2 className="w-4 h-4 text-[#C48229]" />
                   Dados Cadastrais e Fiscais
                 </h4>
 
@@ -505,8 +505,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
               {/* Tabela de Preço Detalhada */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
-                <h4 className="text-xs font-bold text-[#8A6A39] uppercase tracking-wider flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-[#B38F4F]" />
+                <h4 className="text-xs font-bold text-[#92611F] uppercase tracking-wider flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-[#C48229]" />
                   Tabela de Frete & Tarifas Vigentes
                 </h4>
 
@@ -563,7 +563,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
                   <div className="bg-white p-3 rounded-lg border border-slate-200">
                     <span className="text-slate-400 block text-[11px]">Condição de Pagamento:</span>
-                    <span className="text-[#8A6A39] font-semibold block mt-0.5">
+                    <span className="text-[#92611F] font-semibold block mt-0.5">
                       {cliente.tabelaFrete?.condicaoPagamento || 'Faturamento 15 dias'} (Dia {cliente.tabelaFrete?.diaFechamento || 15})
                     </span>
                   </div>
@@ -766,7 +766,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onAddInteraction(cliente)}
-                  className="px-3 py-1.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+                  className="px-3 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>+ Nova Interação</span>

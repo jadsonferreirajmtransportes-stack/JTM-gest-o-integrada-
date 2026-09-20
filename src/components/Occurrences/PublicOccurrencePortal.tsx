@@ -329,14 +329,14 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#111111] text-slate-100 flex flex-col font-sans selection:bg-[#B38F4F] selection:text-white">
+    <div className="min-h-screen bg-[#111111] text-slate-100 flex flex-col font-sans selection:bg-[#C48229] selection:text-white">
       {/* Top Brand Header */}
       <header className="bg-[#0c0c0c] border-b border-[#262626] sticky top-0 z-40 px-4 sm:px-8 py-3 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
           <JmtLogo variant="compact" theme="dark" iconSize={32} />
           <div className="hidden sm:block pl-3 border-l border-[#262626]">
             <div className="flex items-center gap-2">
-              <span className="bg-[#B38F4F]/15 text-[#B38F4F] border border-[#B38F4F]/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+              <span className="bg-[#C48229]/15 text-[#C48229] border border-[#C48229]/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                 Canal de Campo
               </span>
             </div>
@@ -348,7 +348,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
 
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 bg-[#161616] px-3 py-1.5 rounded-lg border border-[#2a2a2a]">
-            <ShieldCheck className="w-4 h-4 text-[#B38F4F]" />
+            <ShieldCheck className="w-4 h-4 text-[#C48229]" />
             <span>ANVISA RDC 430 / CLT</span>
           </div>
 
@@ -358,7 +358,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
               onClick={onAdminBack}
               className="px-3 py-1.5 bg-[#181818] hover:bg-[#222222] text-slate-200 border border-[#2a2a2a] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#B38F4F]" />
+              <ArrowLeft className="w-3.5 h-3.5 text-[#C48229]" />
               <span>Painel Admin</span>
             </button>
           )}
@@ -440,7 +440,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
               <button
                 type="button"
                 onClick={handleResetForm}
-                className="w-full sm:w-auto px-5 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors"
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors"
               >
                 <FileText className="w-4 h-4" />
                 <span>Registrar Outra Ocorrência</span>
@@ -485,7 +485,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
             {/* Step 1: Supervisor & Team Identification */}
             <div className="bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4 shadow-sm">
               <div className="flex items-center gap-2.5 border-b border-slate-800 pb-3">
-                <UserCheck className="w-4 h-4 text-[#B38F4F]" />
+                <UserCheck className="w-4 h-4 text-[#C48229]" />
                 <h3 className="text-sm font-bold text-white">1. Identificação do Supervisor & Unidade</h3>
               </div>
 
@@ -538,7 +538,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
             <div className="bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4 shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <Truck className="w-4 h-4 text-[#B38F4F]" />
+                  <Truck className="w-4 h-4 text-[#C48229]" />
                   <h3 className="text-sm font-bold text-white">2. Colaborador Envolvido *</h3>
                 </div>
                 <span className="text-[11px] text-slate-400">
@@ -554,7 +554,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
                   placeholder="Buscar colaborador por nome, cargo ou matrícula..."
                   value={employeeSearch}
                   onChange={(e) => setEmployeeSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                 />
               </div>
 
@@ -564,7 +564,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
                   required
                   value={colaboradorId}
                   onChange={(e) => setColaboradorId(e.target.value)}
-                  className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-medium focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                  className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-medium focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                 >
                   <option value="">-- Selecione o colaborador --</option>
                   {availableEmployees.map((c) => (
@@ -579,7 +579,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
               {selectedColaborador && (
                 <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between gap-3 text-xs animate-in fade-in duration-150">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#B38F4F]/20 text-[#B38F4F] border border-[#B38F4F]/30 flex items-center justify-center font-bold">
+                    <div className="w-9 h-9 rounded-full bg-[#C48229]/20 text-[#C48229] border border-[#C48229]/30 flex items-center justify-center font-bold">
                       {selectedColaborador.nomeCompleto.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
@@ -599,7 +599,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
             {/* Step 3: Occurrence Type Selection */}
             <div className="bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4 shadow-sm">
               <div className="flex items-center gap-2.5 border-b border-slate-800 pb-3">
-                <AlertTriangle className="w-4 h-4 text-[#B38F4F]" />
+                <AlertTriangle className="w-4 h-4 text-[#C48229]" />
                 <h3 className="text-sm font-bold text-white">3. Tipo de Evento / Ocorrência *</h3>
               </div>
 
@@ -620,16 +620,16 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
                       }}
                       className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
                         isSelected
-                          ? 'bg-[#1e1a14] border-[#B38F4F] text-white shadow-md ring-1 ring-[#B38F4F]'
+                          ? 'bg-[#1e1a14] border-[#C48229] text-white shadow-md ring-1 ring-[#C48229]'
                           : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
-                          <Icon className={`w-4 h-4 ${isSelected ? 'text-[#B38F4F]' : opt.color}`} />
+                          <Icon className={`w-4 h-4 ${isSelected ? 'text-[#C48229]' : opt.color}`} />
                           <span className="text-xs font-bold">{opt.tipo}</span>
                         </div>
-                        {isSelected && <Check className="w-4 h-4 text-[#B38F4F]" />}
+                        {isSelected && <Check className="w-4 h-4 text-[#C48229]" />}
                       </div>
                       <p className="text-[10px] text-slate-400 leading-snug">{opt.desc}</p>
                     </button>
@@ -641,7 +641,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
             {/* Step 4: Details & Medical Data */}
             <div className="bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4 shadow-sm">
               <div className="flex items-center gap-2.5 border-b border-slate-800 pb-3">
-                <Calendar className="w-4 h-4 text-[#B38F4F]" />
+                <Calendar className="w-4 h-4 text-[#C48229]" />
                 <h3 className="text-sm font-bold text-white">4. Data, Prazos & Relato</h3>
               </div>
 
@@ -800,7 +800,7 @@ export const PublicOccurrencePortal: React.FC<PublicOccurrencePortalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:w-auto px-8 py-3.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                className="w-full sm:w-auto px-8 py-3.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <span>Registrando e enviando...</span>

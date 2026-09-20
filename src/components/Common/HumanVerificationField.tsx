@@ -33,7 +33,7 @@ export const HumanVerificationField: React.FC<HumanVerificationFieldProps> = ({
   return (
     <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5">
       <label className="flex items-start gap-3">
-        <ShieldCheck className="w-5 h-5 text-[#B38F4F] shrink-0 mt-0.5" />
+        <ShieldCheck className="w-5 h-5 text-[#C48229] shrink-0 mt-0.5" />
         <div className="flex-1 space-y-2">
           <div className="text-xs text-slate-300">
             <strong className="text-white block mb-0.5">Verificação Anti-Robô</strong>
@@ -50,7 +50,7 @@ export const HumanVerificationField: React.FC<HumanVerificationFieldProps> = ({
             value={value}
             onChange={handleChange}
             placeholder="Digite o resultado"
-            className="w-full sm:w-40 p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-bold focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+            className="w-full sm:w-40 p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-bold focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
           />
         </div>
       </label>

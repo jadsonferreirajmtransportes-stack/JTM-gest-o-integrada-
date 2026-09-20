@@ -75,7 +75,7 @@ Qualquer dúvida, entre em contato com o Departamento Pessoal!`,
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
       <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#8A6A39] via-[#B38F4F] to-[#8A6A39] p-6 text-white flex items-center justify-between relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#92611F] via-[#C48229] to-[#92611F] p-6 text-white flex items-center justify-between relative overflow-hidden">
           <div className="flex items-center gap-3.5 relative z-10">
             <div className="w-12 h-12 rounded-2xl bg-black/20 border border-white/20 flex items-center justify-center text-white shadow-inner">
               <HardHat className="w-6 h-6 text-amber-100" />
@@ -93,7 +93,7 @@ Qualquer dúvida, entre em contato com o Departamento Pessoal!`,
         {/* Body */}
         <div className="p-6 space-y-6 text-slate-700">
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#8A6A39] uppercase tracking-wider">Link Seguro de Acesso Direto</label>
+            <label className="block text-xs font-bold text-[#92611F] uppercase tracking-wider">Link Seguro de Acesso Direto</label>
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-200 font-mono text-xs text-emerald-700 break-all select-all flex items-center gap-2">
                 <Smartphone className="w-4 h-4 text-slate-400 shrink-0" />
@@ -103,7 +103,7 @@ Qualquer dúvida, entre em contato com o Departamento Pessoal!`,
                 type="button"
                 onClick={handleCopyLink}
                 className={`px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
-                  copied ? 'bg-emerald-600 text-white' : 'bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs'
+                  copied ? 'bg-emerald-600 text-white' : 'bg-[#C48229] hover:bg-[#92611F] text-white shadow-xs'
                 }`}
               >
                 {copied ? (
@@ -166,7 +166,7 @@ Qualquer dúvida, entre em contato com o Departamento Pessoal!`,
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                  <QrCode className="w-4 h-4 text-[#8A6A39]" />
+                  <QrCode className="w-4 h-4 text-[#92611F]" />
                   <span>QR Code de Campo</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">O supervisor pode escanear direto no depósito de EPI.</p>
@@ -190,7 +190,7 @@ Qualquer dúvida, entre em contato com o Departamento Pessoal!`,
               onClose();
               onOpenPortalView();
             }}
-            className="px-4 py-2 bg-white hover:bg-slate-100 text-[#8A6A39] rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-200 transition-colors"
+            className="px-4 py-2 bg-white hover:bg-slate-100 text-[#92611F] rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-200 transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             <span>Testar / Abrir Formulário Agora</span>

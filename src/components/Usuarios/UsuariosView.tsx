@@ -163,12 +163,12 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
       {/* Top Header Card */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-[#B38F4F] flex items-center justify-center text-white shadow-md shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-[#C48229] flex items-center justify-center text-white shadow-md shrink-0">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#B38F4F]/15 text-[#8A6A39] border border-[#B38F4F]/30">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#C48229]/15 text-[#92611F] border border-[#C48229]/30">
                 Gestão de Acessos & Logins
               </span>
               <span className="text-[10px] font-semibold text-slate-500">
@@ -192,14 +192,14 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
             className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
             title="Alternar entre usuários cadastrados"
           >
-            <ArrowRightLeft className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <ArrowRightLeft className="w-3.5 h-3.5 text-[#C48229]" />
             <span>Trocar de Login</span>
           </button>
 
           <button
             type="button"
             onClick={handleOpenCreateModal}
-            className="px-4 py-2 bg-[#B38F4F] hover:bg-[#967438] text-white rounded-xl text-xs font-bold shadow-md shadow-[#B38F4F]/20 transition-all flex items-center gap-2"
+            className="px-4 py-2 bg-[#C48229] hover:bg-[#967438] text-white rounded-xl text-xs font-bold shadow-md shadow-[#C48229]/20 transition-all flex items-center gap-2"
           >
             <UserPlus className="w-4 h-4" />
             <span>Novo Login de Acesso</span>
@@ -234,12 +234,12 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
               Módulos do Sistema
             </span>
-            <div className="text-2xl font-black text-[#B38F4F] mt-0.5">{MODULOS_SISTEMA.length}</div>
+            <div className="text-2xl font-black text-[#C48229] mt-0.5">{MODULOS_SISTEMA.length}</div>
             <div className="text-[11px] text-slate-500 font-medium mt-0.5">
               Controle individual por usuário
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-[#B38F4F]">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-[#C48229]">
             <Layers className="w-5 h-5" />
           </div>
         </div>
@@ -248,7 +248,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
         <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 shadow-xs flex items-center justify-between sm:col-span-2">
           <div className="min-w-0 flex-1 pr-3">
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white text-[#8A6A39] border border-[#B38F4F]/40">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white text-[#92611F] border border-[#C48229]/40">
                 Sua Sessão Ativa
               </span>
               <span className="text-[10px] text-slate-500 font-mono">@{currentUser.login}</span>
@@ -266,7 +266,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
             onClick={() => setIsSwitchModalOpen(true)}
             className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
           >
-            <ArrowRightLeft className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <ArrowRightLeft className="w-3.5 h-3.5 text-[#C48229]" />
             <span>Alternar</span>
           </button>
         </div>
@@ -279,7 +279,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
           onClick={() => setActiveTab('lista')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'lista'
-              ? 'bg-[#B38F4F] text-white shadow-sm'
+              ? 'bg-[#C48229] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -292,7 +292,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
           onClick={() => setActiveTab('matriz')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'matriz'
-              ? 'bg-[#B38F4F] text-white shadow-sm'
+              ? 'bg-[#C48229] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -305,7 +305,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
           onClick={() => setActiveTab('seguranca')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'seguranca'
-              ? 'bg-[#B38F4F] text-white shadow-sm'
+              ? 'bg-[#C48229] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -326,7 +326,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                 placeholder="Buscar por nome, login, e-mail, cargo..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden transition-all"
+                className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#C48229] focus:border-transparent outline-hidden transition-all"
               />
             </div>
 
@@ -353,7 +353,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
               <select
                 value={moduleFilter}
                 onChange={(e) => setModuleFilter(e.target.value)}
-                className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-hidden focus:ring-2 focus:ring-[#C48229]"
               >
                 <option value="todos">Todos os Módulos</option>
                 {MODULOS_SISTEMA.map((m) => (
@@ -378,7 +378,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
               <button
                 type="button"
                 onClick={handleOpenCreateModal}
-                className="mt-4 px-4 py-2 bg-[#B38F4F] text-white text-xs font-bold rounded-xl inline-flex items-center gap-2"
+                className="mt-4 px-4 py-2 bg-[#C48229] text-white text-xs font-bold rounded-xl inline-flex items-center gap-2"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>Novo Login</span>
@@ -395,7 +395,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                     key={user.id}
                     className={`bg-white rounded-2xl border transition-all duration-150 p-5 flex flex-col justify-between shadow-xs ${
                       isCurrent
-                        ? 'border-[#B38F4F] ring-1 ring-[#B38F4F]/40 shadow-sm'
+                        ? 'border-[#C48229] ring-1 ring-[#C48229]/40 shadow-sm'
                         : 'border-slate-200 hover:border-slate-300'
                     }`}
                   >
@@ -406,7 +406,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                           <div
                             className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 shadow-xs ${
                               isCurrent
-                                ? 'bg-gradient-to-br from-[#B38F4F] to-[#8A6A39] text-white'
+                                ? 'bg-gradient-to-br from-[#C48229] to-[#92611F] text-white'
                                 : 'bg-slate-100 text-slate-700 border border-slate-200'
                             }`}
                           >
@@ -469,7 +469,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                       {/* Password Info Box */}
                       <div className="mt-4 p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2 min-w-0">
-                          <KeyRound className="w-3.5 h-3.5 text-[#B38F4F] shrink-0" />
+                          <KeyRound className="w-3.5 h-3.5 text-[#C48229] shrink-0" />
                           <span className="text-[11px] text-slate-500 font-medium">Senha:</span>
                           <span className="font-mono text-xs font-bold text-slate-800">
                             {isRevealed ? user.senha || 'Não cadastrada' : '••••••••'}
@@ -478,7 +478,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                         <button
                           type="button"
                           onClick={() => toggleRevealPassword(user.id)}
-                          className="text-[11px] font-bold text-[#8A6A39] hover:text-[#B38F4F] flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-white"
+                          className="text-[11px] font-bold text-[#92611F] hover:text-[#C48229] flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-white"
                         >
                           {isRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                           <span>{isRevealed ? 'Ocultar' : 'Ver'}</span>
@@ -491,7 +491,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                           <span className="text-slate-600 uppercase tracking-wider">
                             Módulos com Acesso Liberado:
                           </span>
-                          <span className="text-[#8A6A39]">
+                          <span className="text-[#92611F]">
                             {user.modulosPermitidos.length} de {MODULOS_SISTEMA.length}
                           </span>
                         </div>
@@ -509,7 +509,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                                 title={`${hasAccess ? 'Revogar' : 'Conceder'} acesso ao módulo ${modulo.nome}`}
                                 className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
                                   hasAccess
-                                    ? 'bg-amber-50 text-[#8A6A39] border-[#B38F4F]/40 shadow-2xs hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300'
+                                    ? 'bg-amber-50 text-[#92611F] border-[#C48229]/40 shadow-2xs hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300'
                                     : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 opacity-60'
                                 }`}
                               >
@@ -534,7 +534,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onSelectUserSession(user)}
-                            className="px-3 py-1.5 bg-slate-100 hover:bg-[#B38F4F] hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs"
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-[#C48229] hover:text-white text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs"
                             title="Entrar imediatamente no sistema com a conta deste usuário"
                           >
                             <UserCheck className="w-3.5 h-3.5" />
@@ -554,7 +554,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                             type="button"
                             onClick={() => handleEnviarConvite(user)}
                             disabled={!user.email || enviandoConviteId === user.id}
-                            className="px-3 py-1.5 bg-amber-50 hover:bg-[#B38F4F] hover:text-white text-[#8A6A39] text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-3 py-1.5 bg-amber-50 hover:bg-[#C48229] hover:text-white text-[#92611F] text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                             title={
                               user.email
                                 ? 'Envia um e-mail pra esta pessoa criar a própria senha de acesso'
@@ -575,7 +575,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenEditModal(user)}
-                          className="p-1.5 text-slate-500 hover:text-[#B38F4F] hover:bg-amber-50 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-500 hover:text-[#C48229] hover:bg-amber-50 rounded-lg transition-colors"
                           title="Editar dados e permissões"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -611,7 +611,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                 Clique nas caixas de seleção diretamente para conceder ou revogar o acesso a qualquer módulo com apenas 1 clique.
               </p>
             </div>
-            <span className="text-[11px] font-bold text-[#8A6A39] bg-amber-50 px-3 py-1 rounded-lg border border-amber-200 shrink-0">
+            <span className="text-[11px] font-bold text-[#92611F] bg-amber-50 px-3 py-1 rounded-lg border border-amber-200 shrink-0">
               Salvo em tempo real no sistema
             </span>
           </div>
@@ -627,7 +627,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                     return (
                       <th key={m.id} className="py-3 px-3 text-center min-w-[110px]">
                         <div className="flex flex-col items-center gap-1">
-                          <Icon className="w-3.5 h-3.5 text-[#B38F4F]" />
+                          <Icon className="w-3.5 h-3.5 text-[#C48229]" />
                           <span>{m.sigla}</span>
                           <span className="text-[9px] font-medium text-slate-400 normal-case">
                             {m.nome}
@@ -659,7 +659,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                             <div className="font-extrabold text-slate-900 text-xs flex items-center gap-1.5">
                               <span>{u.nome}</span>
                               {isCurrent && (
-                                <span className="text-[8px] font-bold px-1.5 py-0.2 bg-[#B38F4F] text-white rounded">
+                                <span className="text-[8px] font-bold px-1.5 py-0.2 bg-[#C48229] text-white rounded">
                                   Você
                                 </span>
                               )}
@@ -691,7 +691,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                               onClick={() => onToggleUserModuleAccess(u.id, modulo.id)}
                               className={`w-6 h-6 rounded-lg mx-auto flex items-center justify-center transition-all ${
                                 hasAccess
-                                  ? 'bg-[#B38F4F] text-white shadow-2xs hover:bg-[#8A6A39]'
+                                  ? 'bg-[#C48229] text-white shadow-2xs hover:bg-[#92611F]'
                                   : 'bg-slate-100 hover:bg-slate-200 text-slate-300 border border-slate-200'
                               }`}
                               title={`${hasAccess ? 'Revogar' : 'Conceder'} ${modulo.nome} para ${u.nome}`}
@@ -710,7 +710,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenEditModal(u)}
-                          className="px-2 py-1 text-[11px] font-bold text-[#8A6A39] hover:bg-amber-50 rounded-lg transition-colors"
+                          className="px-2 py-1 text-[11px] font-bold text-[#92611F] hover:bg-amber-50 rounded-lg transition-colors"
                         >
                           Editar
                         </button>
@@ -728,7 +728,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
       {activeTab === 'seguranca' && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="w-10 h-10 rounded-xl bg-[#B38F4F] text-white flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-[#C48229] text-white flex items-center justify-center font-bold">
               <FileCheck className="w-5 h-5" />
             </div>
             <div>
@@ -744,7 +744,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/60 space-y-2">
               <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#B38F4F]" />
+                <CheckCircle2 className="w-4 h-4 text-[#C48229]" />
                 Individualidade das Credenciais
               </h4>
               <p className="text-xs text-slate-600 leading-relaxed">

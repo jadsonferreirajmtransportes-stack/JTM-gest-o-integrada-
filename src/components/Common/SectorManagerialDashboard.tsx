@@ -42,7 +42,7 @@ export const SectorManagerialDashboard: React.FC<SectorManagerialDashboardProps>
   onSwitchTab,
 }) => {
   const isAereo = setor === 'farma_aereo';
-  const themeText = 'text-[#8A6A39]';
+  const themeText = 'text-[#92611F]';
   const themeLightBg = 'bg-amber-50';
 
   // Faturamento do cliente — usa a média mensal real (Controle Financeiro) quando
@@ -352,7 +352,7 @@ export const SectorManagerialDashboard: React.FC<SectorManagerialDashboardProps>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-[#B38F4F] h-2 rounded-full"
+                    className="bg-[#C48229] h-2 rounded-full"
                     style={{
                       width: `${Math.min(
                         100,

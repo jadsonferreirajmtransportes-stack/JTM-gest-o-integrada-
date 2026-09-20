@@ -119,12 +119,12 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
       {/* Module Title Header Bar */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#B38F4F] to-[#8A6A39] flex items-center justify-center text-white shadow-md shadow-[#B38F4F]/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shadow-md shadow-[#C48229]/20 shrink-0">
             <FolderKanban className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-[#8A6A39] border border-amber-200">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-[#92611F] border border-amber-200">
                 Gestão Corporativa & OKRs
               </span>
               <span className="text-[10px] font-semibold text-slate-500">
@@ -145,7 +145,7 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
           <button
             type="button"
             onClick={handleOpenNew}
-            className="px-4 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2"
+            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Novo Projeto Gerencial</span>
@@ -163,7 +163,7 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
           onClick={() => setActiveTab('dashboard')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'dashboard'
-              ? 'bg-[#B38F4F] text-white shadow-sm'
+              ? 'bg-[#C48229] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -176,7 +176,7 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
           onClick={() => setActiveTab('portfolio')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'portfolio'
-              ? 'bg-[#B38F4F] text-white shadow-sm'
+              ? 'bg-[#C48229] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -189,7 +189,7 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
           onClick={() => setActiveTab('kanban')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'kanban'
-              ? 'bg-[#B38F4F] text-white shadow-sm'
+              ? 'bg-[#C48229] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -202,7 +202,7 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
           onClick={() => setActiveTab('cronograma')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'cronograma'
-              ? 'bg-[#B38F4F] text-white shadow-sm'
+              ? 'bg-[#C48229] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -215,7 +215,7 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
           onClick={() => setActiveTab('orcamento')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'orcamento'
-              ? 'bg-[#B38F4F] text-white shadow-sm'
+              ? 'bg-[#C48229] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -228,7 +228,7 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
           onClick={() => setActiveTab('riscos')}
           className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
             activeTab === 'riscos'
-              ? 'bg-[#B38F4F] text-white shadow-sm'
+              ? 'bg-[#C48229] text-white shadow-sm'
               : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
           }`}
         >

@@ -421,7 +421,7 @@ export const ViagemFormModal: React.FC<ViagemFormModalProps> = ({
                 <div key={ponto.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <span className="w-5 h-5 rounded-full bg-[#B38F4F] text-white text-[10px] flex items-center justify-center">
+                      <span className="w-5 h-5 rounded-full bg-[#C48229] text-white text-[10px] flex items-center justify-center">
                         {idx + 1}
                       </span>
                       Parada #{idx + 1}

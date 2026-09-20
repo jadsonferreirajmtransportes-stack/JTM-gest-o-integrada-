@@ -58,13 +58,13 @@ export const FichaCadastralPublicView: React.FC<FichaCadastralPublicViewProps> =
   const vaMes = dados ? calcVaMes(dados.valorValeAlimentacaoDia || 0) : 0;
 
   return (
-    <div className="min-h-screen bg-[#111111] text-slate-100 flex flex-col font-sans selection:bg-[#B38F4F] selection:text-white print:bg-white print:text-black">
+    <div className="min-h-screen bg-[#111111] text-slate-100 flex flex-col font-sans selection:bg-[#C48229] selection:text-white print:bg-white print:text-black">
       {/* Header */}
       <header className="bg-[#0c0c0c] border-b border-[#262626] sticky top-0 z-40 px-4 sm:px-8 py-3 flex items-center justify-between shadow-md print:hidden">
         <div className="flex items-center gap-3">
           <JmtLogo variant="compact" theme="dark" iconSize={32} />
           <div className="hidden sm:block pl-3 border-l border-[#262626]">
-            <span className="bg-[#B38F4F]/15 text-[#B38F4F] border border-[#B38F4F]/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+            <span className="bg-[#C48229]/15 text-[#C48229] border border-[#C48229]/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
               Ficha Cadastral Compartilhada
             </span>
             <p className="text-[11px] text-slate-400 mt-0.5">Visualização somente leitura — sem login</p>
@@ -77,12 +77,12 @@ export const FichaCadastralPublicView: React.FC<FichaCadastralPublicViewProps> =
               onClick={() => window.print()}
               className="px-3 py-1.5 bg-[#181818] hover:bg-[#222222] text-slate-200 border border-[#2a2a2a] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
-              <Printer className="w-3.5 h-3.5 text-[#B38F4F]" />
+              <Printer className="w-3.5 h-3.5 text-[#C48229]" />
               <span>Imprimir / Salvar PDF</span>
             </button>
           )}
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 bg-[#161616] px-3 py-1.5 rounded-lg border border-[#2a2a2a]">
-            <ShieldCheck className="w-4 h-4 text-[#B38F4F]" />
+            <ShieldCheck className="w-4 h-4 text-[#C48229]" />
             <span>Gestão por Processos JMT</span>
           </div>
           {onAdminBack && (
@@ -91,7 +91,7 @@ export const FichaCadastralPublicView: React.FC<FichaCadastralPublicViewProps> =
               onClick={onAdminBack}
               className="px-3 py-1.5 bg-[#181818] hover:bg-[#222222] text-slate-200 border border-[#2a2a2a] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#B38F4F]" />
+              <ArrowLeft className="w-3.5 h-3.5 text-[#C48229]" />
               <span>Painel Admin</span>
             </button>
           )}
@@ -101,7 +101,7 @@ export const FichaCadastralPublicView: React.FC<FichaCadastralPublicViewProps> =
       <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 lg:p-8 print:p-0 print:max-w-none">
         {carregando ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin text-[#B38F4F]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#C48229]" />
             <span className="text-xs">Carregando ficha cadastral...</span>
           </div>
         ) : erro || !dados ? (

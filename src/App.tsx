@@ -2852,7 +2852,7 @@ export default function App() {
                       const firstAllowed = currentUser.modulosPermitidos[0] || 'visao_geral';
                       handleSelectGlobalModule(firstAllowed);
                     }}
-                    className="px-4 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
                   >
                     Ir para Módulo Autorizado
                   </button>

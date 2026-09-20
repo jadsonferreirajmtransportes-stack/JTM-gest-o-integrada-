@@ -359,7 +359,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
           <button
             type="button"
             onClick={() => setIsNovaConversaOpen(true)}
-            className="w-full px-3 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+            className="w-full px-3 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
           >
             <MessageSquarePlus className="w-4 h-4" /> Nova Conversa
           </button>
@@ -473,10 +473,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 return (
                   <div key={m.id} className={`flex ${propria ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] rounded-2xl px-3.5 py-2 text-xs ${
-                      propria ? 'bg-[#B38F4F] text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'
+                      propria ? 'bg-[#C48229] text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'
                     }`}>
                       {!propria && conversaAberta.tipo === 'grupo' && (
-                        <p className="text-[10px] font-bold text-[#B38F4F] mb-0.5">{autor?.nome || 'Alguém'}</p>
+                        <p className="text-[10px] font-bold text-[#C48229] mb-0.5">{autor?.nome || 'Alguém'}</p>
                       )}
 
                       {m.anexoUrl && (
@@ -578,7 +578,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2.5 text-slate-400 hover:text-[#B38F4F] hover:bg-slate-100 rounded-xl transition-colors shrink-0"
+                className="p-2.5 text-slate-400 hover:text-[#C48229] hover:bg-slate-100 rounded-xl transition-colors shrink-0"
                 title="Anexar imagem ou PDF"
               >
                 <Paperclip className="w-4 h-4" />
@@ -609,7 +609,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 type="button"
                 onClick={handleEnviar}
                 disabled={!textoNovo.trim() && !anexoPendente}
-                className="p-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl transition-colors shrink-0"
+                className="p-2.5 bg-[#C48229] hover:bg-[#92611F] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl transition-colors shrink-0"
                 title="Enviar (Enter)"
               >
                 <Send className="w-4 h-4" />

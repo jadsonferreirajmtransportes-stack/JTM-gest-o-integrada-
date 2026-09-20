@@ -1663,7 +1663,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab((prev) => prev + 1)}
-                className="px-4 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-semibold shadow-xs"
+                className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-semibold shadow-xs"
               >
                 Próximo &rarr;
               </button>

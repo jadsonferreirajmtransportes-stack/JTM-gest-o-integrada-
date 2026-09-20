@@ -182,12 +182,12 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
         {/* Header Bar */}
         <div className="print:hidden flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#B38F4F] shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#C48229] shrink-0">
               <FolderKanban className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-[#8A6A39] border border-slate-200">
+                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-[#92611F] border border-slate-200">
                   {projeto.codigo}
                 </span>
                 <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${statusColors[projeto.status]}`}>
@@ -233,7 +233,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                 onClose();
                 onEdit(projeto);
               }}
-              className="px-3 py-1.5 rounded-lg bg-[#B38F4F] hover:bg-[#8A6A39] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+              className="px-3 py-1.5 rounded-lg bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>Editar</span>
@@ -255,7 +255,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
             onClick={() => setActiveTab('visao_geral')}
             className={`px-3.5 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'visao_geral'
-                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
+                ? 'border-[#C48229] text-[#92611F] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -267,7 +267,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
             onClick={() => setActiveTab('marcos')}
             className={`px-3.5 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'marcos'
-                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
+                ? 'border-[#C48229] text-[#92611F] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -279,7 +279,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
             onClick={() => setActiveTab('kanban')}
             className={`px-3.5 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'kanban'
-                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
+                ? 'border-[#C48229] text-[#92611F] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -291,7 +291,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
             onClick={() => setActiveTab('financeiro')}
             className={`px-3.5 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'financeiro'
-                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
+                ? 'border-[#C48229] text-[#92611F] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -303,7 +303,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
             onClick={() => setActiveTab('riscos')}
             className={`px-3.5 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'riscos'
-                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
+                ? 'border-[#C48229] text-[#92611F] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -315,7 +315,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
             onClick={() => setActiveTab('documentos')}
             className={`px-3.5 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'documentos'
-                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
+                ? 'border-[#C48229] text-[#92611F] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -327,7 +327,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
             onClick={() => setActiveTab('atualizacoes')}
             className={`px-3.5 py-2 border-b-2 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'atualizacoes'
-                ? 'border-[#B38F4F] text-[#8A6A39] bg-white rounded-t-lg'
+                ? 'border-[#C48229] text-[#92611F] bg-white rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -352,21 +352,21 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                   <span className="text-xs font-bold text-[#5c4526] uppercase">Progresso Geral</span>
                   <div className="my-2">
                     <div className="flex items-baseline justify-between mb-1">
-                      <span className="text-2xl font-black text-[#8A6A39] font-mono">
+                      <span className="text-2xl font-black text-[#92611F] font-mono">
                         {projeto.progressoPercentual}%
                       </span>
-                      <span className="text-xs text-[#B38F4F] font-semibold">
+                      <span className="text-xs text-[#C48229] font-semibold">
                         {projeto.marcos.filter((m) => m.concluido).length} de {projeto.marcos.length} marcos
                       </span>
                     </div>
                     <div className="w-full bg-amber-200 h-2.5 rounded-full overflow-hidden">
                       <div
-                        className="bg-[#B38F4F] h-full rounded-full transition-all duration-500"
+                        className="bg-[#C48229] h-full rounded-full transition-all duration-500"
                         style={{ width: `${projeto.progressoPercentual}%` }}
                       />
                     </div>
                   </div>
-                  <span className="text-[10px] text-[#8A6A39]">Meta: {projeto.dataPrevisaoFim}</span>
+                  <span className="text-[10px] text-[#92611F]">Meta: {projeto.dataPrevisaoFim}</span>
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col justify-between">
@@ -441,7 +441,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
               {/* Scope & Description */}
               <div className="p-5 bg-white rounded-xl border border-slate-200 space-y-3">
                 <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-[#B38F4F]" />
+                  <Briefcase className="w-4 h-4 text-[#C48229]" />
                   Escopo e Descrição do Projeto
                 </h3>
                 <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">
@@ -449,9 +449,9 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                 </p>
                 {projeto.objetivoEstrategico && (
                   <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg flex items-center gap-2.5">
-                    <Sparkles className="w-4 h-4 text-[#B38F4F] shrink-0" />
+                    <Sparkles className="w-4 h-4 text-[#C48229] shrink-0" />
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-[#8A6A39] block">
+                      <span className="text-[10px] uppercase font-bold text-[#92611F] block">
                         Objetivo Estratégico & OKR
                       </span>
                       <span className="text-xs font-medium text-[#5c4526]">
@@ -465,7 +465,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
               {/* Team Section */}
               <div className="p-5 bg-white rounded-xl border border-slate-200 space-y-3">
                 <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#B38F4F]" />
+                  <Users className="w-4 h-4 text-[#C48229]" />
                   Comitê & Membros da Equipe Envolvidos
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -475,7 +475,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                         key={i}
                         className="px-3 py-1 rounded-lg text-xs bg-slate-100 text-slate-800 border border-slate-200 font-medium flex items-center gap-1.5"
                       >
-                        <div className="w-2 h-2 rounded-full bg-[#B38F4F]" />
+                        <div className="w-2 h-2 rounded-full bg-[#C48229]" />
                         {membro}
                       </span>
                     ))
@@ -489,7 +489,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
               {projeto.kpis && projeto.kpis.length > 0 && (
                 <div className="p-5 bg-white rounded-xl border border-slate-200 space-y-3">
                   <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-[#B38F4F]" />
+                    <TrendingUp className="w-4 h-4 text-[#C48229]" />
                     Indicadores-Chave de Desempenho (KPIs do Projeto)
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -502,7 +502,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                           <p className="text-xs font-bold text-slate-800">{kpi.nome}</p>
                           <p className="text-[11px] text-slate-500">
                             Meta: <span className="font-semibold text-slate-700">{kpi.meta}</span> • Atual:{' '}
-                            <span className="font-bold text-[#8A6A39]">{kpi.atual}</span>
+                            <span className="font-bold text-[#92611F]">{kpi.atual}</span>
                           </p>
                         </div>
                         {kpi.atingido ? (
@@ -524,7 +524,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
               <div className="p-5 bg-white rounded-xl border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                   <div className="flex items-center gap-2">
-                    <Paperclip className="w-4 h-4 text-[#B38F4F]" />
+                    <Paperclip className="w-4 h-4 text-[#C48229]" />
                     <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                       Documentação & Anexos do Projeto ({projeto.documentos?.length || 0})
                     </h3>
@@ -532,7 +532,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setActiveTab('documentos')}
-                    className="text-xs text-[#B38F4F] hover:text-[#8A6A39] font-bold hover:underline flex items-center gap-1"
+                    className="text-xs text-[#C48229] hover:text-[#92611F] font-bold hover:underline flex items-center gap-1"
                   >
                     <span>Ver todos / Anexar</span>
                     <span>→</span>
@@ -547,7 +547,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setActiveTab('documentos')}
-                      className="px-3 py-1.5 bg-[#B38F4F] text-white rounded-lg text-xs font-bold hover:bg-[#8A6A39] inline-flex items-center gap-1.5 shadow-2xs"
+                      className="px-3 py-1.5 bg-[#C48229] text-white rounded-lg text-xs font-bold hover:bg-[#92611F] inline-flex items-center gap-1.5 shadow-2xs"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Anexar Primeiro Arquivo</span>
@@ -666,14 +666,14 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                     value={novaTarefaTitulo}
                     onChange={(e) => setNovaTarefaTitulo(e.target.value)}
                     placeholder="Descrição da ação..."
-                    className="sm:col-span-2 px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
+                    className="sm:col-span-2 px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#C48229] focus:outline-hidden"
                   />
                   <input
                     type="text"
                     value={novaTarefaResp}
                     onChange={(e) => setNovaTarefaResp(e.target.value)}
                     placeholder="Responsável"
-                    className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
+                    className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#C48229] focus:outline-hidden"
                   />
                   <div className="flex gap-2">
                     <select
@@ -688,7 +688,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                     </select>
                     <button
                       type="submit"
-                      className="px-3 py-1.5 bg-[#B38F4F] text-white rounded-lg text-xs font-bold hover:bg-[#8A6A39] shrink-0"
+                      className="px-3 py-1.5 bg-[#C48229] text-white rounded-lg text-xs font-bold hover:bg-[#92611F] shrink-0"
                     >
                       + Criar
                     </button>
@@ -725,7 +725,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                             <p className="font-semibold text-slate-800 leading-snug">{task.titulo}</p>
                             <div className="flex items-center justify-between text-[10px] text-slate-500">
                               <span>Resp: {task.responsavel}</span>
-                              <span className="font-bold text-[#8A6A39]">{task.prioridade}</span>
+                              <span className="font-bold text-[#92611F]">{task.prioridade}</span>
                             </div>
 
                             {/* Move controls */}
@@ -734,7 +734,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleMoveTask(task.id, 'a_fazer')}
-                                  className="text-slate-400 hover:text-[#B38F4F]"
+                                  className="text-slate-400 hover:text-[#C48229]"
                                 >
                                   ← A Fazer
                                 </button>
@@ -743,7 +743,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleMoveTask(task.id, col === 'a_fazer' ? 'em_andamento' : col === 'em_andamento' ? 'revisao' : 'concluido')}
-                                  className="text-[#B38F4F] hover:text-[#8A6A39] font-bold ml-auto"
+                                  className="text-[#C48229] hover:text-[#92611F] font-bold ml-auto"
                                 >
                                   Avançar →
                                 </button>
@@ -790,13 +790,13 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
               {/* ROI and Return Section */}
               <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 space-y-2">
                 <h4 className="text-xs font-bold text-[#5c4526] flex items-center gap-1.5 uppercase">
-                  <TrendingUp className="w-4 h-4 text-[#8A6A39]" />
+                  <TrendingUp className="w-4 h-4 text-[#92611F]" />
                   Retorno sobre Investimento (ROI) e Ganhos Operacionais
                 </h4>
                 <p className="text-xs text-[#5c4526] font-medium">
                   {projeto.retornoEsperadoDescricao || 'Retorno direto em conformidade regulatória e atração comercial.'}
                 </p>
-                <div className="flex items-center gap-4 text-xs text-[#8A6A39] pt-1">
+                <div className="flex items-center gap-4 text-xs text-[#92611F] pt-1">
                   <span>
                     Payback Estimado: <strong className="font-mono">{projeto.roiEstimadoMeses || 6} meses</strong>
                   </span>
@@ -855,7 +855,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                   value={novoStatusFeedTitulo}
                   onChange={(e) => setNovoStatusFeedTitulo(e.target.value)}
                   placeholder="Título do status (ex: Vistoria concluída sem desvios)..."
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
+                  className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#C48229] focus:outline-hidden"
                 />
                 <div className="flex gap-2">
                   <input
@@ -864,11 +864,11 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                     value={novoStatusFeedDesc}
                     onChange={(e) => setNovoStatusFeedDesc(e.target.value)}
                     placeholder="Detalhamento técnico / operacional..."
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:outline-hidden"
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-[#C48229] focus:outline-hidden"
                   />
                   <button
                     type="submit"
-                    className="px-4 py-1.5 bg-[#B38F4F] text-white rounded-lg text-xs font-bold hover:bg-[#8A6A39] shrink-0"
+                    className="px-4 py-1.5 bg-[#C48229] text-white rounded-lg text-xs font-bold hover:bg-[#92611F] shrink-0"
                   >
                     Publicar
                   </button>
@@ -888,7 +888,7 @@ export const ProjetoDetailModal: React.FC<ProjetoDetailModalProps> = ({
                         </span>
                       </div>
                       <p className="text-slate-600 text-[11px]">{att.descricao}</p>
-                      <span className="text-[10px] text-[#8A6A39] font-medium block">
+                      <span className="text-[10px] text-[#92611F] font-medium block">
                         Por: {att.autor}
                       </span>
                     </div>

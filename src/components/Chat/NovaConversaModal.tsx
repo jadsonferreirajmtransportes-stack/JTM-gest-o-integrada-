@@ -60,7 +60,7 @@ export const NovaConversaModal: React.FC<NovaConversaModalProps> = ({
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
         <div className="bg-white border-b border-slate-100 p-5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#8A6A39]">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#92611F]">
               <MessageSquarePlus className="w-5 h-5" />
             </div>
             <h2 className="text-base font-bold text-slate-900 leading-tight">Nova Conversa</h2>
@@ -157,7 +157,7 @@ export const NovaConversaModal: React.FC<NovaConversaModalProps> = ({
             type="button"
             onClick={handleConfirmar}
             disabled={!podeConfirmar}
-            className="px-5 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold shadow-sm"
+            className="px-5 py-2 bg-[#C48229] hover:bg-[#92611F] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold shadow-sm"
           >
             {modo === 'direta' ? 'Iniciar Conversa' : 'Criar Grupo'}
           </button>

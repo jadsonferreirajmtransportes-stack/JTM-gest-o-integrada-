@@ -218,7 +218,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
                   blocos: blocos.map((b, i) => (i === idx ? { ...b, concluido: e.target.checked } : b)),
                 });
               }}
-              className="w-4 h-4 rounded border-slate-300 text-[#B38F4F] focus:ring-[#B38F4F] shrink-0"
+              className="w-4 h-4 rounded border-slate-300 text-[#C48229] focus:ring-[#C48229] shrink-0"
             />
             <input
               type="text"
@@ -506,7 +506,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
           <button
             type="button"
             onClick={() => onNavigateToVinculo?.(vinculo.modulo)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-[11px] font-semibold text-[#8A6A39] transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-[11px] font-semibold text-[#92611F] transition-colors"
             title="Ir para o registro vinculado"
           >
             {VinculoIcon && <VinculoIcon className="w-3.5 h-3.5" />}
@@ -540,7 +540,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
           onClick={() => setShowCompartilhar((v) => !v)}
           className={`ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-[11px] font-medium transition-colors ${
             (pagina.usuariosMarcadosIds || []).length > 0
-              ? 'bg-amber-50 border-amber-200 text-[#8A6A39]'
+              ? 'bg-amber-50 border-amber-200 text-[#92611F]'
               : 'bg-white border-dashed border-slate-300 text-slate-500 hover:text-slate-700'
           }`}
         >
@@ -558,7 +558,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
           type="button"
           onClick={() => setShowCompartilharLink(true)}
           title="Gerar link de visualização (WhatsApp / e-mail)"
-          className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border border-dashed border-slate-300 rounded-lg text-[11px] font-medium text-slate-500 hover:text-[#8A6A39] hover:border-amber-300 transition-colors"
+          className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border border-dashed border-slate-300 rounded-lg text-[11px] font-medium text-slate-500 hover:text-[#92611F] hover:border-amber-300 transition-colors"
         >
           <Link2 className="w-3.5 h-3.5" />
           <span>Link de Visualização</span>
@@ -581,7 +581,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
                       onClick={() => handleToggleUsuarioMarcado(u.id)}
                       className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border flex items-center gap-1 transition-colors ${
                         marcado
-                          ? 'bg-[#B38F4F] border-[#B38F4F] text-white'
+                          ? 'bg-[#C48229] border-[#C48229] text-white'
                           : 'bg-white border-slate-300 text-slate-600 hover:border-amber-300'
                       }`}
                     >
@@ -641,7 +641,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
                     key={cfg.tipo}
                     type="button"
                     onClick={() => handleInserirBloco(idx, cfg.tipo)}
-                    className="text-[10px] px-2 py-1 bg-white border border-slate-200 rounded-md hover:border-amber-400 hover:text-[#8A6A39] text-slate-600 font-medium transition-colors flex items-center gap-1"
+                    className="text-[10px] px-2 py-1 bg-white border border-slate-200 rounded-md hover:border-amber-400 hover:text-[#92611F] text-slate-600 font-medium transition-colors flex items-center gap-1"
                   >
                     <span className="text-slate-400">{cfg.atalho}</span>
                     {cfg.label}
@@ -655,7 +655,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
         <button
           type="button"
           onClick={() => setMenuAdicionarIdx(menuAdicionarIdx === blocos.length - 1 ? null : blocos.length - 1)}
-          className="ml-5 mt-1 flex items-center gap-1 text-[11px] text-slate-400 hover:text-[#B38F4F] transition-colors"
+          className="ml-5 mt-1 flex items-center gap-1 text-[11px] text-slate-400 hover:text-[#C48229] transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Adicionar bloco</span>

@@ -344,7 +344,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
       <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 text-[#8A6A39] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 text-[#92611F] flex items-center justify-center shrink-0">
               <Paperclip className="w-4 h-4" />
             </div>
             <div>
@@ -362,7 +362,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
           <button
             type="button"
             onClick={() => setShowUploadModal(true)}
-            className="px-4 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all shrink-0"
+            className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Anexar Novo Arquivo</span>
@@ -380,11 +380,11 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
           onClick={() => fileInputRef.current?.click()}
           className={`p-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-2.5 ${
             dragActive
-              ? 'border-[#B38F4F] bg-amber-50/80 scale-[0.99]'
+              ? 'border-[#C48229] bg-amber-50/80 scale-[0.99]'
               : 'border-slate-300 bg-slate-50/60 hover:bg-amber-50/30 hover:border-amber-400'
           }`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center text-[#B38F4F]">
+          <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center text-[#C48229]">
             <Upload className="w-6 h-6 animate-bounce" />
           </div>
           <div>
@@ -414,7 +414,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Pesquisar documento por nome, nota ou autor..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-[#B38F4F] focus:bg-white focus:outline-hidden"
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-[#C48229] focus:bg-white focus:outline-hidden"
           />
         </div>
 
@@ -424,7 +424,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
             onClick={() => setSelectedCategoriaFilter('all')}
             className={`px-3 py-1.5 rounded-lg font-bold text-xs whitespace-nowrap transition-all ${
               selectedCategoriaFilter === 'all'
-                ? 'bg-[#B38F4F] text-white shadow-xs'
+                ? 'bg-[#C48229] text-white shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -441,7 +441,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
                 onClick={() => setSelectedCategoriaFilter(cat)}
                 className={`px-3 py-1.5 rounded-lg font-bold text-xs whitespace-nowrap transition-all ${
                   selectedCategoriaFilter === cat
-                    ? 'bg-[#B38F4F] text-white shadow-xs'
+                    ? 'bg-[#C48229] text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -474,7 +474,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
             <button
               type="button"
               onClick={() => setShowUploadModal(true)}
-              className="px-4 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 shadow-xs transition-all"
+              className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 shadow-xs transition-all"
             >
               <Upload className="w-3.5 h-3.5" />
               <span>Anexar Primeiro Arquivo</span>
@@ -534,7 +534,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
 
                   {/* Title & Description */}
                   <h4
-                    className="text-xs font-bold text-slate-900 line-clamp-2 hover:text-[#8A6A39] cursor-pointer"
+                    className="text-xs font-bold text-slate-900 line-clamp-2 hover:text-[#92611F] cursor-pointer"
                     title={doc.nome}
                     onClick={() => hasPreviewUrl && setPreviewDoc(doc)}
                   >
@@ -568,7 +568,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
                       <button
                         type="button"
                         onClick={() => setPreviewDoc(doc)}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-[#8A6A39] text-xs font-semibold flex items-center gap-1 transition-colors"
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-[#92611F] text-xs font-semibold flex items-center gap-1 transition-colors"
                         title="Visualizar documento"
                       >
                         <Eye className="w-3.5 h-3.5" />
@@ -633,7 +633,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-5 py-4 bg-white border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Paperclip className="w-5 h-5 text-[#B38F4F]" />
+                <Paperclip className="w-5 h-5 text-[#C48229]" />
                 <h3 className="text-sm font-bold text-slate-900">Anexar Documento ao Projeto</h3>
               </div>
               <button
@@ -653,7 +653,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
                 <select
                   value={categoria}
                   onChange={(e) => setCategoria(e.target.value as CategoriaDocumentoProjeto)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#B38F4F] focus:bg-white focus:outline-hidden"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#C48229] focus:bg-white focus:outline-hidden"
                 >
                   {CATEGORIAS_DOCUMENTOS_PROJETO.map((cat) => (
                     <option key={cat} value={cat}>
@@ -672,7 +672,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
                   value={autor}
                   onChange={(e) => setAutor(e.target.value)}
                   placeholder="Nome do autor ou departamento..."
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#B38F4F] focus:bg-white focus:outline-hidden"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#C48229] focus:bg-white focus:outline-hidden"
                 />
               </div>
 
@@ -685,7 +685,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
                   onChange={(e) => setObservacao(e.target.value)}
                   rows={3}
                   placeholder="Ex: Laudo técnico de calibração emitido pela RBC com validade até Julho/2027..."
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#B38F4F] focus:bg-white focus:outline-hidden"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#C48229] focus:bg-white focus:outline-hidden"
                 />
               </div>
 
@@ -695,9 +695,9 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
                 </label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-5 border-2 border-dashed border-amber-300 hover:border-[#B38F4F] bg-amber-50/40 rounded-xl text-center cursor-pointer transition-colors"
+                  className="p-5 border-2 border-dashed border-amber-300 hover:border-[#C48229] bg-amber-50/40 rounded-xl text-center cursor-pointer transition-colors"
                 >
-                  <Upload className="w-6 h-6 text-[#B38F4F] mx-auto mb-1.5" />
+                  <Upload className="w-6 h-6 text-[#C48229] mx-auto mb-1.5" />
                   <span className="text-xs font-bold text-[#5c4526] block">
                     Clique para escolher o arquivo
                   </span>
@@ -719,7 +719,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold shadow-xs"
+                className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold shadow-xs"
               >
                 Escolher Arquivo e Salvar
               </button>
@@ -734,7 +734,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
           <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
             <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
               <div className="flex items-center gap-3 truncate">
-                <Paperclip className="w-5 h-5 text-[#B38F4F] shrink-0" />
+                <Paperclip className="w-5 h-5 text-[#C48229] shrink-0" />
                 <div className="truncate">
                   <h3 className="text-sm font-bold text-slate-900 truncate">{previewDoc.nome}</h3>
                   <div className="flex items-center gap-2 text-[11px] text-slate-500">
@@ -788,7 +788,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
                 </div>
               ) : (
                 <div className="text-center p-8 bg-white rounded-2xl border border-slate-200 shadow-sm max-w-md space-y-3">
-                  <div className="w-16 h-16 rounded-2xl bg-amber-50 text-[#B38F4F] flex items-center justify-center mx-auto border border-amber-100">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-50 text-[#C48229] flex items-center justify-center mx-auto border border-amber-100">
                     <FileText className="w-8 h-8" />
                   </div>
                   <h4 className="text-sm font-bold text-slate-900">{previewDoc.nome}</h4>
@@ -814,7 +814,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
 
             {previewDoc.observacao && (
               <div className="px-6 py-3 bg-white border-t border-slate-200 text-xs text-slate-700 flex items-center gap-2">
-                <Tag className="w-3.5 h-3.5 text-[#B38F4F] shrink-0" />
+                <Tag className="w-3.5 h-3.5 text-[#C48229] shrink-0" />
                 <span><strong>Nota da Gestão:</strong> {previewDoc.observacao}</span>
               </div>
             )}

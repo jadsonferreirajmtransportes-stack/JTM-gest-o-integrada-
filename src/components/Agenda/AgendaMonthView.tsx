@@ -149,7 +149,7 @@ export const AgendaMonthView: React.FC<AgendaMonthViewProps> = ({
                 <span
                   className={`text-xs font-semibold inline-flex items-center justify-center w-6 h-6 rounded-full ${
                     cell.isToday
-                      ? 'bg-[#B38F4F] text-white shadow-xs'
+                      ? 'bg-[#C48229] text-white shadow-xs'
                       : cell.isCurrentMonth
                       ? 'text-slate-800'
                       : 'text-slate-400'
@@ -161,7 +161,7 @@ export const AgendaMonthView: React.FC<AgendaMonthViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onNewAtividadeDate(cell.dateStr)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-[#B38F4F] hover:bg-slate-100 rounded-md transition-opacity"
+                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-[#C48229] hover:bg-slate-100 rounded-md transition-opacity"
                   title="Adicionar atividade neste dia"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -203,7 +203,7 @@ export const AgendaMonthView: React.FC<AgendaMonthViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onSelectAtividade(dayAtividades[3])}
-                    className="w-full text-center text-[10px] text-[#B38F4F] font-semibold hover:underline"
+                    className="w-full text-center text-[10px] text-[#C48229] font-semibold hover:underline"
                   >
                     +{dayAtividades.length - 3} mais
                   </button>

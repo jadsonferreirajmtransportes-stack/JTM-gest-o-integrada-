@@ -34,8 +34,8 @@ export const LoginScreen: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Acento dourado discreto — mesmo tratamento do cabeçalho da Torre de Controle */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#B38F4F]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-[#B38F4F]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[#C48229]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-[#C48229]/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
         <div className="pt-8 pb-6 px-6 text-center border-b border-slate-100">
@@ -63,7 +63,7 @@ export const LoginScreen: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seuemail@jmtransportes.com.br"
-                className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#B38F4F]/40 focus:border-[#B38F4F] outline-hidden"
+                className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#C48229]/40 focus:border-[#C48229] outline-hidden"
               />
             </div>
           </div>
@@ -77,7 +77,7 @@ export const LoginScreen: React.FC = () => {
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#B38F4F]/40 focus:border-[#B38F4F] outline-hidden"
+                className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#C48229]/40 focus:border-[#C48229] outline-hidden"
               />
               <button
                 type="button"
@@ -92,7 +92,7 @@ export const LoginScreen: React.FC = () => {
           <button
             type="submit"
             disabled={carregando}
-            className="w-full py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] disabled:bg-slate-300 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
+            className="w-full py-2.5 bg-[#C48229] hover:bg-[#92611F] disabled:bg-slate-300 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
           >
             {carregando ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {carregando ? 'Entrando...' : 'Entrar'}

@@ -14,8 +14,8 @@ export interface JmtLogoProps {
  * - Official Vector Asset: SELO.png
  *
  * Official Palette:
- * - Bronze JMT: #B38F4F
- * - Bronze Profundo: #8A6A39
+ * - Bronze JMT: #C48229
+ * - Bronze Profundo: #92611F
  * - Grafite: #111111
  * - Branco: #FFFFFF
  * - Areia: #F4EEE1
@@ -59,15 +59,15 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
       <div
         className={`inline-flex items-center gap-2.5 px-3 py-1.5 rounded-lg border ${
           isDark
-            ? 'bg-[#111111] border-[#B38F4F]/40 text-white'
-            : 'bg-[#F4EEE1] border-[#B38F4F]/30 text-[#111111]'
+            ? 'bg-[#111111] border-[#C48229]/40 text-white'
+            : 'bg-[#F4EEE1] border-[#C48229]/30 text-[#111111]'
         } ${className}`}
       >
         <JmtIconImage size={22} isDark={isDark} />
         <div className="flex flex-col">
           <span
             className={`text-[10px] font-bold tracking-[0.22em] uppercase leading-tight ${
-              isDark ? 'text-[#B38F4F]' : 'text-[#8A6A39]'
+              isDark ? 'text-[#C48229]' : 'text-[#92611F]'
             }`}
           >
             Logística de Saúde
@@ -113,7 +113,7 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
             <span className={`font-extrabold text-sm sm:text-base tracking-tight leading-none ${textColor}`}>
               JMT
             </span>
-            <span className="text-[10px] font-bold text-[#B38F4F] tracking-wider uppercase">
+            <span className="text-[10px] font-bold text-[#C48229] tracking-wider uppercase">
               Transportes
             </span>
           </div>
@@ -145,7 +145,7 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
           >
             Transportes
           </span>
-          <span className="text-[8px] font-semibold tracking-wider text-[#B38F4F] uppercase">
+          <span className="text-[8px] font-semibold tracking-wider text-[#C48229] uppercase">
             Saúde
           </span>
         </div>

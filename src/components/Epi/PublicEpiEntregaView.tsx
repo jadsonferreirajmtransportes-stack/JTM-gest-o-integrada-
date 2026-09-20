@@ -94,14 +94,14 @@ export const PublicEpiEntregaView: React.FC<PublicEpiEntregaViewProps> = ({ cola
         <div className="flex items-center gap-3">
           <JmtLogo variant="compact" theme="dark" iconSize={32} />
           <div className="hidden sm:block pl-3 border-l border-[#262626]">
-            <span className="bg-[#B38F4F]/15 text-[#B38F4F] border border-[#B38F4F]/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+            <span className="bg-[#C48229]/15 text-[#C48229] border border-[#C48229]/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
               Formulário de Entrega de EPI
             </span>
             <p className="text-[11px] text-slate-400 mt-0.5">Preenchido pelo supervisor/responsável — sem login</p>
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 bg-[#161616] px-3 py-1.5 rounded-lg border border-[#2a2a2a]">
-          <ShieldCheck className="w-4 h-4 text-[#B38F4F]" />
+          <ShieldCheck className="w-4 h-4 text-[#C48229]" />
           <span>Gestão por Processos JMT</span>
         </div>
       </header>
@@ -120,7 +120,7 @@ export const PublicEpiEntregaView: React.FC<PublicEpiEntregaViewProps> = ({ cola
         ) : (
           <div className="bg-white text-slate-900 rounded-3xl shadow-2xl border border-slate-200 p-6 sm:p-8 space-y-5">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#B38F4F] flex items-center justify-center border border-amber-200 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#C48229] flex items-center justify-center border border-amber-200 shrink-0">
                 <HardHat className="w-5 h-5" />
               </div>
               <div>
@@ -204,7 +204,7 @@ export const PublicEpiEntregaView: React.FC<PublicEpiEntregaViewProps> = ({ cola
                   <button
                     type="button"
                     onClick={handleAddItem}
-                    className="text-[11px] font-bold text-[#8A6A39] hover:text-[#6b5029] flex items-center gap-1"
+                    className="text-[11px] font-bold text-[#92611F] hover:text-[#6b5029] flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" /> Adicionar item
                   </button>
@@ -294,7 +294,7 @@ export const PublicEpiEntregaView: React.FC<PublicEpiEntregaViewProps> = ({ cola
               <button
                 type="submit"
                 disabled={enviando}
-                className="w-full px-5 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-5 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{enviando ? 'Enviando...' : 'Registrar Entrega'}</span>

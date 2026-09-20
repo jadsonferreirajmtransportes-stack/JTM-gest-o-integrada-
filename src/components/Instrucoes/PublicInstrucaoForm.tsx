@@ -40,13 +40,13 @@ export const PublicInstrucaoForm: React.FC<PublicInstrucaoFormProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#111111] text-slate-100 flex flex-col font-sans selection:bg-[#B38F4F] selection:text-white">
+    <div className="min-h-screen bg-[#111111] text-slate-100 flex flex-col font-sans selection:bg-[#C48229] selection:text-white">
       {/* Header */}
       <header className="bg-[#0c0c0c] border-b border-[#262626] sticky top-0 z-40 px-4 sm:px-8 py-3 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
           <JmtLogo variant="compact" theme="dark" iconSize={32} />
           <div className="hidden sm:block pl-3 border-l border-[#262626]">
-            <span className="bg-[#B38F4F]/15 text-[#B38F4F] border border-[#B38F4F]/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+            <span className="bg-[#C48229]/15 text-[#C48229] border border-[#C48229]/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
               Preenchimento de Instrução de Trabalho
             </span>
             <p className="text-[11px] text-slate-400 mt-0.5">Sem necessidade de login no sistema</p>
@@ -54,7 +54,7 @@ export const PublicInstrucaoForm: React.FC<PublicInstrucaoFormProps> = ({
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 bg-[#161616] px-3 py-1.5 rounded-lg border border-[#2a2a2a]">
-            <ShieldCheck className="w-4 h-4 text-[#B38F4F]" />
+            <ShieldCheck className="w-4 h-4 text-[#C48229]" />
             <span>Gestão por Processos JMT</span>
           </div>
           {onAdminBack && (
@@ -63,7 +63,7 @@ export const PublicInstrucaoForm: React.FC<PublicInstrucaoFormProps> = ({
               onClick={onAdminBack}
               className="px-3 py-1.5 bg-[#181818] hover:bg-[#222222] text-slate-200 border border-[#2a2a2a] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#B38F4F]" />
+              <ArrowLeft className="w-3.5 h-3.5 text-[#C48229]" />
               <span>Painel Admin</span>
             </button>
           )}
@@ -105,7 +105,7 @@ export const PublicInstrucaoForm: React.FC<PublicInstrucaoFormProps> = ({
             <button
               type="button"
               onClick={() => setConcluido(false)}
-              className="px-5 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors mx-auto"
+              className="px-5 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors mx-auto"
             >
               <PenLine className="w-4 h-4" />
               <span>Continuar Editando</span>
@@ -135,7 +135,7 @@ export const PublicInstrucaoForm: React.FC<PublicInstrucaoFormProps> = ({
               <button
                 type="button"
                 onClick={handleConcluir}
-                className="px-6 py-3 bg-[#B38F4F] hover:bg-[#8A6A39] text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2 transition-all"
+                className="px-6 py-3 bg-[#C48229] hover:bg-[#92611F] text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2 transition-all"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Concluir Preenchimento</span>

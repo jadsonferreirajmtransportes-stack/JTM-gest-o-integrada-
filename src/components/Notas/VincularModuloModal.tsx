@@ -49,7 +49,7 @@ const TIPOS: Array<{ tipo: TipoEntidadeVinculo; label: string; icon: React.Eleme
   { tipo: 'colaborador', label: 'Colaborador', icon: Users, modulo: 'dp', color: 'text-amber-600 bg-amber-50 border-amber-200' },
   { tipo: 'projeto', label: 'Projeto Gerencial', icon: FolderKanban, modulo: 'projetos', color: 'text-purple-600 bg-purple-50 border-purple-200' },
   { tipo: 'ocorrencia', label: 'Ocorrência', icon: AlertTriangle, modulo: 'dp', color: 'text-rose-600 bg-rose-50 border-rose-200' },
-  { tipo: 'atividade_agenda', label: 'Compromisso da Agenda', icon: Calendar, modulo: 'agenda', color: 'text-[#8A6A39] bg-amber-50 border-amber-200' },
+  { tipo: 'atividade_agenda', label: 'Compromisso da Agenda', icon: Calendar, modulo: 'agenda', color: 'text-[#92611F] bg-amber-50 border-amber-200' },
 ];
 
 export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
@@ -124,7 +124,7 @@ export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150">
         <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-[#B38F4F]" />
+            <Link2 className="w-4 h-4 text-[#C48229]" />
             <h3 className="text-sm font-bold text-slate-800">
               {tipoSelecionado ? `Selecionar ${TIPOS.find((t) => t.tipo === tipoSelecionado)?.label}` : 'Vincular a um Módulo'}
             </h3>
@@ -147,7 +147,7 @@ export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
             <div className="p-3 border-b border-slate-100">
               <div className="flex items-center justify-between gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl">
                 <div className="min-w-0">
-                  <span className="text-[10px] text-[#8A6A39] font-bold uppercase tracking-wider block">Vínculo Atual</span>
+                  <span className="text-[10px] text-[#92611F] font-bold uppercase tracking-wider block">Vínculo Atual</span>
                   <span className="text-xs text-[#5c4526] font-semibold truncate block">{vinculoAtual.entidadeLabel}</span>
                 </div>
                 <button
@@ -156,7 +156,7 @@ export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
                     onRemoverVinculo();
                     onClose();
                   }}
-                  className="p-1.5 text-[#8A6A39] hover:text-rose-600 hover:bg-white rounded-lg transition-colors shrink-0"
+                  className="p-1.5 text-[#92611F] hover:text-rose-600 hover:bg-white rounded-lg transition-colors shrink-0"
                   title="Remover vínculo"
                 >
                   <Unlink className="w-3.5 h-3.5" />
@@ -197,7 +197,7 @@ export const VincularModuloModal: React.FC<VincularModuloModalProps> = ({
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   placeholder="Buscar..."
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/30"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]/30"
                 />
               </div>
               <button

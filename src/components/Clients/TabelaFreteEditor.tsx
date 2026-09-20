@@ -74,7 +74,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
 
   return (
     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-      <h4 className="text-xs font-bold text-[#B38F4F] uppercase tracking-wider flex items-center gap-2">
+      <h4 className="text-xs font-bold text-[#C48229] uppercase tracking-wider flex items-center gap-2">
         <DollarSign className="w-4 h-4" />
         {titulo}
       </h4>
@@ -88,7 +88,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
             onClick={() => onChange({ ...value, modeloPrecificacao: 'tarifa_base', tipoCobranca: 'Tabela por Faixa de Peso' })}
             className={`text-left p-2.5 rounded-lg border transition-colors ${
               modeloPrecificacao === 'tarifa_base'
-                ? 'bg-amber-50 border-[#B38F4F] text-amber-900'
+                ? 'bg-amber-50 border-[#C48229] text-amber-900'
                 : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
             }`}
           >
@@ -103,7 +103,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
             }
             className={`text-left p-2.5 rounded-lg border transition-colors ${
               modeloPrecificacao === 'ad_valorem'
-                ? 'bg-amber-50 border-[#B38F4F] text-amber-900'
+                ? 'bg-amber-50 border-[#C48229] text-amber-900'
                 : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
             }`}
           >
@@ -116,7 +116,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
             onClick={() => onChange({ ...value, modeloPrecificacao: 'outro' })}
             className={`text-left p-2.5 rounded-lg border transition-colors ${
               modeloPrecificacao === 'outro'
-                ? 'bg-amber-50 border-[#B38F4F] text-amber-900'
+                ? 'bg-amber-50 border-[#C48229] text-amber-900'
                 : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
             }`}
           >
@@ -137,7 +137,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
               value={value.valorBase}
               onChange={(e) => onChange({ ...value, valorBase: Number(e.target.value) })}
               placeholder="0.00"
-              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#C48229]"
             />
             <p className="text-[10px] text-slate-500 mt-1">Valor cobrado até o peso-base da faixa (ex: até 10kg).</p>
           </div>
@@ -150,7 +150,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
               value={value.valorKgExcedente || 0}
               onChange={(e) => onChange({ ...value, valorKgExcedente: Number(e.target.value) })}
               placeholder="0.00"
-              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#C48229]"
             />
             <p className="text-[10px] text-slate-500 mt-1">Cobrado por kg que ultrapassar o peso-base.</p>
           </div>
@@ -251,7 +251,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
             value={value.percentualAdValoremNF || 0}
             onChange={(e) => onChange({ ...value, percentualAdValoremNF: Number(e.target.value) })}
             placeholder="0.30"
-            className="w-full sm:w-1/2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#B38F4F]"
+            className="w-full sm:w-1/2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#C48229]"
           />
           <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
             Percentual cobrado sobre o valor declarado na Nota Fiscal do serviço/mercadoria transportada.
@@ -267,7 +267,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
             <select
               value={value.tipoCobranca}
               onChange={(e) => onChange({ ...value, tipoCobranca: e.target.value as TabelaPrecoFrete['tipoCobranca'] })}
-              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#C48229]"
             >
               <option value="Valor por Ponto/Entrega">Valor por Ponto / Entrega</option>
               <option value="Valor por Km Rodado">Valor por Km Rodado</option>
@@ -285,7 +285,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
               value={value.valorBase}
               onChange={(e) => onChange({ ...value, valorBase: Number(e.target.value) })}
               placeholder="0.00"
-              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-bold focus:outline-hidden focus:border-[#C48229]"
             />
           </div>
         </div>
@@ -381,7 +381,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
             value={value.freteMinimo || 0}
             onChange={(e) => onChange({ ...value, freteMinimo: Number(e.target.value) })}
             placeholder="0.00"
-            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
+            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#C48229]"
           />
         </div>
 
@@ -393,7 +393,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
             value={value.taxaDescargaAjudante || 0}
             onChange={(e) => onChange({ ...value, taxaDescargaAjudante: Number(e.target.value) })}
             placeholder="0.00"
-            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
+            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#C48229]"
           />
         </div>
 
@@ -405,7 +405,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
             value={value.percentualGrisPedagio || 0}
             onChange={(e) => onChange({ ...value, percentualGrisPedagio: Number(e.target.value) })}
             placeholder="0.8"
-            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
+            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#C48229]"
           />
         </div>
       </div>
@@ -418,7 +418,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
             value={value.condicaoPagamento}
             onChange={(e) => onChange({ ...value, condicaoPagamento: e.target.value })}
             placeholder="Ex: Faturamento Quinzenal (15 dias)"
-            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
+            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#C48229]"
           />
         </div>
 
@@ -430,7 +430,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
             max={31}
             value={value.diaFechamento || 15}
             onChange={(e) => onChange({ ...value, diaFechamento: Number(e.target.value) })}
-            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
+            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#C48229]"
           />
         </div>
       </div>
@@ -442,7 +442,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
           value={value.observacoesTarifa || ''}
           onChange={(e) => onChange({ ...value, observacoesTarifa: e.target.value })}
           placeholder="Ex: Adicional de R$ 14,00 por volume termolábil com datalogger calibrado."
-          className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
+          className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#C48229]"
         />
       </div>
     </div>

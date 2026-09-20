@@ -123,7 +123,7 @@ export const GlobalModuleSwitcher: React.FC<GlobalModuleSwitcherProps> = ({
         <div className="flex items-center gap-3">
           <JmtLogo variant="compact" theme="dark" iconSize={26} />
           <div className="hidden sm:block pl-3 border-l border-[#262626]">
-            <span className="inline-flex items-center gap-1 text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#B38F4F]/15 text-[#B38F4F] border border-[#B38F4F]/30">
+            <span className="inline-flex items-center gap-1 text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#C48229]/15 text-[#C48229] border border-[#C48229]/30">
               <ShieldCheck className="w-3 h-3" />
               RDC 430/2020 ANVISA
             </span>
@@ -138,19 +138,19 @@ export const GlobalModuleSwitcher: React.FC<GlobalModuleSwitcherProps> = ({
             onClick={() => onChangeModule('visao_geral')}
             className={`group relative flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all duration-150 border ${
               activeModule === 'visao_geral'
-                ? 'bg-gradient-to-r from-[#B38F4F]/25 to-[#8A6A39]/20 border-[#B38F4F] text-white shadow-md ring-1 ring-[#B38F4F]/50 font-bold'
+                ? 'bg-gradient-to-r from-[#C48229]/25 to-[#92611F]/20 border-[#C48229] text-white shadow-md ring-1 ring-[#C48229]/50 font-bold'
                 : 'bg-[#161616] border-[#2a2a2a] hover:bg-[#202020] hover:border-[#383838] text-slate-300'
             }`}
             title="Torre de Controle e Indicadores Gerais de todos os Módulos"
           >
             <div className={`w-5 h-5 flex items-center justify-center rounded text-[11px] font-bold shrink-0 transition-colors ${
               activeModule === 'visao_geral'
-                ? 'bg-[#B38F4F] text-white font-extrabold shadow-xs'
-                : 'bg-[#262626] text-[#B38F4F]'
+                ? 'bg-[#C48229] text-white font-extrabold shadow-xs'
+                : 'bg-[#262626] text-[#C48229]'
             }`}>
               ★
             </div>
-            <LayoutDashboard className="w-4 h-4 shrink-0 text-[#B38F4F]" />
+            <LayoutDashboard className="w-4 h-4 shrink-0 text-[#C48229]" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
                 <span className="font-bold text-xs truncate text-white">Dashboard Geral</span>
@@ -158,7 +158,7 @@ export const GlobalModuleSwitcher: React.FC<GlobalModuleSwitcherProps> = ({
               <span className="text-[10px] text-slate-400 truncate block">Visão Integrada</span>
             </div>
             {activeModule === 'visao_geral' && (
-              <span className="absolute -bottom-[1px] left-3 right-3 h-[2px] bg-[#B38F4F] rounded-full" />
+              <span className="absolute -bottom-[1px] left-3 right-3 h-[2px] bg-[#C48229] rounded-full" />
             )}
           </button>
 
@@ -173,7 +173,7 @@ export const GlobalModuleSwitcher: React.FC<GlobalModuleSwitcherProps> = ({
                 onClick={() => onChangeModule(mod.id)}
                 className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-all duration-150 border ${
                   isActive
-                    ? 'bg-[#1c1813] border-[#B38F4F] text-white shadow-sm ring-1 ring-[#B38F4F]/40'
+                    ? 'bg-[#1c1813] border-[#C48229] text-white shadow-sm ring-1 ring-[#C48229]/40'
                     : 'bg-[#161616] border-[#2a2a2a] hover:bg-[#202020] hover:border-[#383838] text-slate-300'
                 }`}
                 title={mod.description}
@@ -182,7 +182,7 @@ export const GlobalModuleSwitcher: React.FC<GlobalModuleSwitcherProps> = ({
                 <span
                   className={`w-5 h-5 flex items-center justify-center rounded text-[11px] font-bold shrink-0 transition-colors ${
                     isActive
-                      ? 'bg-[#B38F4F] text-white font-extrabold shadow-xs'
+                      ? 'bg-[#C48229] text-white font-extrabold shadow-xs'
                       : 'bg-[#262626] text-slate-400 group-hover:bg-[#303030] group-hover:text-slate-200'
                   }`}
                 >
@@ -192,7 +192,7 @@ export const GlobalModuleSwitcher: React.FC<GlobalModuleSwitcherProps> = ({
                 {/* Icon */}
                 <Icon
                   className={`w-4 h-4 shrink-0 transition-colors ${
-                    isActive ? 'text-[#B38F4F]' : 'text-slate-400 group-hover:text-slate-200'
+                    isActive ? 'text-[#C48229]' : 'text-slate-400 group-hover:text-slate-200'
                   }`}
                 />
 
@@ -213,7 +213,7 @@ export const GlobalModuleSwitcher: React.FC<GlobalModuleSwitcherProps> = ({
 
                 {/* Active Underline Glow */}
                 {isActive && (
-                  <span className="absolute -bottom-[1px] left-3 right-3 h-[2px] bg-[#B38F4F] rounded-full" />
+                  <span className="absolute -bottom-[1px] left-3 right-3 h-[2px] bg-[#C48229] rounded-full" />
                 )}
               </button>
             );

@@ -22,12 +22,12 @@ export const StrategicGuidelinesBanner: React.FC<StrategicGuidelinesBannerProps>
           className={`bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 ${className}`}
         >
           <div className="flex items-start gap-3.5 min-w-0">
-            <div className="p-2.5 rounded-xl bg-amber-500/10 text-[#8A6A39] border border-amber-500/20 shrink-0 mt-0.5">
+            <div className="p-2.5 rounded-xl bg-amber-500/10 text-[#92611F] border border-amber-500/20 shrink-0 mt-0.5">
               <Compass className="w-5 h-5" />
             </div>
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-[#8A6A39] border border-amber-200">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-[#92611F] border border-amber-200">
                   Propósito JMT
                 </span>
                 <span className="text-xs text-slate-500 font-medium hidden sm:inline">
@@ -44,7 +44,7 @@ export const StrategicGuidelinesBanner: React.FC<StrategicGuidelinesBannerProps>
                     key={idx}
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 text-[10px]"
                   >
-                    <ShieldCheck className="w-3 h-3 text-[#B38F4F]" />
+                    <ShieldCheck className="w-3 h-3 text-[#C48229]" />
                     {p.nome}
                   </span>
                 ))}
@@ -73,15 +73,15 @@ export const StrategicGuidelinesBanner: React.FC<StrategicGuidelinesBannerProps>
   return (
     <>
       <div
-        className={`relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-950 via-[#181614] to-slate-900 text-white p-5 sm:p-6 border border-[#B38F4F]/30 shadow-md ${className}`}
+        className={`relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-950 via-[#181614] to-slate-900 text-white p-5 sm:p-6 border border-[#C48229]/30 shadow-md ${className}`}
       >
         <div className="absolute right-0 top-0 bottom-0 opacity-5 pointer-events-none flex items-center pr-6">
-          <Compass className="w-48 h-48 text-[#B38F4F]" />
+          <Compass className="w-48 h-48 text-[#C48229]" />
         </div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="space-y-2 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#B38F4F]/20 text-[#E5C178] border border-[#B38F4F]/40 text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C48229]/20 text-[#E5C178] border border-[#C48229]/40 text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
               <Compass className="w-3.5 h-3.5 text-[#E5C178]" />
               <span>Norteadores Estratégicos JMT</span>
             </div>
@@ -121,7 +121,7 @@ export const StrategicGuidelinesBanner: React.FC<StrategicGuidelinesBannerProps>
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#B38F4F] hover:bg-[#8A6A39] text-slate-950 font-extrabold text-xs transition-all shadow-md active:scale-98"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-slate-950 font-extrabold text-xs transition-all shadow-md active:scale-98"
             >
               <Award className="w-4 h-4" />
               <span>Missão, Visão e Valores</span>

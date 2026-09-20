@@ -16,8 +16,8 @@
 
 @layer base {
   :root {
-    --jmt-bronze: #B38F4F;
-    --jmt-bronze-dark: #8A6A39;
+    --jmt-bronze: #C48229;
+    --jmt-bronze-dark: #92611F;
     --jmt-grafite: #111111;
     --jmt-branco: #FFFFFF;
     --jmt-areia: #F4EEE1;
@@ -83,7 +83,7 @@
   left: 0;
   width: 48px;
   height: 3px;
-  background-color: #B38F4F;
+  background-color: #C48229;
   border-radius: 9999px;
 }
 
@@ -122,7 +122,7 @@
 }
 
 .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
-  background: #B38F4F;
+  background: #C48229;
 }
 
 /* ============================================================
@@ -222,7 +222,7 @@
   .jmt-print-subtitle {
     font-weight: 600;
     font-size: 11.5px;
-    color: #b38f4f;
+    color: #c48229;
     margin-top: 2px;
   }
   .jmt-print-meta {
@@ -232,7 +232,7 @@
   }
   .jmt-print-divider {
     height: 2px;
-    background: #b38f4f;
+    background: #c48229;
     margin-top: 8px;
   }
 
@@ -249,7 +249,7 @@
     text-align: center;
     font-size: 9px;
     font-weight: 600;
-    color: #b38f4f;
+    color: #c48229;
   }
   .jmt-print-footer .jmt-print-pageno {
     color: #555555;
@@ -270,7 +270,7 @@
   .jmt-print-norteadores-titulo {
     font-weight: 700;
     font-size: 10.5px;
-    color: #b38f4f;
+    color: #c48229;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin-bottom: 4px;
@@ -299,7 +299,7 @@
 }
 .jmt-proposta-info-card {
   background: #faf6ec;
-  border-left: 3px solid #b38f4f;
+  border-left: 3px solid #c48229;
   border-radius: 4px;
   padding: 12px 14px;
 }
@@ -310,13 +310,13 @@
   margin-top: 22px;
   margin-bottom: 8px;
   padding-bottom: 6px;
-  border-bottom: 2px solid #b38f4f;
+  border-bottom: 2px solid #c48229;
 }
 .jmt-proposta-section-num {
   width: 20px;
   height: 20px;
   border-radius: 9999px;
-  background: #b38f4f;
+  background: #c48229;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -328,7 +328,7 @@
 .jmt-proposta-section-title {
   font-size: 12.5px;
   font-weight: 700;
-  color: #b38f4f;
+  color: #c48229;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }

@@ -176,7 +176,7 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
               className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-200"
               title="Imprimir Ficha Cadastral do Empregado"
             >
-              <Printer className="w-4 h-4 text-[#8A6A39]" />
+              <Printer className="w-4 h-4 text-[#92611F]" />
               <span>Imprimir Ficha</span>
             </button>
 
@@ -187,7 +187,7 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
                 className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-200"
                 title="Compartilhar Ficha Cadastral por link (terceiro externo, sem login)"
               >
-                <Link2 className="w-4 h-4 text-[#8A6A39]" />
+                <Link2 className="w-4 h-4 text-[#92611F]" />
                 <span>Compartilhar</span>
               </button>
             )}

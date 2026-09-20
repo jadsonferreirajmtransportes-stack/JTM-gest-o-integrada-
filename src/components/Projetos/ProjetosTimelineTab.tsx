@@ -57,7 +57,7 @@ export const ProjetosTimelineTab: React.FC<ProjetosTimelineTabProps> = ({
       <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-[#B38F4F]" />
+            <Calendar className="w-4 h-4 text-[#C48229]" />
             Cronograma Estratégico & Roadmap de Entregas 2026
           </h3>
           <p className="text-xs text-slate-500">
@@ -107,13 +107,13 @@ export const ProjetosTimelineTab: React.FC<ProjetosTimelineTabProps> = ({
                   {/* Row Top: Project info */}
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-[#8A6A39] border border-amber-200">
+                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-[#92611F] border border-amber-200">
                         {p.codigo}
                       </span>
                       <button
                         type="button"
                         onClick={() => onSelectProjeto(p)}
-                        className="font-bold text-slate-900 hover:text-[#8A6A39] transition-colors text-left"
+                        className="font-bold text-slate-900 hover:text-[#92611F] transition-colors text-left"
                       >
                         {p.titulo}
                       </button>
@@ -121,7 +121,7 @@ export const ProjetosTimelineTab: React.FC<ProjetosTimelineTabProps> = ({
 
                     <div className="flex items-center gap-3 text-slate-500 text-[11px]">
                       <span>{p.dataInicio} até {p.dataPrevisaoFim}</span>
-                      <span className="font-mono font-bold text-[#8A6A39]">{p.progressoPercentual}%</span>
+                      <span className="font-mono font-bold text-[#92611F]">{p.progressoPercentual}%</span>
                     </div>
                   </div>
 
@@ -132,7 +132,7 @@ export const ProjetosTimelineTab: React.FC<ProjetosTimelineTabProps> = ({
 
                     {/* Active Project Span Bar */}
                     <div
-                      className="absolute top-1 bottom-1 bg-gradient-to-r from-[#B38F4F] to-[#B38F4F] rounded-md shadow-xs flex items-center justify-between px-2 text-white text-[10px] font-bold transition-all duration-300 group-hover:brightness-110"
+                      className="absolute top-1 bottom-1 bg-gradient-to-r from-[#C48229] to-[#C48229] rounded-md shadow-xs flex items-center justify-between px-2 text-white text-[10px] font-bold transition-all duration-300 group-hover:brightness-110"
                       style={{
                         left: `${startPct}%`,
                         width: `${widthPct}%`,

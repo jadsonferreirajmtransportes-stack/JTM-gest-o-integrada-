@@ -230,8 +230,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-[#8A6A39] border border-amber-200 text-xs font-bold uppercase tracking-wider">
-              <Building2 className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-[#92611F] border border-amber-200 text-xs font-bold uppercase tracking-wider">
+              <Building2 className="w-3.5 h-3.5 text-[#C48229]" />
               <span>Gestão Comercial & Operações Farmacêuticas</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
@@ -259,7 +259,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 id="btn-add-new-client"
                 type="button"
                 onClick={handleOpenNew}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#B38F4F] hover:bg-[#8A6A39] text-slate-950 font-bold text-xs transition-all shadow-md active:scale-98"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-slate-950 font-bold text-xs transition-all shadow-md active:scale-98"
               >
                 <Plus className="w-4 h-4" />
                 <span>Novo Cliente</span>
@@ -274,7 +274,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
         <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider">Carteira de Clientes</span>
-            <Building2 className="w-4 h-4 text-[#B38F4F]" />
+            <Building2 className="w-4 h-4 text-[#C48229]" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="font-display text-2xl font-bold text-slate-900">{metrics.total}</span>
@@ -337,7 +337,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por cliente, CNPJ, código ou cidade..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:bg-white focus:border-[#B38F4F]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:bg-white focus:border-[#C48229]"
             />
           </div>
 
@@ -347,7 +347,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               id="select-filter-client-status"
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-hidden focus:bg-white focus:border-[#B38F4F]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-hidden focus:bg-white focus:border-[#C48229]"
             >
               <option value="all">Todos os Status</option>
               <option value="Ativo">Ativo</option>
@@ -364,7 +364,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               id="select-filter-client-segment"
               value={selectedSegmento}
               onChange={(e) => setSelectedSegmento(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-hidden focus:bg-white focus:border-[#B38F4F]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-hidden focus:bg-white focus:border-[#C48229]"
             >
               <option value="all">Todos os Segmentos</option>
               <option value="Distribuidora de Medicamentos">Distribuidora Medicamentos</option>
@@ -383,7 +383,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               id="select-filter-client-temp"
               value={selectedTemperatura}
               onChange={(e) => setSelectedTemperatura(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-hidden focus:bg-white focus:border-[#B38F4F]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-hidden focus:bg-white focus:border-[#C48229]"
             >
               <option value="all">Todas as Temperaturas</option>
               <option value="Climatizado">Climatizado (15° a 25°)</option>
@@ -400,7 +400,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-[#B38F4F]/15 text-[#B38F4F] border border-[#B38F4F]/30'
+                  ? 'bg-[#C48229]/15 text-[#C48229] border border-[#C48229]/30'
                   : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'
               }`}
               title="Visualização em Grade"
@@ -412,7 +412,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               onClick={() => setViewMode('table')}
               className={`p-2 rounded-lg transition-colors ${
                 viewMode === 'table'
-                  ? 'bg-[#B38F4F]/15 text-[#B38F4F] border border-[#B38F4F]/30'
+                  ? 'bg-[#C48229]/15 text-[#C48229] border border-[#C48229]/30'
                   : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'
               }`}
               title="Visualização em Lista / Tabela"
@@ -449,7 +449,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 <button
                   type="button"
                   onClick={handleOpenNew}
-                  className="mt-2 px-4 py-2 rounded-xl bg-[#B38F4F] hover:bg-[#8A6A39] text-slate-950 font-bold text-xs inline-flex items-center gap-2 shadow-md"
+                  className="mt-2 px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-slate-950 font-bold text-xs inline-flex items-center gap-2 shadow-md"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Cadastrar Primeiro Cliente</span>
@@ -521,7 +521,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenAddInteraction(cli)}
-                          className="p-1.5 text-slate-400 hover:text-[#B38F4F] hover:bg-slate-100 rounded transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-[#C48229] hover:bg-slate-100 rounded transition-colors"
                           title="Registrar Interação"
                         >
                           <Clock className="w-3.5 h-3.5" />

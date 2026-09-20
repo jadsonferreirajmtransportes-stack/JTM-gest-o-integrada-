@@ -66,7 +66,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#8A6A39]">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#92611F]">
               <Clock className="w-5 h-5" />
             </div>
             <div>
@@ -99,7 +99,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
                 required
                 value={data}
                 onChange={(e) => setData(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#C48229]"
               />
             </div>
 
@@ -110,7 +110,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
               <select
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value as InteracaoCliente['tipo'])}
-                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#C48229]"
               >
                 <option value="Reunião Comercial">Reunião Comercial</option>
                 <option value="Alinhamento Operacional">Alinhamento Operacional</option>
@@ -130,7 +130,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
             <select
               value={responsavelJMT}
               onChange={(e) => setResponsavelJMT(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#C48229]"
             >
               {supervisores.map((s) => (
                 <option key={s.id} value={s.nome}>
@@ -152,7 +152,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
               value={resumo}
               onChange={(e) => setResumo(e.target.value)}
               placeholder="Descreva detalhadamente o que foi conversado, alinhamentos de frete, acordos operacionais ou auditorias..."
-              className="w-full bg-white border border-slate-200 rounded-lg p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-white border border-slate-200 rounded-lg p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#C48229]"
             />
           </div>
 
@@ -166,7 +166,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
                 value={proximoPasso}
                 onChange={(e) => setProximoPasso(e.target.value)}
                 placeholder="Ex: Enviar minuta aditiva de frete..."
-                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#C48229]"
               />
             </div>
 
@@ -178,7 +178,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
                 type="date"
                 value={dataProximoPasso}
                 onChange={(e) => setDataProximoPasso(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#B38F4F]"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#C48229]"
               />
             </div>
           </div>
@@ -194,7 +194,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white transition-colors flex items-center gap-1.5 shadow-md"
+              className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#C48229] hover:bg-[#92611F] text-white transition-colors flex items-center gap-1.5 shadow-md"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Salvar Interação</span>

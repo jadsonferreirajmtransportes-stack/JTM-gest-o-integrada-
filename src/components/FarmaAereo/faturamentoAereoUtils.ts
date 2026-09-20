@@ -420,8 +420,8 @@ function sanitizarNomeArquivo(texto: string): string {
 // --jmt-bronze/--jmt-bronze-dark em src/index.css) e extraída diretamente das faturas reais
 // já emitidas para os clientes (ex.: FATURA_CARGO_BRASIL_JUNHO_2026.xlsx), garantindo que a
 // planilha gerada pelo sistema saia visualmente igual ao que a JMT já envia hoje.
-const COR_BRONZE = 'FFB38F4F';
-const COR_BRONZE_ESCURO = 'FF8A6A39';
+const COR_BRONZE = 'FFC48229';
+const COR_BRONZE_ESCURO = 'FF92611F';
 const COR_CINZA_TEXTO = 'FF555555';
 const COR_BORDA = 'FFBFBFBF';
 const COR_BRANCO = 'FFFFFFFF';

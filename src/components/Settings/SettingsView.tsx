@@ -176,7 +176,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="px-3.5 py-1.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors shrink-0"
+            className="px-3.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>
@@ -206,7 +206,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           onClick={() => setActiveTab('cargos')}
           className={`pb-2.5 px-3 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
             activeTab === 'cargos'
-              ? 'border-[#B38F4F] text-[#B38F4F]'
+              ? 'border-[#C48229] text-[#C48229]'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -219,7 +219,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           onClick={() => setActiveTab('supervisores')}
           className={`pb-2.5 px-3 border-b-2 flex items-center gap-1.5 transition-colors whitespace-nowrap ${
             activeTab === 'supervisores'
-              ? 'border-[#B38F4F] text-[#B38F4F]'
+              ? 'border-[#C48229] text-[#C48229]'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -616,7 +616,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white font-bold rounded-lg transition-colors shadow-xs"
+                    className="px-4 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold rounded-lg transition-colors shadow-xs"
                   >
                     Salvar Cargo
                   </button>

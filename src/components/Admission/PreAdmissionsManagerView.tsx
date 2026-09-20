@@ -171,7 +171,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
           <button
             type="button"
             onClick={onOpenLinkGenerator}
-            className="px-4 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-900/20 shrink-0"
+            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-900/20 shrink-0"
           >
             <Share2 className="w-4 h-4" />
             <span>Gerar / Enviar Link de Admissão</span>
@@ -227,7 +227,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por nome do candidato, CPF ou WhatsApp..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
           />
         </div>
 
@@ -240,7 +240,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
               onClick={() => setStatusFilter(st)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
                 statusFilter === st
-                  ? 'bg-[#B38F4F] text-white shadow-xs'
+                  ? 'bg-[#C48229] text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -253,7 +253,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
       {/* Pre-Admissions List */}
       {filteredList.length === 0 ? (
         <div className="bg-white border border-dashed border-slate-300 rounded-3xl p-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-amber-50 text-[#B38F4F] flex items-center justify-center mx-auto mb-4 border border-amber-200">
+          <div className="w-16 h-16 rounded-full bg-amber-50 text-[#C48229] flex items-center justify-center mx-auto mb-4 border border-amber-200">
             <Share2 className="w-8 h-8" />
           </div>
           <h3 className="text-base font-bold text-slate-800 mb-1">Nenhum formulário de admissão encontrado</h3>
@@ -264,7 +264,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
             <button
               type="button"
               onClick={onOpenLinkGenerator}
-              className="px-5 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-amber-900/20"
+              className="px-5 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-amber-900/20"
             >
               Gerar Link de Admissão Agora
             </button>
@@ -284,7 +284,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
               >
                 {/* Candidate Info */}
                 <div className="flex items-start gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-amber-100/80 text-[#B38F4F] border border-amber-200 flex items-center justify-center font-bold text-base shrink-0 mt-0.5">
+                  <div className="w-11 h-11 rounded-2xl bg-amber-100/80 text-[#C48229] border border-amber-200 flex items-center justify-center font-bold text-base shrink-0 mt-0.5">
                     {item.dadosPessoais.nomeCompleto.slice(0, 2).toUpperCase()}
                   </div>
 
@@ -324,7 +324,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
                     {/* Quick Specs Pill: Uniforme & Docs */}
                     <div className="flex flex-wrap items-center gap-2 mt-2 text-[11px]">
                       <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 flex items-center gap-1">
-                        <Shirt className="w-3 h-3 text-[#B38F4F]" />
+                        <Shirt className="w-3 h-3 text-[#C48229]" />
                         <span>Uniforme: Camisa {item.fardamento.tamanhoCamisa} | Calça {item.fardamento.numeroCalca} | Bota {item.fardamento.numeroCalcado}</span>
                       </span>
 
@@ -368,7 +368,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
                     <button
                       type="button"
                       onClick={() => handleStartEfetivacao(item)}
-                      className="px-4 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs"
+                      className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs"
                     >
                       <UserCheck className="w-4 h-4" />
                       <span>Efetivar Admissão</span>
@@ -401,7 +401,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
             {/* Header */}
             <div className="bg-white border-b border-slate-100 p-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#B38F4F] text-white flex items-center justify-center font-bold text-lg">
+                <div className="w-10 h-10 rounded-xl bg-[#C48229] text-white flex items-center justify-center font-bold text-lg">
                   {selectedCandidate.dadosPessoais.nomeCompleto.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
@@ -567,7 +567,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
                   <button
                     type="button"
                     onClick={() => handleStartEfetivacao(selectedCandidate)}
-                    className="px-4 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                    className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs"
                   >
                     <UserCheck className="w-4 h-4" />
                     <span>Efetivar Admissão</span>
@@ -584,7 +584,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
           <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-200">
             <form onSubmit={handleConfirmEfetivacao}>
-              <div className="bg-gradient-to-r from-[#B38F4F] to-amber-600 p-6 text-white">
+              <div className="bg-gradient-to-r from-[#C48229] to-amber-600 p-6 text-white">
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-2xl bg-black/20 border border-white/20 flex items-center justify-center text-white">
                     <UserCheck className="w-6 h-6" />
@@ -721,7 +721,7 @@ export const PreAdmissionsManagerView: React.FC<PreAdmissionsManagerViewProps> =
 
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-amber-900/20"
+                  className="px-6 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-amber-900/20"
                 >
                   <Check className="w-4 h-4" />
                   <span>Confirmar & Cadastrar Colaborador</span>

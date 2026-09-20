@@ -203,7 +203,7 @@ Qualquer dúvida, entre em contato com o Departamento Pessoal!`;
                 className={`px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
                   copied
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs'
+                    : 'bg-[#C48229] hover:bg-[#92611F] text-white shadow-xs'
                 }`}
               >
                 {copied ? (

@@ -93,7 +93,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <HardHat className="w-5 h-5 text-[#B38F4F]" />
+            <HardHat className="w-5 h-5 text-[#C48229]" />
             Entrega de EPI
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -108,14 +108,14 @@ export const EpiView: React.FC<EpiViewProps> = ({
               className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5"
               title="Link do Formulário Público de Entrega de EPI (sem login)"
             >
-              <Link2 className="w-4 h-4 text-[#8A6A39]" />
+              <Link2 className="w-4 h-4 text-[#92611F]" />
               <span>Link do Formulário</span>
             </button>
           )}
           <button
             type="button"
             onClick={handleNovaEntrega}
-            className="px-4 py-2.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm"
+            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Entrega</span>
@@ -181,7 +181,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setEntregaComprovante(entrega)}
-                          className="text-[11px] font-semibold text-[#8A6A39] hover:underline flex items-center gap-1"
+                          className="text-[11px] font-semibold text-[#92611F] hover:underline flex items-center gap-1"
                         >
                           <Paperclip className="w-3 h-3" /> Anexar
                         </button>
@@ -192,7 +192,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setAlvoFicha({ nome, funcaoCargo: colab?.funcaoCargo })}
-                          className="p-1.5 text-slate-400 hover:text-[#8A6A39] hover:bg-slate-100 rounded-lg"
+                          className="p-1.5 text-slate-400 hover:text-[#92611F] hover:bg-slate-100 rounded-lg"
                           title="Ver ficha de EPI (todas as entregas dessa pessoa)"
                         >
                           <FileText className="w-3.5 h-3.5" />
@@ -201,7 +201,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
                           type="button"
                           onClick={() => setColaboradorParaCompartilhar(colab || null)}
                           disabled={!colab}
-                          className="p-1.5 text-slate-400 hover:text-[#8A6A39] hover:bg-slate-100 rounded-lg disabled:opacity-30"
+                          className="p-1.5 text-slate-400 hover:text-[#92611F] hover:bg-slate-100 rounded-lg disabled:opacity-30"
                           title={colab ? 'Compartilhar ficha por link' : 'Só disponível pra colaboradores cadastrados no sistema'}
                         >
                           <Share2 className="w-3.5 h-3.5" />

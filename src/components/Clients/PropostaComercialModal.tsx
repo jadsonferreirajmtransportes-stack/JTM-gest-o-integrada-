@@ -131,7 +131,7 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
             <button
               type="button"
               onClick={handlePrint}
-              className="px-3.5 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs"
+              className="px-3.5 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Imprimir / Salvar PDF</span>
@@ -165,7 +165,7 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
                 value={contatoAC}
                 onChange={(e) => setContatoAC(e.target.value)}
                 placeholder="Representante Legal"
-                className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 w-56 focus:outline-hidden focus:border-[#B38F4F]"
+                className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 w-56 focus:outline-hidden focus:border-[#C48229]"
               />
             </div>
             <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer pb-1.5">
@@ -173,7 +173,7 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
                 type="checkbox"
                 checked={incluirFracionada}
                 onChange={(e) => setIncluirFracionada(e.target.checked)}
-                className="rounded border-slate-300 text-[#B38F4F] focus:ring-0 bg-white"
+                className="rounded border-slate-300 text-[#C48229] focus:ring-0 bg-white"
               />
               Modalidade Fracionada
             </label>
@@ -182,7 +182,7 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
                 type="checkbox"
                 checked={incluirDedicada}
                 onChange={(e) => setIncluirDedicada(e.target.checked)}
-                className="rounded border-slate-300 text-[#B38F4F] focus:ring-0 bg-white"
+                className="rounded border-slate-300 text-[#C48229] focus:ring-0 bg-white"
               />
               Modalidade Dedicada
             </label>
@@ -196,7 +196,7 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
               value={observacoesAdicionais}
               onChange={(e) => setObservacoesAdicionais(e.target.value)}
               placeholder="Ex: condições especiais combinadas nesta negociação..."
-              className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#B38F4F]"
+              className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#C48229]"
             />
           </div>
         </div>
@@ -205,11 +205,11 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
         <div className="jmt-print-doc jmt-print-styled flex-1 overflow-y-auto custom-scrollbar">
           <div className="max-w-[750px] mx-auto p-8 text-[13px] leading-relaxed text-slate-800">
             {/* Cabeçalho */}
-            <div className="flex items-start gap-4 pb-3 mb-4 border-b-2 border-[#B38F4F]">
+            <div className="flex items-start gap-4 pb-3 mb-4 border-b-2 border-[#C48229]">
               <JmtLogo variant="full" theme="light" iconSize={30} />
               <div className="flex-1 text-right">
                 <h1 className="text-lg font-bold text-slate-900">PROPOSTA COMERCIAL</h1>
-                <div className="text-[11.5px] font-semibold text-[#B38F4F] mt-0.5">
+                <div className="text-[11.5px] font-semibold text-[#C48229] mt-0.5">
                   {cliente.razaoSocial.toUpperCase()} | {dataExtenso}
                 </div>
               </div>
@@ -428,18 +428,18 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
             <div className="grid grid-cols-2 gap-8 text-[11.5px]">
               <div className="border-t border-slate-400 pt-1.5 text-center">
                 <div className="font-bold text-slate-900">Jobson de Moraes Transportes LTDA</div>
-                <div className="text-[#B38F4F] font-semibold">Jobson de Moraes — Diretor</div>
+                <div className="text-[#C48229] font-semibold">Jobson de Moraes — Diretor</div>
               </div>
               <div className="border-t border-slate-400 pt-1.5 text-center">
                 <div className="font-bold text-slate-900">{cliente.razaoSocial}</div>
-                <div className="text-[#B38F4F] font-semibold">{contatoAC.trim() || 'Representante Legal'}</div>
+                <div className="text-[#C48229] font-semibold">{contatoAC.trim() || 'Representante Legal'}</div>
               </div>
             </div>
 
             {/* Anexo I — Cidades Atendidas */}
             {cidadesAnexo.length > 0 && (
               <>
-                <div className="mt-10 pt-3 border-t-2 border-[#B38F4F]">
+                <div className="mt-10 pt-3 border-t-2 border-[#C48229]">
                   <h3 className="font-bold text-slate-900 text-[13px]">
                     Anexo I — Cidades Atendidas{nomeEstadoPlano ? ` (${nomeEstadoPlano})` : ''}
                   </h3>
@@ -453,7 +453,7 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
             )}
 
             {/* Rodapé institucional */}
-            <div className="mt-10 pt-3 border-t border-slate-200 text-center text-[9.5px] font-semibold text-[#B38F4F]">
+            <div className="mt-10 pt-3 border-t border-slate-200 text-center text-[9.5px] font-semibold text-[#C48229]">
               {STRATEGIC_GUIDELINES.assinatura}
             </div>
           </div>

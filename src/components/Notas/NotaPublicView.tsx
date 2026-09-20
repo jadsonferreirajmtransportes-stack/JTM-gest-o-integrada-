@@ -32,7 +32,7 @@ const BlocoView: React.FC<{ bloco: BlocoNota }> = ({ bloco }) => {
       ) : null;
     case 'citacao':
       return bloco.texto ? (
-        <blockquote className="border-l-4 border-[#B38F4F] pl-3 text-sm italic text-slate-600">
+        <blockquote className="border-l-4 border-[#C48229] pl-3 text-sm italic text-slate-600">
           {bloco.texto}
         </blockquote>
       ) : null;
@@ -144,7 +144,7 @@ export const NotaPublicView: React.FC<NotaPublicViewProps> = ({ token, onAdminBa
         <div className="flex items-center gap-3">
           <JmtLogo variant="compact" theme="light" iconSize={32} />
           <div className="hidden sm:block pl-3 border-l border-slate-200">
-            <span className="bg-amber-50 text-[#8A6A39] border border-amber-200 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+            <span className="bg-amber-50 text-[#92611F] border border-amber-200 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
               Página Compartilhada
             </span>
             <p className="text-[11px] text-slate-500 mt-0.5">Visualização somente leitura — sem login</p>
@@ -157,12 +157,12 @@ export const NotaPublicView: React.FC<NotaPublicViewProps> = ({ token, onAdminBa
               onClick={() => window.print()}
               className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
-              <Printer className="w-3.5 h-3.5 text-[#8A6A39]" />
+              <Printer className="w-3.5 h-3.5 text-[#92611F]" />
               <span>Imprimir / Salvar PDF</span>
             </button>
           )}
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-            <ShieldCheck className="w-4 h-4 text-[#8A6A39]" />
+            <ShieldCheck className="w-4 h-4 text-[#92611F]" />
             <span>Notas & Ideias JMT</span>
           </div>
           {onAdminBack && (
@@ -171,7 +171,7 @@ export const NotaPublicView: React.FC<NotaPublicViewProps> = ({ token, onAdminBa
               onClick={onAdminBack}
               className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#8A6A39]" />
+              <ArrowLeft className="w-3.5 h-3.5 text-[#92611F]" />
               <span>Painel Admin</span>
             </button>
           )}
@@ -181,7 +181,7 @@ export const NotaPublicView: React.FC<NotaPublicViewProps> = ({ token, onAdminBa
       <main className="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 lg:p-8 print:p-0 print:max-w-none">
         {carregando ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin text-[#B38F4F]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#C48229]" />
             <span className="text-xs">Carregando página...</span>
           </div>
         ) : erro || !dados ? (

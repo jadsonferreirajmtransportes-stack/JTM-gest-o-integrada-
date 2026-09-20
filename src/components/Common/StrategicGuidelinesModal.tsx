@@ -46,12 +46,12 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pr-8">
             <div className="flex items-center gap-3.5">
-              <div className="p-2.5 rounded-2xl bg-amber-50 border border-amber-200 text-[#8A6A39] shrink-0">
+              <div className="p-2.5 rounded-2xl bg-amber-50 border border-amber-200 text-[#92611F] shrink-0">
                 <Compass className="w-6 h-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A6A39]">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#92611F]">
                     Norteadores Estratégicos Institucionais
                   </span>
                   <span className="text-[10px] text-slate-400 font-mono">04/09/2026</span>
@@ -77,11 +77,11 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
           <div className="bg-linear-to-r from-amber-50 to-orange-50/40 rounded-2xl p-5 sm:p-6 border border-amber-200/80 shadow-xs relative overflow-hidden">
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-xl bg-amber-500/20 text-amber-900 shrink-0 mt-0.5">
-                <Compass className="w-6 h-6 text-[#8A6A39]" />
+                <Compass className="w-6 h-6 text-[#92611F]" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#8A6A39]">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#92611F]">
                     {proposito.titulo}
                   </span>
                   <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
@@ -145,7 +145,7 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
           {/* 3. Valores (6 Cards) */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Award className="w-4 h-4 text-[#B38F4F]" />
+              <Award className="w-4 h-4 text-[#C48229]" />
               <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
                 Nossos Valores
               </h3>
@@ -157,7 +157,7 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
                   className="p-4 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 transition-colors shadow-2xs"
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="w-5 h-5 rounded-full bg-[#B38F4F]/15 text-[#8A6A39] text-xs font-black flex items-center justify-center shrink-0">
+                    <span className="w-5 h-5 rounded-full bg-[#C48229]/15 text-[#92611F] text-xs font-black flex items-center justify-center shrink-0">
                       {idx + 1}
                     </span>
                     <h4 className="text-xs font-bold text-slate-900 leading-tight">
@@ -175,7 +175,7 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
           {/* 4. Pilares Operacionais */}
           <div className="bg-slate-50 rounded-2xl p-5 sm:p-6 border border-slate-200">
             <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-              <span className="text-xs font-black uppercase tracking-widest text-[#8A6A39]">
+              <span className="text-xs font-black uppercase tracking-widest text-[#92611F]">
                 Pilares Operacionais
               </span>
               <span className="text-[11px] text-slate-400">Diretriz de Execução Diária</span>
@@ -221,7 +221,7 @@ export const StrategicGuidelinesModal: React.FC<StrategicGuidelinesModalProps> =
           </div>
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-[#B38F4F] hover:bg-[#8A6A39] text-white text-xs font-bold transition-all shrink-0 shadow-xs"
+            className="px-5 py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold transition-all shrink-0 shadow-xs"
           >
             Entendido
           </button>

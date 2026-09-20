@@ -70,7 +70,7 @@ export const EpiPrintModal: React.FC<EpiPrintModalProps> = ({ nome, funcaoCargo,
             <button
               type="button"
               onClick={handlePrint}
-              className="px-3 py-1.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg text-xs font-bold flex items-center gap-1.5"
+              className="px-3 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-bold flex items-center gap-1.5"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Imprimir</span>

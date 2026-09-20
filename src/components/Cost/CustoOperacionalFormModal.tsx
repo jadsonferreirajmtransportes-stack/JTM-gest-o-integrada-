@@ -171,7 +171,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-[#B38F4F]/15 text-[#8A6A39] border border-[#B38F4F]/30">
+            <div className="p-2.5 rounded-xl bg-[#C48229]/15 text-[#92611F] border border-[#C48229]/30">
               <DollarSign className="w-5 h-5" />
             </div>
             <div>
@@ -205,11 +205,11 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 onClick={() => setSetor('farma_rodoviario')}
                 className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
                   setor === 'farma_rodoviario'
-                    ? 'border-[#B38F4F] bg-[#B38F4F]/10 ring-2 ring-[#B38F4F]/30 text-slate-900 font-bold'
+                    ? 'border-[#C48229] bg-[#C48229]/10 ring-2 ring-[#C48229]/30 text-slate-900 font-bold'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className={`p-2 rounded-lg ${setor === 'farma_rodoviario' ? 'bg-[#B38F4F] text-white' : 'bg-slate-100 text-slate-600'}`}>
+                <div className={`p-2 rounded-lg ${setor === 'farma_rodoviario' ? 'bg-[#C48229] text-white' : 'bg-slate-100 text-slate-600'}`}>
                   <Truck className="w-4 h-4" />
                 </div>
                 <div>
@@ -223,11 +223,11 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 onClick={() => setSetor('farma_aereo')}
                 className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
                   setor === 'farma_aereo'
-                    ? 'border-[#B38F4F] bg-[#B38F4F]/10 ring-2 ring-[#B38F4F]/30 text-slate-900 font-bold'
+                    ? 'border-[#C48229] bg-[#C48229]/10 ring-2 ring-[#C48229]/30 text-slate-900 font-bold'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className={`p-2 rounded-lg ${setor === 'farma_aereo' ? 'bg-[#B38F4F] text-white' : 'bg-slate-100 text-slate-600'}`}>
+                <div className={`p-2 rounded-lg ${setor === 'farma_aereo' ? 'bg-[#C48229] text-white' : 'bg-slate-100 text-slate-600'}`}>
                   <Plane className="w-4 h-4" />
                 </div>
                 <div>
@@ -241,11 +241,11 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 onClick={() => setSetor('geral')}
                 className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
                   setor === 'geral'
-                    ? 'border-[#B38F4F] bg-[#B38F4F]/10 ring-2 ring-[#B38F4F]/30 text-slate-900 font-bold'
+                    ? 'border-[#C48229] bg-[#C48229]/10 ring-2 ring-[#C48229]/30 text-slate-900 font-bold'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <div className={`p-2 rounded-lg ${setor === 'geral' ? 'bg-[#B38F4F] text-white' : 'bg-slate-100 text-slate-600'}`}>
+                <div className={`p-2 rounded-lg ${setor === 'geral' ? 'bg-[#C48229] text-white' : 'bg-slate-100 text-slate-600'}`}>
                   <Building2 className="w-4 h-4" />
                 </div>
                 <div>
@@ -276,7 +276,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                   onClick={() => setCategoria(preset.categoria)}
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                     categoria === preset.categoria
-                      ? 'bg-[#B38F4F] text-white shadow-xs'
+                      ? 'bg-[#C48229] text-white shadow-xs'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60'
                   }`}
                 >
@@ -291,7 +291,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
               placeholder="Ou digite o nome personalizado da categoria..."
-              className={`w-full px-3.5 py-2 rounded-xl border text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/40 ${
+              className={`w-full px-3.5 py-2 rounded-xl border text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]/40 ${
                 errors.categoria ? 'border-rose-500 bg-rose-50/20' : 'border-slate-300'
               }`}
             />
@@ -309,7 +309,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 placeholder="Ex: Diesel S10 para frota refrigerada quinzenal (Posto Graal)"
-                className={`w-full px-3.5 py-2 rounded-xl border text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/40 ${
+                className={`w-full px-3.5 py-2 rounded-xl border text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]/40 ${
                   errors.descricao ? 'border-rose-500 bg-rose-50/20' : 'border-slate-300'
                 }`}
               />
@@ -327,7 +327,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                   value={valor}
                   onChange={(e) => setValor(e.target.value)}
                   placeholder="0,00"
-                  className={`w-full pl-9 pr-3 py-2 rounded-xl border font-mono font-bold text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/40 ${
+                  className={`w-full pl-9 pr-3 py-2 rounded-xl border font-mono font-bold text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]/40 ${
                     errors.valor ? 'border-rose-500 bg-rose-50/20' : 'border-slate-300'
                   }`}
                 />
@@ -347,7 +347,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 value={fornecedor}
                 onChange={(e) => setFornecedor(e.target.value)}
                 placeholder="Ex: Thermo King Autorizada, LATAM Cargo, Posto Shell..."
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/40"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]/40"
               />
             </div>
 
@@ -360,7 +360,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 value={numeroDocumentoOuNF}
                 onChange={(e) => setNumeroDocumentoOuNF(e.target.value)}
                 placeholder="Ex: NF-e 45.891 ou Fatura FAT-2026/09"
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/40"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 bg-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]/40"
               />
             </div>
           </div>
@@ -375,7 +375,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 type="month"
                 value={dataCompetencia}
                 onChange={(e) => setDataCompetencia(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 bg-white text-xs focus:ring-2 focus:ring-[#B38F4F]/40"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 bg-white text-xs focus:ring-2 focus:ring-[#C48229]/40"
               />
             </div>
 
@@ -387,7 +387,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
                 type="date"
                 value={dataVencimento}
                 onChange={(e) => setDataVencimento(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 bg-white text-xs focus:ring-2 focus:ring-[#B38F4F]/40"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 bg-white text-xs focus:ring-2 focus:ring-[#C48229]/40"
               />
             </div>
 
@@ -398,7 +398,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as StatusCustoOperacional)}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 bg-white text-xs font-medium focus:ring-2 focus:ring-[#B38F4F]/40"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 bg-white text-xs font-medium focus:ring-2 focus:ring-[#C48229]/40"
               >
                 <option value="Pago">Pago</option>
                 <option value="A Pagar">A Pagar / Pendente</option>
@@ -413,7 +413,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
               <select
                 value={periodicidade}
                 onChange={(e) => setPeriodicidade(e.target.value as PeriodicidadeCusto)}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 bg-white text-xs font-medium focus:ring-2 focus:ring-[#B38F4F]/40"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-slate-800 bg-white text-xs font-medium focus:ring-2 focus:ring-[#C48229]/40"
               >
                 <option value="Recorrente">Recorrente</option>
                 <option value="Mensal Fixo">Mensal Fixo</option>
@@ -478,7 +478,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
               placeholder="Detalhes sobre a conformidade RDC 430, rota, calibração RBC, garantia..."
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 bg-white text-xs focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/40"
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 bg-white text-xs focus:outline-hidden focus:ring-2 focus:ring-[#C48229]/40"
             />
           </div>
         </form>
@@ -497,7 +497,7 @@ export const CustoOperacionalFormModal: React.FC<CustoOperacionalFormModalProps>
             <button
               type="button"
               onClick={handleSubmit}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#B38F4F] hover:bg-[#9A7B43] shadow-md shadow-[#B38F4F]/20 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#C48229] hover:bg-[#9A7B43] shadow-md shadow-[#C48229]/20 transition-all cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>{initialData ? 'Salvar Alterações' : 'Confirmar & Adicionar Custo'}</span>

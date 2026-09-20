@@ -179,7 +179,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
       {/* Top Banner / Hero */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#8A6A39] text-xs font-semibold border border-amber-200">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
             <CalendarDays className="w-3.5 h-3.5" />
             <span>Governança & Rotinas de Gestão JMT</span>
           </div>
@@ -206,7 +206,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
           <button
             type="button"
             onClick={handleOpenNewAtividade}
-            className="px-4 py-2 rounded-xl bg-[#B38F4F] hover:bg-[#8A6A39] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+            className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Atividade</span>
@@ -220,7 +220,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 font-medium">Total Programado</span>
-            <div className="w-7 h-7 rounded-lg bg-amber-50 text-[#B38F4F] flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-amber-50 text-[#C48229] flex items-center justify-center">
               <CalendarDays className="w-4 h-4" />
             </div>
           </div>
@@ -231,13 +231,13 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
         {/* Hoje */}
         <div className="bg-white p-3.5 rounded-xl border border-amber-200 bg-amber-50/20 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-[#8A6A39] font-semibold">Hoje</span>
-            <div className="w-7 h-7 rounded-lg bg-[#B38F4F] text-white flex items-center justify-center shadow-xs">
+            <span className="text-xs text-[#92611F] font-semibold">Hoje</span>
+            <div className="w-7 h-7 rounded-lg bg-[#C48229] text-white flex items-center justify-center shadow-xs">
               <Clock className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-xl font-bold text-[#8A6A39] mt-1">{hojeCount}</p>
-          <p className="text-[11px] text-[#B38F4F] font-medium mt-0.5">
+          <p className="text-xl font-bold text-[#92611F] mt-1">{hojeCount}</p>
+          <p className="text-[11px] text-[#C48229] font-medium mt-0.5">
             {hojeCount > 0 ? 'Compromissos hoje' : 'Nenhum para hoje'}
           </p>
         </div>
@@ -292,7 +292,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <CalendarDays className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <CalendarDays className="w-3.5 h-3.5 text-[#C48229]" />
             <span>Mês</span>
           </button>
           <button
@@ -304,7 +304,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Clock className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <Clock className="w-3.5 h-3.5 text-[#C48229]" />
             <span>Semana</span>
           </button>
           <button
@@ -316,7 +316,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <CalendarIcon className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <CalendarIcon className="w-3.5 h-3.5 text-[#C48229]" />
             <span>Dia</span>
           </button>
           <button
@@ -328,7 +328,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <ListFilter className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <ListFilter className="w-3.5 h-3.5 text-[#C48229]" />
             <span>Lista</span>
           </button>
           <button
@@ -340,7 +340,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Kanban className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <Kanban className="w-3.5 h-3.5 text-[#C48229]" />
             <span>Kanban</span>
           </button>
         </div>
@@ -352,7 +352,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
             onClick={() => setSelectedCategoria('todas')}
             className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
               selectedCategoria === 'todas'
-                ? 'bg-[#B38F4F] text-white font-semibold'
+                ? 'bg-[#C48229] text-white font-semibold'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >

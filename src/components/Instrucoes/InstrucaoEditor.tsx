@@ -82,7 +82,7 @@ const VINCULO_ICON: Record<VinculoNotaModulo['tipoEntidade'], React.ElementType>
 const STATUS_OPCOES: StatusInstrucaoTrabalho[] = ['Rascunho', 'Em Revisão', 'Vigente', 'Obsoleta'];
 
 const inputCls =
-  'w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#B38F4F] placeholder-slate-300';
+  'w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#C48229] placeholder-slate-300';
 const labelCls = 'text-[11px] font-bold text-slate-500 block mb-1';
 
 export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
@@ -204,7 +204,7 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
         <button
           type="button"
           onClick={() => onChange([...linhas, criarLinha()])}
-          className="w-full flex items-center justify-center gap-1.5 px-2 py-2 text-[11px] font-semibold text-slate-500 hover:text-[#8A6A39] hover:bg-amber-50/50 border-t border-slate-200 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 px-2 py-2 text-[11px] font-semibold text-slate-500 hover:text-[#92611F] hover:bg-amber-50/50 border-t border-slate-200 transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           {labelAdicionar}
@@ -517,7 +517,7 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
             <button
               type="button"
               onClick={onShare}
-              className="p-1.5 text-slate-400 hover:text-[#8A6A39] hover:bg-amber-50 rounded-lg transition-colors"
+              className="p-1.5 text-slate-400 hover:text-[#92611F] hover:bg-amber-50 rounded-lg transition-colors"
               title="Compartilhar link de preenchimento"
             >
               <Share2 className="w-4 h-4" />
@@ -574,7 +574,7 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
             onClick={() => setShowCompartilhar((v) => !v)}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-[11px] font-medium transition-colors ${
               (form.usuariosMarcadosIds || []).length > 0
-                ? 'bg-amber-50 border-amber-200 text-[#8A6A39]'
+                ? 'bg-amber-50 border-amber-200 text-[#92611F]'
                 : 'bg-white border-dashed border-slate-300 text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -603,7 +603,7 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
                         onClick={() => handleToggleUsuarioMarcado(u.id)}
                         className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border flex items-center gap-1 transition-colors ${
                           marcado
-                            ? 'bg-[#B38F4F] border-[#B38F4F] text-white'
+                            ? 'bg-[#C48229] border-[#C48229] text-white'
                             : 'bg-white border-slate-300 text-slate-600 hover:border-amber-300'
                         }`}
                       >
@@ -634,7 +634,7 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
               title={etapa.descricao}
               className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[11px] font-semibold transition-colors ${
                 ativa
-                  ? 'bg-[#B38F4F] border-[#B38F4F] text-white'
+                  ? 'bg-[#C48229] border-[#C48229] text-white'
                   : concluidaAntes
                   ? 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100'
                   : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
@@ -665,7 +665,7 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
           <button
             type="button"
             onClick={() => setMostrarGuia((v) => !v)}
-            className="shrink-0 flex items-center gap-1 text-[10px] font-semibold text-[#8A6A39] hover:text-[#B38F4F] transition-colors"
+            className="shrink-0 flex items-center gap-1 text-[10px] font-semibold text-[#92611F] hover:text-[#C48229] transition-colors"
           >
             <Lightbulb className="w-3 h-3" />
             {mostrarGuia ? 'Ocultar dica' : 'Como preencher?'}
@@ -700,7 +700,7 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
           type="button"
           onClick={() => irParaEtapa(indiceEtapa + 1)}
           disabled={indiceEtapa === ETAPAS_FORMULARIO.length - 1}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#B38F4F] hover:bg-[#8A6A39] disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#C48229] hover:bg-[#92611F] disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
         >
           Próxima etapa
           <ChevronRight className="w-3.5 h-3.5" />

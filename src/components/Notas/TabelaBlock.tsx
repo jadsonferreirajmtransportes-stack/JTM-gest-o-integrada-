@@ -85,7 +85,7 @@ export const TabelaBlock: React.FC<TabelaBlockProps> = ({ colunas, linhas, onCha
               <button
                 type="button"
                 onClick={handleAddColuna}
-                className="flex h-full w-full items-center justify-center py-2 text-slate-400 transition-colors hover:text-[#B38F4F]"
+                className="flex h-full w-full items-center justify-center py-2 text-slate-400 transition-colors hover:text-[#C48229]"
                 title="Adicionar coluna"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -126,7 +126,7 @@ export const TabelaBlock: React.FC<TabelaBlockProps> = ({ colunas, linhas, onCha
       <button
         type="button"
         onClick={handleAddLinha}
-        className="flex w-full items-center justify-center gap-1 border-t border-slate-200 py-1.5 text-[11px] font-semibold text-slate-400 transition-colors hover:bg-amber-50/40 hover:text-[#B38F4F]"
+        className="flex w-full items-center justify-center gap-1 border-t border-slate-200 py-1.5 text-[11px] font-semibold text-slate-400 transition-colors hover:bg-amber-50/40 hover:text-[#C48229]"
       >
         <Plus className="w-3.5 h-3.5" />
         Adicionar linha

@@ -148,7 +148,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por título, código, líder ou palavras-chave..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#B38F4F] focus:bg-white focus:outline-hidden"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#C48229] focus:bg-white focus:outline-hidden"
             />
           </div>
 
@@ -160,7 +160,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
                 onClick={() => setViewMode('grid')}
                 className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
                   viewMode === 'grid'
-                    ? 'bg-white text-[#8A6A39] shadow-xs'
+                    ? 'bg-white text-[#92611F] shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
                 title="Visualização em Cartões"
@@ -173,7 +173,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
                 onClick={() => setViewMode('table')}
                 className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
                   viewMode === 'table'
-                    ? 'bg-white text-[#8A6A39] shadow-xs'
+                    ? 'bg-white text-[#92611F] shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
                 title="Visualização em Tabela"
@@ -195,7 +195,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
             <button
               type="button"
               onClick={onOpenNovoProjeto}
-              className="px-4 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4" />
               <span>Novo Projeto</span>
@@ -283,7 +283,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
               setSelectedPrioridade('todos');
               setSelectedSetor('todos');
             }}
-            className="text-[#8A6A39] hover:underline font-semibold"
+            className="text-[#92611F] hover:underline font-semibold"
           >
             Limpar Filtros
           </button>
@@ -300,7 +300,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
               <button
                 type="button"
                 onClick={onOpenNovoProjeto}
-                className="px-4 py-2 bg-[#B38F4F] text-white rounded-xl text-xs font-bold hover:bg-[#8A6A39]"
+                className="px-4 py-2 bg-[#C48229] text-white rounded-xl text-xs font-bold hover:bg-[#92611F]"
               >
                 Criar Novo Projeto
               </button>
@@ -319,7 +319,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-amber-50 text-[#8A6A39] border border-amber-200">
+                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-amber-50 text-[#92611F] border border-amber-200">
                           {p.codigo}
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${priorityColors[p.prioridade]}`}>
@@ -365,11 +365,11 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
                         <span className="text-slate-500 font-medium">
                           Marcos: {completedMilestones}/{totalMilestones}
                         </span>
-                        <span className="font-mono font-bold text-[#8A6A39]">{p.progressoPercentual}%</span>
+                        <span className="font-mono font-bold text-[#92611F]">{p.progressoPercentual}%</span>
                       </div>
                       <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                         <div
-                          className="bg-[#B38F4F] h-full rounded-full transition-all duration-300"
+                          className="bg-[#C48229] h-full rounded-full transition-all duration-300"
                           style={{ width: `${p.progressoPercentual}%` }}
                         />
                       </div>
@@ -400,7 +400,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
                       <button
                         type="button"
                         onClick={() => onSelectProjeto(p)}
-                        className="p-1.5 text-slate-400 hover:text-[#B38F4F] hover:bg-amber-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-[#C48229] hover:bg-amber-50 rounded-lg transition-colors"
                         title="Ver Detalhes 360°"
                       >
                         <Eye className="w-4 h-4" />
@@ -408,7 +408,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
                       <button
                         type="button"
                         onClick={() => onEditProjeto(p)}
-                        className="p-1.5 text-slate-400 hover:text-[#B38F4F] hover:bg-amber-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-[#C48229] hover:bg-amber-50 rounded-lg transition-colors"
                         title="Editar Projeto"
                       >
                         <Edit3 className="w-4 h-4" />
@@ -458,12 +458,12 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
                   <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[11px] font-bold text-[#8A6A39] bg-amber-50 px-1.5 py-0.5 rounded">
+                        <span className="font-mono text-[11px] font-bold text-[#92611F] bg-amber-50 px-1.5 py-0.5 rounded">
                           {p.codigo}
                         </span>
                         <span
                           onClick={() => onSelectProjeto(p)}
-                          className="font-bold text-slate-900 hover:text-[#8A6A39] cursor-pointer line-clamp-1"
+                          className="font-bold text-slate-900 hover:text-[#92611F] cursor-pointer line-clamp-1"
                         >
                           {p.titulo}
                         </span>
@@ -489,9 +489,9 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
                     <td className="py-3 px-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <div className="w-16 bg-slate-200 h-2 rounded-full overflow-hidden">
-                          <div className="bg-[#B38F4F] h-full rounded-full" style={{ width: `${p.progressoPercentual}%` }} />
+                          <div className="bg-[#C48229] h-full rounded-full" style={{ width: `${p.progressoPercentual}%` }} />
                         </div>
-                        <span className="font-mono font-bold text-[#8A6A39] text-[11px]">{p.progressoPercentual}%</span>
+                        <span className="font-mono font-bold text-[#92611F] text-[11px]">{p.progressoPercentual}%</span>
                       </div>
                     </td>
                     <td className="py-3 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
@@ -512,7 +512,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
                         <button
                           type="button"
                           onClick={() => onSelectProjeto(p)}
-                          className="p-1 text-slate-400 hover:text-[#B38F4F] rounded-md"
+                          className="p-1 text-slate-400 hover:text-[#C48229] rounded-md"
                           title="Detalhes"
                         >
                           <Eye className="w-4 h-4" />
@@ -520,7 +520,7 @@ export const ProjetosListTab: React.FC<ProjetosListTabProps> = ({
                         <button
                           type="button"
                           onClick={() => onEditProjeto(p)}
-                          className="p-1 text-slate-400 hover:text-[#B38F4F] rounded-md"
+                          className="p-1 text-slate-400 hover:text-[#C48229] rounded-md"
                           title="Editar"
                         >
                           <Edit3 className="w-4 h-4" />

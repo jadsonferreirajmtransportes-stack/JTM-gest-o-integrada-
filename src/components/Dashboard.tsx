@@ -207,10 +207,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               id="dp-btn-admission-link"
               type="button"
               onClick={onOpenAdmissionLink}
-              className="px-3.5 py-2 rounded-xl border border-[#B38F4F]/30 bg-[#F4EEE1] text-[#111111] hover:bg-[#B38F4F]/15 text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl border border-[#C48229]/30 bg-[#F4EEE1] text-[#111111] hover:bg-[#C48229]/15 text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
               title="Gerar e compartilhar link do formulário de admissão"
             >
-              <UserCheck className="w-3.5 h-3.5 text-[#B38F4F]" />
+              <UserCheck className="w-3.5 h-3.5 text-[#C48229]" />
               <span>Link de Admissão</span>
             </button>
           )}
@@ -222,7 +222,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               onClick={onOpenNovaOcorrencia}
               className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5"
             >
-              <AlertTriangle className="w-3.5 h-3.5 text-[#B38F4F]" />
+              <AlertTriangle className="w-3.5 h-3.5 text-[#C48229]" />
               <span>Nova Ocorrência</span>
             </button>
           )}
@@ -242,7 +242,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               id="dp-btn-new-employee"
               type="button"
               onClick={onOpenNovoColaborador}
-              className="bg-[#B38F4F] hover:bg-[#8A6A39] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-98 flex items-center gap-2"
+              className="bg-[#C48229] hover:bg-[#92611F] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-98 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               <span>Novo Colaborador</span>
@@ -339,7 +339,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('saude')}
-                className="text-[10px] text-[#B38F4F] hover:opacity-80 font-bold uppercase transition-opacity"
+                className="text-[10px] text-[#C48229] hover:opacity-80 font-bold uppercase transition-opacity"
               >
                 Ver todos os alertas &rarr;
               </button>
@@ -417,7 +417,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <button
                     type="button"
                     onClick={() => onNavigate('ferias')}
-                    className="text-xs text-[#B38F4F] hover:opacity-80 font-medium"
+                    className="text-xs text-[#C48229] hover:opacity-80 font-medium"
                   >
                     Ver escala
                   </button>
@@ -468,7 +468,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <button
                     type="button"
                     onClick={() => onNavigate('aniversariantes')}
-                    className="text-xs text-[#B38F4F] hover:opacity-80 font-medium"
+                    className="text-xs text-[#C48229] hover:opacity-80 font-medium"
                   >
                     Ver todos
                   </button>
@@ -520,7 +520,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="lg:col-span-4 space-y-6">
           {/* Status Compliance ANVISA */}
           <div className="bg-white p-6 rounded-xl shadow-xs border border-slate-200">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#8A6A39] mb-5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#92611F] mb-5">
               Status Compliance ANVISA
             </h3>
 
@@ -532,7 +532,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-[#B38F4F] h-1.5 rounded-full transition-all duration-500"
+                    className="bg-[#C48229] h-1.5 rounded-full transition-all duration-500"
                     style={{ width: `${pctDocs}%` }}
                   />
                 </div>
@@ -580,7 +580,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('ocorrencias')}
-                className="text-xs text-[#B38F4F] hover:opacity-80 font-medium"
+                className="text-xs text-[#C48229] hover:opacity-80 font-medium"
               >
                 Ver todas
               </button>
@@ -624,7 +624,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => onNavigate('formulario_publico')}
                 className="w-full mt-5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-colors flex items-center justify-center gap-2"
               >
-                <Share2 className="w-3.5 h-3.5 text-[#B38F4F]" />
+                <Share2 className="w-3.5 h-3.5 text-[#C48229]" />
                 <span>Gerar Link de Formulário Público</span>
               </button>
             )}

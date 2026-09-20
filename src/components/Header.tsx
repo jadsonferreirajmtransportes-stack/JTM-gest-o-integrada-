@@ -270,7 +270,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
                 className="w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
               >
-                <Download className="w-4 h-4 text-[#B38F4F]" />
+                <Download className="w-4 h-4 text-[#C48229]" />
                 <span>Exportar Backup (JSON)</span>
               </button>
               <button
@@ -317,7 +317,7 @@ export const Header: React.FC<HeaderProps> = ({
             {totalAlertCount > 0 && (
               <span
                 className={`absolute -top-1 -right-1 text-[10px] font-bold px-1.5 py-0.2 rounded-full text-white ${
-                  urgentCount > 0 ? 'bg-rose-600 animate-pulse' : 'bg-[#B38F4F]'
+                  urgentCount > 0 ? 'bg-rose-600 animate-pulse' : 'bg-[#C48229]'
                 }`}
               >
                 {totalAlertCount}
@@ -329,7 +329,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
                 <div className="font-bold text-[#111111] text-sm flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-[#B38F4F]" />
+                  <AlertTriangle className="w-4 h-4 text-[#C48229]" />
                   <span>Alertas Regulatórios ({totalAlertCount})</span>
                 </div>
                 {urgentCount > 0 && (
@@ -358,7 +358,7 @@ export const Header: React.FC<HeaderProps> = ({
                           <Stethoscope className="w-4 h-4 text-rose-600" />
                         )}
                         {alerta.tipo === 'ferias' && (
-                          <Calendar className="w-4 h-4 text-[#B38F4F]" />
+                          <Calendar className="w-4 h-4 text-[#C48229]" />
                         )}
                         {alerta.tipo === 'documento' && (
                           <FileWarning className="w-4 h-4 text-amber-500" />
@@ -371,7 +371,7 @@ export const Header: React.FC<HeaderProps> = ({
                             className={`text-[10px] font-bold px-1.5 py-0.2 rounded-sm ${
                               alerta.nivel === 'urgente'
                                 ? 'bg-rose-100 text-rose-800'
-                                : 'bg-[#F4EEE1] text-[#8A6A39] border border-[#B38F4F]/30'
+                                : 'bg-[#F4EEE1] text-[#92611F] border border-[#C48229]/30'
                             }`}
                           >
                             {alerta.diasRestantes !== undefined
@@ -398,7 +398,7 @@ export const Header: React.FC<HeaderProps> = ({
                     setIsAlertsOpen(false);
                     onSelectSection('saude');
                   }}
-                  className="text-xs font-semibold text-[#8A6A39] hover:text-[#B38F4F]"
+                  className="text-xs font-semibold text-[#92611F] hover:text-[#C48229]"
                 >
                   Ver Relatório Completo de Conformidade RDC 430 &rarr;
                 </button>
@@ -412,10 +412,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={onOpenSwitchUserModal}
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#B38F4F]/60 transition-all text-left shadow-2xs group"
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#C48229]/60 transition-all text-left shadow-2xs group"
             title="Clique para alternar o usuário conectado ou gerenciar logins"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#B38F4F] to-[#8A6A39] text-white font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#C48229] to-[#92611F] text-white font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               {currentUser.nome.substring(0, 2).toUpperCase()}
             </div>
             <div className="hidden md:block text-left">

@@ -206,7 +206,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
         {/* Header */}
         <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#B38F4F] text-white flex items-center justify-center shadow-md shadow-[#B38F4F]/20">
+            <div className="w-10 h-10 rounded-xl bg-[#C48229] text-white flex items-center justify-center shadow-md shadow-[#C48229]/20">
               <Send className="w-5 h-5" />
             </div>
             <div>
@@ -249,21 +249,21 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
           <div className="flex items-center gap-3 flex-wrap">
             <span className="font-bold">{atividade.titulo}</span>
             <span className="text-amber-400">•</span>
-            <span className="flex items-center gap-1 text-[#8A6A39]">
-              <Calendar className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <span className="flex items-center gap-1 text-[#92611F]">
+              <Calendar className="w-3.5 h-3.5 text-[#C48229]" />
               {formattedDate}
             </span>
             <span className="text-amber-400">•</span>
-            <span className="flex items-center gap-1 text-[#8A6A39]">
-              <Clock className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <span className="flex items-center gap-1 text-[#92611F]">
+              <Clock className="w-3.5 h-3.5 text-[#C48229]" />
               {timeStr}
             </span>
           </div>
-          <div className="flex items-center gap-1 text-[11px] text-[#8A6A39] font-medium">
+          <div className="flex items-center gap-1 text-[11px] text-[#92611F] font-medium">
             {getTipoLocalEfetivo(atividade) === 'videoconferencia' ? (
-              <Video className="w-3 h-3 text-[#B38F4F]" />
+              <Video className="w-3 h-3 text-[#C48229]" />
             ) : (
-              <MapPin className="w-3 h-3 text-[#B38F4F]" />
+              <MapPin className="w-3 h-3 text-[#C48229]" />
             )}
             <span className="truncate max-w-[200px]">{atividade.localOuLink}</span>
           </div>
@@ -300,7 +300,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
               onClick={() => setActiveTab('email')}
               className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
                 activeTab === 'email'
-                  ? 'bg-[#B38F4F] text-white shadow-sm'
+                  ? 'bg-[#C48229] text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
@@ -309,7 +309,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] ${
                   activeTab === 'email'
-                    ? 'bg-[#8A6A39] text-white'
+                    ? 'bg-[#92611F] text-white'
                     : 'bg-slate-200 text-slate-700'
                 }`}
               >
@@ -333,7 +333,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
                     onClick={() => setTipoModelo('lembrete')}
                     className={`p-2 rounded-xl border text-left text-xs transition-all ${
                       tipoModelo === 'lembrete'
-                        ? 'border-[#B38F4F] bg-amber-50/60 text-[#5c4526] font-bold ring-2 ring-[#B38F4F]/20'
+                        ? 'border-[#C48229] bg-amber-50/60 text-[#5c4526] font-bold ring-2 ring-[#C48229]/20'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                     }`}
                   >
@@ -390,7 +390,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-[#B38F4F]" />
+                    <Users className="w-4 h-4 text-[#C48229]" />
                     <span className="text-xs font-bold text-slate-900">
                       Pessoas Envolvidas ({selectedPessoas.length}/{pessoas.length} selecionadas)
                     </span>
@@ -399,7 +399,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleSelectAll(true)}
-                      className="text-[#B38F4F] hover:text-[#8A6A39] font-medium"
+                      className="text-[#C48229] hover:text-[#92611F] font-medium"
                     >
                       Marcar todas
                     </button>
@@ -435,7 +435,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
                               type="checkbox"
                               checked={p.selecionado}
                               onChange={() => handleTogglePessoa(p.id)}
-                              className="mt-0.5 rounded border-slate-300 text-[#B38F4F] focus:ring-[#B38F4F]"
+                              className="mt-0.5 rounded border-slate-300 text-[#C48229] focus:ring-[#C48229]"
                             />
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
@@ -494,7 +494,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
 
                                 {/* Email */}
                                 <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
-                                  <span className="text-[10px] font-bold text-[#8A6A39] uppercase">
+                                  <span className="text-[10px] font-bold text-[#92611F] uppercase">
                                     E-mail:
                                   </span>
                                   <input
@@ -512,7 +512,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
                                         previewEmail.subject
                                       )}&body=${encodeURIComponent(previewEmail.body)}`}
                                       title="Enviar e-mail individual"
-                                      className="p-1 hover:bg-amber-100 text-[#B38F4F] rounded transition-colors"
+                                      className="p-1 hover:bg-amber-100 text-[#C48229] rounded transition-colors"
                                     >
                                       <Mail className="w-3.5 h-3.5" />
                                     </a>
@@ -543,7 +543,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowAddPessoa(true)}
-                    className="px-3 py-1.5 text-xs font-semibold text-[#B38F4F] hover:text-[#8A6A39] bg-amber-50/60 hover:bg-amber-100/60 rounded-lg border border-dashed border-amber-200 flex items-center gap-1.5 transition-colors w-full justify-center"
+                    className="px-3 py-1.5 text-xs font-semibold text-[#C48229] hover:text-[#92611F] bg-amber-50/60 hover:bg-amber-100/60 rounded-lg border border-dashed border-amber-200 flex items-center gap-1.5 transition-colors w-full justify-center"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Adicionar outro contato / convidado externo</span>
@@ -588,7 +588,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
                         type="button"
                         onClick={handleAddCustomPessoa}
                         disabled={!novoNome.trim()}
-                        className="px-3 py-1 bg-[#B38F4F] hover:bg-[#8A6A39] disabled:opacity-50 text-white rounded-md text-xs font-semibold"
+                        className="px-3 py-1 bg-[#C48229] hover:bg-[#92611F] disabled:opacity-50 text-white rounded-md text-xs font-semibold"
                       >
                         Salvar e Incluir
                       </button>
@@ -607,7 +607,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
                   value={observacaoCustom}
                   onChange={(e) => setObservacaoCustom(e.target.value)}
                   placeholder="Ex: Favor levar os relatórios de temperatura impressos e ter em mãos as credenciais da Anvisa..."
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] focus:bg-white"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#C48229] focus:bg-white"
                 />
               </div>
             </div>
@@ -733,7 +733,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
                         type="button"
                         onClick={handleOpenMailto}
                         disabled={selectedEmails.length === 0}
-                        className="w-full py-2.5 px-3 bg-[#B38F4F] hover:bg-[#8A6A39] disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#B38F4F]/20"
+                        className="w-full py-2.5 px-3 bg-[#C48229] hover:bg-[#92611F] disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C48229]/20"
                         title="Abrir aplicativo de e-mail padrão do sistema"
                       >
                         <Mail className="w-4 h-4" />
@@ -812,7 +812,7 @@ export const AgendaAlertaModal: React.FC<AgendaAlertaModalProps> = ({
               <strong className="text-slate-700">{selectedPessoas.length}</strong> pessoa(s)
             </span>
             {atividade.ultimoAlertaEnviadoEm && (
-              <span className="text-[#B38F4F] font-medium bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
+              <span className="text-[#C48229] font-medium bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
                 Último alerta enviado em:{' '}
                 {new Date(atividade.ultimoAlertaEnviadoEm).toLocaleString('pt-BR', {
                   day: '2-digit',

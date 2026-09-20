@@ -342,7 +342,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
         {/* Header */}
         <div className="px-6 py-4 bg-white flex items-center justify-between shrink-0 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#B38F4F] flex items-center justify-center text-white shadow-sm shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#C48229] flex items-center justify-center text-white shadow-sm shrink-0">
               <KeyRound className="w-5 h-5" />
             </div>
             <div>
@@ -375,7 +375,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
           {/* Section 1: Dados do Usuário */}
           <div>
             <div className="flex items-center gap-2 mb-3 pb-1 border-b border-slate-100">
-              <User className="w-4 h-4 text-[#B38F4F]" />
+              <User className="w-4 h-4 text-[#C48229]" />
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 1. Credenciais & Informações do Usuário
               </h4>
@@ -392,7 +392,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                   placeholder="Ex: Carlos Eduardo Lima"
                   value={nome}
                   onChange={(e) => handleAutoSuggestLogin(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#C48229] focus:border-transparent outline-hidden transition-all"
                 />
               </div>
 
@@ -408,7 +408,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                     placeholder="carlos.lima"
                     value={login}
                     onChange={(e) => setLogin(e.target.value.toLowerCase().replace(/\s+/g, '.'))}
-                    className="w-full pl-8 pr-3.5 py-2 text-sm font-mono bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden transition-all"
+                    className="w-full pl-8 pr-3.5 py-2 text-sm font-mono bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#C48229] focus:border-transparent outline-hidden transition-all"
                   />
                 </div>
                 <p className="text-[10px] text-slate-400 mt-1">Usado para entrar no sistema (sem espaços).</p>
@@ -420,7 +420,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                   <button
                     type="button"
                     onClick={handleGeneratePassword}
-                    className="text-[10px] text-[#B38F4F] hover:underline font-bold flex items-center gap-1"
+                    className="text-[10px] text-[#C48229] hover:underline font-bold flex items-center gap-1"
                   >
                     <Sparkles className="w-3 h-3" /> Gerar Segura
                   </button>
@@ -432,7 +432,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                     placeholder="Senha de acesso"
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
-                    className="w-full pl-3.5 pr-10 py-2 text-sm font-mono bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden transition-all"
+                    className="w-full pl-3.5 pr-10 py-2 text-sm font-mono bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#C48229] focus:border-transparent outline-hidden transition-all"
                   />
                   <button
                     type="button"
@@ -453,7 +453,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                     placeholder="carlos.lima@jmtransportes.com.br"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden transition-all"
+                    className="w-full pl-9 pr-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#C48229] focus:border-transparent outline-hidden transition-all"
                   />
                 </div>
               </div>
@@ -465,7 +465,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                   placeholder="Ex: Supervisor Farma Rodoviário"
                   value={cargo}
                   onChange={(e) => setCargo(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#C48229] focus:border-transparent outline-hidden transition-all"
                 />
               </div>
 
@@ -474,7 +474,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                 <select
                   value={setor}
                   onChange={(e) => setSetor(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#C48229] focus:border-transparent outline-hidden transition-all"
                 >
                   <option value="">Selecione um setor...</option>
                   <option value="Diretoria Executiva">Diretoria Executiva</option>
@@ -534,7 +534,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                       onClick={() => setRole(r)}
                       className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all capitalize ${
                         role === r
-                          ? 'bg-[#B38F4F] border-[#B38F4F] text-white shadow-xs'
+                          ? 'bg-[#C48229] border-[#C48229] text-white shadow-xs'
                           : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                       }`}
                     >
@@ -549,7 +549,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
 
               <div className="sm:col-span-2 pt-2 border-t border-slate-100">
                 <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-                  <UserCog className="w-3.5 h-3.5 text-[#B38F4F]" />
+                  <UserCog className="w-3.5 h-3.5 text-[#C48229]" />
                   Vincular a um Supervisor (opcional)
                 </label>
                 <select
@@ -558,7 +558,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                     setSupervisorId(e.target.value);
                     if (!e.target.value) setEscopoApenasProprioSetor(false);
                   }}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden transition-all"
+                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#C48229] focus:border-transparent outline-hidden transition-all"
                 >
                   <option value="">— Nenhum —</option>
                   {supervisores.map((sup) => (
@@ -582,7 +582,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                     disabled={!supervisorId}
                     checked={escopoApenasProprioSetor}
                     onChange={(e) => setEscopoApenasProprioSetor(e.target.checked)}
-                    className="mt-0.5 w-3.5 h-3.5 accent-[#B38F4F]"
+                    className="mt-0.5 w-3.5 h-3.5 accent-[#C48229]"
                   />
                   <span className="text-xs text-slate-700">
                     <strong className="font-bold">Restringir à própria equipe/carteira</strong> —
@@ -599,7 +599,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-1 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#B38F4F]" />
+                <ShieldCheck className="w-4 h-4 text-[#C48229]" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
                   2. Módulos com Acesso Permitido ({modulosPermitidos.length} de {MODULOS_SISTEMA.length})
                 </h4>
@@ -661,14 +661,14 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                     onClick={() => toggleModule(modulo.id)}
                     className={`cursor-pointer rounded-xl p-3.5 border transition-all duration-150 flex items-start gap-3 select-none ${
                       isChecked
-                        ? 'bg-amber-50/50 border-[#B38F4F] shadow-xs ring-1 ring-[#B38F4F]/30'
+                        ? 'bg-amber-50/50 border-[#C48229] shadow-xs ring-1 ring-[#C48229]/30'
                         : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/70 opacity-80'
                     }`}
                   >
                     <div
                       className={`w-5 h-5 rounded-md flex items-center justify-center mt-0.5 shrink-0 transition-colors ${
                         isChecked
-                          ? 'bg-[#B38F4F] text-white shadow-xs'
+                          ? 'bg-[#C48229] text-white shadow-xs'
                           : 'border-2 border-slate-300 bg-white'
                       }`}
                     >
@@ -679,7 +679,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                       <div className="flex items-center gap-2 flex-wrap">
                         <Icon
                           className={`w-4 h-4 shrink-0 ${
-                            isChecked ? 'text-[#8A6A39]' : 'text-slate-400'
+                            isChecked ? 'text-[#92611F]' : 'text-slate-400'
                           }`}
                         />
                         <span className={`text-xs font-bold ${isChecked ? 'text-slate-900' : 'text-slate-600'}`}>
@@ -708,7 +708,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
               <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                   <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <UserCog className="w-3.5 h-3.5 text-[#B38F4F]" />
+                    <UserCog className="w-3.5 h-3.5 text-[#C48229]" />
                     Dentro de DP, quais seções esse login vê? ({secoesDpPermitidas.length} de{' '}
                     {TODAS_SECOES_DP.length})
                   </p>
@@ -739,7 +739,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                         key={secao.id}
                         className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer select-none transition-colors ${
                           isChecked
-                            ? 'bg-white border-[#B38F4F]/40 text-slate-800'
+                            ? 'bg-white border-[#C48229]/40 text-slate-800'
                             : 'bg-white/60 border-slate-200 text-slate-400'
                         }`}
                       >
@@ -747,7 +747,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleSecaoDp(secao.id)}
-                          className="w-3.5 h-3.5 accent-[#B38F4F]"
+                          className="w-3.5 h-3.5 accent-[#C48229]"
                         />
                         <span className="text-[11px] font-medium">{secao.label}</span>
                       </label>
@@ -770,7 +770,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
               <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                   <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <UserCog className="w-3.5 h-3.5 text-[#B38F4F]" />
+                    <UserCog className="w-3.5 h-3.5 text-[#C48229]" />
                     Dentro de Farma Aéreo/Rodoviário, quais abas esse login vê? (
                     {secoesOperacoesPermitidas.length} de {TODAS_SECOES_OPERACOES.length})
                   </p>
@@ -801,7 +801,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                         key={secao.id}
                         className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer select-none transition-colors ${
                           isChecked
-                            ? 'bg-white border-[#B38F4F]/40 text-slate-800'
+                            ? 'bg-white border-[#C48229]/40 text-slate-800'
                             : 'bg-white/60 border-slate-200 text-slate-400'
                         }`}
                       >
@@ -809,7 +809,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleSecaoOperacoes(secao.id)}
-                          className="w-3.5 h-3.5 accent-[#B38F4F]"
+                          className="w-3.5 h-3.5 accent-[#C48229]"
                         />
                         <span className="text-[11px] font-medium">{secao.label}</span>
                       </label>
@@ -836,7 +836,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
               placeholder="Ex: Usuário responsável pelos embarques aeroportuários do TECA Recife e acompanhamento de clientes farmacêuticos."
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#B38F4F] focus:border-transparent outline-hidden transition-all custom-scrollbar"
+              className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#C48229] focus:border-transparent outline-hidden transition-all custom-scrollbar"
             />
           </div>
         </form>
@@ -844,7 +844,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
         {/* Footer */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
           <div className="text-xs text-slate-500 flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-[#B38F4F]" />
+            <Info className="w-3.5 h-3.5 text-[#C48229]" />
             <span>As permissões entram em vigor imediatamente após salvar.</span>
           </div>
 
@@ -859,7 +859,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
             <button
               type="button"
               onClick={handleSubmit}
-              className="px-5 py-2 text-xs font-bold text-white bg-[#B38F4F] hover:bg-[#967438] rounded-xl shadow-md shadow-[#B38F4F]/20 transition-all flex items-center gap-2"
+              className="px-5 py-2 text-xs font-bold text-white bg-[#C48229] hover:bg-[#967438] rounded-xl shadow-md shadow-[#C48229]/20 transition-all flex items-center gap-2"
             >
               <Check className="w-4 h-4" />
               <span>{usuarioToEdit ? 'Salvar Alterações' : 'Criar Login'}</span>

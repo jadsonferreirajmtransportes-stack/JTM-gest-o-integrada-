@@ -106,7 +106,7 @@ export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-50 text-[#B38F4F]"
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-50 text-[#C48229]"
           >
             <Users className="w-5 h-5" />
           </div>
@@ -116,7 +116,7 @@ export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
                 Equipe Alocada ao {setorNome}
               </h2>
               <span
-                className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#8A6A39]"
+                className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#92611F]"
               >
                 {linkedColaboradores.length} colaboradores
               </span>
@@ -131,7 +131,7 @@ export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
           {onOpenLinkModal && (
             <button
               onClick={onOpenLinkModal}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs bg-[#B38F4F] hover:bg-[#8A6A39] text-white"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs bg-[#C48229] hover:bg-[#92611F] text-white"
             >
               <UserCheck className="w-3.5 h-3.5" />
               <span>Alocar / Remanejar ({allColaboradores.length})</span>
@@ -141,7 +141,7 @@ export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
           {onOpenNovoColaborador && (
             <button
               onClick={onOpenNovoColaborador}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#B38F4F] hover:bg-[#8A6A39] text-white transition-all shadow-xs"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#C48229] hover:bg-[#92611F] text-white transition-all shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Novo Colaborador</span>
@@ -159,7 +159,7 @@ export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por Nome, Matrícula, Cargo..."
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] focus:bg-white"
+            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#C48229] focus:bg-white"
           />
         </div>
 
@@ -170,7 +170,7 @@ export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
           <select
             value={funcaoFilter}
             onChange={(e) => setFuncaoFilter(e.target.value)}
-            className="w-full md:w-auto px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] focus:bg-white"
+            className="w-full md:w-auto px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229] focus:bg-white"
           >
             <option value="todos">Todas as Funções ({uniqueFuncoes.length})</option>
             {uniqueFuncoes.map((f) => (
@@ -186,7 +186,7 @@ export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
       {displayedColaboradores.length === 0 ? (
         <div className="bg-white rounded-xl p-10 border border-slate-200 text-center space-y-3">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto bg-amber-50 text-[#B38F4F]"
+            className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto bg-amber-50 text-[#C48229]"
           >
             <Users className="w-6 h-6" />
           </div>
@@ -201,7 +201,7 @@ export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
           {onOpenLinkModal && (
             <button
               onClick={onOpenLinkModal}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all bg-[#B38F4F] hover:bg-[#8A6A39]"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all bg-[#C48229] hover:bg-[#92611F]"
             >
               <UserCheck className="w-4 h-4" />
               <span>Alocar Colaboradores ao {setorNome}</span>
@@ -234,7 +234,7 @@ export const SectorEmployeesTab: React.FC<SectorEmployeesTabProps> = ({
                         className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                           isFarmaceutico
                             ? 'bg-purple-100 text-purple-800'
-                            : 'bg-amber-100 text-[#8A6A39]'
+                            : 'bg-amber-100 text-[#92611F]'
                         }`}
                       >
                         {colab.nomeCompleto

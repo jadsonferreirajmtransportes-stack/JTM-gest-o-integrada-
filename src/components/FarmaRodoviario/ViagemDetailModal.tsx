@@ -190,7 +190,7 @@ export const ViagemDetailModal: React.FC<ViagemDetailModalProps> = ({
             {/* Departure Checklist */}
             <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-2">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-[#B38F4F]" />
+                <ShieldCheck className="w-4 h-4 text-[#C48229]" />
                 Checklist de Partida & ANVISA
               </span>
               <div className="space-y-1 text-xs">
@@ -289,7 +289,7 @@ export const ViagemDetailModal: React.FC<ViagemDetailModalProps> = ({
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-start gap-3">
-                      <span className="w-6 h-6 rounded-full bg-[#B38F4F] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                      <span className="w-6 h-6 rounded-full bg-[#C48229] text-white text-xs font-bold flex items-center justify-center shrink-0">
                         {ponto.ordemEntrega}
                       </span>
                       <div>
@@ -321,7 +321,7 @@ export const ViagemDetailModal: React.FC<ViagemDetailModalProps> = ({
                       ) : (
                         <button
                           onClick={() => setSelectedPontoId(ponto.id)}
-                          className="px-3 py-1.5 text-xs font-bold bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg transition-colors shadow-xs"
+                          className="px-3 py-1.5 text-xs font-bold bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg transition-colors shadow-xs"
                         >
                           Dar Baixa na Entrega
                         </button>

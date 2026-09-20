@@ -38,7 +38,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div>
             <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
-              <ZoomIn className="w-4 h-4 text-[#8A6A39]" />
+              <ZoomIn className="w-4 h-4 text-[#92611F]" />
               <span>{title}</span>
             </h3>
             {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
@@ -51,7 +51,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
               className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-200 transition-colors"
               title="Baixar arquivo original"
             >
-              <Download className="w-3.5 h-3.5 text-[#8A6A39]" />
+              <Download className="w-3.5 h-3.5 text-[#92611F]" />
               <span>Baixar</span>
             </button>
             <button
@@ -80,7 +80,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="px-3 py-1.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all shrink-0"
+                  className="px-3 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all shrink-0"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Baixar PDF</span>

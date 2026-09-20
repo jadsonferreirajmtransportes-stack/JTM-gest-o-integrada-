@@ -290,7 +290,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
         {/* Modal Header */}
         <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#B38F4F] text-white flex items-center justify-center shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-[#C48229] text-white flex items-center justify-center shadow-xs">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
@@ -324,7 +324,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ex: Comitê Semanal de Operações Farma Aéreo e Rodoviário"
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
             />
           </div>
 
@@ -335,7 +335,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
               <select
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value as CategoriaAtividadeGestao)}
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
               >
                 {CATEGORIAS.map((cat) => (
                   <option key={cat} value={cat}>
@@ -350,7 +350,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as StatusAtividadeGestao)}
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
               >
                 {STATUS_LIST.map((st) => (
                   <option key={st} value={st}>
@@ -365,7 +365,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
               <select
                 value={prioridade}
                 onChange={(e) => setPrioridade(e.target.value as PrioridadeAtividadeGestao)}
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
               >
                 {PRIORIDADES.map((pr) => (
                   <option key={pr} value={pr}>
@@ -380,7 +380,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#B38F4F]" />
+                <Clock className="w-3.5 h-3.5 text-[#C48229]" />
                 Data e Horário
               </span>
               <label className="flex items-center gap-1.5 cursor-pointer text-slate-600 select-none">
@@ -388,7 +388,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                   type="checkbox"
                   checked={diaInteiro}
                   onChange={(e) => setDiaInteiro(e.target.checked)}
-                  className="rounded border-slate-300 text-[#B38F4F] focus:ring-[#B38F4F]"
+                  className="rounded border-slate-300 text-[#C48229] focus:ring-[#C48229]"
                 />
                 <span>Dia Inteiro</span>
               </label>
@@ -406,7 +406,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                     // Evita Data Final anterior à nova Data de Início
                     if (dataFim && dataFim < e.target.value) setDataFim('');
                   }}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                 />
               </div>
 
@@ -419,13 +419,13 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                   min={data}
                   value={dataFim}
                   onChange={(e) => setDataFim(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                 />
               </div>
             </div>
 
             {dataFim && dataFim > data && (
-              <p className="text-[11px] text-[#8A6A39] bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+              <p className="text-[11px] text-[#92611F] bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
                 <Calendar className="w-3 h-3 shrink-0" />
                 <span>
                   Atividade de vários dias: de{' '}
@@ -446,7 +446,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                     type="time"
                     value={horaInicio}
                     onChange={(e) => setHoraInicio(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
 
@@ -458,7 +458,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                     type="time"
                     value={horaFim}
                     onChange={(e) => setHoraFim(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
               </div>
@@ -471,7 +471,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                 <select
                   value={recorrencia}
                   onChange={(e) => setRecorrencia(e.target.value as RecorrenciaAtividade)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                 >
                   {RECORRENCIAS.map((rec) => (
                     <option key={rec} value={rec}>
@@ -488,7 +488,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                 <select
                   value={lembreteMinutos}
                   onChange={(e) => setLembreteMinutos(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                 >
                   {OPCOES_LEMBRETE_MINUTOS.map((opt) => (
                     <option key={opt.valor} value={opt.valor}>
@@ -503,7 +503,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                 <select
                   value={moduloRelacionado}
                   onChange={(e) => setModuloRelacionado(e.target.value as GlobalModuleId | 'geral')}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                 >
                   <option value="geral">Geral / Corporativo JMT</option>
                   <option value="farma_aereo">Farma Aéreo</option>
@@ -532,7 +532,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                 if (foundSup) setResponsavelCargo(foundSup.cargo);
               }}
               placeholder="Ex: Carlos Eduardo Lima"
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
             />
             <datalist id="supervisores-list">
               <option value="Jadson de Moraes" />
@@ -550,7 +550,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
           {/* Local ou Videoconferência */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
             <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#B38F4F]" />
+              <MapPin className="w-3.5 h-3.5 text-[#C48229]" />
               Onde será a atividade?
             </span>
 
@@ -560,7 +560,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                 onClick={() => setTipoLocal('presencial')}
                 className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${
                   tipoLocal === 'presencial'
-                    ? 'bg-[#B38F4F] border-[#B38F4F] text-white'
+                    ? 'bg-[#C48229] border-[#C48229] text-white'
                     : 'bg-white border-slate-300 text-slate-600 hover:border-amber-300'
                 }`}
               >
@@ -572,7 +572,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                 onClick={() => setTipoLocal('videoconferencia')}
                 className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${
                   tipoLocal === 'videoconferencia'
-                    ? 'bg-[#B38F4F] border-[#B38F4F] text-white'
+                    ? 'bg-[#C48229] border-[#C48229] text-white'
                     : 'bg-white border-slate-300 text-slate-600 hover:border-amber-300'
                 }`}
               >
@@ -591,7 +591,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                     value={localOuLink}
                     onChange={(e) => setLocalOuLink(e.target.value)}
                     placeholder="Ex: Sala de Reuniões Matriz JMT"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
                 <div>
@@ -605,7 +605,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                     value={linkLocalizacao}
                     onChange={(e) => setLinkLocalizacao(e.target.value)}
                     placeholder="https://maps.google.com/..."
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
               </div>
@@ -618,7 +618,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                   value={localOuLink}
                   onChange={(e) => setLocalOuLink(e.target.value)}
                   placeholder="Ex: https://meet.google.com/xxx-xxxx-xxx"
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                 />
               </div>
             )}
@@ -634,7 +634,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
               value={participantesInput}
               onChange={(e) => setParticipantesInput(e.target.value)}
               placeholder="Ex: Carlos Lima, Mariana Alencar, Equipe Farma Aéreo"
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
             />
           </div>
 
@@ -659,7 +659,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                       onClick={() => handleToggleUsuarioMarcado(u.id)}
                       className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
                         marcado
-                          ? 'bg-[#B38F4F] border-[#B38F4F] text-white'
+                          ? 'bg-[#C48229] border-[#C48229] text-white'
                           : 'bg-white border-slate-300 text-slate-600 hover:border-amber-300'
                       }`}
                     >
@@ -683,7 +683,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Breve resumo da finalidade deste compromisso..."
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
             />
           </div>
 
@@ -696,7 +696,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
               value={pautaAta}
               onChange={(e) => setPautaAta(e.target.value)}
               placeholder="1. Ponto principal a ser alinhado;&#10;2. Decisões operacionais;&#10;3. Próximos passos."
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] font-mono"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229] font-mono"
             />
           </div>
 
@@ -704,7 +704,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-                <CheckSquare className="w-3.5 h-3.5 text-[#B38F4F]" />
+                <CheckSquare className="w-3.5 h-3.5 text-[#C48229]" />
                 Deliberações & Ações Derivadas ({deliberacoes.length})
               </span>
             </div>
@@ -722,7 +722,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                         type="checkbox"
                         checked={item.concluido}
                         onChange={() => handleToggleDeliberacao(item.id)}
-                        className="rounded border-slate-300 text-[#B38F4F] focus:ring-[#B38F4F]"
+                        className="rounded border-slate-300 text-[#C48229] focus:ring-[#C48229]"
                       />
                       <span className={`truncate ${item.concluido ? 'line-through text-slate-400' : 'text-slate-700'}`}>
                         {item.texto}
@@ -752,7 +752,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                 value={novoItemDeliberacao}
                 onChange={(e) => setNovoItemDeliberacao(e.target.value)}
                 placeholder="Nova deliberação ou tarefa acordada..."
-                className="flex-1 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                className="flex-1 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -765,12 +765,12 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                 value={novoItemResponsavel}
                 onChange={(e) => setNovoItemResponsavel(e.target.value)}
                 placeholder="Responsável (opcional)"
-                className="w-36 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]"
+                className="w-36 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
               />
               <button
                 type="button"
                 onClick={handleAddDeliberacao}
-                className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-[#8A6A39] rounded-lg font-medium transition-colors shrink-0"
+                className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-[#92611F] rounded-lg font-medium transition-colors shrink-0"
               >
                 Adicionar
               </button>
@@ -781,13 +781,13 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-                <Paperclip className="w-3.5 h-3.5 text-[#B38F4F]" />
+                <Paperclip className="w-3.5 h-3.5 text-[#C48229]" />
                 Documentos / Anexos ({anexos.length})
               </span>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-[#8A6A39] rounded-lg font-medium transition-colors flex items-center gap-1.5 shrink-0"
+                className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-[#92611F] rounded-lg font-medium transition-colors flex items-center gap-1.5 shrink-0"
               >
                 <Upload className="w-3.5 h-3.5" />
                 <span>Anexar</span>
@@ -812,7 +812,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                     className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200"
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1 text-slate-700">
-                      <FileText className="w-3.5 h-3.5 text-[#B38F4F] shrink-0" />
+                      <FileText className="w-3.5 h-3.5 text-[#C48229] shrink-0" />
                       <span className="truncate font-medium">{anexo.nome}</span>
                       {anexo.tamanho && (
                         <span className="text-[10px] text-slate-400 font-mono shrink-0">{anexo.tamanho}</span>
@@ -822,7 +822,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setAnexoVisualizando({ url: anexo.arquivoUrl, nome: anexo.nome })}
-                        className="p-1 text-slate-400 hover:text-[#8A6A39] transition-colors"
+                        className="p-1 text-slate-400 hover:text-[#92611F] transition-colors"
                         title="Visualizar anexo"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -830,7 +830,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
                       <a
                         href={anexo.arquivoUrl}
                         download={anexo.nome}
-                        className="p-1 text-slate-400 hover:text-[#8A6A39] transition-colors"
+                        className="p-1 text-slate-400 hover:text-[#92611F] transition-colors"
                         title="Baixar anexo"
                       >
                         <Download className="w-3.5 h-3.5" />
@@ -867,7 +867,7 @@ export const AgendaFormModal: React.FC<AgendaFormModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-semibold text-white bg-[#B38F4F] hover:bg-[#8A6A39] rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+              className="px-5 py-2 text-xs font-semibold text-white bg-[#C48229] hover:bg-[#92611F] rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
             >
               <span>{initialData ? 'Salvar Alterações' : 'Criar Atividade'}</span>
             </button>

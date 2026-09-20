@@ -53,7 +53,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
   const isAereo = setor === 'farma_aereo';
   const setorNome = isAereo ? 'Farma Aéreo (AWB / RDC 430)' : 'Farma Rodoviário (Frota / MDF-e)';
   const SetorIcon = isAereo ? Plane : Truck;
-  const themeBg = 'from-[#B38F4F] to-[#5c4526]';
+  const themeBg = 'from-[#C48229] to-[#5c4526]';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
@@ -94,7 +94,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                   ? 'Buscar por Razão Social, Nome Fantasia ou CNPJ...'
                   : 'Buscar por Nome, Matrícula, Cargo ou CPF...'
               }
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F] focus:border-[#B38F4F]"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#C48229] focus:border-[#C48229]"
             />
           </div>
           {mode === 'clientes' && onOpenNovoCliente && (
@@ -103,7 +103,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                 onClose();
                 onOpenNovoCliente();
               }}
-              className="w-full sm:w-auto px-3.5 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shrink-0 shadow-xs"
+              className="w-full sm:w-auto px-3.5 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shrink-0 shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Nova Empresa</span>
@@ -115,7 +115,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                 onClose();
                 onOpenNovoColaborador();
               }}
-              className="w-full sm:w-auto px-3.5 py-2 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shrink-0 shadow-xs"
+              className="w-full sm:w-auto px-3.5 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shrink-0 shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Novo Colaborador</span>
@@ -156,7 +156,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                         <div
                           className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                             isLinked
-                              ? 'bg-[#B38F4F] text-white shadow-xs'
+                              ? 'bg-[#C48229] text-white shadow-xs'
                               : 'bg-slate-100 text-slate-500'
                           }`}
                         >
@@ -171,7 +171,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                               {cliente.codigoCliente}
                             </span>
                             {isLinked && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#8A6A39]">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#92611F]">
                                 Vinculada ao {isAereo ? 'Aéreo' : 'Rodoviário'}
                               </span>
                             )}
@@ -187,7 +187,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
                           isLinked
                             ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                            : 'bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs'
+                            : 'bg-[#C48229] hover:bg-[#92611F] text-white shadow-xs'
                         }`}
                       >
                         {isLinked ? (
@@ -238,7 +238,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                         <div
                           className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                             isLinked
-                              ? 'bg-[#B38F4F] text-white shadow-xs'
+                              ? 'bg-[#C48229] text-white shadow-xs'
                               : 'bg-slate-100 text-slate-500'
                           }`}
                         >
@@ -253,7 +253,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                               {colab.codigoMatricula}
                             </span>
                             {isLinked && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#8A6A39]">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#92611F]">
                                 Alocado ao {isAereo ? 'Aéreo' : 'Rodoviário'}
                               </span>
                             )}
@@ -269,7 +269,7 @@ export const SectorLinkModal: React.FC<SectorLinkModalProps> = ({
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
                           isLinked
                             ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                            : 'bg-[#B38F4F] hover:bg-[#8A6A39] text-white shadow-xs'
+                            : 'bg-[#C48229] hover:bg-[#92611F] text-white shadow-xs'
                         }`}
                       >
                         {isLinked ? (

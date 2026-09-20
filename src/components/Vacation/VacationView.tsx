@@ -298,7 +298,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
             <button
               type="button"
               onClick={() => handleOpenNew()}
-              className="px-3.5 py-1.5 bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+              className="px-3.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span>Programar Férias</span>

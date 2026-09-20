@@ -151,7 +151,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
       <div key={p.id}>
         <div
           className={`group flex items-center gap-1 pr-1.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
-            selecionado ? 'bg-amber-50 text-[#8A6A39]' : 'text-slate-600 hover:bg-slate-100'
+            selecionado ? 'bg-amber-50 text-[#92611F]' : 'text-slate-600 hover:bg-slate-100'
           }`}
           style={{ paddingLeft: `${6 + depth * 14}px` }}
           onClick={() => setSelectedId(p.id)}
@@ -180,7 +180,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
               e.stopPropagation();
               handleNovaPagina(p.id);
             }}
-            className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-[#B38F4F] shrink-0 transition-opacity"
+            className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-[#C48229] shrink-0 transition-opacity"
             title="Nova sub-página"
           >
             <Plus className="w-3 h-3" />
@@ -196,7 +196,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
       {/* Hero */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#8A6A39] text-xs font-semibold border border-amber-200">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
             <NotebookPen className="w-3.5 h-3.5" />
             <span>Notas & Ideias JMT</span>
           </div>
@@ -209,7 +209,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
         <button
           type="button"
           onClick={() => handleNovaPagina()}
-          className="px-4 py-2 rounded-xl bg-[#B38F4F] hover:bg-[#8A6A39] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0"
+          className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Página</span>
@@ -228,7 +228,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar páginas..."
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#B38F4F]/30"
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#C48229]/30"
               />
             </div>
           </div>
@@ -245,7 +245,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
                     type="button"
                     onClick={() => setSelectedId(p.id)}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
-                      selectedId === p.id ? 'bg-amber-50 text-[#8A6A39]' : 'text-slate-600 hover:bg-slate-100'
+                      selectedId === p.id ? 'bg-amber-50 text-[#92611F]' : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
                     <span className="text-sm shrink-0">{p.icone || '📄'}</span>
@@ -271,7 +271,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
                           type="button"
                           onClick={() => setSelectedId(p.id)}
                           className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
-                            selectedId === p.id ? 'bg-amber-50 text-[#8A6A39]' : 'text-slate-600 hover:bg-slate-100'
+                            selectedId === p.id ? 'bg-amber-50 text-[#92611F]' : 'text-slate-600 hover:bg-slate-100'
                           }`}
                         >
                           <span className="text-sm shrink-0">{p.icone || '📄'}</span>
@@ -287,7 +287,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleNovaPagina()}
-                    className="p-0.5 text-slate-400 hover:text-[#B38F4F] transition-colors"
+                    className="p-0.5 text-slate-400 hover:text-[#C48229] transition-colors"
                     title="Nova página"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -329,7 +329,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
               <button
                 type="button"
                 onClick={() => handleNovaPagina()}
-                className="px-4 py-2 text-xs font-semibold bg-[#B38F4F] hover:bg-[#8A6A39] text-white rounded-lg shadow-xs inline-flex items-center gap-2 transition-colors"
+                className="px-4 py-2 text-xs font-semibold bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg shadow-xs inline-flex items-center gap-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 <span>Nova Página</span>
