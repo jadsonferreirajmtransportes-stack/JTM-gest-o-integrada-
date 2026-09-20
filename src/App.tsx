@@ -624,6 +624,12 @@ export default function App() {
         // numa tela em branco (ver primeiraSecaoDpPermitida).
         setActiveSection(primeiraSecaoDpPermitida(currentUser));
       }
+    } else {
+      // Qualquer operação cadastrada dinamicamente (ex.: Unimed) não tem um "else if" fixo
+      // acima — sem isso, activeSection ficava travado no valor anterior (ex.: 'farma_
+      // rodoviario'), e essa tela continuava batendo a condição de render dela ao mesmo
+      // tempo que a nova operação, fazendo as duas aparecerem empilhadas na mesma página.
+      setActiveSection(modId);
     }
   };
 
