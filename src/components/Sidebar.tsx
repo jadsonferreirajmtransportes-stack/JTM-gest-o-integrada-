@@ -962,7 +962,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {collapsed ? (
               <JmtLogo variant="icon" theme="light" iconSize={30} />
             ) : (
-              <JmtLogo variant="full" theme="light" iconSize={34} />
+              <JmtLogo variant="full" theme="light" iconSize={48} />
             )}
           </div>
 
