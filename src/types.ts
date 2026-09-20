@@ -78,6 +78,29 @@ export interface Operacao {
   atualizadoEm?: string;
 }
 
+/** Um mês de faturamento real conciliado com o parceiro de uma Operação genérica (ex.:
+ *  Unimed) — sem CT-e/AWB, então esse é o equivalente simples do Controle Financeiro pra
+ *  quem não tem frete: valor fechado + NF + anexo do PDF. Quando existe ao menos 1
+ *  lançamento pra uma operação, ele passa a mandar na Visão Geral/DRE em vez do campo
+ *  "Faturamento Mensal Estimado" do cliente (mesma lógica de Farma Aéreo com faturamento
+ *  real de CT-e — ver computeFaturamentoRealOperacao). */
+export interface LancamentoFaturamentoOperacao {
+  id: string;
+  operacaoId: string;
+  clienteId?: string;
+  clienteNome?: string;
+  periodo: string; // 'YYYY-MM'
+  valor: number;
+  numeroNF?: string;
+  descricao?: string;
+  anexoNome?: string;
+  /** Base64 (data URI) do PDF/imagem da NF — mesmo padrão de anexo já usado em outras
+   *  entidades do sistema (ex.: documentos de Projeto), sem depender de storage externo. */
+  anexoUrl?: string;
+  criadoEm: string;
+  atualizadoEm?: string;
+}
+
 // Sistema de Autenticação e Permissão de Módulos por Login
 export interface UsuarioLogin {
   id: string;

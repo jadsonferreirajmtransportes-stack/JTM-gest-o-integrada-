@@ -26,6 +26,7 @@ import {
   ItemDeliberacaoAta,
   CustoOperacional,
   Operacao,
+  LancamentoFaturamentoOperacao,
   UsuarioLogin,
   NotaPagina,
   InstrucaoTrabalho,
@@ -136,7 +137,14 @@ import {
   getOrcamentos,
   saveOrcamentoItem,
 } from './utils/gestaoApi';
-import { getOperacoes, saveOperacao, deleteOperacao } from './utils/operacoesApi';
+import {
+  getOperacoes,
+  saveOperacao,
+  deleteOperacao,
+  getLancamentosFaturamentoOperacao,
+  saveLancamentoFaturamentoOperacao,
+  deleteLancamentoFaturamentoOperacao,
+} from './utils/operacoesApi';
 // Farma Rodoviário (viagens/telemetria) também já migrado para o Supabase — ver
 // src/utils/viagensApi.ts.
 import {
@@ -501,6 +509,9 @@ export default function App() {
   const [instrucoesTrabalho, setInstrucoesTrabalho] = useState<InstrucaoTrabalho[]>([]);
   const [custosOperacionais, setCustosOperacionais] = useState<CustoOperacional[]>([]);
   const [operacoes, setOperacoes] = useState<Operacao[]>([]);
+  const [lancamentosFaturamentoOperacao, setLancamentosFaturamentoOperacao] = useState<
+    LancamentoFaturamentoOperacao[]
+  >([]);
   // Qualquer operação cadastrada além das 2 originais (Farma Aéreo/Rodoviário continuam com
   // suas próprias telas) — cada uma ganha um <OperacaoView> genérico automaticamente.
   const operacoesExtrasAtivas = useMemo(
@@ -961,16 +972,18 @@ export default function App() {
   // forma assíncrona.
   const loadGestaoData = useCallback(async () => {
     try {
-      const [custos, projetos, atividades, notas, instrucoes, viagens, orcamentosCarregados, ops] = await Promise.all([
-        getCustosOperacionais(),
-        getProjetosGerenciais(),
-        getAtividadesGestao(),
-        getNotasPaginas(),
-        getInstrucoesTrabalho(),
-        getViagensRodoviarias(),
-        getOrcamentos(),
-        getOperacoes(),
-      ]);
+      const [custos, projetos, atividades, notas, instrucoes, viagens, orcamentosCarregados, ops, lancFatOp] =
+        await Promise.all([
+          getCustosOperacionais(),
+          getProjetosGerenciais(),
+          getAtividadesGestao(),
+          getNotasPaginas(),
+          getInstrucoesTrabalho(),
+          getViagensRodoviarias(),
+          getOrcamentos(),
+          getOperacoes(),
+          getLancamentosFaturamentoOperacao(),
+        ]);
       setCustosOperacionais(custos);
       setProjetos(projetos);
       setAtividadesGestao(atividades);
@@ -978,6 +991,7 @@ export default function App() {
       setInstrucoesTrabalho(instrucoes);
       setViagensRodoviarias(viagens);
       setOrcamentos(orcamentosCarregados);
+      setLancamentosFaturamentoOperacao(lancFatOp);
       setOperacoes(ops);
     } catch (err) {
       console.error('Erro ao carregar Custos/Projetos/Agenda/Notas/Instruções/Viagens/Orçamentos (Supabase):', err);
@@ -2354,6 +2368,19 @@ export default function App() {
     showToast('Operação removida com sucesso.', 'info');
   };
 
+  // Lançamentos de Faturamento por Operação (meses conciliados manualmente, ex.: Unimed)
+  const handleSaveLancamentoFaturamentoOperacao = async (lancamento: LancamentoFaturamentoOperacao) => {
+    await saveLancamentoFaturamentoOperacao(lancamento);
+    await loadGestaoData();
+    showToast('Lançamento de faturamento salvo com sucesso!', 'success');
+  };
+
+  const handleDeleteLancamentoFaturamentoOperacao = async (id: string) => {
+    await deleteLancamentoFaturamentoOperacao(id);
+    await loadGestaoData();
+    showToast('Lançamento removido com sucesso.', 'info');
+  };
+
   // Settings Handlers
   const handleAddEmpregador = async (emp: Empregador) => {
     await saveEmpregador(emp);
@@ -2755,6 +2782,9 @@ export default function App() {
                 custosOperacionais={custosOperacionais}
                 operacoesExtras={operacoesExtrasAtivas}
                 totalOperacoesAtivas={2 + operacoesExtrasAtivas.length}
+                lancamentosFaturamento={lancamentosFaturamentoOperacao.filter((l) => l.operacaoId === op.id)}
+                onSaveLancamentoFaturamento={handleSaveLancamentoFaturamentoOperacao}
+                onDeleteLancamentoFaturamento={handleDeleteLancamentoFaturamentoOperacao}
                 onSaveCliente={handleSaveCliente}
                 onSaveColaborador={handleSaveColaborador}
                 onSaveCusto={handleSaveCustoOperacional}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Building2, Users, DollarSign, TrendingUp, PieChart } from 'lucide-react';
+import { Building2, Users, DollarSign, TrendingUp, PieChart, Receipt } from 'lucide-react';
 import {
   Cliente,
   Colaborador,
@@ -7,6 +7,7 @@ import {
   UsuarioLogin,
   CustoOperacional,
   Operacao,
+  LancamentoFaturamentoOperacao,
 } from '../../types';
 import { podeVerAbaOperacoes } from '../../utils/visibilidadeUtils';
 import { SectorClientsTab } from './SectorClientsTab';
@@ -14,8 +15,14 @@ import { SectorEmployeesTab } from './SectorEmployeesTab';
 import { SectorManagerialDashboard } from './SectorManagerialDashboard';
 import { SectorRevenueTab } from './SectorRevenueTab';
 import { SectorCostsTab } from './SectorCostsTab';
+import { LancamentosFaturamentoOperacaoSection } from './LancamentosFaturamentoOperacaoSection';
 import { CustoOperacionalFormModal } from '../Cost/CustoOperacionalFormModal';
-import { calcFinancialsSetor, isVinculadoAoSetor, operacaoTemAba } from '../../utils/sectorUtils';
+import {
+  calcFinancialsSetor,
+  computeFaturamentoRealOperacao,
+  isVinculadoAoSetor,
+  operacaoTemAba,
+} from '../../utils/sectorUtils';
 import { resolveOperacaoIcon } from '../../utils/iconResolver';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -32,6 +39,12 @@ interface OperacaoViewProps {
   custosOperacionais?: CustoOperacional[];
   operacoesExtras?: Operacao[];
   totalOperacoesAtivas?: number;
+  /** Meses de faturamento real já conciliados com o parceiro (ver LancamentoFaturamentoOperacao)
+   *  — já vem filtrado só pra essa operação. Assim que existir 1, ele passa a mandar na Visão
+   *  Geral/DRE em vez do campo "estimado" de cada cliente. */
+  lancamentosFaturamento?: LancamentoFaturamentoOperacao[];
+  onSaveLancamentoFaturamento?: (lancamento: LancamentoFaturamentoOperacao) => void;
+  onDeleteLancamentoFaturamento?: (id: string) => void;
   onSaveCliente?: (cliente: Cliente) => void;
   onSaveColaborador?: (colaborador: Colaborador) => void;
   onSaveCusto?: (custo: CustoOperacional) => void;
@@ -52,6 +65,9 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
   custosOperacionais = [],
   operacoesExtras = [],
   totalOperacoesAtivas = 2,
+  lancamentosFaturamento = [],
+  onSaveLancamentoFaturamento,
+  onDeleteLancamentoFaturamento,
   onSaveCliente = (_c: Cliente) => {},
   onSaveColaborador = (_c: Colaborador) => {},
   onSaveCusto,
@@ -78,16 +94,28 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
   const [isCustoModalOpen, setIsCustoModalOpen] = useState(false);
   const [selectedCustoEdit, setSelectedCustoEdit] = useState<CustoOperacional | null>(null);
 
-  // Sem Controle Financeiro (import de CT-e/NF) — essa operação não tem faturamento real
-  // granular, então calcFinancialsSetor sempre cai no fallback "estimado" por cliente.
+  // Sem Controle Financeiro de CT-e/NF — o "faturamento real" aqui vem dos meses conciliados
+  // manualmente (LancamentosFaturamentoOperacaoSection). Enquanto não existir nenhum, cai no
+  // fallback "estimado" por cliente (mesmo comportamento de antes).
+  const faturamentoReal = useMemo(
+    () => (lancamentosFaturamento.length > 0 ? computeFaturamentoRealOperacao(lancamentosFaturamento) : undefined),
+    [lancamentosFaturamento]
+  );
   const metrics = useMemo(
-    () => calcFinancialsSetor(operacao.id, clientes, colaboradores, custosOperacionais),
-    [operacao.id, clientes, colaboradores, custosOperacionais]
+    () => calcFinancialsSetor(operacao.id, clientes, colaboradores, custosOperacionais, faturamentoReal),
+    [operacao.id, clientes, colaboradores, custosOperacionais, faturamentoReal]
   );
 
   const sectorClientes = useMemo(
     () => clientes.filter((c) => isVinculadoAoSetor(c.setoresVinculados, operacao.id)),
     [clientes, operacao.id]
+  );
+  // Soma do "Faturamento Mensal Estimado" de cada empresa atrelada — mostrado ao lado do real
+  // conciliado (não some quando há lançamento; o usuário pediu pra ver os dois lado a lado,
+  // mesmo que o DRE priorize o real quando ele existir).
+  const totalEstimadoEmpresas = useMemo(
+    () => sectorClientes.reduce((sum, c) => sum + (Number(c.faturamentoMensalEstimado) || 0), 0),
+    [sectorClientes]
   );
   const sectorColaboradores = useMemo(
     () => colaboradores.filter((c) => c.status !== 'Inativo' && isVinculadoAoSetor(c.setoresAtuacao, operacao.id)),
@@ -225,14 +253,53 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
       )}
 
       {activeSubTab === 'faturamento' && podeVerAba('faturamento') && (
-        <SectorRevenueTab
-          setor={operacao.id}
-          metrics={metrics}
-          clientes={sectorClientes}
-          onOpenNovoCliente={onOpenNovoCliente}
-          onOpenLinkModal={() => onOpenLinkModal('clientes')}
-          onSelectClienteDetail={onSelectClienteDetail}
-        />
+        <div className="space-y-4">
+          {/* Comparativo: as duas fontes de faturamento ficam sempre visíveis lado a lado —
+              uma não substitui a outra na tela, mesmo que o DRE (Visão Geral) priorize o real
+              conciliado quando ele existir, por ser mais confiável que uma estimativa. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5" /> Estimado (Empresas Atreladas)
+              </span>
+              <div className="text-2xl font-black text-slate-800 mt-1">{formatCurrency(totalEstimadoEmpresas)}</div>
+              <p className="text-[10px] text-slate-400 mt-1">
+                Soma do "Faturamento Mensal Estimado" digitado em cada empresa vinculada.
+              </p>
+            </div>
+            <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 shadow-xs">
+              <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Receipt className="w-3.5 h-3.5" /> Real Conciliado (Lançamentos)
+              </span>
+              <div className="text-2xl font-black text-emerald-950 mt-1">
+                {faturamentoReal ? formatCurrency(faturamentoReal.totalMensalMedio) : '—'}
+              </div>
+              <p className="text-[10px] text-emerald-700/70 mt-1">
+                {faturamentoReal
+                  ? `Média de ${faturamentoReal.mesesComDados} mês${faturamentoReal.mesesComDados === 1 ? '' : 'es'} lançado${faturamentoReal.mesesComDados === 1 ? '' : 's'} — este valor é o que entra na Visão Geral & DRE.`
+                  : 'Nenhum mês lançado ainda — a Visão Geral & DRE usa o estimado ao lado.'}
+              </p>
+            </div>
+          </div>
+
+          {onSaveLancamentoFaturamento && (
+            <LancamentosFaturamentoOperacaoSection
+              operacaoId={operacao.id}
+              operacaoNome={operacao.nome}
+              lancamentos={lancamentosFaturamento}
+              onSave={onSaveLancamentoFaturamento}
+              onDelete={onDeleteLancamentoFaturamento || (() => {})}
+            />
+          )}
+          <SectorRevenueTab
+            setor={operacao.id}
+            metrics={metrics}
+            clientes={sectorClientes}
+            onOpenNovoCliente={onOpenNovoCliente}
+            onOpenLinkModal={() => onOpenLinkModal('clientes')}
+            onSelectClienteDetail={onSelectClienteDetail}
+          />
+        </div>
       )}
 
       {activeSubTab === 'custos' && podeVerAba('custos') && (

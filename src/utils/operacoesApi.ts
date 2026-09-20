@@ -5,7 +5,7 @@
 // ============================================================================
 
 import { supabase } from './supabaseClient';
-import { Operacao } from '../types';
+import { Operacao, LancamentoFaturamentoOperacao } from '../types';
 
 function n(v: any): any {
   return v === '' || v === undefined ? null : v;
@@ -66,4 +66,63 @@ export async function saveOperacao(item: Operacao): Promise<void> {
 export async function deleteOperacao(id: string): Promise<void> {
   const { error } = await supabase.from('operacoes').delete().eq('id', id);
   assertNoError(error, 'deleteOperacao');
+}
+
+// ============================================================================
+// LANÇAMENTOS DE FATURAMENTO POR OPERAÇÃO (ver migração 042)
+// ============================================================================
+
+function rowToLancamentoFaturamentoOperacao(r: any): LancamentoFaturamentoOperacao {
+  return {
+    id: r.id,
+    operacaoId: r.operacao_id,
+    clienteId: u(r.cliente_id),
+    clienteNome: u(r.cliente_nome),
+    periodo: r.periodo,
+    valor: Number(r.valor ?? 0),
+    numeroNF: u(r.numero_nf),
+    descricao: u(r.descricao),
+    anexoNome: u(r.anexo_nome),
+    anexoUrl: u(r.anexo_url),
+    criadoEm: r.criado_em,
+    atualizadoEm: u(r.atualizado_em),
+  };
+}
+
+function lancamentoFaturamentoOperacaoToRow(l: LancamentoFaturamentoOperacao) {
+  return {
+    id: l.id,
+    operacao_id: l.operacaoId,
+    cliente_id: n(l.clienteId),
+    cliente_nome: n(l.clienteNome),
+    periodo: l.periodo,
+    valor: l.valor ?? 0,
+    numero_nf: n(l.numeroNF),
+    descricao: n(l.descricao),
+    anexo_nome: n(l.anexoNome),
+    anexo_url: n(l.anexoUrl),
+    criado_em: l.criadoEm || new Date().toISOString(),
+    atualizado_em: new Date().toISOString(),
+  };
+}
+
+export async function getLancamentosFaturamentoOperacao(): Promise<LancamentoFaturamentoOperacao[]> {
+  const { data, error } = await supabase
+    .from('lancamentos_faturamento_operacao')
+    .select('*')
+    .order('periodo', { ascending: false });
+  assertNoError(error, 'getLancamentosFaturamentoOperacao');
+  return (data ?? []).map(rowToLancamentoFaturamentoOperacao);
+}
+
+export async function saveLancamentoFaturamentoOperacao(item: LancamentoFaturamentoOperacao): Promise<void> {
+  const { error } = await supabase
+    .from('lancamentos_faturamento_operacao')
+    .upsert(lancamentoFaturamentoOperacaoToRow(item));
+  assertNoError(error, 'saveLancamentoFaturamentoOperacao');
+}
+
+export async function deleteLancamentoFaturamentoOperacao(id: string): Promise<void> {
+  const { error } = await supabase.from('lancamentos_faturamento_operacao').delete().eq('id', id);
+  assertNoError(error, 'deleteLancamentoFaturamentoOperacao');
 }

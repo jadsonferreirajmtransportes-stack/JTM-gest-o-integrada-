@@ -1,4 +1,10 @@
-import { Cliente, Colaborador, CustoOperacional, LancamentoFaturamentoAereo } from '../types';
+import {
+  Cliente,
+  Colaborador,
+  CustoOperacional,
+  LancamentoFaturamentoAereo,
+  LancamentoFaturamentoOperacao,
+} from '../types';
 
 // Os 2 literais continuam documentando os setores originais; `| string` abre espaço pra
 // qualquer operação cadastrada dinamicamente (ver types.ts `Operacao` / operacoesApi.ts).
@@ -56,6 +62,37 @@ export function computeFaturamentoRealAereo(
     if (l.dataEmissao) {
       meses.add(l.dataEmissao.slice(0, 7));
     }
+  });
+
+  const mesesComDados = Math.max(meses.size, 1);
+  const porClienteChave: Record<string, number> = {};
+  Object.entries(totalPorChave).forEach(([chave, total]) => {
+    porClienteChave[chave] = total / mesesComDados;
+  });
+
+  return {
+    totalMensalMedio: totalGeral / mesesComDados,
+    porClienteChave,
+    mesesComDados: meses.size,
+  };
+}
+
+/** Mesmo cálculo acima, só que a partir dos Lançamentos de Faturamento de uma Operação
+ *  genérica (ex.: Unimed) — conciliados mês a mês com o parceiro, em vez de CT-e/AWB. Usa
+ *  `periodo` (já vem como 'YYYY-MM') no lugar de `dataEmissao`. */
+export function computeFaturamentoRealOperacao(
+  lancamentos: LancamentoFaturamentoOperacao[]
+): FaturamentoRealSetor {
+  const totalPorChave: Record<string, number> = {};
+  const meses = new Set<string>();
+  let totalGeral = 0;
+
+  (lancamentos || []).forEach((l) => {
+    const valor = Number(l.valor) || 0;
+    totalGeral += valor;
+    const chave = l.clienteId || `periodo:${l.periodo}`;
+    totalPorChave[chave] = (totalPorChave[chave] || 0) + valor;
+    if (l.periodo) meses.add(l.periodo);
   });
 
   const mesesComDados = Math.max(meses.size, 1);
