@@ -28,10 +28,22 @@ import {
   FeriadoEmpresa,
   UserRole,
   Operacao,
+  SecaoOperacoes,
 } from '../../types';
 import { formatMoney, formatDate, calcDaysRemaining } from '../../utils/formatters';
 import { CCT_PISOS_SALARIAIS, CCT_METADATA } from '../../data/cctData';
 import { ICON_OPTIONS, resolveOperacaoIcon } from '../../utils/iconResolver';
+
+// Abas genéricas que uma Operação pode ter — "Controle Financeiro" fica de fora de propósito:
+// é a tela de import de CT-e/AWB e cálculo de tarifário de frete, exclusiva de Farma Aéreo/
+// Rodoviário, sem sentido pra uma operação genérica (ex.: Unimed, plano de saúde).
+const SECOES_OPERACAO_GENERICAS: { id: Exclude<SecaoOperacoes, 'controle_financeiro'>; label: string }[] = [
+  { id: 'visao_geral', label: 'Visão Geral & DRE' },
+  { id: 'empresas', label: 'Empresas Atreladas' },
+  { id: 'equipe', label: 'Equipe do Setor' },
+  { id: 'faturamento', label: 'Faturamento' },
+  { id: 'custos', label: 'Custos Operacionais' },
+];
 
 const CORES_OPERACAO = [
   { de: 'from-sky-600', ate: 'to-blue-800', borda: 'border-sky-500', label: 'Azul' },
@@ -75,18 +87,58 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     'cct' | 'cargos' | 'supervisores' | 'empregadores' | 'feriados' | 'operacoes'
   >('cct');
 
-  // New Operação Form
+  // New/Edit Operação Form — opEditingId != null quando é edição (mantém o id original mesmo
+  // que o nome mude, já que o id é referenciado em clientes/colaboradores/custos vinculados).
+  const [opEditingId, setOpEditingId] = useState<string | null>(null);
   const [opNome, setOpNome] = useState('');
   const [opNomeCurto, setOpNomeCurto] = useState('');
   const [opIcone, setOpIcone] = useState('Building2');
   const [opCorIdx, setOpCorIdx] = useState(0);
   const [opOrdem, setOpOrdem] = useState(100);
+  const [opSecoesAtivas, setOpSecoesAtivas] = useState<Exclude<SecaoOperacoes, 'controle_financeiro'>[]>(
+    SECOES_OPERACAO_GENERICAS.map((s) => s.id)
+  );
+
+  const toggleOpSecao = (id: Exclude<SecaoOperacoes, 'controle_financeiro'>) => {
+    setOpSecoesAtivas((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+  };
+
+  const resetOperacaoForm = () => {
+    setOpEditingId(null);
+    setOpNome('');
+    setOpNomeCurto('');
+    setOpIcone('Building2');
+    setOpCorIdx(0);
+    setOpOrdem(100);
+    setOpSecoesAtivas(SECOES_OPERACAO_GENERICAS.map((s) => s.id));
+  };
+
+  const handleAbrirEdicaoOperacao = (op: Operacao) => {
+    setOpEditingId(op.id);
+    setOpNome(op.nome);
+    setOpNomeCurto(op.nomeCurto || '');
+    setOpIcone(op.icone);
+    const corIdx = CORES_OPERACAO.findIndex((c) => c.de === op.corDe && c.ate === op.corAte);
+    setOpCorIdx(corIdx >= 0 ? corIdx : 0);
+    setOpOrdem(op.ordem);
+    setOpSecoesAtivas(
+      op.secoesAtivas && op.secoesAtivas.length > 0
+        ? op.secoesAtivas
+        : SECOES_OPERACAO_GENERICAS.map((s) => s.id)
+    );
+    setIsAddModalOpen(true);
+  };
 
   const handleSaveOperacaoForm = (e: React.FormEvent) => {
     e.preventDefault();
     const cor = CORES_OPERACAO[opCorIdx];
+    const existente = operacoes.find((o) => o.id === opEditingId);
     onSaveOperacao({
-      id: opNome.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''),
+      id:
+        opEditingId ||
+        opNome.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''),
       nome: opNome.trim(),
       nomeCurto: opNomeCurto.trim() || undefined,
       icone: opIcone,
@@ -94,13 +146,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       corAte: cor.ate,
       corBorda: cor.borda,
       ordem: opOrdem,
-      ativo: true,
+      ativo: existente?.ativo ?? true,
+      // Todas marcadas = sem restrição (undefined), igual ao padrão já usado em
+      // secoesOperacoesPermitidas/secoesDpPermitidas — evita gravar um registro redundante.
+      secoesAtivas: opSecoesAtivas.length === SECOES_OPERACAO_GENERICAS.length ? undefined : opSecoesAtivas,
     });
-    setOpNome('');
-    setOpNomeCurto('');
-    setOpIcone('Building2');
-    setOpCorIdx(0);
-    setOpOrdem(100);
+    resetOperacaoForm();
     setIsAddModalOpen(false);
   };
 
@@ -223,7 +274,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {userRole === 'admin' && activeTab !== 'cct' && (
           <button
             type="button"
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => {
+              if (activeTab === 'operacoes') resetOperacaoForm();
+              setIsAddModalOpen(true);
+            }}
             className="px-3.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors shrink-0"
           >
             <Plus className="w-4 h-4" />
@@ -661,18 +715,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </td>
                       <td className="py-2.5 px-3 text-right">
                         {!ehOriginal && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm(`Excluir a operação "${op.nome}"? Isso não afeta clientes/colaboradores já vinculados, só remove o módulo do menu.`)) {
-                                onDeleteOperacao(op.id);
-                              }
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
-                            title="Excluir operação"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="inline-flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleAbrirEdicaoOperacao(op)}
+                              className="p-1.5 text-slate-400 hover:text-[#C48229] rounded-lg hover:bg-amber-50"
+                              title="Editar operação (nome, ícone, cor, abas)"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`Excluir a operação "${op.nome}"? Isso não afeta clientes/colaboradores já vinculados, só remove o módulo do menu.`)) {
+                                  onDeleteOperacao(op.id);
+                                }
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
+                              title="Excluir operação"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -690,20 +754,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <h3 className="font-bold text-slate-900 text-sm">
-                Adicionar{' '}
-                {activeTab === 'cargos'
-                  ? 'Cargo'
-                  : activeTab === 'supervisores'
-                  ? 'Supervisor'
-                  : activeTab === 'empregadores'
-                  ? 'Empregador'
-                  : activeTab === 'operacoes'
-                  ? 'Operação'
-                  : 'Feriado'}
+                {activeTab === 'operacoes' && opEditingId
+                  ? 'Editar Operação'
+                  : `Adicionar ${
+                      activeTab === 'cargos'
+                        ? 'Cargo'
+                        : activeTab === 'supervisores'
+                        ? 'Supervisor'
+                        : activeTab === 'empregadores'
+                        ? 'Empregador'
+                        : activeTab === 'operacoes'
+                        ? 'Operação'
+                        : 'Feriado'
+                    }`}
               </h3>
               <button
                 type="button"
-                onClick={() => setIsAddModalOpen(false)}
+                onClick={() => {
+                  if (activeTab === 'operacoes') resetOperacaoForm();
+                  setIsAddModalOpen(false);
+                }}
                 className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
@@ -969,10 +1039,34 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className="w-full p-2 border border-slate-200 rounded-lg"
                   />
                 </div>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">
+                    Abas desta Operação ({opSecoesAtivas.length} de {SECOES_OPERACAO_GENERICAS.length})
+                  </label>
+                  <div className="space-y-1.5 border border-slate-200 rounded-lg p-2.5">
+                    {SECOES_OPERACAO_GENERICAS.map((secao) => (
+                      <label key={secao.id} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={opSecoesAtivas.includes(secao.id)}
+                          onChange={() => toggleOpSecao(secao.id)}
+                          className="rounded border-slate-300 text-[#C48229] focus:ring-[#C48229]"
+                        />
+                        <span>{secao.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    "Controle Financeiro" (import de CT-e/AWB) é exclusivo de Farma Aéreo/Rodoviário — não se aplica aqui.
+                  </p>
+                </div>
                 <div className="pt-3 border-t flex justify-end gap-2">
                   <button
                     type="button"
-                    onClick={() => setIsAddModalOpen(false)}
+                    onClick={() => {
+                      resetOperacaoForm();
+                      setIsAddModalOpen(false);
+                    }}
                     className="px-3 py-1.5 text-slate-600 rounded-lg"
                   >
                     Cancelar
@@ -981,7 +1075,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     type="submit"
                     className="px-4 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold rounded-lg transition-colors shadow-xs"
                   >
-                    Salvar Operação
+                    {opEditingId ? 'Salvar Alterações' : 'Salvar Operação'}
                   </button>
                 </div>
               </form>

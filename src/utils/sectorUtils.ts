@@ -11,6 +11,14 @@ export function isVinculadoAoSetor(setoresVinculados: string[] | undefined, seto
   return Array.isArray(setoresVinculados) && setoresVinculados.includes(setor);
 }
 
+/** Se a Operação não restringiu nenhuma aba (Operacao.secoesAtivas ausente/vazio), mostra
+ *  todas — mesmo padrão de "ausente = sem restrição" já usado em secoesOperacoesPermitidas/
+ *  secoesDpPermitidas (ver visibilidadeUtils.ts). */
+export function operacaoTemAba(secoesAtivas: string[] | undefined, aba: string): boolean {
+  if (!secoesAtivas || secoesAtivas.length === 0) return true;
+  return secoesAtivas.includes(aba);
+}
+
 // ==========================================
 // FATURAMENTO REAL (a partir dos lançamentos do Controle Financeiro)
 // ==========================================

@@ -30,6 +30,7 @@ function rowToOperacao(r: any): Operacao {
     corBorda: r.cor_borda,
     ordem: Number(r.ordem ?? 100),
     ativo: r.ativo ?? true,
+    secoesAtivas: u(r.secoes_ativas),
     criadoEm: u(r.criado_em),
     atualizadoEm: u(r.atualizado_em),
   };
@@ -46,6 +47,7 @@ function operacaoToRow(o: Operacao) {
     cor_borda: o.corBorda,
     ordem: o.ordem ?? 100,
     ativo: o.ativo ?? true,
+    secoes_ativas: o.secoesAtivas && o.secoesAtivas.length > 0 ? o.secoesAtivas : null,
     atualizado_em: new Date().toISOString(),
   };
 }

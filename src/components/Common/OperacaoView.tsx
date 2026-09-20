@@ -15,7 +15,7 @@ import { SectorManagerialDashboard } from './SectorManagerialDashboard';
 import { SectorRevenueTab } from './SectorRevenueTab';
 import { SectorCostsTab } from './SectorCostsTab';
 import { CustoOperacionalFormModal } from '../Cost/CustoOperacionalFormModal';
-import { calcFinancialsSetor, isVinculadoAoSetor } from '../../utils/sectorUtils';
+import { calcFinancialsSetor, isVinculadoAoSetor, operacaoTemAba } from '../../utils/sectorUtils';
 import { resolveOperacaoIcon } from '../../utils/iconResolver';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -67,9 +67,13 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
   const OperacaoIcon = resolveOperacaoIcon(operacao.icone);
 
   const ORDEM_ABAS_OPERACOES = ['visao_geral', 'empresas', 'equipe', 'faturamento', 'custos'] as const;
+  // Uma aba só aparece se a Operação a tiver habilitada (cadastro) E o login tiver permissão
+  // pra vê-la (secoesOperacoesPermitidas) — as duas checagens são independentes.
+  const podeVerAba = (aba: (typeof ORDEM_ABAS_OPERACOES)[number]) =>
+    operacaoTemAba(operacao.secoesAtivas, aba) && podeVerAbaOperacoes(currentUser, aba);
   const [activeSubTab, setActiveSubTab] = useState<
     'visao_geral' | 'empresas' | 'equipe' | 'faturamento' | 'custos'
-  >(() => ORDEM_ABAS_OPERACOES.find((aba) => podeVerAbaOperacoes(currentUser, aba)) || 'visao_geral');
+  >(() => ORDEM_ABAS_OPERACOES.find((aba) => podeVerAba(aba)) || 'visao_geral');
 
   const [isCustoModalOpen, setIsCustoModalOpen] = useState(false);
   const [selectedCustoEdit, setSelectedCustoEdit] = useState<CustoOperacional | null>(null);
@@ -114,7 +118,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
 
       {/* Sub-navegação */}
       <div className="flex items-center overflow-x-auto border-b border-slate-200 gap-2 bg-white px-3 pt-2 rounded-xl shadow-xs">
-        {podeVerAbaOperacoes(currentUser, 'visao_geral') && (
+        {podeVerAba('visao_geral') && (
           <button
             onClick={() => setActiveSubTab('visao_geral')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -127,7 +131,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
             <span>Visão Geral & DRE</span>
           </button>
         )}
-        {podeVerAbaOperacoes(currentUser, 'empresas') && (
+        {podeVerAba('empresas') && (
           <button
             onClick={() => setActiveSubTab('empresas')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -140,7 +144,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
             <span>Empresas Atreladas ({metrics.totalClientesVinculados})</span>
           </button>
         )}
-        {podeVerAbaOperacoes(currentUser, 'equipe') && (
+        {podeVerAba('equipe') && (
           <button
             onClick={() => setActiveSubTab('equipe')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -153,7 +157,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
             <span>Equipe do Setor ({metrics.headcountEquipe})</span>
           </button>
         )}
-        {podeVerAbaOperacoes(currentUser, 'faturamento') && (
+        {podeVerAba('faturamento') && (
           <button
             onClick={() => setActiveSubTab('faturamento')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -166,7 +170,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
             <span>Faturamento ({formatCurrency(metrics.faturamentoMensalTotal)})</span>
           </button>
         )}
-        {podeVerAbaOperacoes(currentUser, 'custos') && (
+        {podeVerAba('custos') && (
           <button
             onClick={() => setActiveSubTab('custos')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -181,7 +185,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
         )}
       </div>
 
-      {activeSubTab === 'visao_geral' && podeVerAbaOperacoes(currentUser, 'visao_geral') && (
+      {activeSubTab === 'visao_geral' && podeVerAba('visao_geral') && (
         <SectorManagerialDashboard
           setor={operacao.id}
           metrics={metrics}
@@ -192,7 +196,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
         />
       )}
 
-      {activeSubTab === 'empresas' && podeVerAbaOperacoes(currentUser, 'empresas') && (
+      {activeSubTab === 'empresas' && podeVerAba('empresas') && (
         <SectorClientsTab
           setor={operacao.id}
           allClientes={clientes}
@@ -206,7 +210,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
         />
       )}
 
-      {activeSubTab === 'equipe' && podeVerAbaOperacoes(currentUser, 'equipe') && (
+      {activeSubTab === 'equipe' && podeVerAba('equipe') && (
         <SectorEmployeesTab
           setor={operacao.id}
           allColaboradores={colaboradores}
@@ -220,7 +224,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
         />
       )}
 
-      {activeSubTab === 'faturamento' && podeVerAbaOperacoes(currentUser, 'faturamento') && (
+      {activeSubTab === 'faturamento' && podeVerAba('faturamento') && (
         <SectorRevenueTab
           setor={operacao.id}
           metrics={metrics}
@@ -231,7 +235,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
         />
       )}
 
-      {activeSubTab === 'custos' && podeVerAbaOperacoes(currentUser, 'custos') && (
+      {activeSubTab === 'custos' && podeVerAba('custos') && (
         <SectorCostsTab
           setor={operacao.id}
           metrics={metrics}

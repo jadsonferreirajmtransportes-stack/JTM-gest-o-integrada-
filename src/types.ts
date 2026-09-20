@@ -69,6 +69,11 @@ export interface Operacao {
   corBorda: string;
   ordem: number;
   ativo: boolean;
+  /** Quais das abas genéricas essa operação exibe (Visão Geral/Empresas/Equipe/Faturamento/
+   *  Custos) — ausente ou vazio = todas (comportamento padrão, preserva o que já existia
+   *  antes desse campo). "Controle Financeiro" nunca aparece aqui: é exclusivo de Farma
+   *  Aéreo/Rodoviário (import de CT-e/AWB), não faz sentido pra uma operação genérica. */
+  secoesAtivas?: Exclude<SecaoOperacoes, 'controle_financeiro'>[];
   criadoEm?: string;
   atualizadoEm?: string;
 }
