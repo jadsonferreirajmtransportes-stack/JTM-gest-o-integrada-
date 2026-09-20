@@ -1,5 +1,5 @@
 import React from 'react';
-import { JMT_LOGO_BASE64, JMT_ICON_BASE64 } from '../../data/jmtLogoBase64';
+import { JMT_LOGO_BASE64, JMT_ICON_BASE64, JMT_ICON_DARK_BASE64 } from '../../data/jmtLogoBase64';
 
 export interface JmtLogoProps {
   variant?: 'full' | 'compact' | 'icon' | 'seal';
@@ -22,81 +22,23 @@ export interface JmtLogoProps {
  * - Névoa: #6E6A62
  * - Petróleo: #28464E
  */
-export const JmtLogoSymbol: React.FC<{
+
+/** Só o símbolo (sem o texto), recortado direto do arquivo oficial da marca — usado em todo
+ *  lugar que precisa apenas do glifo (ícone, selo, ou ao lado do texto desenhado à parte nas
+ *  variantes "compact"/"full" em tema escuro). `JMT_ICON_DARK_BASE64` é o mesmo recorte com o
+ *  traço preto invertido para branco (o bronze permanece igual, já visível em fundo escuro). */
+const JmtIconImage: React.FC<{
   className?: string;
   size?: number;
   isDark?: boolean;
-}> = ({ className = '', size = 38, isDark = false }) => {
-  const mainStroke = isDark ? '#FFFFFF' : '#111111';
-  const bronzeStroke = '#B38F4F';
-
-  return (
-    <svg
-      viewBox="0 0 140 90"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ width: size * 1.55, height: size }}
-      className={`shrink-0 select-none ${className}`}
-      aria-label="Símbolo Jobson de Moraes Transportes (JM)"
-    >
-      {/* 
-        Geometry definition:
-        Base line: y = 72
-        Peak 1 apex: (58, 18)
-        Peak 2 apex: (92, 18)
-        Inner intersection: (75, 45)
-        Inner triangle base: (58, 72) to (92, 72)
-        Peak 2 right leg: (92, 18) to (126, 72)
-        Bronze line: horizontal tail (12, 72) -> (24, 72) -> ascends to Peak 1 (58, 18)
-      */}
-
-      {/* Traço Bronze: a rota e o movimento (Início horizontal e subida ao Vértice 1) */}
-      <path
-        d="M 12 72 L 28 72 L 58 18"
-        stroke={bronzeStroke}
-        strokeWidth="7.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* Vértice 1 descendo até a base direita do triângulo central */}
-      <path
-        d="M 58 18 L 92 72"
-        stroke={mainStroke}
-        strokeWidth="7.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* Base do triângulo central: solidez e montanhas */}
-      <path
-        d="M 58 72 L 92 72"
-        stroke={mainStroke}
-        strokeWidth="7.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* Vértice 2 subindo do triângulo central até o pico 2 */}
-      <path
-        d="M 58 72 L 92 18"
-        stroke={mainStroke}
-        strokeWidth="7.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* Descida do pico 2 até o solo direito */}
-      <path
-        d="M 92 18 L 126 72"
-        stroke={mainStroke}
-        strokeWidth="7.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-};
+}> = ({ className = '', size = 38, isDark = false }) => (
+  <img
+    src={isDark ? JMT_ICON_DARK_BASE64 : JMT_ICON_BASE64}
+    alt="Jobson de Moraes Transportes"
+    style={{ height: size }}
+    className={`w-auto shrink-0 select-none ${className}`}
+  />
+);
 
 export const JmtLogo: React.FC<JmtLogoProps> = ({
   variant = 'full',
@@ -109,21 +51,7 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
   const subTextColor = isDark ? 'text-slate-300' : 'text-[#111111]';
 
   if (variant === 'icon') {
-    // Em tema claro, mesmo recorte oficial usado no "full"/"compact" (só o símbolo, sem o
-    // texto) — todo uso hoje de variant="icon" é sobre fundo claro (login, sidebar recolhida,
-    // badge mobile do Header). Tema escuro não tem uma versão clara desse recorte ainda, então
-    // continua com o símbolo desenhado à mão.
-    if (!isDark) {
-      return (
-        <img
-          src={JMT_ICON_BASE64}
-          alt="Jobson de Moraes Transportes"
-          style={{ height: iconSize }}
-          className={`w-auto select-none ${className}`}
-        />
-      );
-    }
-    return <JmtLogoSymbol size={iconSize} isDark={isDark} className={className} />;
+    return <JmtIconImage size={iconSize} isDark={isDark} className={className} />;
   }
 
   if (variant === 'seal') {
@@ -135,7 +63,7 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
             : 'bg-[#F4EEE1] border-[#B38F4F]/30 text-[#111111]'
         } ${className}`}
       >
-        <JmtLogoSymbol size={22} isDark={isDark} />
+        <JmtIconImage size={22} isDark={isDark} />
         <div className="flex flex-col">
           <span
             className={`text-[10px] font-bold tracking-[0.22em] uppercase leading-tight ${
@@ -179,7 +107,7 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
   if (variant === 'compact') {
     return (
       <div className={`inline-flex items-center gap-2.5 ${className}`}>
-        <JmtLogoSymbol size={iconSize} isDark={isDark} />
+        <JmtIconImage size={iconSize} isDark={isDark} />
         <div className="flex flex-col justify-center">
           <div className="flex items-baseline gap-1">
             <span className={`font-extrabold text-sm sm:text-base tracking-tight leading-none ${textColor}`}>
@@ -200,7 +128,7 @@ export const JmtLogo: React.FC<JmtLogoProps> = ({
   // variant === 'full' (tema escuro)
   return (
     <div className={`inline-flex items-center gap-3 ${className}`}>
-      <JmtLogoSymbol size={iconSize} isDark={isDark} />
+      <JmtIconImage size={iconSize} isDark={isDark} />
       <div className="flex flex-col justify-center select-none">
         <span
           className={`font-black tracking-[-0.01em] uppercase text-sm sm:text-base leading-tight ${textColor}`}
