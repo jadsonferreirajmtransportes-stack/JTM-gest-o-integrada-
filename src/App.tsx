@@ -617,7 +617,7 @@ export default function App() {
     setToastMessage({ text, type });
     // Erro fica mais tempo na tela — geralmente carrega um detalhe técnico mais longo
     // (ex.: motivo de uma falha ao salvar), e a pessoa precisa de tempo pra ler ou printar.
-    setTimeout(() => setToastMessage(null), type === 'error' ? 9000 : 3500);
+    setTimeout(() => setToastMessage(null), type === 'error' ? 15000 : 7000);
   };
 
   // Switch Global Module
