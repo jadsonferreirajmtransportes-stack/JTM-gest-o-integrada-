@@ -11,6 +11,7 @@ import {
   Check,
   Lock,
   Unlock,
+  Pencil,
 } from 'lucide-react';
 import {
   Cliente,
@@ -224,17 +225,20 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
   const coletasDoMes = coletas.filter((c) => c.data.startsWith(mes)).sort((a, b) => a.data.localeCompare(b.data));
   const totalColetas = coletasDoMes.reduce((sum, c) => sum + c.valor, 0);
 
-  // Novo Tipo (por dia)
+  // Novo/Editar Tipo (por dia)
+  const [editingTipoId, setEditingTipoId] = useState<string | null>(null);
   const [novoTipoNome, setNovoTipoNome] = useState('');
   const [novoTipoValor, setNovoTipoValor] = useState('');
   const [novoTipoClienteId, setNovoTipoClienteId] = useState('');
 
-  // Nova Faixa
+  // Nova/Editar Faixa
+  const [editingFaixaId, setEditingFaixaId] = useState<string | null>(null);
   const [novaFaixaMin, setNovaFaixaMin] = useState('');
   const [novaFaixaMax, setNovaFaixaMax] = useState('');
   const [novaFaixaValor, setNovaFaixaValor] = useState('');
 
-  // Nova Coleta
+  // Nova/Editar Coleta
+  const [editingColetaId, setEditingColetaId] = useState<string | null>(null);
   const [coletaData, setColetaData] = useState(`${mes}-01`);
   const [coletaClienteId, setColetaClienteId] = useState('');
   const [coletaDestinatario, setColetaDestinatario] = useState('');
@@ -260,35 +264,53 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
     e.preventDefault();
     if (!novoTipoNome.trim()) return;
     const clienteSelecionado = clientes.find((c) => c.id === novoTipoClienteId);
+    const existente = editingTipoId ? tiposOperacaoDiaria.find((t) => t.id === editingTipoId) : undefined;
     onSaveTipo({
-      id: `tipo-op-${Date.now()}`,
+      id: editingTipoId || `tipo-op-${Date.now()}`,
       operacaoId,
       nome: novoTipoNome.trim(),
       valorDiario: parseValor(novoTipoValor),
-      ativo: true,
-      ordem: tiposOperacaoDiaria.length,
+      ativo: existente?.ativo ?? true,
+      ordem: existente?.ordem ?? tiposOperacaoDiaria.length,
       clienteId: novoTipoClienteId || undefined,
       clienteNome: clienteSelecionado ? clienteSelecionado.nomeFantasia || clienteSelecionado.razaoSocial : undefined,
     });
+    setEditingTipoId(null);
     setNovoTipoNome('');
     setNovoTipoValor('');
     setNovoTipoClienteId('');
   };
 
+  const handleAbrirEdicaoTipo = (t: TipoOperacaoDiaria) => {
+    setEditingTipoId(t.id);
+    setNovoTipoNome(t.nome);
+    setNovoTipoValor(t.valorDiario.toFixed(2).replace('.', ','));
+    setNovoTipoClienteId(t.clienteId || '');
+  };
+
   const handleAddFaixa = (e: React.FormEvent) => {
     e.preventDefault();
     if (!novaFaixaMin || !novaFaixaValor) return;
+    const existente = editingFaixaId ? faixasVolume.find((f) => f.id === editingFaixaId) : undefined;
     onSaveFaixa({
-      id: `faixa-op-${Date.now()}`,
+      id: editingFaixaId || `faixa-op-${Date.now()}`,
       operacaoId,
       volumeMin: Number(novaFaixaMin),
       volumeMax: novaFaixaMax ? Number(novaFaixaMax) : undefined,
       valor: parseValor(novaFaixaValor),
-      ordem: faixasVolume.length,
+      ordem: existente?.ordem ?? faixasVolume.length,
     });
+    setEditingFaixaId(null);
     setNovaFaixaMin('');
     setNovaFaixaMax('');
     setNovaFaixaValor('');
+  };
+
+  const handleAbrirEdicaoFaixa = (f: FaixaVolumeOperacao) => {
+    setEditingFaixaId(f.id);
+    setNovaFaixaMin(String(f.volumeMin));
+    setNovaFaixaMax(f.volumeMax !== undefined ? String(f.volumeMax) : '');
+    setNovaFaixaValor(f.valor.toFixed(2).replace('.', ','));
   };
 
   const handleAddColeta = (e: React.FormEvent) => {
@@ -297,8 +319,9 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
     const volumes = Number(coletaVolumes) || 1;
     const valor = calcularValorPorFaixa(volumes, faixasVolume);
     const clienteSelecionado = clientes.find((c) => c.id === coletaClienteId);
+    const existente = editingColetaId ? coletas.find((c) => c.id === editingColetaId) : undefined;
     onSaveColeta({
-      id: `coleta-op-${Date.now()}`,
+      id: editingColetaId || `coleta-op-${Date.now()}`,
       operacaoId,
       data: coletaData,
       clienteId: coletaClienteId || undefined,
@@ -309,8 +332,9 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
       numeroDocumento: coletaNF.trim() || undefined,
       valor,
       observacao: coletaObs.trim() || undefined,
-      criadoEm: new Date().toISOString(),
+      criadoEm: existente?.criadoEm || new Date().toISOString(),
     });
+    setEditingColetaId(null);
     setColetaClienteId('');
     setColetaDestinatario('');
     setColetaCidade('');
@@ -318,6 +342,31 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
     setColetaNF('');
     setColetaObs('');
     setShowNovaColeta(false);
+  };
+
+  const handleAbrirNovaColeta = () => {
+    setEditingColetaId(null);
+    setColetaData(`${mes}-01`);
+    setColetaClienteId('');
+    setColetaDestinatario('');
+    setColetaCidade('');
+    setColetaVolumes('1');
+    setColetaNF('');
+    setColetaObs('');
+    setShowNovaColeta(true);
+  };
+
+  const handleAbrirEdicaoColeta = (c: ColetaOperacao) => {
+    if (mesesFechados.some((m) => m.periodo === c.data.slice(0, 7))) return;
+    setEditingColetaId(c.id);
+    setColetaData(c.data);
+    setColetaClienteId(c.clienteId || '');
+    setColetaDestinatario(c.destinatario || '');
+    setColetaCidade(c.cidade || '');
+    setColetaVolumes(String(c.quantidadeVolumes));
+    setColetaNF(c.numeroDocumento || '');
+    setColetaObs(c.observacao || '');
+    setShowNovaColeta(true);
   };
 
   const handleExportDia = () => {
@@ -551,7 +600,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
               </button>
               <button
                 type="button"
-                onClick={() => setShowNovaColeta(true)}
+                onClick={handleAbrirNovaColeta}
                 disabled={faixasVolume.length === 0 || mesFechado}
                 className="px-2.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] disabled:bg-slate-300 text-white rounded-lg text-[11px] font-semibold flex items-center gap-1"
               >
@@ -602,15 +651,24 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                       <td className="px-2 py-1.5">{c.cidade || '—'}</td>
                       <td className="px-2 py-1.5 text-center">{c.quantidadeVolumes}</td>
                       <td className="px-2 py-1.5 text-right font-semibold">{formatCurrency(c.valor)}</td>
-                      <td className="px-2 py-1.5 text-right">
+                      <td className="px-2 py-1.5 text-right whitespace-nowrap">
                         {!mesFechado && (
-                          <button
-                            type="button"
-                            onClick={() => onDeleteColeta(c.id)}
-                            className="p-1 text-slate-400 hover:text-rose-600 rounded-md"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleAbrirEdicaoColeta(c)}
+                              className="p-1 text-slate-400 hover:text-[#C48229] rounded-md"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onDeleteColeta(c.id)}
+                              className="p-1 text-slate-400 hover:text-rose-600 rounded-md"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </>
                         )}
                       </td>
                     </tr>
@@ -631,7 +689,14 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
             <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900">Tipos de Operação (por dia)</h3>
-              <button type="button" onClick={() => setShowConfigTipos(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingTipoId(null);
+                  setShowConfigTipos(false);
+                }}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -655,6 +720,13 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                     >
                       {t.ativo ? 'Ativo' : 'Inativo'}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAbrirEdicaoTipo(t)}
+                      className="p-1 text-slate-400 hover:text-[#C48229]"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
                     <button type="button" onClick={() => onDeleteTipo(t.id)} className="p-1 text-slate-400 hover:text-rose-600">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -662,6 +734,23 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                 </div>
               ))}
               <form onSubmit={handleAddTipo} className="pt-3 border-t border-slate-100 space-y-2">
+                {editingTipoId && (
+                  <div className="flex items-center justify-between text-[11px] text-[#92611F] font-semibold bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
+                    <span>Editando tipo existente</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingTipoId(null);
+                        setNovoTipoNome('');
+                        setNovoTipoValor('');
+                        setNovoTipoClienteId('');
+                      }}
+                      className="underline"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="text"
@@ -693,7 +782,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                   </select>
                 )}
                 <button type="submit" className="w-full py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg font-bold">
-                  Adicionar Tipo
+                  {editingTipoId ? 'Salvar Alterações' : 'Adicionar Tipo'}
                 </button>
               </form>
             </div>
@@ -707,7 +796,14 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
             <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900">Tabela de Faixas por Volume</h3>
-              <button type="button" onClick={() => setShowConfigFaixas(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingFaixaId(null);
+                  setShowConfigFaixas(false);
+                }}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -719,6 +815,13 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-[#92611F]">{formatCurrency(f.valor)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleAbrirEdicaoFaixa(f)}
+                      className="p-1 text-slate-400 hover:text-[#C48229]"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
                     <button type="button" onClick={() => onDeleteFaixa(f.id)} className="p-1 text-slate-400 hover:text-rose-600">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -726,6 +829,23 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                 </div>
               ))}
               <form onSubmit={handleAddFaixa} className="pt-3 border-t border-slate-100 space-y-2">
+                {editingFaixaId && (
+                  <div className="flex items-center justify-between text-[11px] text-[#92611F] font-semibold bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
+                    <span>Editando faixa existente</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingFaixaId(null);
+                        setNovaFaixaMin('');
+                        setNovaFaixaMax('');
+                        setNovaFaixaValor('');
+                      }}
+                      className="underline"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
                 <div className="grid grid-cols-3 gap-2">
                   <input
                     type="number"
@@ -750,7 +870,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                   />
                 </div>
                 <button type="submit" className="w-full py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg font-bold">
-                  Adicionar Faixa
+                  {editingFaixaId ? 'Salvar Alterações' : 'Adicionar Faixa'}
                 </button>
               </form>
             </div>
@@ -763,8 +883,15 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
         <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-slate-950/70 backdrop-blur-xs">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900">Nova Coleta</h3>
-              <button type="button" onClick={() => setShowNovaColeta(false)} className="text-slate-400 hover:text-slate-600">
+              <h3 className="text-sm font-bold text-slate-900">{editingColetaId ? 'Editar Coleta' : 'Nova Coleta'}</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingColetaId(null);
+                  setShowNovaColeta(false);
+                }}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -850,11 +977,18 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                 <strong>{formatCurrency(calcularValorPorFaixa(Number(coletaVolumes) || 1, faixasVolume))}</strong>
               </div>
               <div className="pt-2 border-t flex justify-end gap-2">
-                <button type="button" onClick={() => setShowNovaColeta(false)} className="px-3 py-1.5 text-slate-600 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingColetaId(null);
+                    setShowNovaColeta(false);
+                  }}
+                  className="px-3 py-1.5 text-slate-600 rounded-lg"
+                >
                   Cancelar
                 </button>
                 <button type="submit" className="px-4 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold rounded-lg">
-                  Salvar Coleta
+                  {editingColetaId ? 'Salvar Alterações' : 'Salvar Coleta'}
                 </button>
               </div>
             </form>

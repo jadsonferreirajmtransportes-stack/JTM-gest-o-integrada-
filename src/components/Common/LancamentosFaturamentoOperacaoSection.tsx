@@ -6,6 +6,7 @@ import {
   FileText,
   Download,
   Trash2,
+  Pencil,
   Eye,
   X,
   Calendar,
@@ -42,6 +43,7 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
   const periodoAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
 
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [periodo, setPeriodo] = useState(periodoAtual);
   const [clienteId, setClienteId] = useState('');
   const [valor, setValor] = useState('');
@@ -56,6 +58,7 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
   const ordenados = [...lancamentos].sort((a, b) => b.periodo.localeCompare(a.periodo));
 
   const resetForm = () => {
+    setEditingId(null);
     setPeriodo(periodoAtual);
     setClienteId('');
     setValor('');
@@ -64,6 +67,18 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
     setAnexoNome(undefined);
     setAnexoUrl(undefined);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleAbrirEdicao = (l: LancamentoFaturamentoOperacao) => {
+    setEditingId(l.id);
+    setPeriodo(l.periodo);
+    setClienteId(l.clienteId || '');
+    setValor(l.valor.toFixed(2).replace('.', ','));
+    setNumeroNF(l.numeroNF || '');
+    setDescricao(l.descricao || '');
+    setAnexoNome(l.anexoNome);
+    setAnexoUrl(l.anexoUrl);
+    setShowForm(true);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,8 +97,9 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
     const valorNumerico = Number(valor.replace(/\./g, '').replace(',', '.'));
     if (!periodo || !valorNumerico) return;
     const clienteSelecionado = clientes.find((c) => c.id === clienteId);
+    const existente = editingId ? lancamentos.find((l) => l.id === editingId) : undefined;
     onSave({
-      id: `lanc-fat-op-${Date.now()}`,
+      id: editingId || `lanc-fat-op-${Date.now()}`,
       operacaoId,
       periodo,
       clienteId: clienteId || undefined,
@@ -93,7 +109,7 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
       descricao: descricao.trim() || undefined,
       anexoNome,
       anexoUrl,
-      criadoEm: new Date().toISOString(),
+      criadoEm: existente?.criadoEm || new Date().toISOString(),
     });
     resetForm();
     setShowForm(false);
@@ -184,6 +200,14 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
                     </a>
                   </>
                 )}
+                <button
+                  type="button"
+                  onClick={() => handleAbrirEdicao(l)}
+                  className="p-1.5 text-slate-400 hover:text-[#C48229] rounded-lg hover:bg-amber-50"
+                  title="Editar lançamento"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
                 {deleteConfirmId === l.id ? (
                   <div className="flex items-center gap-1">
                     <button
@@ -224,7 +248,9 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
         <div className="fixed inset-0 z-60 flex items-center justify-center p-3 bg-slate-950/70 backdrop-blur-xs">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900">Novo Lançamento de Faturamento</h3>
+              <h3 className="text-sm font-bold text-slate-900">
+                {editingId ? 'Editar Lançamento de Faturamento' : 'Novo Lançamento de Faturamento'}
+              </h3>
               <button type="button" onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
@@ -326,7 +352,7 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
                   type="submit"
                   className="px-4 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold rounded-lg transition-colors shadow-xs"
                 >
-                  Salvar Lançamento
+                  {editingId ? 'Salvar Alterações' : 'Salvar Lançamento'}
                 </button>
               </div>
             </form>
