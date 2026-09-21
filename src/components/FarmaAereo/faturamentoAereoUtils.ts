@@ -916,6 +916,188 @@ function getTemplateBomiPorNumeroFatura(numeroFatura: string): TemplateExportaca
   return undefined;
 }
 
+// ==========================================
+// Exportação CARGO BRASIL — formato fixo próprio (não é o layout institucional JMT dos
+// outros clientes: sem logo/título bronze, é o formulário que a própria Cargo Brasil exige
+// de todo agente subcontratado). Duas abas (CAPITAL/INTERIOR conforme a cidade de destino) e
+// um bloco de cabeçalho com nº da fatura, forma de pagamento e dados bancários da JMT — mesma
+// estrutura de "PLANILHA AGENTES DE MAIO (4).xlsx", o modelo real que a Cargo Brasil manda.
+// ==========================================
+
+/** Cidade é "Capital" se o tarifário por cidade cadastrado no cliente já classificar assim
+ *  (campo `raio`, ex.: "CAPITAL E REGIÃO METROPOLITANA" — mesmo dado usado no cálculo do Valor
+ *  a Cobrar). Sem tarifário pra essa cidade, cai no padrão observado no modelo real (Natal e
+ *  Parnamirim = Capital; qualquer outra cidade = Interior) — ajuste `CIDADES_CAPITAL_PADRAO`
+ *  se a Cargo Brasil classificar outras cidades da Grande Natal como Capital também. */
+const CIDADES_CAPITAL_PADRAO = new Set(['natal', 'parnamirim'].map(normalizeCidade));
+
+function ehCidadeCapitalCargoBrasil(cliente: Cliente | undefined, cidade: string | undefined, modal?: string): boolean {
+  const faixa = buscarTarifaCidade(cliente, cidade, modal);
+  if (faixa?.raio) return normalizeKey(faixa.raio).includes('capital');
+  return CIDADES_CAPITAL_PADRAO.has(normalizeCidade(cidade || ''));
+}
+
+interface ColunaCargoBrasil {
+  header: string;
+  key: string;
+  width: number;
+  moeda?: boolean;
+}
+
+const COLUNAS_CARGO_BRASIL_CAPITAL: ColunaCargoBrasil[] = [
+  { header: 'Nº CTE', key: 'numeroCte', width: 12 },
+  { header: 'Nº NFE', key: 'notaFiscal', width: 16 },
+  { header: 'EMISSÃO', key: 'emissao', width: 13 },
+  { header: 'CLIENTE ORIGEM', key: 'clienteOrigem', width: 32 },
+  { header: 'CIDADE DESTINO', key: 'cidadeDestino', width: 18 },
+  { header: 'UF', key: 'uf', width: 6 },
+  { header: 'PESO', key: 'peso', width: 10 },
+  { header: 'OBSERVAÇÃO', key: 'observacao', width: 30 },
+  { header: 'R$ TOTAL', key: 'total', width: 12, moeda: true },
+];
+
+const COLUNAS_CARGO_BRASIL_INTERIOR: ColunaCargoBrasil[] = [
+  { header: 'Nº CTE CARGO BRASIL', key: 'numeroCte', width: 16 },
+  { header: 'N° CTE SUB/ AGENTE', key: 'ctrc', width: 16 },
+  { header: 'Nº NFE', key: 'notaFiscal', width: 16 },
+  { header: 'EMISSÃO', key: 'emissao', width: 13 },
+  { header: 'CLIENTE ORIGEM', key: 'clienteOrigem', width: 32 },
+  { header: 'CIDADE DESTINO', key: 'cidadeDestino', width: 18 },
+  { header: 'UF', key: 'uf', width: 6 },
+  { header: 'PESO', key: 'peso', width: 10 },
+  { header: 'OBSERVAÇÕES', key: 'observacao', width: 30 },
+  { header: 'R$ TOTAL', key: 'total', width: 12, moeda: true },
+];
+
+function montarLinhaCargoBrasil(l: LancamentoFaturamentoAereo, cliente: Cliente | undefined): Record<string, string | number | null> {
+  return {
+    numeroCte: l.numeroCte || '',
+    ctrc: l.ctrc || '',
+    notaFiscal: l.notaFiscal || '',
+    emissao: l.dataEmissao ? formatDateBR(l.dataEmissao) : '',
+    clienteOrigem: l.remetenteLab || '',
+    cidadeDestino: l.cidadeDestino || '',
+    uf: l.estadoDestino || '',
+    peso: l.pesoKg ?? l.pesoTaxado ?? null,
+    observacao: l.observacao || '',
+    total: computeValorACobrar(l, cliente),
+  };
+}
+
+/** Bloco fixo de cabeçalho (nº fatura/data/forma de pagamento à direita, AGENTE+CNPJ+dados
+ *  bancários da JMT à esquerda) — mesma posição relativa do modelo real, com a coluna da direita
+ *  ajustada conforme o total de colunas da aba (Capital tem 9, Interior tem 10). "TRANSFERÊNCIA"
+ *  vem marcada por padrão — é a forma de pagamento que a JMT sempre usa nessa parceria. */
+function preencherCabecalhoCargoBrasil(sheet: ExcelJS.Worksheet, fatura: FaturaAereo, totalColunas: number) {
+  const colDireita = totalColunas - 1; // penúltima coluna (0-based)
+  const colCnpjBanco = totalColunas >= 10 ? 4 : 3;
+  const negrito = { bold: true, size: 9, name: 'Arial' as const };
+  const normal = { size: 9, name: 'Arial' as const };
+
+  const setar = (linha: number, coluna: number, valor: string, font = normal) => {
+    const cell = sheet.getCell(linha, coluna + 1); // ExcelJS é 1-based
+    cell.value = valor;
+    cell.font = font;
+  };
+
+  setar(1, colDireita, `N° FATURA: ${fatura.numeroFatura}`, negrito);
+  setar(2, colDireita, `DATA DE EMISSÃO: ${formatDateBR(new Date().toISOString())}`);
+  setar(3, colDireita, 'FORMATO DE PAGAMENTO', negrito);
+  setar(4, colDireita, '(      ) BOLETO');
+  setar(5, colDireita, '(  X  ) TRANSFERÊNCIA');
+  setar(6, colDireita, '(      ) DEPÓSITO');
+  setar(7, 0, 'AGENTE: JOBSON DE MORAES TRANSPORTES LTDA', negrito);
+  setar(7, colCnpjBanco, 'CNPJ: 24.192.148/0001-33');
+  setar(7, colDireita, '(      ) PIX');
+  setar(8, 0, 'DADOS BANCÁRIOS/ BANCO: CAIXA ECONÔMICA FEDERAL', negrito);
+  setar(8, colCnpjBanco, 'AG: 2008     CONTA: 1766313-5');
+  setar(8, colDireita, 'VENCIMENTO: ');
+}
+
+/** Preenche uma aba (Capital ou Interior) com o cabeçalho fixo + cabeçalho da tabela (linha 9)
+ *  + linhas de dados + linha de TOTAL — mesma disposição do modelo real da Cargo Brasil. */
+function preencherAbaCargoBrasil(
+  sheet: ExcelJS.Worksheet,
+  colunas: ColunaCargoBrasil[],
+  lancamentos: LancamentoFaturamentoAereo[],
+  cliente: Cliente | undefined,
+  fatura: FaturaAereo
+) {
+  sheet.columns = colunas.map((c) => ({ key: c.key, width: c.width }));
+  preencherCabecalhoCargoBrasil(sheet, fatura, colunas.length);
+
+  const linhaCabecalho = 9;
+  const headerRow = sheet.getRow(linhaCabecalho);
+  colunas.forEach((col, idx) => {
+    const cell = headerRow.getCell(idx + 1);
+    cell.value = col.header;
+    cell.font = { bold: true, size: 10, name: 'Arial' };
+    cell.border = BORDA_FINA;
+  });
+
+  lancamentos.forEach((l, idx) => {
+    const valores = montarLinhaCargoBrasil(l, cliente);
+    const row = sheet.getRow(linhaCabecalho + 1 + idx);
+    colunas.forEach((col, colIdx) => {
+      const cell = row.getCell(colIdx + 1);
+      cell.value = valores[col.key];
+      if (col.moeda && typeof cell.value === 'number') cell.numFmt = '#,##0.00';
+      cell.font = { size: 10, name: 'Arial' };
+      cell.border = BORDA_FINA;
+    });
+  });
+
+  // Mesma posição do rótulo "TOTAL:" do modelo real (coluna R$ TOTAL menos 4) — Capital: coluna
+  // E de 9; Interior: coluna F de 10.
+  const linhaTotal = linhaCabecalho + 1 + lancamentos.length;
+  const totalRow = sheet.getRow(linhaTotal);
+  const colLabelTotal = Math.max(1, colunas.length - 4);
+  totalRow.getCell(colLabelTotal).value = 'TOTAL:';
+  totalRow.getCell(colLabelTotal).font = { bold: true, size: 10, name: 'Arial' };
+  const totalCell = totalRow.getCell(colunas.length);
+  totalCell.value = lancamentos.reduce((soma, l) => soma + computeValorACobrar(l, cliente), 0);
+  totalCell.numFmt = '#,##0.00';
+  totalCell.font = { bold: true, size: 10, name: 'Arial' };
+}
+
+/** Gera e baixa a fatura no formato próprio da Cargo Brasil — 2 abas (CAPITAL/INTERIOR) — em
+ *  vez do layout institucional genérico usado pelos demais clientes (ver `exportarFaturaParaExcel`,
+ *  que já desvia pra cá quando o cliente é a Cargo Brasil). */
+async function exportarFaturaCargoBrasilParaExcel(
+  fatura: FaturaAereo,
+  lancamentosDaFatura: LancamentoFaturamentoAereo[],
+  cliente: Cliente | undefined
+): Promise<void> {
+  const capital = lancamentosDaFatura.filter((l) => ehCidadeCapitalCargoBrasil(cliente, l.cidadeDestino, l.modal));
+  const interior = lancamentosDaFatura.filter((l) => !ehCidadeCapitalCargoBrasil(cliente, l.cidadeDestino, l.modal));
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = STRATEGIC_GUIDELINES.empresa;
+  workbook.created = new Date();
+
+  preencherAbaCargoBrasil(
+    workbook.addWorksheet('CAPITAL', { views: [{ showGridLines: false }] }),
+    COLUNAS_CARGO_BRASIL_CAPITAL,
+    capital,
+    cliente,
+    fatura
+  );
+  preencherAbaCargoBrasil(
+    workbook.addWorksheet('INTERIOR', { views: [{ showGridLines: false }] }),
+    COLUNAS_CARGO_BRASIL_INTERIOR,
+    interior,
+    cliente,
+    fatura
+  );
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  const nomeFatura = sanitizarNomeArquivo(fatura.numeroFatura || 'Fatura');
+  baixarBlob(blob, `Fatura_CargoBrasil_${nomeFatura}.xlsx`);
+}
+
 /** IDs dos clientes que já têm modelo próprio de exportação — mapeamento direto por id (mais
  *  confiável que por nome, que pode mudar). Ajuste aqui se o cadastro do cliente for recriado. */
 const TEMPLATE_POR_CLIENTE_ID: Record<string, TemplateExportacaoFatura> = {
@@ -996,6 +1178,13 @@ export async function exportarFaturaParaExcel(
   lancamentosDaFatura: LancamentoFaturamentoAereo[],
   cliente?: Cliente
 ): Promise<void> {
+  // Cargo Brasil tem formato próprio (2 abas, sem o layout institucional JMT) — desvia antes
+  // de entrar no sistema de template de coluna única usado pelos demais clientes.
+  const nomeClienteNormalizado = normalizarNomeCliente(cliente?.nomeFantasia || cliente?.razaoSocial || fatura.clienteNome || '');
+  if (nomeClienteNormalizado.includes('CARGO BRASIL')) {
+    return exportarFaturaCargoBrasilParaExcel(fatura, lancamentosDaFatura, cliente);
+  }
+
   // Modelo de colunas específico da empresa (BLS/TEMPLOG/TRANS MODEL), quando existir —
   // senão cai no padrão (colunas do Coda). Só a estrutura da tabela muda; o restante do
   // layout institucional (logo, cores, borda, total, rodapé) é sempre o mesmo abaixo.
