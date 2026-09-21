@@ -183,6 +183,10 @@ export type UrgenciaSolicitacaoCompra = 'Normal' | 'Urgente';
  *  diretoria aprova ou recusa; "Comprado" é marcado manualmente depois da compra efetivada. */
 export interface SolicitacaoCompra {
   id: string;
+  /** Agrupa vários itens pedidos de uma vez, na mesma submissão do formulário (ex.: "papel A4
+   *  + canetas + mouse" pedidos juntos) — cada item continua sendo seu próprio registro, com
+   *  status/aprovação independentes, só a exibição na lista agrupa quem tem o mesmo grupoId. */
+  grupoId?: string;
   item: string;
   quantidade: number;
   justificativa?: string;

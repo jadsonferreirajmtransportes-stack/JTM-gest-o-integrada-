@@ -24,6 +24,7 @@ function assertNoError(error: { message: string } | null, contexto: string) {
 function rowToSolicitacaoCompra(r: any): SolicitacaoCompra {
   return {
     id: r.id,
+    grupoId: u(r.grupo_id),
     item: r.item,
     quantidade: Number(r.quantidade ?? 1),
     justificativa: u(r.justificativa),
@@ -47,6 +48,7 @@ function rowToSolicitacaoCompra(r: any): SolicitacaoCompra {
 function solicitacaoCompraToRow(s: SolicitacaoCompra) {
   return {
     id: s.id,
+    grupo_id: n(s.grupoId),
     item: s.item,
     quantidade: s.quantidade ?? 1,
     justificativa: n(s.justificativa),

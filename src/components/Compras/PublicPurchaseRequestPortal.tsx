@@ -7,6 +7,8 @@ import {
   Upload,
   FileText,
   Send,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { SolicitacaoCompra, UrgenciaSolicitacaoCompra } from '../../types';
 import { JmtLogo } from '../Brand/JmtLogo';
@@ -27,10 +29,10 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
   onSuccessSubmit,
   onAdminBack,
 }) => {
-  const [item, setItem] = useState('');
-  const [quantidade, setQuantidade] = useState('1');
+  const [itens, setItens] = useState<{ item: string; quantidade: string; valorEstimado: string }[]>([
+    { item: '', quantidade: '1', valorEstimado: '' },
+  ]);
   const [justificativa, setJustificativa] = useState('');
-  const [valorEstimado, setValorEstimado] = useState('');
   const [fornecedorSugerido, setFornecedorSugerido] = useState('');
   const [urgencia, setUrgencia] = useState<UrgenciaSolicitacaoCompra>('Normal');
   const [prazoNecessario, setPrazoNecessario] = useState('');
@@ -62,11 +64,19 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
     reader.readAsDataURL(file);
   };
 
+  const handleAddLinhaItem = () => {
+    setItens((prev) => [...prev, { item: '', quantidade: '1', valorEstimado: '' }]);
+  };
+  const handleRemoveLinhaItem = (idx: number) => {
+    setItens((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev));
+  };
+  const handleUpdateLinhaItem = (idx: number, campo: 'item' | 'quantidade' | 'valorEstimado', valor: string) => {
+    setItens((prev) => prev.map((linha, i) => (i === idx ? { ...linha, [campo]: valor } : linha)));
+  };
+
   const resetForm = () => {
-    setItem('');
-    setQuantidade('1');
+    setItens([{ item: '', quantidade: '1', valorEstimado: '' }]);
     setJustificativa('');
-    setValorEstimado('');
     setFornecedorSugerido('');
     setUrgencia('Normal');
     setPrazoNecessario('');
@@ -83,8 +93,9 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
       console.warn('Envio bloqueado: comportamento automatizado detectado.');
       return;
     }
-    if (!item.trim()) {
-      alert('Por favor, informe o item que precisa comprar.');
+    const linhasValidas = itens.filter((l) => l.item.trim());
+    if (linhasValidas.length === 0) {
+      alert('Por favor, informe ao menos um item que precisa comprar.');
       return;
     }
     if (!solicitanteNome.trim()) {
@@ -95,12 +106,15 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
     setIsSubmitting(true);
     setErroEnvio(null);
     const protocolNum = `JMT-COMPRA-${Date.now().toString().slice(-6)}`;
-    const payload: SolicitacaoCompra = {
-      id: `compra-${Date.now()}`,
-      item: item.trim(),
-      quantidade: Number(quantidade) || 1,
+    const agora = Date.now();
+    const grupoId = linhasValidas.length > 1 ? `pedido-${agora}` : undefined;
+    const payloads: SolicitacaoCompra[] = linhasValidas.map((linha, idx) => ({
+      id: `compra-${agora}-${idx}`,
+      grupoId,
+      item: linha.item.trim(),
+      quantidade: Number(linha.quantidade) || 1,
       justificativa: justificativa.trim() || undefined,
-      valorEstimado: valorEstimado ? Number(valorEstimado.replace(/\./g, '').replace(',', '.')) : undefined,
+      valorEstimado: linha.valorEstimado ? Number(linha.valorEstimado.replace(/\./g, '').replace(',', '.')) : undefined,
       fornecedorSugerido: fornecedorSugerido.trim() || undefined,
       urgencia,
       prazoNecessario: prazoNecessario || undefined,
@@ -110,11 +124,15 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
       solicitanteContato: solicitanteContato.trim() || undefined,
       status: 'Pendente',
       criadoEm: new Date().toISOString(),
-    };
+    }));
 
     setTimeout(async () => {
       try {
-        await onSuccessSubmit(payload);
+        for (const payload of payloads) {
+          // Sequencial (não Promise.all) — evita rajada simultânea no Supabase e mantém a
+          // ordem de criação previsível caso algum item falhe no meio da lista.
+          await onSuccessSubmit(payload);
+        }
         setSubmittedProtocol(protocolNum);
       } catch (err) {
         console.error(err);
@@ -201,29 +219,56 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
             )}
 
             <div className="bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4 shadow-sm">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Item / Descrição *</label>
-                  <input
-                    type="text"
-                    required
-                    value={item}
-                    onChange={(e) => setItem(e.target.value)}
-                    placeholder="Ex: Resma de papel A4"
-                    className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
-                  />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-300">Itens *</label>
+                  <button
+                    type="button"
+                    onClick={handleAddLinhaItem}
+                    className="text-[11px] font-semibold text-[#C48229] hover:underline flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" /> Adicionar outro item
+                  </button>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Quantidade *</label>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    value={quantidade}
-                    onChange={(e) => setQuantidade(e.target.value)}
-                    className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
-                  />
-                </div>
+                {itens.map((linha, idx) => (
+                  <div key={idx} className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 items-center">
+                    <input
+                      type="text"
+                      required={idx === 0}
+                      value={linha.item}
+                      onChange={(e) => handleUpdateLinhaItem(idx, 'item', e.target.value)}
+                      placeholder="Ex: Resma de papel A4"
+                      className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
+                    />
+                    <input
+                      type="number"
+                      required={idx === 0}
+                      min={1}
+                      value={linha.quantidade}
+                      onChange={(e) => handleUpdateLinhaItem(idx, 'quantidade', e.target.value)}
+                      placeholder="Qtd."
+                      className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
+                    />
+                    <input
+                      type="text"
+                      value={linha.valorEstimado}
+                      onChange={(e) => handleUpdateLinhaItem(idx, 'valorEstimado', e.target.value)}
+                      placeholder="R$ (opc.)"
+                      className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
+                    />
+                    {itens.length > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLinhaItem(idx)}
+                        className="p-2 text-slate-500 hover:text-rose-400"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <span />
+                    )}
+                  </div>
+                ))}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1.5">Justificativa</label>
@@ -237,16 +282,6 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Valor Estimado (R$)</label>
-                  <input
-                    type="text"
-                    value={valorEstimado}
-                    onChange={(e) => setValorEstimado(e.target.value)}
-                    placeholder="Ex: 150,00"
-                    className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
-                  />
-                </div>
-                <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1.5">Urgência</label>
                   <select
                     value={urgencia}
@@ -257,8 +292,6 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
                     <option value="Urgente">Urgente</option>
                   </select>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1.5">Fornecedor Sugerido</label>
                   <input
@@ -268,15 +301,15 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
                     className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Prazo Necessário</label>
-                  <input
-                    type="date"
-                    value={prazoNecessario}
-                    onChange={(e) => setPrazoNecessario(e.target.value)}
-                    className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
-                  />
-                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">Prazo Necessário</label>
+                <input
+                  type="date"
+                  value={prazoNecessario}
+                  onChange={(e) => setPrazoNecessario(e.target.value)}
+                  className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
+                />
               </div>
             </div>
 
@@ -329,7 +362,10 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
                 'Enviando...'
               ) : (
                 <>
-                  <Send className="w-4 h-4" /> Enviar Solicitação
+                  <Send className="w-4 h-4" />
+                  {itens.filter((l) => l.item.trim()).length > 1
+                    ? `Enviar ${itens.filter((l) => l.item.trim()).length} Itens`
+                    : 'Enviar Solicitação'}
                 </>
               )}
             </button>
