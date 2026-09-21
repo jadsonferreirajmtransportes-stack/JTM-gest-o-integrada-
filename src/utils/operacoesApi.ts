@@ -146,6 +146,8 @@ function rowToTipoOperacaoDiaria(r: any): TipoOperacaoDiaria {
     valorDiario: Number(r.valor_diario ?? 0),
     ativo: r.ativo ?? true,
     ordem: Number(r.ordem ?? 100),
+    clienteId: u(r.cliente_id),
+    clienteNome: u(r.cliente_nome),
     criadoEm: u(r.criado_em),
   };
 }
@@ -157,6 +159,8 @@ function tipoOperacaoDiariaToRow(t: TipoOperacaoDiaria) {
     valor_diario: t.valorDiario ?? 0,
     ativo: t.ativo ?? true,
     ordem: t.ordem ?? 100,
+    cliente_id: n(t.clienteId),
+    cliente_nome: n(t.clienteNome),
   };
 }
 export async function getTiposOperacaoDiaria(): Promise<TipoOperacaoDiaria[]> {
@@ -245,6 +249,8 @@ function rowToColetaOperacao(r: any): ColetaOperacao {
     id: r.id,
     operacaoId: r.operacao_id,
     data: r.data,
+    clienteId: u(r.cliente_id),
+    clienteNome: u(r.cliente_nome),
     destinatario: u(r.destinatario),
     cidade: u(r.cidade),
     quantidadeVolumes: Number(r.quantidade_volumes ?? 1),
@@ -259,6 +265,8 @@ function coletaOperacaoToRow(c: ColetaOperacao) {
     id: c.id,
     operacao_id: c.operacaoId,
     data: c.data,
+    cliente_id: n(c.clienteId),
+    cliente_nome: n(c.clienteNome),
     destinatario: n(c.destinatario),
     cidade: n(c.cidade),
     quantidade_volumes: c.quantidadeVolumes ?? 1,

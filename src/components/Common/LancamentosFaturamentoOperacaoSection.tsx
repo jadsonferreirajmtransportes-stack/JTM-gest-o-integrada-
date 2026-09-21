@@ -11,13 +11,16 @@ import {
   Calendar,
   Hash,
 } from 'lucide-react';
-import { LancamentoFaturamentoOperacao } from '../../types';
+import { Cliente, LancamentoFaturamentoOperacao } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 
 interface LancamentosFaturamentoOperacaoSectionProps {
   operacaoId: string;
   operacaoNome: string;
   lancamentos: LancamentoFaturamentoOperacao[];
+  /** Empresas atreladas à Operação — pra poder identificar de qual empresa veio o lançamento
+   *  (alimenta o Real Conciliado por empresa em Visão Geral/DRE e no ranking de clientes). */
+  clientes?: Cliente[];
   onSave: (lancamento: LancamentoFaturamentoOperacao) => void;
   onDelete: (id: string) => void;
 }
@@ -31,6 +34,7 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
   operacaoId,
   operacaoNome,
   lancamentos,
+  clientes = [],
   onSave,
   onDelete,
 }) => {
@@ -39,6 +43,7 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
 
   const [showForm, setShowForm] = useState(false);
   const [periodo, setPeriodo] = useState(periodoAtual);
+  const [clienteId, setClienteId] = useState('');
   const [valor, setValor] = useState('');
   const [numeroNF, setNumeroNF] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -52,6 +57,7 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
 
   const resetForm = () => {
     setPeriodo(periodoAtual);
+    setClienteId('');
     setValor('');
     setNumeroNF('');
     setDescricao('');
@@ -75,10 +81,13 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
     e.preventDefault();
     const valorNumerico = Number(valor.replace(/\./g, '').replace(',', '.'));
     if (!periodo || !valorNumerico) return;
+    const clienteSelecionado = clientes.find((c) => c.id === clienteId);
     onSave({
       id: `lanc-fat-op-${Date.now()}`,
       operacaoId,
       periodo,
+      clienteId: clienteId || undefined,
+      clienteNome: clienteSelecionado ? clienteSelecionado.nomeFantasia || clienteSelecionado.razaoSocial : undefined,
       valor: valorNumerico,
       numeroNF: numeroNF.trim() || undefined,
       descricao: descricao.trim() || undefined,
@@ -141,6 +150,11 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-bold text-slate-900">{formatPeriodoLabel(l.periodo)}</span>
                   <span className="text-xs font-bold text-emerald-700">{formatCurrency(l.valor)}</span>
+                  {l.clienteNome && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-50 text-[#92611F] border border-amber-200 rounded">
+                      {l.clienteNome}
+                    </span>
+                  )}
                   {l.numeroNF && (
                     <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
                       NF {l.numeroNF}
@@ -241,6 +255,23 @@ export const LancamentosFaturamentoOperacaoSection: React.FC<LancamentosFaturame
                   />
                 </div>
               </div>
+              {clientes.length > 0 && (
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Empresa (opcional)</label>
+                  <select
+                    value={clienteId}
+                    onChange={(e) => setClienteId(e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg bg-white"
+                  >
+                    <option value="">— Não vincular a uma empresa específica —</option>
+                    {clientes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nomeFantasia || c.razaoSocial}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="font-semibold text-slate-700 flex items-center gap-1 mb-1">
                   <Hash className="w-3 h-3" /> Nº da(s) NF (opcional)

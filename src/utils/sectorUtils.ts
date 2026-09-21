@@ -109,14 +109,14 @@ export function computeFaturamentoRealOperacao(
 
   (coletas || []).forEach((c) => {
     const periodo = c.data ? c.data.slice(0, 7) : undefined;
-    somar(Number(c.valor) || 0, periodo, `periodo:${periodo}`);
+    somar(Number(c.valor) || 0, periodo, c.clienteId || `periodo:${periodo}`);
   });
 
-  const valorDiarioPorTipo = new Map((tiposOperacaoDiaria || []).map((t) => [t.id, t.valorDiario]));
+  const tipoPorId = new Map((tiposOperacaoDiaria || []).map((t) => [t.id, t]));
   (registrosDia || []).forEach((r) => {
     const periodo = r.data ? r.data.slice(0, 7) : undefined;
-    const valor = valorDiarioPorTipo.get(r.tipoOperacaoId) || 0;
-    somar(valor, periodo, `periodo:${periodo}`);
+    const tipo = tipoPorId.get(r.tipoOperacaoId);
+    somar(tipo?.valorDiario || 0, periodo, tipo?.clienteId || `periodo:${periodo}`);
   });
 
   const mesesComDados = Math.max(meses.size, 1);

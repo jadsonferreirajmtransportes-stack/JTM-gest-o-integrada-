@@ -113,6 +113,11 @@ export interface TipoOperacaoDiaria {
   valorDiario: number;
   ativo: boolean;
   ordem: number;
+  /** Empresa atrelada dona desse tipo (opcional) — ex.: "Operação CD" é da Unimed. Vincula
+   *  todo dia marcado pra esse tipo à empresa (ver computeFaturamentoRealOperacao), sem
+   *  precisar escolher empresa a cada clique no calendário. */
+  clienteId?: string;
+  clienteNome?: string;
   criadoEm?: string;
 }
 
@@ -145,6 +150,11 @@ export interface ColetaOperacao {
   id: string;
   operacaoId: string;
   data: string; // 'YYYY-MM-DD'
+  /** Empresa atrelada de origem da coleta (opcional) — mesma chave usada em
+   *  FaturamentoRealSetor.porClienteChave, alimenta o "Real Conciliado" por empresa na
+   *  Visão Geral/DRE e na aba Faturamento do cliente. */
+  clienteId?: string;
+  clienteNome?: string;
   destinatario?: string;
   cidade?: string;
   quantidadeVolumes: number;

@@ -10,6 +10,7 @@ import {
   Check,
 } from 'lucide-react';
 import {
+  Cliente,
   TipoOperacaoDiaria,
   RegistroDiaOperacao,
   FaixaVolumeOperacao,
@@ -24,6 +25,9 @@ interface AcompanhamentoOperacionalSectionProps {
   registrosDia: RegistroDiaOperacao[];
   faixasVolume: FaixaVolumeOperacao[];
   coletas: ColetaOperacao[];
+  /** Empresas atreladas à Operação — pra identificar de qual empresa veio a coleta (alimenta
+   *  o Real Conciliado por empresa em Visão Geral/DRE e no ranking de clientes). */
+  clientes?: Cliente[];
   onSaveTipo: (t: TipoOperacaoDiaria) => void;
   onDeleteTipo: (id: string) => void;
   onMarcarDia: (registro: RegistroDiaOperacao) => void;
@@ -66,6 +70,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
   registrosDia,
   faixasVolume,
   coletas,
+  clientes = [],
   onSaveTipo,
   onDeleteTipo,
   onMarcarDia,
@@ -110,6 +115,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
   // Novo Tipo (por dia)
   const [novoTipoNome, setNovoTipoNome] = useState('');
   const [novoTipoValor, setNovoTipoValor] = useState('');
+  const [novoTipoClienteId, setNovoTipoClienteId] = useState('');
 
   // Nova Faixa
   const [novaFaixaMin, setNovaFaixaMin] = useState('');
@@ -118,6 +124,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
 
   // Nova Coleta
   const [coletaData, setColetaData] = useState(`${mes}-01`);
+  const [coletaClienteId, setColetaClienteId] = useState('');
   const [coletaDestinatario, setColetaDestinatario] = useState('');
   const [coletaCidade, setColetaCidade] = useState('');
   const [coletaVolumes, setColetaVolumes] = useState('1');
@@ -139,6 +146,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
   const handleAddTipo = (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoTipoNome.trim()) return;
+    const clienteSelecionado = clientes.find((c) => c.id === novoTipoClienteId);
     onSaveTipo({
       id: `tipo-op-${Date.now()}`,
       operacaoId,
@@ -146,9 +154,12 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
       valorDiario: parseValor(novoTipoValor),
       ativo: true,
       ordem: tiposOperacaoDiaria.length,
+      clienteId: novoTipoClienteId || undefined,
+      clienteNome: clienteSelecionado ? clienteSelecionado.nomeFantasia || clienteSelecionado.razaoSocial : undefined,
     });
     setNovoTipoNome('');
     setNovoTipoValor('');
+    setNovoTipoClienteId('');
   };
 
   const handleAddFaixa = (e: React.FormEvent) => {
@@ -171,10 +182,13 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
     e.preventDefault();
     const volumes = Number(coletaVolumes) || 1;
     const valor = calcularValorPorFaixa(volumes, faixasVolume);
+    const clienteSelecionado = clientes.find((c) => c.id === coletaClienteId);
     onSaveColeta({
       id: `coleta-op-${Date.now()}`,
       operacaoId,
       data: coletaData,
+      clienteId: coletaClienteId || undefined,
+      clienteNome: clienteSelecionado ? clienteSelecionado.nomeFantasia || clienteSelecionado.razaoSocial : undefined,
       destinatario: coletaDestinatario.trim() || undefined,
       cidade: coletaCidade.trim() || undefined,
       quantidadeVolumes: volumes,
@@ -183,6 +197,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
       observacao: coletaObs.trim() || undefined,
       criadoEm: new Date().toISOString(),
     });
+    setColetaClienteId('');
     setColetaDestinatario('');
     setColetaCidade('');
     setColetaVolumes('1');
@@ -403,7 +418,12 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                   {coletasDoMes.map((c) => (
                     <tr key={c.id}>
                       <td className="px-2 py-1.5 font-mono">{c.data.split('-').reverse().join('/')}</td>
-                      <td className="px-2 py-1.5">{c.destinatario || '—'}</td>
+                      <td className="px-2 py-1.5">
+                        {c.destinatario || '—'}
+                        {c.clienteNome && (
+                          <span className="block text-[10px] text-[#92611F] font-semibold">{c.clienteNome}</span>
+                        )}
+                      </td>
                       <td className="px-2 py-1.5">{c.cidade || '—'}</td>
                       <td className="px-2 py-1.5 text-center">{c.quantidadeVolumes}</td>
                       <td className="px-2 py-1.5 text-right font-semibold">{formatCurrency(c.valor)}</td>
@@ -443,7 +463,10 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                 <div key={t.id} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-200">
                   <div>
                     <div className="font-bold text-slate-800">{t.nome}</div>
-                    <div className="text-slate-500">{formatCurrency(t.valorDiario)}/dia</div>
+                    <div className="text-slate-500">
+                      {formatCurrency(t.valorDiario)}/dia
+                      {t.clienteNome && <span className="text-[#92611F] font-semibold"> • {t.clienteNome}</span>}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button
@@ -478,6 +501,20 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                     className="p-2 border border-slate-200 rounded-lg"
                   />
                 </div>
+                {clientes.length > 0 && (
+                  <select
+                    value={novoTipoClienteId}
+                    onChange={(e) => setNovoTipoClienteId(e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg bg-white"
+                  >
+                    <option value="">— Empresa (opcional) —</option>
+                    {clientes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nomeFantasia || c.razaoSocial}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <button type="submit" className="w-full py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg font-bold">
                   Adicionar Tipo
                 </button>
@@ -578,6 +615,23 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                   />
                 </div>
               </div>
+              {clientes.length > 0 && (
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Empresa (opcional)</label>
+                  <select
+                    value={coletaClienteId}
+                    onChange={(e) => setColetaClienteId(e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg bg-white"
+                  >
+                    <option value="">— Não vincular a uma empresa específica —</option>
+                    {clientes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nomeFantasia || c.razaoSocial}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">Destinatário</label>
                 <input

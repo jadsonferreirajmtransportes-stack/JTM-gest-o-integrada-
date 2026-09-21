@@ -324,6 +324,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
               operacaoId={operacao.id}
               operacaoNome={operacao.nome}
               lancamentos={lancamentosFaturamento}
+              clientes={sectorClientes}
               onSave={onSaveLancamentoFaturamento}
               onDelete={onDeleteLancamentoFaturamento || (() => {})}
             />
@@ -341,6 +342,7 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
                 registrosDia={registrosDiaOperacao}
                 faixasVolume={faixasVolumeOperacao}
                 coletas={coletasOperacao}
+                clientes={sectorClientes}
                 onSaveTipo={onSaveTipoOperacaoDiaria}
                 onDeleteTipo={onDeleteTipoOperacaoDiaria || (() => {})}
                 onMarcarDia={onMarcarDiaOperacao}
