@@ -25,6 +25,8 @@ import {
   InstrucaoTrabalho,
 } from '../../types';
 import { getMensagens, assinarMensagensNovas, AnexoMensagemChat } from '../../utils/chatApi';
+import { podeVerRegistroCompartilhado } from '../../utils/visibilidadeUtils';
+import { podeVerAtividade } from '../Agenda/agendaUtils';
 import { NovaConversaModal } from './NovaConversaModal';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 
@@ -276,27 +278,72 @@ export const ChatView: React.FC<ChatViewProps> = ({
   // ------------------------------------------------------------------
   // Menções (@Notas, @Agenda, @Projetos, @Instruções de Trabalho)
   // ------------------------------------------------------------------
+
+  // Só os outros participantes da conversa aberta agora (exclui eu mesmo) — usado pra restringir
+  // o que dá pra @mencionar ao que eu JÁ compartilhei com quem está do outro lado da conversa,
+  // e não a tudo que eu vejo. Numa conversa em grupo, exige visível pra TODOS os outros membros
+  // (mencionar precisa significar "todo mundo aqui consegue abrir", não só "eu consigo").
+  const outrosParticipantesDaConversa = useMemo<UsuarioLogin[]>(() => {
+    if (!conversaAberta) return [];
+    return conversaAberta.participantesIds
+      .filter((id) => id !== currentUserId)
+      .map((id) => usuarios.find((u) => u.id === id))
+      .filter((u): u is UsuarioLogin => !!u);
+  }, [conversaAberta, usuarios, currentUserId]);
+
   const itensMencionaveis = useMemo<ItemMencionavel[]>(() => {
+    // Sem conversa aberta ainda, ou sem conseguir resolver quem é o outro participante (não
+    // deveria acontecer numa conversa de verdade) — não restringe além do que já veio filtrado
+    // de App.tsx pro usuário atual.
+    const compartilhadoComTodosOsOutros = (podeVerPara: (outro: UsuarioLogin) => boolean): boolean =>
+      outrosParticipantesDaConversa.length === 0 || outrosParticipantesDaConversa.every(podeVerPara);
+
     const deNotas: ItemMencionavel[] = notas
       .filter((n) => !n.arquivada)
+      .filter((n) =>
+        compartilhadoComTodosOsOutros((outro) =>
+          podeVerRegistroCompartilhado({
+            criadoPorUserId: n.criadoPorUserId,
+            usuariosMarcadosIds: n.usuariosMarcadosIds,
+            nomesTextoLivre: [n.autor],
+            currentUser: outro,
+            userRole: outro.role,
+          })
+        )
+      )
       .map((n) => ({ tipo: 'nota' as const, id: n.id, titulo: n.titulo || 'Sem título' }));
-    const deAtividades: ItemMencionavel[] = atividades.map((a) => ({
-      tipo: 'atividade' as const,
-      id: a.id,
-      titulo: a.titulo,
-      subtitulo: a.data,
-    }));
-    const deProjetos: ItemMencionavel[] = projetos.map((p) => ({
-      tipo: 'projeto' as const,
-      id: p.id,
-      titulo: p.titulo,
-      subtitulo: p.codigo,
-    }));
+    const deAtividades: ItemMencionavel[] = atividades
+      .filter((a) => compartilhadoComTodosOsOutros((outro) => podeVerAtividade(a, outro, outro.role)))
+      .map((a) => ({ tipo: 'atividade' as const, id: a.id, titulo: a.titulo, subtitulo: a.data }));
+    const deProjetos: ItemMencionavel[] = projetos
+      .filter((p) =>
+        compartilhadoComTodosOsOutros((outro) =>
+          podeVerRegistroCompartilhado({
+            criadoPorUserId: p.criadoPorUserId,
+            usuariosMarcadosIds: p.usuariosMarcadosIds,
+            nomesTextoLivre: [p.liderProjetoNome, ...(p.equipeMembros || [])],
+            currentUser: outro,
+            userRole: outro.role,
+          })
+        )
+      )
+      .map((p) => ({ tipo: 'projeto' as const, id: p.id, titulo: p.titulo, subtitulo: p.codigo }));
     const deInstrucoes: ItemMencionavel[] = instrucoes
       .filter((i) => !i.arquivada)
+      .filter((i) =>
+        compartilhadoComTodosOsOutros((outro) =>
+          podeVerRegistroCompartilhado({
+            criadoPorUserId: i.criadoPorUserId,
+            usuariosMarcadosIds: i.usuariosMarcadosIds,
+            nomesTextoLivre: [i.autor, i.responsavel, i.aprovadoPor],
+            currentUser: outro,
+            userRole: outro.role,
+          })
+        )
+      )
       .map((i) => ({ tipo: 'instrucao' as const, id: i.id, titulo: i.titulo, subtitulo: i.codigo }));
     return [...deNotas, ...deAtividades, ...deProjetos, ...deInstrucoes];
-  }, [notas, atividades, projetos, instrucoes]);
+  }, [notas, atividades, projetos, instrucoes, outrosParticipantesDaConversa]);
 
   const resultadosMencao = useMemo(() => {
     if (mencaoQuery === null) return [];
