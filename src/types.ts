@@ -16,6 +16,7 @@ export type GlobalModuleId =
   | 'notas'
   | 'instrucoes'
   | 'usuarios'
+  | 'compras'
   | string;
 
 // Seções de dentro do módulo DP (Departamento Pessoal) que podem ser restringidas
@@ -172,6 +173,35 @@ export interface MesFechadoOperacao {
   operacaoId: string;
   periodo: string; // 'YYYY-MM'
   fechadoEm?: string;
+}
+
+export type StatusSolicitacaoCompra = 'Pendente' | 'Aprovado' | 'Recusado' | 'Comprado';
+export type UrgenciaSolicitacaoCompra = 'Normal' | 'Urgente';
+
+/** Pedido de compra de um item — criado por um login interno OU por qualquer pessoa sem
+ *  cadastro via link público (ver módulo Compras, PublicPurchaseRequestPortal.tsx). Admin/
+ *  diretoria aprova ou recusa; "Comprado" é marcado manualmente depois da compra efetivada. */
+export interface SolicitacaoCompra {
+  id: string;
+  item: string;
+  quantidade: number;
+  justificativa?: string;
+  valorEstimado?: number;
+  fornecedorSugerido?: string;
+  urgencia: UrgenciaSolicitacaoCompra;
+  prazoNecessario?: string; // 'YYYY-MM-DD'
+  anexoNome?: string;
+  anexoUrl?: string;
+  /** Quem pediu — login interno (nome + login do UsuarioLogin) ou alguém externo via link
+   *  público (nome + contato digitados livremente, sem cadastro no sistema). */
+  solicitanteNome: string;
+  solicitanteLogin?: string;
+  solicitanteContato?: string;
+  status: StatusSolicitacaoCompra;
+  aprovadoPor?: string;
+  motivoRecusa?: string;
+  criadoEm: string;
+  atualizadoEm?: string;
 }
 
 // Sistema de Autenticação e Permissão de Módulos por Login

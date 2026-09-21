@@ -31,6 +31,7 @@ import {
   ArrowRightLeft,
   NotebookPen,
   FileCheck2,
+  ShoppingCart,
   Calculator,
   MessageSquare,
   Download,
@@ -104,6 +105,7 @@ interface SidebarProps {
     notasCount?: number;
     instrucoesCount?: number;
     conversasChatNaoLidas?: number;
+    comprasPendentesCount?: number;
   };
   isMobileOpen: boolean;
   onCloseMobile: () => void;
@@ -273,6 +275,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: counts.instrucoesCount,
       color: 'from-[#92611F] to-[#5c4526]',
       activeBorder: 'border-[#C48229]',
+    },
+    {
+      id: 'compras' as GlobalModuleId,
+      title: 'Compras',
+      short: 'Solicitações de Itens',
+      icon: ShoppingCart,
+      badge: counts.comprasPendentesCount,
+      color: 'from-orange-600 to-orange-800',
+      activeBorder: 'border-orange-500',
     },
     {
       id: 'usuarios' as GlobalModuleId,

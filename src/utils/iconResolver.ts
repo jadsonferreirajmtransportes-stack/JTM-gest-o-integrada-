@@ -14,6 +14,7 @@ import {
   Stethoscope,
   ShieldCheck,
   Boxes,
+  ShoppingCart,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -27,6 +28,7 @@ export const ICON_OPTIONS: Record<string, LucideIcon> = {
   Stethoscope,
   ShieldCheck,
   Boxes,
+  ShoppingCart,
 };
 
 export function resolveOperacaoIcon(nomeIcone: string | undefined): LucideIcon {

@@ -149,6 +149,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     iconeNome: 'ShieldCheck',
     categoria: 'Administração',
   },
+  {
+    id: 'compras',
+    nome: 'Compras',
+    sigla: 'CMP',
+    descricao: 'Solicitações de itens para compra, com aprovação da diretoria e link público para pedidos externos.',
+    corBadge: 'bg-orange-100 text-orange-900 border-orange-300',
+    corBorda: 'border-orange-500',
+    iconeNome: 'ShoppingCart',
+    categoria: 'Corporativo',
+  },
 ];
 
 export const INITIAL_USERS_DATA: UsuarioLogin[] = [

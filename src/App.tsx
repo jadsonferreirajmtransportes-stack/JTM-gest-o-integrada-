@@ -35,6 +35,7 @@ import {
   UsuarioLogin,
   NotaPagina,
   InstrucaoTrabalho,
+  SolicitacaoCompra,
   LancamentoFaturamentoAereo,
   FaturaAereo,
   QuinzenaValeAlimentacao,
@@ -172,6 +173,7 @@ import {
   saveViagemRodoviaria,
   deleteViagemRodoviaria,
 } from './utils/viagensApi';
+import { getSolicitacoesCompra, saveSolicitacaoCompra, deleteSolicitacaoCompra } from './utils/comprasApi';
 import {
   calcExamStatus,
   calcDaysRemaining,
@@ -261,6 +263,9 @@ import {
 } from './utils/visibilidadeUtils';
 import { NotasView } from './components/Notas/NotasView';
 import { InstrucoesTrabalhoView } from './components/Instrucoes/InstrucoesTrabalhoView';
+import { ComprasView } from './components/Compras/ComprasView';
+import { PublicPurchaseRequestPortal } from './components/Compras/PublicPurchaseRequestPortal';
+import { PurchaseLinkModal } from './components/Compras/PurchaseLinkModal';
 import { GeneralDashboard } from './components/DashboardGeral/GeneralDashboard';
 import { CustoOperacionalFormModal } from './components/Cost/CustoOperacionalFormModal';
 
@@ -527,6 +532,7 @@ export default function App() {
   } | null>(null);
   const [notasPaginas, setNotasPaginas] = useState<NotaPagina[]>([]);
   const [instrucoesTrabalho, setInstrucoesTrabalho] = useState<InstrucaoTrabalho[]>([]);
+  const [solicitacoesCompra, setSolicitacoesCompra] = useState<SolicitacaoCompra[]>([]);
   const [custosOperacionais, setCustosOperacionais] = useState<CustoOperacional[]>([]);
   const [operacoes, setOperacoes] = useState<Operacao[]>([]);
   const [lancamentosFaturamentoOperacao, setLancamentosFaturamentoOperacao] = useState<
@@ -586,6 +592,10 @@ export default function App() {
   const [epiPublicaToken, setEpiPublicaToken] = useState<string | undefined>(undefined);
   const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
   const [isEpiLinkModalOpen, setIsEpiLinkModalOpen] = useState<boolean>(false);
+
+  // Public purchase-request portal (Compras) — via ?form=compras, sem login necessário.
+  const [isComprasPortalView, setIsComprasPortalView] = useState<boolean>(false);
+  const [isComprasLinkModalOpen, setIsComprasLinkModalOpen] = useState<boolean>(false);
 
   // Modals State
   const [isAvisoAberturaOpen, setIsAvisoAberturaOpen] = useState<boolean>(false);
@@ -652,6 +662,8 @@ export default function App() {
       setActiveSection('instrucoes');
     } else if (modId === 'usuarios') {
       setActiveSection('usuarios');
+    } else if (modId === 'compras') {
+      setActiveSection('compras');
     } else if (modId === 'dp') {
       if (
         ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios'].includes(
@@ -954,6 +966,8 @@ export default function App() {
         setEpiPublicaToken(searchParams.get('token') || undefined);
       } else if (formParam === 'epi_entrega' || hash === '#epi_entrega') {
         setIsEpiFormularioPublicoView(true);
+      } else if (formParam === 'compras' || hash === '#compras') {
+        setIsComprasPortalView(true);
       }
     }
   }, []);
@@ -1014,6 +1028,7 @@ export default function App() {
         faixasVolume,
         coletas,
         mesesFechados,
+        solicitacoesCompraCarregadas,
       ] = await Promise.all([
         getCustosOperacionais(),
         getProjetosGerenciais(),
@@ -1029,6 +1044,7 @@ export default function App() {
         getFaixasVolumeOperacao(),
         getColetasOperacao(),
         getMesesFechadosOperacao(),
+        getSolicitacoesCompra(),
       ]);
       setCustosOperacionais(custos);
       setProjetos(projetos);
@@ -1043,6 +1059,7 @@ export default function App() {
       setFaixasVolumeOperacao(faixasVolume);
       setColetasOperacao(coletas);
       setMesesFechadosOperacao(mesesFechados);
+      setSolicitacoesCompra(solicitacoesCompraCarregadas);
       setOperacoes(ops);
     } catch (err) {
       console.error('Erro ao carregar Custos/Projetos/Agenda/Notas/Instruções/Viagens/Orçamentos (Supabase):', err);
@@ -1545,6 +1562,7 @@ export default function App() {
       totalLogins: users.length,
       notasCount: notasVisiveis.filter((n) => !n.arquivada).length,
       instrucoesCount: instrucoesVisiveis.filter((i) => !i.arquivada).length,
+      comprasPendentesCount: solicitacoesCompra.filter((s) => s.status === 'Pendente').length,
     };
   }, [
     colaboradoresEquipeVisiveis,
@@ -1562,6 +1580,7 @@ export default function App() {
     conversasChat,
     ultimasLeiturasChat,
     operacoes,
+    solicitacoesCompra,
   ]);
 
   // Dados do "Aviso de Abertura" (compromissos de hoje + prazos de projetos) — mesmo critério de
@@ -2483,6 +2502,33 @@ export default function App() {
     showToast('Mês reaberto.', 'info');
   };
 
+  // Compras Handlers
+  const handleSaveSolicitacaoCompra = async (item: SolicitacaoCompra) => {
+    await saveSolicitacaoCompra(item);
+    await loadGestaoData();
+    showToast(item.id && solicitacoesCompra.some((s) => s.id === item.id) ? 'Solicitação atualizada!' : 'Solicitação de compra enviada!', 'success');
+  };
+  const handleDeleteSolicitacaoCompra = async (id: string) => {
+    await deleteSolicitacaoCompra(id);
+    await loadGestaoData();
+    showToast('Solicitação removida.', 'info');
+  };
+  const handleAprovarSolicitacaoCompra = async (item: SolicitacaoCompra) => {
+    await saveSolicitacaoCompra({ ...item, status: 'Aprovado', aprovadoPor: currentUser?.nome, motivoRecusa: undefined });
+    await loadGestaoData();
+    showToast('Solicitação aprovada!', 'success');
+  };
+  const handleRecusarSolicitacaoCompra = async (item: SolicitacaoCompra, motivo?: string) => {
+    await saveSolicitacaoCompra({ ...item, status: 'Recusado', aprovadoPor: currentUser?.nome, motivoRecusa: motivo });
+    await loadGestaoData();
+    showToast('Solicitação recusada.', 'info');
+  };
+  const handleMarcarCompradoSolicitacaoCompra = async (item: SolicitacaoCompra) => {
+    await saveSolicitacaoCompra({ ...item, status: 'Comprado' });
+    await loadGestaoData();
+    showToast('Solicitação marcada como comprada!', 'success');
+  };
+
   // Settings Handlers
   const handleAddEmpregador = async (emp: Empregador) => {
     await saveEmpregador(emp);
@@ -2583,6 +2629,20 @@ export default function App() {
     );
   }
 
+  // IF Public Purchase Request (Compras) portal is active (via direct link or test button)
+  if (isComprasPortalView || activeSection === 'formulario_compras') {
+    return (
+      <PublicPurchaseRequestPortal
+        onSuccessSubmit={handleSaveSolicitacaoCompra}
+        onAdminBack={() => {
+          setIsComprasPortalView(false);
+          setActiveGlobalModule('compras');
+          setActiveSection('compras');
+        }}
+      />
+    );
+  }
+
   // IF Public Instrução de Trabalho filling portal is active (via direct link)
   if (isInstrucaoPortalView) {
     return (
@@ -2666,6 +2726,7 @@ export default function App() {
           else if (sec === 'notas') setActiveGlobalModule('notas');
           else if (sec === 'instrucoes') setActiveGlobalModule('instrucoes');
           else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
+          else if (sec === 'compras') setActiveGlobalModule('compras');
           else setActiveGlobalModule('dp');
           setIsMobileMenuOpen(false);
         }}
@@ -2715,6 +2776,7 @@ export default function App() {
             else if (sec === 'chat') setActiveGlobalModule('chat');
             else if (sec === 'notas') setActiveGlobalModule('notas');
             else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
+            else if (sec === 'compras') setActiveGlobalModule('compras');
             else setActiveGlobalModule('dp');
           }}
           searchQuery={searchQuery}
@@ -3035,6 +3097,23 @@ export default function App() {
               atividadesGestao={atividadesVisiveis}
               abrirInstrucaoId={mencaoAlvo?.tipo === 'instrucao' ? mencaoAlvo.id : undefined}
               abrirInstrucaoSinal={mencaoAlvo?.tipo === 'instrucao' ? mencaoAlvo.sinal : undefined}
+            />
+          )}
+
+          {/* ========================================================================= */}
+          {/* MODULE: COMPRAS (SOLICITAÇÕES DE ITENS) */}
+          {/* ========================================================================= */}
+          {(activeGlobalModule === 'compras' || activeSection === 'compras') && (
+            <ComprasView
+              solicitacoes={solicitacoesCompra}
+              currentUser={currentUser}
+              isAdmin={usuarioAutenticadoReal?.role === 'admin'}
+              onSave={handleSaveSolicitacaoCompra}
+              onDelete={handleDeleteSolicitacaoCompra}
+              onAprovar={handleAprovarSolicitacaoCompra}
+              onRecusar={handleRecusarSolicitacaoCompra}
+              onMarcarComprado={handleMarcarCompradoSolicitacaoCompra}
+              onOpenLinkModal={() => setIsComprasLinkModalOpen(true)}
             />
           )}
 
@@ -3421,6 +3500,13 @@ export default function App() {
         isOpen={isEpiLinkModalOpen}
         onClose={() => setIsEpiLinkModalOpen(false)}
         onOpenPortalView={() => setIsEpiFormularioPublicoView(true)}
+      />
+
+      {/* 6c. Compras — Link Generator & WhatsApp Sender Modal */}
+      <PurchaseLinkModal
+        isOpen={isComprasLinkModalOpen}
+        onClose={() => setIsComprasLinkModalOpen(false)}
+        onOpenPortalView={() => setIsComprasPortalView(true)}
       />
 
       {/* 7. Custo Operacional Form Modal (Torre de Controle & Gestão Geral) */}
