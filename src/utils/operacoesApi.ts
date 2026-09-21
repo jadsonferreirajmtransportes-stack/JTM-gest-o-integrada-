@@ -5,7 +5,14 @@
 // ============================================================================
 
 import { supabase } from './supabaseClient';
-import { Operacao, LancamentoFaturamentoOperacao } from '../types';
+import {
+  Operacao,
+  LancamentoFaturamentoOperacao,
+  TipoOperacaoDiaria,
+  RegistroDiaOperacao,
+  FaixaVolumeOperacao,
+  ColetaOperacao,
+} from '../types';
 
 function n(v: any): any {
   return v === '' || v === undefined ? null : v;
@@ -125,4 +132,152 @@ export async function saveLancamentoFaturamentoOperacao(item: LancamentoFaturame
 export async function deleteLancamentoFaturamentoOperacao(id: string): Promise<void> {
   const { error } = await supabase.from('lancamentos_faturamento_operacao').delete().eq('id', id);
   assertNoError(error, 'deleteLancamentoFaturamentoOperacao');
+}
+
+// ============================================================================
+// ACOMPANHAMENTO POR DIA CORRIDO (ver migração 043)
+// ============================================================================
+
+function rowToTipoOperacaoDiaria(r: any): TipoOperacaoDiaria {
+  return {
+    id: r.id,
+    operacaoId: r.operacao_id,
+    nome: r.nome,
+    valorDiario: Number(r.valor_diario ?? 0),
+    ativo: r.ativo ?? true,
+    ordem: Number(r.ordem ?? 100),
+    criadoEm: u(r.criado_em),
+  };
+}
+function tipoOperacaoDiariaToRow(t: TipoOperacaoDiaria) {
+  return {
+    id: t.id,
+    operacao_id: t.operacaoId,
+    nome: t.nome,
+    valor_diario: t.valorDiario ?? 0,
+    ativo: t.ativo ?? true,
+    ordem: t.ordem ?? 100,
+  };
+}
+export async function getTiposOperacaoDiaria(): Promise<TipoOperacaoDiaria[]> {
+  const { data, error } = await supabase.from('tipos_operacao_diaria').select('*').order('ordem');
+  assertNoError(error, 'getTiposOperacaoDiaria');
+  return (data ?? []).map(rowToTipoOperacaoDiaria);
+}
+export async function saveTipoOperacaoDiaria(item: TipoOperacaoDiaria): Promise<void> {
+  const { error } = await supabase.from('tipos_operacao_diaria').upsert(tipoOperacaoDiariaToRow(item));
+  assertNoError(error, 'saveTipoOperacaoDiaria');
+}
+export async function deleteTipoOperacaoDiaria(id: string): Promise<void> {
+  const { error } = await supabase.from('tipos_operacao_diaria').delete().eq('id', id);
+  assertNoError(error, 'deleteTipoOperacaoDiaria');
+}
+
+function rowToRegistroDiaOperacao(r: any): RegistroDiaOperacao {
+  return {
+    id: r.id,
+    operacaoId: r.operacao_id,
+    tipoOperacaoId: r.tipo_operacao_id,
+    data: r.data,
+    criadoEm: u(r.criado_em),
+  };
+}
+export async function getRegistrosDiaOperacao(): Promise<RegistroDiaOperacao[]> {
+  const { data, error } = await supabase.from('registros_dia_operacao').select('*');
+  assertNoError(error, 'getRegistrosDiaOperacao');
+  return (data ?? []).map(rowToRegistroDiaOperacao);
+}
+/** Marca um dia como "rodou" pra um tipo — id determinístico, então marcar de novo não duplica. */
+export async function marcarRegistroDiaOperacao(item: RegistroDiaOperacao): Promise<void> {
+  const { error } = await supabase.from('registros_dia_operacao').upsert({
+    id: item.id,
+    operacao_id: item.operacaoId,
+    tipo_operacao_id: item.tipoOperacaoId,
+    data: item.data,
+  });
+  assertNoError(error, 'marcarRegistroDiaOperacao');
+}
+export async function desmarcarRegistroDiaOperacao(id: string): Promise<void> {
+  const { error } = await supabase.from('registros_dia_operacao').delete().eq('id', id);
+  assertNoError(error, 'desmarcarRegistroDiaOperacao');
+}
+
+// ============================================================================
+// ACOMPANHAMENTO POR COLETA/EVENTO COM TABELA DE FAIXAS (ver migração 043)
+// ============================================================================
+
+function rowToFaixaVolumeOperacao(r: any): FaixaVolumeOperacao {
+  return {
+    id: r.id,
+    operacaoId: r.operacao_id,
+    volumeMin: Number(r.volume_min ?? 0),
+    volumeMax: r.volume_max === null ? undefined : Number(r.volume_max),
+    valor: Number(r.valor ?? 0),
+    ordem: Number(r.ordem ?? 100),
+  };
+}
+function faixaVolumeOperacaoToRow(f: FaixaVolumeOperacao) {
+  return {
+    id: f.id,
+    operacao_id: f.operacaoId,
+    volume_min: f.volumeMin,
+    volume_max: f.volumeMax ?? null,
+    valor: f.valor,
+    ordem: f.ordem ?? 100,
+  };
+}
+export async function getFaixasVolumeOperacao(): Promise<FaixaVolumeOperacao[]> {
+  const { data, error } = await supabase.from('faixas_volume_operacao').select('*').order('ordem');
+  assertNoError(error, 'getFaixasVolumeOperacao');
+  return (data ?? []).map(rowToFaixaVolumeOperacao);
+}
+export async function saveFaixaVolumeOperacao(item: FaixaVolumeOperacao): Promise<void> {
+  const { error } = await supabase.from('faixas_volume_operacao').upsert(faixaVolumeOperacaoToRow(item));
+  assertNoError(error, 'saveFaixaVolumeOperacao');
+}
+export async function deleteFaixaVolumeOperacao(id: string): Promise<void> {
+  const { error } = await supabase.from('faixas_volume_operacao').delete().eq('id', id);
+  assertNoError(error, 'deleteFaixaVolumeOperacao');
+}
+
+function rowToColetaOperacao(r: any): ColetaOperacao {
+  return {
+    id: r.id,
+    operacaoId: r.operacao_id,
+    data: r.data,
+    destinatario: u(r.destinatario),
+    cidade: u(r.cidade),
+    quantidadeVolumes: Number(r.quantidade_volumes ?? 1),
+    numeroDocumento: u(r.numero_documento),
+    valor: Number(r.valor ?? 0),
+    observacao: u(r.observacao),
+    criadoEm: u(r.criado_em),
+  };
+}
+function coletaOperacaoToRow(c: ColetaOperacao) {
+  return {
+    id: c.id,
+    operacao_id: c.operacaoId,
+    data: c.data,
+    destinatario: n(c.destinatario),
+    cidade: n(c.cidade),
+    quantidade_volumes: c.quantidadeVolumes ?? 1,
+    numero_documento: n(c.numeroDocumento),
+    valor: c.valor ?? 0,
+    observacao: n(c.observacao),
+    criado_em: c.criadoEm || new Date().toISOString(),
+  };
+}
+export async function getColetasOperacao(): Promise<ColetaOperacao[]> {
+  const { data, error } = await supabase.from('coletas_operacao').select('*').order('data', { ascending: false });
+  assertNoError(error, 'getColetasOperacao');
+  return (data ?? []).map(rowToColetaOperacao);
+}
+export async function saveColetaOperacao(item: ColetaOperacao): Promise<void> {
+  const { error } = await supabase.from('coletas_operacao').upsert(coletaOperacaoToRow(item));
+  assertNoError(error, 'saveColetaOperacao');
+}
+export async function deleteColetaOperacao(id: string): Promise<void> {
+  const { error } = await supabase.from('coletas_operacao').delete().eq('id', id);
+  assertNoError(error, 'deleteColetaOperacao');
 }

@@ -101,6 +101,59 @@ export interface LancamentoFaturamentoOperacao {
   atualizadoEm?: string;
 }
 
+/** Acompanhamento operacional de uma Operação genérica cobrada por DIA CORRIDO (ex.: Unimed
+ *  "Operação CD: 23 dias × R$ 800,00") — cada tipo tem seu valor diário; os dias em que rodou
+ *  são marcados num calendário (ver RegistroDiaOperacao) e o total do mês sai sozinho
+ *  (dias marcados × valorDiario). Complementa LancamentoFaturamentoOperacao: aqui é o
+ *  detalhamento operacional que embasa o valor lançado lá. */
+export interface TipoOperacaoDiaria {
+  id: string;
+  operacaoId: string;
+  nome: string; // 'Operação CD'
+  valorDiario: number;
+  ativo: boolean;
+  ordem: number;
+  criadoEm?: string;
+}
+
+/** Um dia marcado como "rodou" pra um TipoOperacaoDiaria — id determinístico
+ *  `${tipoOperacaoId}_${data}` pra marcar/desmarcar virar um simples criar/excluir. */
+export interface RegistroDiaOperacao {
+  id: string;
+  operacaoId: string;
+  tipoOperacaoId: string;
+  data: string; // 'YYYY-MM-DD'
+  criadoEm?: string;
+}
+
+/** Faixa de uma tabela de preço por volume — usada em operações cobradas POR COLETA/EVENTO em
+ *  vez de por dia (ex.: Unimed "Operação Interior": 01-03 volumes R$ 50, 04-06 volumes R$ 80,
+ *  acima de 06 volumes R$ 120). `volumeMax` ausente = "acima de volumeMin". */
+export interface FaixaVolumeOperacao {
+  id: string;
+  operacaoId: string;
+  volumeMin: number;
+  volumeMax?: number;
+  valor: number;
+  ordem: number;
+}
+
+/** Uma coleta/entrega individual cobrada por volume (ver FaixaVolumeOperacao) — `valor` é
+ *  calculado e GRAVADO no momento do registro (não recalculado depois), pra não alterar
+ *  coletas antigas se a tabela de faixas mudar no futuro. */
+export interface ColetaOperacao {
+  id: string;
+  operacaoId: string;
+  data: string; // 'YYYY-MM-DD'
+  destinatario?: string;
+  cidade?: string;
+  quantidadeVolumes: number;
+  numeroDocumento?: string;
+  valor: number;
+  observacao?: string;
+  criadoEm?: string;
+}
+
 // Sistema de Autenticação e Permissão de Módulos por Login
 export interface UsuarioLogin {
   id: string;

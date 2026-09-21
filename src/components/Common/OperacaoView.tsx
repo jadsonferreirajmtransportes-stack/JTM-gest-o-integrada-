@@ -8,6 +8,10 @@ import {
   CustoOperacional,
   Operacao,
   LancamentoFaturamentoOperacao,
+  TipoOperacaoDiaria,
+  RegistroDiaOperacao,
+  FaixaVolumeOperacao,
+  ColetaOperacao,
 } from '../../types';
 import { podeVerAbaOperacoes } from '../../utils/visibilidadeUtils';
 import { SectorClientsTab } from './SectorClientsTab';
@@ -16,6 +20,7 @@ import { SectorManagerialDashboard } from './SectorManagerialDashboard';
 import { SectorRevenueTab } from './SectorRevenueTab';
 import { SectorCostsTab } from './SectorCostsTab';
 import { LancamentosFaturamentoOperacaoSection } from './LancamentosFaturamentoOperacaoSection';
+import { AcompanhamentoOperacionalSection } from './AcompanhamentoOperacionalSection';
 import { CustoOperacionalFormModal } from '../Cost/CustoOperacionalFormModal';
 import {
   calcFinancialsSetor,
@@ -45,6 +50,20 @@ interface OperacaoViewProps {
   lancamentosFaturamento?: LancamentoFaturamentoOperacao[];
   onSaveLancamentoFaturamento?: (lancamento: LancamentoFaturamentoOperacao) => void;
   onDeleteLancamentoFaturamento?: (id: string) => void;
+  /** Acompanhamento operacional (dias corridos / coletas por faixa de volume) — já vem
+   *  filtrado só pra essa operação. Sem os handlers, a seção de acompanhamento não aparece. */
+  tiposOperacaoDiaria?: TipoOperacaoDiaria[];
+  registrosDiaOperacao?: RegistroDiaOperacao[];
+  faixasVolumeOperacao?: FaixaVolumeOperacao[];
+  coletasOperacao?: ColetaOperacao[];
+  onSaveTipoOperacaoDiaria?: (tipo: TipoOperacaoDiaria) => void;
+  onDeleteTipoOperacaoDiaria?: (id: string) => void;
+  onMarcarDiaOperacao?: (registro: RegistroDiaOperacao) => void;
+  onDesmarcarDiaOperacao?: (id: string) => void;
+  onSaveFaixaVolumeOperacao?: (faixa: FaixaVolumeOperacao) => void;
+  onDeleteFaixaVolumeOperacao?: (id: string) => void;
+  onSaveColetaOperacao?: (coleta: ColetaOperacao) => void;
+  onDeleteColetaOperacao?: (id: string) => void;
   onSaveCliente?: (cliente: Cliente) => void;
   onSaveColaborador?: (colaborador: Colaborador) => void;
   onSaveCusto?: (custo: CustoOperacional) => void;
@@ -68,6 +87,18 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
   lancamentosFaturamento = [],
   onSaveLancamentoFaturamento,
   onDeleteLancamentoFaturamento,
+  tiposOperacaoDiaria = [],
+  registrosDiaOperacao = [],
+  faixasVolumeOperacao = [],
+  coletasOperacao = [],
+  onSaveTipoOperacaoDiaria,
+  onDeleteTipoOperacaoDiaria,
+  onMarcarDiaOperacao,
+  onDesmarcarDiaOperacao,
+  onSaveFaixaVolumeOperacao,
+  onDeleteFaixaVolumeOperacao,
+  onSaveColetaOperacao,
+  onDeleteColetaOperacao,
   onSaveCliente = (_c: Cliente) => {},
   onSaveColaborador = (_c: Colaborador) => {},
   onSaveCusto,
@@ -291,6 +322,30 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
               onDelete={onDeleteLancamentoFaturamento || (() => {})}
             />
           )}
+
+          {onSaveTipoOperacaoDiaria &&
+            onMarcarDiaOperacao &&
+            onDesmarcarDiaOperacao &&
+            onSaveFaixaVolumeOperacao &&
+            onSaveColetaOperacao && (
+              <AcompanhamentoOperacionalSection
+                operacaoId={operacao.id}
+                operacaoNome={operacao.nome}
+                tiposOperacaoDiaria={tiposOperacaoDiaria}
+                registrosDia={registrosDiaOperacao}
+                faixasVolume={faixasVolumeOperacao}
+                coletas={coletasOperacao}
+                onSaveTipo={onSaveTipoOperacaoDiaria}
+                onDeleteTipo={onDeleteTipoOperacaoDiaria || (() => {})}
+                onMarcarDia={onMarcarDiaOperacao}
+                onDesmarcarDia={onDesmarcarDiaOperacao}
+                onSaveFaixa={onSaveFaixaVolumeOperacao}
+                onDeleteFaixa={onDeleteFaixaVolumeOperacao || (() => {})}
+                onSaveColeta={onSaveColetaOperacao}
+                onDeleteColeta={onDeleteColetaOperacao || (() => {})}
+              />
+            )}
+
           <SectorRevenueTab
             setor={operacao.id}
             metrics={metrics}

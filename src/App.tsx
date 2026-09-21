@@ -27,6 +27,10 @@ import {
   CustoOperacional,
   Operacao,
   LancamentoFaturamentoOperacao,
+  TipoOperacaoDiaria,
+  RegistroDiaOperacao,
+  FaixaVolumeOperacao,
+  ColetaOperacao,
   UsuarioLogin,
   NotaPagina,
   InstrucaoTrabalho,
@@ -144,6 +148,18 @@ import {
   getLancamentosFaturamentoOperacao,
   saveLancamentoFaturamentoOperacao,
   deleteLancamentoFaturamentoOperacao,
+  getTiposOperacaoDiaria,
+  saveTipoOperacaoDiaria,
+  deleteTipoOperacaoDiaria,
+  getRegistrosDiaOperacao,
+  marcarRegistroDiaOperacao,
+  desmarcarRegistroDiaOperacao,
+  getFaixasVolumeOperacao,
+  saveFaixaVolumeOperacao,
+  deleteFaixaVolumeOperacao,
+  getColetasOperacao,
+  saveColetaOperacao,
+  deleteColetaOperacao,
 } from './utils/operacoesApi';
 // Farma Rodoviário (viagens/telemetria) também já migrado para o Supabase — ver
 // src/utils/viagensApi.ts.
@@ -512,6 +528,12 @@ export default function App() {
   const [lancamentosFaturamentoOperacao, setLancamentosFaturamentoOperacao] = useState<
     LancamentoFaturamentoOperacao[]
   >([]);
+  // Acompanhamento operacional (dias corridos / coletas por faixa de volume) — ver
+  // AcompanhamentoOperacionalSection.tsx e migração 043.
+  const [tiposOperacaoDiaria, setTiposOperacaoDiaria] = useState<TipoOperacaoDiaria[]>([]);
+  const [registrosDiaOperacao, setRegistrosDiaOperacao] = useState<RegistroDiaOperacao[]>([]);
+  const [faixasVolumeOperacao, setFaixasVolumeOperacao] = useState<FaixaVolumeOperacao[]>([]);
+  const [coletasOperacao, setColetasOperacao] = useState<ColetaOperacao[]>([]);
   // Qualquer operação cadastrada além das 2 originais (Farma Aéreo/Rodoviário continuam com
   // suas próprias telas) — cada uma ganha um <OperacaoView> genérico automaticamente.
   const operacoesExtrasAtivas = useMemo(
@@ -972,18 +994,35 @@ export default function App() {
   // forma assíncrona.
   const loadGestaoData = useCallback(async () => {
     try {
-      const [custos, projetos, atividades, notas, instrucoes, viagens, orcamentosCarregados, ops, lancFatOp] =
-        await Promise.all([
-          getCustosOperacionais(),
-          getProjetosGerenciais(),
-          getAtividadesGestao(),
-          getNotasPaginas(),
-          getInstrucoesTrabalho(),
-          getViagensRodoviarias(),
-          getOrcamentos(),
-          getOperacoes(),
-          getLancamentosFaturamentoOperacao(),
-        ]);
+      const [
+        custos,
+        projetos,
+        atividades,
+        notas,
+        instrucoes,
+        viagens,
+        orcamentosCarregados,
+        ops,
+        lancFatOp,
+        tiposDiaria,
+        registrosDia,
+        faixasVolume,
+        coletas,
+      ] = await Promise.all([
+        getCustosOperacionais(),
+        getProjetosGerenciais(),
+        getAtividadesGestao(),
+        getNotasPaginas(),
+        getInstrucoesTrabalho(),
+        getViagensRodoviarias(),
+        getOrcamentos(),
+        getOperacoes(),
+        getLancamentosFaturamentoOperacao(),
+        getTiposOperacaoDiaria(),
+        getRegistrosDiaOperacao(),
+        getFaixasVolumeOperacao(),
+        getColetasOperacao(),
+      ]);
       setCustosOperacionais(custos);
       setProjetos(projetos);
       setAtividadesGestao(atividades);
@@ -992,6 +1031,10 @@ export default function App() {
       setViagensRodoviarias(viagens);
       setOrcamentos(orcamentosCarregados);
       setLancamentosFaturamentoOperacao(lancFatOp);
+      setTiposOperacaoDiaria(tiposDiaria);
+      setRegistrosDiaOperacao(registrosDia);
+      setFaixasVolumeOperacao(faixasVolume);
+      setColetasOperacao(coletas);
       setOperacoes(ops);
     } catch (err) {
       console.error('Erro ao carregar Custos/Projetos/Agenda/Notas/Instruções/Viagens/Orçamentos (Supabase):', err);
@@ -2381,6 +2424,47 @@ export default function App() {
     showToast('Lançamento removido com sucesso.', 'info');
   };
 
+  // Acompanhamento Operacional (dias corridos / coletas por faixa de volume) — ver
+  // AcompanhamentoOperacionalSection.tsx e migração 043.
+  const handleSaveTipoOperacaoDiaria = async (tipo: TipoOperacaoDiaria) => {
+    await saveTipoOperacaoDiaria(tipo);
+    await loadGestaoData();
+    showToast('Tipo de operação salvo!', 'success');
+  };
+  const handleDeleteTipoOperacaoDiaria = async (id: string) => {
+    await deleteTipoOperacaoDiaria(id);
+    await loadGestaoData();
+    showToast('Tipo de operação removido.', 'info');
+  };
+  const handleMarcarDiaOperacao = async (registro: RegistroDiaOperacao) => {
+    await marcarRegistroDiaOperacao(registro);
+    await loadGestaoData();
+  };
+  const handleDesmarcarDiaOperacao = async (id: string) => {
+    await desmarcarRegistroDiaOperacao(id);
+    await loadGestaoData();
+  };
+  const handleSaveFaixaVolumeOperacao = async (faixa: FaixaVolumeOperacao) => {
+    await saveFaixaVolumeOperacao(faixa);
+    await loadGestaoData();
+    showToast('Faixa de volume salva!', 'success');
+  };
+  const handleDeleteFaixaVolumeOperacao = async (id: string) => {
+    await deleteFaixaVolumeOperacao(id);
+    await loadGestaoData();
+    showToast('Faixa de volume removida.', 'info');
+  };
+  const handleSaveColetaOperacao = async (coleta: ColetaOperacao) => {
+    await saveColetaOperacao(coleta);
+    await loadGestaoData();
+    showToast('Coleta registrada!', 'success');
+  };
+  const handleDeleteColetaOperacao = async (id: string) => {
+    await deleteColetaOperacao(id);
+    await loadGestaoData();
+    showToast('Coleta removida.', 'info');
+  };
+
   // Settings Handlers
   const handleAddEmpregador = async (emp: Empregador) => {
     await saveEmpregador(emp);
@@ -2785,6 +2869,18 @@ export default function App() {
                 lancamentosFaturamento={lancamentosFaturamentoOperacao.filter((l) => l.operacaoId === op.id)}
                 onSaveLancamentoFaturamento={handleSaveLancamentoFaturamentoOperacao}
                 onDeleteLancamentoFaturamento={handleDeleteLancamentoFaturamentoOperacao}
+                tiposOperacaoDiaria={tiposOperacaoDiaria.filter((t) => t.operacaoId === op.id)}
+                registrosDiaOperacao={registrosDiaOperacao.filter((r) => r.operacaoId === op.id)}
+                faixasVolumeOperacao={faixasVolumeOperacao.filter((f) => f.operacaoId === op.id)}
+                coletasOperacao={coletasOperacao.filter((c) => c.operacaoId === op.id)}
+                onSaveTipoOperacaoDiaria={handleSaveTipoOperacaoDiaria}
+                onDeleteTipoOperacaoDiaria={handleDeleteTipoOperacaoDiaria}
+                onMarcarDiaOperacao={handleMarcarDiaOperacao}
+                onDesmarcarDiaOperacao={handleDesmarcarDiaOperacao}
+                onSaveFaixaVolumeOperacao={handleSaveFaixaVolumeOperacao}
+                onDeleteFaixaVolumeOperacao={handleDeleteFaixaVolumeOperacao}
+                onSaveColetaOperacao={handleSaveColetaOperacao}
+                onDeleteColetaOperacao={handleDeleteColetaOperacao}
                 onSaveCliente={handleSaveCliente}
                 onSaveColaborador={handleSaveColaborador}
                 onSaveCusto={handleSaveCustoOperacional}
