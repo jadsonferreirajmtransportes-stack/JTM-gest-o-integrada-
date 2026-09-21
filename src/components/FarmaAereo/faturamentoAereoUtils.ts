@@ -991,8 +991,11 @@ function montarLinhaCargoBrasil(l: LancamentoFaturamentoAereo, cliente: Cliente 
 function preencherCabecalhoCargoBrasil(sheet: ExcelJS.Worksheet, fatura: FaturaAereo, totalColunas: number) {
   const colDireita = totalColunas - 1; // penúltima coluna (0-based)
   const colCnpjBanco = totalColunas >= 10 ? 4 : 3;
-  const negrito = { bold: true, size: 9, name: 'Arial' as const };
-  const normal = { size: 9, name: 'Arial' as const };
+  // Mesma paleta bronze/dourado da Diretriz de Documentos JMT usada em todo o resto do
+  // sistema (ver COR_BRONZE_ESCURO/COR_CINZA_TEXTO) — a estrutura é da Cargo Brasil, a
+  // formatação (cor, negrito) segue o padrão institucional da JMT.
+  const negrito = { bold: true, size: 9, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' as const };
+  const normal = { size: 9, color: { argb: COR_CINZA_TEXTO }, name: 'Arial' as const };
 
   const setar = (linha: number, coluna: number, valor: string, font = normal) => {
     const cell = sheet.getCell(linha, coluna + 1); // ExcelJS é 1-based
@@ -1014,9 +1017,12 @@ function preencherCabecalhoCargoBrasil(sheet: ExcelJS.Worksheet, fatura: FaturaA
   setar(8, colDireita, 'VENCIMENTO: ');
 }
 
-/** Preenche uma aba (Capital ou Interior) com o cabeçalho fixo + cabeçalho da tabela (linha 9)
- *  + linhas de dados + linha de TOTAL — mesma disposição do modelo real da Cargo Brasil. */
+/** Preenche uma aba (Capital ou Interior) com o mesmo padrão institucional JMT (logo, cabeçalho
+ *  da tabela em fundo bronze/texto branco, bordas finas, linha de TOTAL em bronze escuro e
+ *  rodapé com a assinatura obrigatória da Diretriz de Documentos) por cima do cabeçalho fixo
+ *  (linhas 1-8) e das colunas (linha 9 em diante) que são a estrutura própria da Cargo Brasil. */
 function preencherAbaCargoBrasil(
+  workbook: ExcelJS.Workbook,
   sheet: ExcelJS.Worksheet,
   colunas: ColunaCargoBrasil[],
   lancamentos: LancamentoFaturamentoAereo[],
@@ -1024,6 +1030,11 @@ function preencherAbaCargoBrasil(
   fatura: FaturaAereo
 ) {
   sheet.columns = colunas.map((c) => ({ key: c.key, width: c.width }));
+
+  const imageId = workbook.addImage({ base64: JMT_LOGO_BASE64, extension: 'png' });
+  sheet.addImage(imageId, { tl: { col: 0, row: 0 }, ext: { width: 110, height: 41 } });
+  sheet.getRow(1).height = 22;
+
   preencherCabecalhoCargoBrasil(sheet, fatura, colunas.length);
 
   const linhaCabecalho = 9;
@@ -1031,9 +1042,12 @@ function preencherAbaCargoBrasil(
   colunas.forEach((col, idx) => {
     const cell = headerRow.getCell(idx + 1);
     cell.value = col.header;
-    cell.font = { bold: true, size: 10, name: 'Arial' };
+    cell.font = { bold: true, size: 10, color: { argb: COR_BRANCO }, name: 'Arial' };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COR_BRONZE } };
+    cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
     cell.border = BORDA_FINA;
   });
+  headerRow.height = 22;
 
   lancamentos.forEach((l, idx) => {
     const valores = montarLinhaCargoBrasil(l, cliente);
@@ -1042,7 +1056,7 @@ function preencherAbaCargoBrasil(
       const cell = row.getCell(colIdx + 1);
       cell.value = valores[col.key];
       if (col.moeda && typeof cell.value === 'number') cell.numFmt = '#,##0.00';
-      cell.font = { size: 10, name: 'Arial' };
+      cell.font = { size: 10, color: { argb: COR_PRETO }, name: 'Arial' };
       cell.border = BORDA_FINA;
     });
   });
@@ -1053,11 +1067,21 @@ function preencherAbaCargoBrasil(
   const totalRow = sheet.getRow(linhaTotal);
   const colLabelTotal = Math.max(1, colunas.length - 4);
   totalRow.getCell(colLabelTotal).value = 'TOTAL:';
-  totalRow.getCell(colLabelTotal).font = { bold: true, size: 10, name: 'Arial' };
+  totalRow.getCell(colLabelTotal).font = { bold: true, size: 10, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' };
   const totalCell = totalRow.getCell(colunas.length);
   totalCell.value = lancamentos.reduce((soma, l) => soma + computeValorACobrar(l, cliente), 0);
   totalCell.numFmt = '#,##0.00';
-  totalCell.font = { bold: true, size: 10, name: 'Arial' };
+  totalCell.font = { bold: true, size: 10, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' };
+  totalRow.height = 20;
+
+  // Rodapé institucional — assinatura obrigatória da Diretriz de Documentos JMT (mesmo texto
+  // usado no layout genérico dos demais clientes).
+  const linhaRodape = linhaTotal + 2;
+  sheet.mergeCells(linhaRodape, 1, linhaRodape, colunas.length);
+  const rodapeCell = sheet.getCell(linhaRodape, 1);
+  rodapeCell.value = STRATEGIC_GUIDELINES.assinatura;
+  rodapeCell.font = { bold: true, size: 9, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' };
+  rodapeCell.alignment = { horizontal: 'center' };
 }
 
 /** Gera e baixa a fatura no formato próprio da Cargo Brasil — 2 abas (CAPITAL/INTERIOR) — em
@@ -1076,6 +1100,7 @@ async function exportarFaturaCargoBrasilParaExcel(
   workbook.created = new Date();
 
   preencherAbaCargoBrasil(
+    workbook,
     workbook.addWorksheet('CAPITAL', { views: [{ showGridLines: false }] }),
     COLUNAS_CARGO_BRASIL_CAPITAL,
     capital,
@@ -1083,6 +1108,7 @@ async function exportarFaturaCargoBrasilParaExcel(
     fatura
   );
   preencherAbaCargoBrasil(
+    workbook,
     workbook.addWorksheet('INTERIOR', { views: [{ showGridLines: false }] }),
     COLUNAS_CARGO_BRASIL_INTERIOR,
     interior,
