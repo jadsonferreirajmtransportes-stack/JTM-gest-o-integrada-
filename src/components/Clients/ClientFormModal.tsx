@@ -17,6 +17,7 @@ import {
   Layers,
   Clock,
   User,
+  Loader2,
 } from 'lucide-react';
 import {
   Cliente,
@@ -33,6 +34,7 @@ import {
   TabelaPrecoFrete,
 } from '../../types';
 import { TabelaFreteEditor, TABELA_FRETE_PADRAO } from './TabelaFreteEditor';
+import { maskCNPJ, maskCEP, maskPhone } from '../../utils/formatters';
 
 interface ClientFormModalProps {
   isOpen: boolean;
@@ -144,6 +146,10 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   const [regioesAtendidas, setRegioesAtendidas] = useState<RegiaoAtendimento[]>([]);
   const [observacoesOperacionais, setObservacoesOperacionais] = useState('');
   const [satisfacaoNPS, setSatisfacaoNPS] = useState<number>(10);
+
+  // Autopreenchimento via CNPJ (Receita Federal, através da BrasilAPI — pública, sem chave)
+  const [isCnpjLoading, setIsCnpjLoading] = useState(false);
+  const [cnpjLookupMsg, setCnpjLookupMsg] = useState<{ tipo: 'erro' | 'sucesso'; texto: string } | null>(null);
 
   // Load initial data on edit
   useEffect(() => {
@@ -277,6 +283,43 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   }, [initialData, isOpen, existingClientsCount, empregadores]);
 
   if (!isOpen) return null;
+
+  // Autopreenchimento via CNPJ (BrasilAPI, espelho público dos dados da Receita Federal —
+  // mesmo padrão do lookup de CEP via ViaCEP em CandidateAdmissionPortal.tsx). Só dispara ao
+  // sair do campo com os 14 dígitos completos; não sobrescreve o que já tiver sido digitado
+  // se a consulta não devolver aquele dado específico.
+  const handleCnpjBlur = async () => {
+    const cleanCnpj = cnpj.replace(/\D/g, '');
+    if (cleanCnpj.length !== 14) return;
+    setIsCnpjLoading(true);
+    setCnpjLookupMsg(null);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
+      if (!res.ok) throw new Error('CNPJ não encontrado');
+      const data = await res.json();
+
+      if (data.razao_social) setRazaoSocial(data.razao_social);
+      if (data.nome_fantasia) setNomeFantasia(data.nome_fantasia);
+
+      if (data.logradouro) {
+        const numero = data.numero ? `, ${data.numero}` : '';
+        const complemento = data.complemento ? ` - ${data.complemento}` : '';
+        const bairro = data.bairro ? ` - ${data.bairro}` : '';
+        setEnderecoCompleto(`${data.logradouro}${numero}${complemento}${bairro}`);
+      }
+      if (data.municipio && data.uf) setCidadeUF(`${data.municipio}/${data.uf}`);
+      if (data.cep) setCep(maskCEP(String(data.cep)));
+      if (data.ddd_telefone_1) setTelefonePrincipal(maskPhone(data.ddd_telefone_1.replace(/\D/g, '')));
+      if (data.email) setEmailPrincipal((prev) => prev || data.email);
+
+      setCnpjLookupMsg({ tipo: 'sucesso', texto: `Dados preenchidos: ${data.razao_social || 'empresa localizada'}.` });
+    } catch (err) {
+      console.warn('Consulta de CNPJ falhou, continuando com preenchimento manual', err);
+      setCnpjLookupMsg({ tipo: 'erro', texto: 'CNPJ não encontrado na Receita Federal — preencha manualmente.' });
+    } finally {
+      setIsCnpjLoading(false);
+    }
+  };
 
   const toggleTipoOperacao = (tipo: TipoOperacaoContratada) => {
     if (tiposOperacao.includes(tipo)) {
@@ -651,13 +694,32 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   <label className="block text-xs font-semibold text-slate-600 mb-1">
                     CNPJ *
                   </label>
-                  <input
-                    type="text"
-                    value={cnpj}
-                    onChange={(e) => setCnpj(e.target.value)}
-                    placeholder="00.000.000/0000-00"
-                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 font-mono focus:outline-hidden focus:border-[#C48229]"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={cnpj}
+                      onChange={(e) => {
+                        setCnpj(maskCNPJ(e.target.value));
+                        setCnpjLookupMsg(null);
+                      }}
+                      onBlur={handleCnpjBlur}
+                      placeholder="00.000.000/0000-00"
+                      maxLength={18}
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs text-slate-900 font-mono focus:outline-hidden focus:border-[#C48229]"
+                    />
+                    {isCnpjLoading && (
+                      <Loader2 className="w-3.5 h-3.5 text-[#C48229] animate-spin absolute right-2.5 top-1/2 -translate-y-1/2" />
+                    )}
+                  </div>
+                  {cnpjLookupMsg && (
+                    <span
+                      className={`text-[10px] mt-1 block ${
+                        cnpjLookupMsg.tipo === 'sucesso' ? 'text-emerald-600' : 'text-amber-600'
+                      }`}
+                    >
+                      {cnpjLookupMsg.texto}
+                    </span>
+                  )}
                 </div>
 
                 <div>
