@@ -84,6 +84,16 @@ export async function saveSolicitacaoCompra(item: SolicitacaoCompra): Promise<vo
   assertNoError(error, 'saveSolicitacaoCompra');
 }
 
+/** Só pro Formulário Público de Compras (papel "anon"). `upsert` (usado em saveSolicitacaoCompra
+ *  acima) gera um `INSERT ... ON CONFLICT DO UPDATE`, e o Postgres exige permissão de UPDATE na
+ *  tabela pra esse comando ser válido mesmo quando nenhum conflito realmente acontece — e o
+ *  "anon" só tem policy de INSERT (de propósito: ninguém sem login pode editar pedido alheio).
+ *  Por isso aqui é sempre um INSERT puro, nunca upsert. */
+export async function criarSolicitacaoCompraPublica(item: SolicitacaoCompra): Promise<void> {
+  const { error } = await supabase.from('solicitacoes_compra').insert(solicitacaoCompraToRow(item));
+  assertNoError(error, 'criarSolicitacaoCompraPublica');
+}
+
 export async function deleteSolicitacaoCompra(id: string): Promise<void> {
   const { error } = await supabase.from('solicitacoes_compra').delete().eq('id', id);
   assertNoError(error, 'deleteSolicitacaoCompra');

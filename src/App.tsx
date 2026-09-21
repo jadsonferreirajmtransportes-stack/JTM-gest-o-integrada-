@@ -81,6 +81,7 @@ import {
   deleteEntregaEpi,
   getOcorrencias,
   saveOcorrencia,
+  criarOcorrenciaPublica,
   deleteOcorrencia,
   updateOnboardingItem,
   renovarExameASO,
@@ -173,7 +174,12 @@ import {
   saveViagemRodoviaria,
   deleteViagemRodoviaria,
 } from './utils/viagensApi';
-import { getSolicitacoesCompra, saveSolicitacaoCompra, deleteSolicitacaoCompra } from './utils/comprasApi';
+import {
+  getSolicitacoesCompra,
+  saveSolicitacaoCompra,
+  deleteSolicitacaoCompra,
+  criarSolicitacaoCompraPublica,
+} from './utils/comprasApi';
 import {
   calcExamStatus,
   calcDaysRemaining,
@@ -1952,6 +1958,14 @@ export default function App() {
     showToast('Ocorrência registrada com sucesso no prontuário do colaborador!');
   };
 
+  // Só pro Formulário Público de Ocorrências (supervisor sem login, papel "anon") — ver
+  // criarOcorrenciaPublica. Sem loadDpData/showToast: quem preenche esse formulário não está
+  // autenticado, não teria como ler os dados de volta (RLS só libera INSERT pro "anon") nem
+  // veria o toast (o portal renderiza fora da casca autenticada do app).
+  const handleCriarOcorrenciaPublica = async (ocorrencia: Ocorrencia) => {
+    await criarOcorrenciaPublica(ocorrencia);
+  };
+
   const handleDeleteOcorrencia = async (id: string) => {
     try {
       await deleteOcorrencia(id);
@@ -2528,6 +2542,12 @@ export default function App() {
     await loadGestaoData();
     showToast('Solicitação marcada como comprada!', 'success');
   };
+  // Só pro Formulário Público (papel "anon") — ver criarSolicitacaoCompraPublica. Não chama
+  // loadGestaoData: quem preenche o formulário público não está autenticado, então não
+  // conseguiria ler os dados de volta mesmo (RLS só libera INSERT pro "anon" nessa tabela).
+  const handleCriarSolicitacaoCompraPublica = async (item: SolicitacaoCompra) => {
+    await criarSolicitacaoCompraPublica(item);
+  };
 
   // Settings Handlers
   const handleAddEmpregador = async (emp: Empregador) => {
@@ -2619,7 +2639,7 @@ export default function App() {
         empregadores={empregadoresPublico}
         preselectedSupervisorId={occurrenceUrlParams.supervisor}
         preselectedEmpresaId={occurrenceUrlParams.empresa}
-        onSuccessSubmit={handleSaveOcorrencia}
+        onSuccessSubmit={handleCriarOcorrenciaPublica}
         onAdminBack={() => {
           setIsOccurrencePortalView(false);
           setActiveGlobalModule('dp');
@@ -2633,7 +2653,7 @@ export default function App() {
   if (isComprasPortalView || activeSection === 'formulario_compras') {
     return (
       <PublicPurchaseRequestPortal
-        onSuccessSubmit={handleSaveSolicitacaoCompra}
+        onSuccessSubmit={handleCriarSolicitacaoCompraPublica}
         onAdminBack={() => {
           setIsComprasPortalView(false);
           setActiveGlobalModule('compras');

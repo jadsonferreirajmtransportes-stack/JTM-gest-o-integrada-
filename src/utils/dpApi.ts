@@ -721,6 +721,15 @@ export async function saveOcorrencia(item: Ocorrencia): Promise<void> {
   const { error } = await supabase.from('ocorrencias').upsert(ocorrenciaToRow(registro));
   assertNoError(error, 'saveOcorrencia');
 }
+/** Só pro Formulário Público de Ocorrências (supervisor de campo sem login, papel "anon").
+ *  `upsert` (a função acima, usada no módulo interno de DP) gera um `INSERT ... ON CONFLICT DO
+ *  UPDATE`, e o Postgres exige permissão de UPDATE na tabela pra esse comando ser válido mesmo
+ *  sem conflito real — e "anon" só tem policy de INSERT. Por isso aqui é sempre um INSERT puro. */
+export async function criarOcorrenciaPublica(item: Ocorrencia): Promise<void> {
+  const registro = item.id ? item : { ...item, id: `oco-${Date.now()}` };
+  const { error } = await supabase.from('ocorrencias').insert(ocorrenciaToRow(registro));
+  assertNoError(error, 'criarOcorrenciaPublica');
+}
 export async function deleteOcorrencia(id: string): Promise<void> {
   const { error } = await supabase.from('ocorrencias').delete().eq('id', id);
   assertNoError(error, 'deleteOcorrencia');
@@ -1008,13 +1017,23 @@ export async function getPreAdmissaoById(id: string): Promise<PreAdmissao | unde
   assertNoError(error, 'getPreAdmissaoById');
   return data ? rowToPreAdmissao(data) : undefined;
 }
-/** Cria a pré-admissão (usado pelo formulário público — candidato sem login, papel "anon"). O
- *  candidato nunca faz upsert por token (não tem permissão de leitura): cada envio gera um
- *  registro novo, com um id sempre novo mesmo que reutilize um token de convite já existente. */
+/** Cria/atualiza a pré-admissão — uso interno (DP autenticado), ex.: marcar
+ *  `colaboradorEfetivadoId` num registro já existente. `upsert` é seguro aqui porque
+ *  "authenticated" tem policy de INSERT e UPDATE (ver migração 005). */
 export async function savePreAdmissao(item: PreAdmissao): Promise<void> {
   const registro = item.id ? item : { ...item, id: `preadm-${Date.now()}` };
   const { error } = await supabase.from('pre_admissoes').upsert(preAdmissaoToRow(registro));
   assertNoError(error, 'savePreAdmissao');
+}
+/** Só pro Formulário Público de Admissão (candidato sem login, papel "anon"). `upsert` (a
+ *  função acima) gera um `INSERT ... ON CONFLICT DO UPDATE`, e o Postgres exige permissão de
+ *  UPDATE na tabela pra esse comando ser válido mesmo sem conflito real — e "anon" só tem
+ *  policy de INSERT (de propósito: candidato não pode ler nem editar o próprio envio depois).
+ *  Por isso aqui é sempre um INSERT puro; cada envio gera um id sempre novo. */
+export async function criarPreAdmissaoPublica(item: PreAdmissao): Promise<void> {
+  const registro = item.id ? item : { ...item, id: `preadm-${Date.now()}` };
+  const { error } = await supabase.from('pre_admissoes').insert(preAdmissaoToRow(registro));
+  assertNoError(error, 'criarPreAdmissaoPublica');
 }
 export async function updatePreAdmissaoStatus(
   id: string,

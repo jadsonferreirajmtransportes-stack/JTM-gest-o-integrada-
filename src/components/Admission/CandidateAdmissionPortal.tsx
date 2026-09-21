@@ -48,7 +48,7 @@ import {
 } from '../../utils/formatters';
 // Envio direto pro Supabase (formulário público, sem login — papel "anon" só pode inserir,
 // nunca ler/editar; ver supabase/migrations/005_pre_admissoes.sql e src/utils/dpApi.ts).
-import { savePreAdmissao } from '../../utils/dpApi';
+import { criarPreAdmissaoPublica } from '../../utils/dpApi';
 import { useBotGuard } from '../../utils/botProtection';
 import { HumanVerificationField } from '../Common/HumanVerificationField';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
@@ -384,7 +384,7 @@ export const CandidateAdmissionPortal: React.FC<CandidateAdmissionPortalProps> =
     };
 
     try {
-      await savePreAdmissao(payload);
+      await criarPreAdmissaoPublica(payload);
       setSubmittedProtocol(protocol);
       setSubmittedData(payload);
       window.scrollTo({ top: 0, behavior: 'smooth' });
