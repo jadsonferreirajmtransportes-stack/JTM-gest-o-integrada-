@@ -89,6 +89,16 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       .filter((op) => !MODULOS_SISTEMA.some((m) => m.id === op.id))
       .map(operacaoParaModuloInfo),
   ];
+  // Farma Aéreo/Rodoviário + qualquer Operação cadastrada dinamicamente (ex.: Unimed) — todas
+  // usam o mesmo checklist de SecaoOperacoes (um único recorte vale pra todas, não dá pra
+  // restringir cada uma diferente hoje). Sem isso, uma Operação nova nunca acionava o checklist
+  // granular, só Farma Aéreo/Rodoviário (que tinham entrada fixa aqui desde antes das Operações
+  // virarem cadastro dinâmico).
+  const idsOperacoesGenericas = operacoesExtras.map((op) => op.id);
+  const usaSecoesOperacoes = (mods: GlobalModuleId[]) =>
+    mods.includes('farma_aereo') ||
+    mods.includes('farma_rodoviario') ||
+    idsOperacoesGenericas.some((id) => mods.includes(id));
   const [nome, setNome] = useState('');
   const [login, setLogin] = useState('');
   const [email, setEmail] = useState('');
@@ -307,9 +317,9 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       return;
     }
 
-    const usaOperacoes = modulosPermitidos.includes('farma_aereo') || modulosPermitidos.includes('farma_rodoviario');
+    const usaOperacoes = usaSecoesOperacoes(modulosPermitidos);
     if (usaOperacoes && secoesOperacoesPermitidas.length === 0) {
-      setErrorMsg('Marque pelo menos 1 (uma) aba de Operações, ou desmarque Farma Aéreo/Rodoviário.');
+      setErrorMsg('Marque pelo menos 1 (uma) aba de Operações, ou desmarque o(s) módulo(s) de operação.');
       return;
     }
 
@@ -776,15 +786,16 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
               </div>
             )}
 
-            {/* Mesmo recorte, agora pras abas de dentro de Farma Aéreo/Farma Rodoviário — um
-                único checklist vale pros dois módulos (não dá pra restringir cada um diferente
-                hoje). Só aparece se pelo menos um dos dois estiver marcado acima. */}
-            {(modulosPermitidos.includes('farma_aereo') || modulosPermitidos.includes('farma_rodoviario')) && (
+            {/* Mesmo recorte, agora pras abas de dentro de Farma Aéreo/Farma Rodoviário e de
+                qualquer Operação cadastrada dinamicamente (ex.: Unimed) — um único checklist
+                vale pra todas (não dá pra restringir cada uma diferente hoje). Só aparece se
+                pelo menos um módulo de operação estiver marcado acima. */}
+            {usaSecoesOperacoes(modulosPermitidos) && (
               <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                   <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                     <UserCog className="w-3.5 h-3.5 text-[#C48229]" />
-                    Dentro de Farma Aéreo/Rodoviário, quais abas esse login vê? (
+                    Dentro de Farma Aéreo/Rodoviário e das Operações (ex.: Unimed), quais abas esse login vê? (
                     {secoesOperacoesPermitidas.length} de {TODAS_SECOES_OPERACOES.length})
                   </p>
                   <div className="flex items-center gap-1.5">
@@ -831,7 +842,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                 </div>
                 {secoesOperacoesPermitidas.length === 0 && (
                   <p className="text-[11px] text-rose-600 font-semibold mt-2">
-                    Nenhuma aba marcada — esse login vai entrar em Farma Aéreo/Rodoviário e não
+                    Nenhuma aba marcada — esse login vai entrar no(s) módulo(s) de operação e não
                     ver nada. Marque ao menos uma.
                   </p>
                 )}
