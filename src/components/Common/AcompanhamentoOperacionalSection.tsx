@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import ExcelJS from 'exceljs';
 import {
   CalendarDays,
   Package,
@@ -8,6 +9,8 @@ import {
   Settings2,
   X,
   Check,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import {
   Cliente,
@@ -15,8 +18,11 @@ import {
   RegistroDiaOperacao,
   FaixaVolumeOperacao,
   ColetaOperacao,
+  MesFechadoOperacao,
 } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { STRATEGIC_GUIDELINES } from '../../data/strategicGuidelines';
+import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 
 interface AcompanhamentoOperacionalSectionProps {
   operacaoId: string;
@@ -28,6 +34,11 @@ interface AcompanhamentoOperacionalSectionProps {
   /** Empresas atreladas à Operação — pra identificar de qual empresa veio a coleta (alimenta
    *  o Real Conciliado por empresa em Visão Geral/DRE e no ranking de clientes). */
   clientes?: Cliente[];
+  /** Meses já fechados/conciliados com o parceiro — trava dias/coletas daquele mês pra
+   *  edição. Sem os handlers, o botão "Fechar Mês" não aparece. */
+  mesesFechados?: MesFechadoOperacao[];
+  onFecharMes?: (periodo: string) => void;
+  onReabrirMes?: (periodo: string) => void;
   onSaveTipo: (t: TipoOperacaoDiaria) => void;
   onDeleteTipo: (id: string) => void;
   onMarcarDia: (registro: RegistroDiaOperacao) => void;
@@ -46,9 +57,104 @@ function calcularValorPorFaixa(volumes: number, faixas: FaixaVolumeOperacao[]): 
   return faixa ? faixa.valor : 0;
 }
 
-function baixarCSV(nomeArquivo: string, headers: string[], rows: (string | number)[][]) {
-  const csvContent = [headers.join(';'), ...rows.map((r) => r.map((c) => `"${c}"`).join(';'))].join('\n');
-  const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+// Mesma paleta bronze/dourado da Diretriz de Documentos JMT usada nas exportações de fatura
+// (ver faturamentoAereoUtils.ts) — aqui repetida localmente porque é um relatório operacional
+// simples de 1 aba, sem o resto do aparato de templates por cliente daquele arquivo.
+const COR_BRONZE = 'FFC48229';
+const COR_BRONZE_ESCURO = 'FF92611F';
+const COR_BRANCO = 'FFFFFFFF';
+const COR_PRETO = 'FF000000';
+const BORDA_FINA = {
+  top: { style: 'thin' as const, color: { argb: 'FFBFBFBF' } },
+  bottom: { style: 'thin' as const, color: { argb: 'FFBFBFBF' } },
+  left: { style: 'thin' as const, color: { argb: 'FFBFBFBF' } },
+  right: { style: 'thin' as const, color: { argb: 'FFBFBFBF' } },
+};
+
+interface ColunaExcel {
+  header: string;
+  key: string;
+  width: number;
+  moeda?: boolean;
+}
+
+/** Gera e baixa um .xlsx com o mesmo padrão institucional JMT (logo, título, cabeçalho da
+ *  tabela em fundo bronze/texto branco, bordas finas, linha de TOTAL e rodapé com a
+ *  assinatura obrigatória da Diretriz de Documentos) usado em toda exportação de fatura do
+ *  sistema — aqui pro relatório operacional (por dia ou por coleta) em vez de uma fatura. */
+async function gerarExcel(
+  nomeArquivo: string,
+  titulo: string,
+  colunas: ColunaExcel[],
+  linhas: Record<string, string | number>[],
+  colunaTotal: string,
+  valorTotal: number
+) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = STRATEGIC_GUIDELINES.empresa;
+  workbook.created = new Date();
+
+  const sheet = workbook.addWorksheet('Relatório', { views: [{ showGridLines: false }] });
+  sheet.columns = colunas.map((c) => ({ key: c.key, width: c.width }));
+
+  const imageId = workbook.addImage({ base64: JMT_LOGO_BASE64, extension: 'png' });
+  sheet.addImage(imageId, { tl: { col: 0, row: 0 }, ext: { width: 110, height: 41 } });
+  sheet.getRow(1).height = 22;
+
+  sheet.mergeCells('C1:J1');
+  sheet.getCell('C1').value = STRATEGIC_GUIDELINES.empresa.toUpperCase();
+  sheet.getCell('C1').font = { bold: true, size: 14, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' };
+
+  sheet.mergeCells('C2:N2');
+  sheet.getCell('C2').value = titulo.toUpperCase();
+  sheet.getCell('C2').font = { bold: true, size: 11, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' };
+
+  const linhaCabecalho = 4;
+  const headerRow = sheet.getRow(linhaCabecalho);
+  colunas.forEach((col, idx) => {
+    const cell = headerRow.getCell(idx + 1);
+    cell.value = col.header;
+    cell.font = { bold: true, size: 10, color: { argb: COR_BRANCO }, name: 'Arial' };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COR_BRONZE } };
+    cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+    cell.border = BORDA_FINA;
+  });
+  headerRow.height = 22;
+
+  linhas.forEach((valores, idx) => {
+    const row = sheet.getRow(linhaCabecalho + 1 + idx);
+    colunas.forEach((col, colIdx) => {
+      const cell = row.getCell(colIdx + 1);
+      cell.value = valores[col.key];
+      if (col.moeda && typeof cell.value === 'number') cell.numFmt = '#,##0.00';
+      cell.font = { size: 10, color: { argb: COR_PRETO }, name: 'Arial' };
+      cell.border = BORDA_FINA;
+    });
+  });
+
+  const linhaTotal = linhaCabecalho + 1 + linhas.length;
+  const colTotalIdx = colunas.findIndex((c) => c.key === colunaTotal) + 1;
+  const totalRow = sheet.getRow(linhaTotal);
+  if (colTotalIdx > 1) sheet.mergeCells(linhaTotal, 1, linhaTotal, colTotalIdx - 1);
+  const totalLabelCell = totalRow.getCell(1);
+  totalLabelCell.value = 'TOTAL';
+  totalLabelCell.font = { bold: true, size: 11, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' };
+  totalLabelCell.alignment = { horizontal: 'right' };
+  const totalValorCell = totalRow.getCell(colTotalIdx);
+  totalValorCell.value = valorTotal;
+  totalValorCell.numFmt = '#,##0.00';
+  totalValorCell.font = { bold: true, size: 11, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' };
+  totalRow.height = 20;
+
+  const linhaRodape = linhaTotal + 2;
+  sheet.mergeCells(linhaRodape, 1, linhaRodape, colunas.length);
+  const rodapeCell = sheet.getCell(linhaRodape, 1);
+  rodapeCell.value = STRATEGIC_GUIDELINES.assinatura;
+  rodapeCell.font = { bold: true, size: 9, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' };
+  rodapeCell.alignment = { horizontal: 'center' };
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -56,13 +162,14 @@ function baixarCSV(nomeArquivo: string, headers: string[], rows: (string | numbe
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 /** Acompanhamento operacional pros dois jeitos de cobrança recorrente encontrados na
  *  prática (ex.: Unimed): "por dia corrido" (Operação CD/Extra — dias marcados × valor
  *  diário) e "por coleta com tabela de faixas de volume" (Operação Interior — cada coleta
- *  cobrada conforme a quantidade de volumes). Gera relatório CSV pra mandar ao parceiro
- *  pra conciliação, mesmo padrão de planilha que já é enviado por e-mail hoje. */
+ *  cobrada conforme a quantidade de volumes). Gera relatório Excel (.xlsx) pra mandar ao
+ *  parceiro pra conciliação, mesmo padrão de planilha que já é enviado por e-mail hoje. */
 export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperacionalSectionProps> = ({
   operacaoId,
   operacaoNome,
@@ -71,6 +178,9 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
   faixasVolume,
   coletas,
   clientes = [],
+  mesesFechados = [],
+  onFecharMes,
+  onReabrirMes,
   onSaveTipo,
   onDeleteTipo,
   onMarcarDia,
@@ -86,6 +196,8 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
   const [showConfigTipos, setShowConfigTipos] = useState(false);
   const [showConfigFaixas, setShowConfigFaixas] = useState(false);
   const [showNovaColeta, setShowNovaColeta] = useState(false);
+
+  const mesFechado = mesesFechados.some((m) => m.periodo === mes);
 
   const tiposAtivos = tiposOperacaoDiaria.filter((t) => t.ativo).sort((a, b) => a.ordem - b.ordem);
   const faixasOrdenadas = [...faixasVolume].sort((a, b) => a.volumeMin - b.volumeMin);
@@ -134,6 +246,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
   const parseValor = (v: string) => Number(v.replace(/\./g, '').replace(',', '.')) || 0;
 
   const handleToggleDia = (tipo: TipoOperacaoDiaria, data: string) => {
+    if (mesFechado) return;
     const chave = `${tipo.id}_${data}`;
     const existente = registrosPorChave.get(chave);
     if (existente) {
@@ -180,6 +293,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
 
   const handleAddColeta = (e: React.FormEvent) => {
     e.preventDefault();
+    if (mesesFechados.some((m) => m.periodo === coletaData.slice(0, 7))) return;
     const volumes = Number(coletaVolumes) || 1;
     const valor = calcularValorPorFaixa(volumes, faixasVolume);
     const clienteSelecionado = clientes.find((c) => c.id === coletaClienteId);
@@ -207,28 +321,55 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
   };
 
   const handleExportDia = () => {
-    const rows: (string | number)[][] = [];
-    resumoPorDiaTipo.forEach((r) => {
-      rows.push([r.tipo.nome, `${r.quantidade} dias × ${formatCurrency(r.tipo.valorDiario)}`, formatCurrency(r.total)]);
-    });
-    rows.push(['TOTAL', '', formatCurrency(totalPorDia)]);
-    baixarCSV(`acompanhamento_diario_${operacaoNome}_${mes}.csv`, ['Tipo de Operação', 'Cálculo', 'Valor'], rows);
+    const colunas: ColunaExcel[] = [
+      { header: 'Tipo de Operação', key: 'tipo', width: 26 },
+      { header: 'Cálculo', key: 'calculo', width: 30 },
+      { header: 'Valor', key: 'valor', width: 14, moeda: true },
+    ];
+    const linhas = resumoPorDiaTipo.map((r) => ({
+      tipo: r.tipo.nome,
+      calculo: `${r.quantidade} dias × ${formatCurrency(r.tipo.valorDiario)}`,
+      valor: r.total,
+    }));
+    gerarExcel(
+      `Acompanhamento_Diario_${operacaoNome}_${mes}.xlsx`,
+      `Acompanhamento Operacional (Por Dia) — ${operacaoNome} — ${mes}`,
+      colunas,
+      linhas,
+      'valor',
+      totalPorDia
+    );
   };
 
   const handleExportColetas = () => {
-    const headers = ['DATA COLETA', 'NF/DOCUMENTO', 'PARCEIRO/AGENTE DE ENTREGA', 'DESTINATÁRIO', 'CIDADE', 'CUSTO R$', 'QUANTIDADES VL', 'OBS'];
-    const rows = coletasDoMes.map((c) => [
-      c.data.split('-').reverse().join('/'),
-      c.numeroDocumento || 'N/A',
-      'JOBSON',
-      c.destinatario || '',
-      c.cidade || '',
-      formatCurrency(c.valor),
-      c.quantidadeVolumes,
-      c.observacao || '',
-    ]);
-    rows.push(['', '', '', '', 'VALOR TOTAL', formatCurrency(totalColetas), '', '']);
-    baixarCSV(`coletas_${operacaoNome}_${mes}.csv`, headers, rows);
+    const colunas: ColunaExcel[] = [
+      { header: 'DATA COLETA', key: 'data', width: 13 },
+      { header: 'NF/DOCUMENTO', key: 'nf', width: 14 },
+      { header: 'PARCEIRO/AGENTE DE ENTREGA', key: 'parceiro', width: 22 },
+      { header: 'DESTINATÁRIO', key: 'destinatario', width: 24 },
+      { header: 'CIDADE', key: 'cidade', width: 16 },
+      { header: 'CUSTO R$', key: 'custo', width: 12, moeda: true },
+      { header: 'QUANTIDADES VL', key: 'volumes', width: 14 },
+      { header: 'OBS', key: 'obs', width: 30 },
+    ];
+    const linhas = coletasDoMes.map((c) => ({
+      data: c.data.split('-').reverse().join('/'),
+      nf: c.numeroDocumento || 'N/A',
+      parceiro: 'JOBSON',
+      destinatario: c.destinatario || '',
+      cidade: c.cidade || '',
+      custo: c.valor,
+      volumes: c.quantidadeVolumes,
+      obs: c.observacao || '',
+    }));
+    gerarExcel(
+      `Coletas_${operacaoNome}_${mes}.xlsx`,
+      `Relatório de Coletas — ${operacaoNome} — ${mes}`,
+      colunas,
+      linhas,
+      'custo',
+      totalColetas
+    );
   };
 
   return (
@@ -240,13 +381,42 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
             Registre os dias/coletas realizados pra contabilizar sozinho e gerar o relatório pra {operacaoNome}.
           </p>
         </div>
-        <input
-          type="month"
-          value={mes}
-          onChange={(e) => setMes(e.target.value)}
-          className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="month"
+            value={mes}
+            onChange={(e) => setMes(e.target.value)}
+            className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs"
+          />
+          {(onFecharMes || onReabrirMes) &&
+            (mesFechado ? (
+              <button
+                type="button"
+                onClick={() => onReabrirMes && onReabrirMes(mes)}
+                className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold flex items-center gap-1"
+                title="Destrava dias/coletas desse mês pra edição"
+              >
+                <Unlock className="w-3 h-3" /> Reabrir Mês
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onFecharMes && onFecharMes(mes)}
+                className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold flex items-center gap-1"
+                title="Marca o mês como conciliado com o parceiro e trava edição"
+              >
+                <Lock className="w-3 h-3" /> Fechar Mês
+              </button>
+            ))}
+        </div>
       </div>
+
+      {mesFechado && (
+        <div className="px-4 py-2 bg-emerald-50 border-b border-emerald-200 flex items-center gap-2 text-[11px] text-emerald-800 font-semibold">
+          <Lock className="w-3.5 h-3.5 shrink-0" />
+          Mês fechado — conciliado com o parceiro. Dias/coletas deste mês estão travados pra edição.
+        </div>
+      )}
 
       <div className="flex items-center gap-2 p-3 border-b border-slate-100">
         <button
@@ -291,7 +461,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                 disabled={tiposAtivos.length === 0}
                 className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-lg text-[11px] font-semibold flex items-center gap-1"
               >
-                <Download className="w-3 h-3" /> Relatório CSV
+                <Download className="w-3 h-3" /> Relatório Excel
               </button>
             </div>
           </div>
@@ -325,7 +495,12 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                               <button
                                 type="button"
                                 onClick={() => handleToggleDia(t, data)}
+                                disabled={mesFechado}
                                 className={`w-5 h-5 rounded-md border flex items-center justify-center mx-auto transition-colors ${
+                                  mesFechado
+                                    ? 'cursor-not-allowed opacity-60'
+                                    : ''
+                                } ${
                                   marcado
                                     ? 'bg-[#C48229] border-[#C48229] text-white'
                                     : 'bg-white border-slate-300 hover:border-[#C48229]'
@@ -377,7 +552,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
               <button
                 type="button"
                 onClick={() => setShowNovaColeta(true)}
-                disabled={faixasVolume.length === 0}
+                disabled={faixasVolume.length === 0 || mesFechado}
                 className="px-2.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] disabled:bg-slate-300 text-white rounded-lg text-[11px] font-semibold flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" /> Nova Coleta
@@ -388,7 +563,7 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                 disabled={coletasDoMes.length === 0}
                 className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-lg text-[11px] font-semibold flex items-center gap-1"
               >
-                <Download className="w-3 h-3" /> Relatório CSV
+                <Download className="w-3 h-3" /> Relatório Excel
               </button>
             </div>
           </div>
@@ -428,13 +603,15 @@ export const AcompanhamentoOperacionalSection: React.FC<AcompanhamentoOperaciona
                       <td className="px-2 py-1.5 text-center">{c.quantidadeVolumes}</td>
                       <td className="px-2 py-1.5 text-right font-semibold">{formatCurrency(c.valor)}</td>
                       <td className="px-2 py-1.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => onDeleteColeta(c.id)}
-                          className="p-1 text-slate-400 hover:text-rose-600 rounded-md"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {!mesFechado && (
+                          <button
+                            type="button"
+                            onClick={() => onDeleteColeta(c.id)}
+                            className="p-1 text-slate-400 hover:text-rose-600 rounded-md"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

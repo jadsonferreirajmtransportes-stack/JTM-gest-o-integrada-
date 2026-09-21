@@ -12,6 +12,7 @@ import {
   RegistroDiaOperacao,
   FaixaVolumeOperacao,
   ColetaOperacao,
+  MesFechadoOperacao,
 } from '../../types';
 import { podeVerAbaOperacoes } from '../../utils/visibilidadeUtils';
 import { SectorClientsTab } from './SectorClientsTab';
@@ -56,6 +57,9 @@ interface OperacaoViewProps {
   registrosDiaOperacao?: RegistroDiaOperacao[];
   faixasVolumeOperacao?: FaixaVolumeOperacao[];
   coletasOperacao?: ColetaOperacao[];
+  mesesFechadosOperacao?: MesFechadoOperacao[];
+  onFecharMesOperacao?: (periodo: string) => void;
+  onReabrirMesOperacao?: (periodo: string) => void;
   onSaveTipoOperacaoDiaria?: (tipo: TipoOperacaoDiaria) => void;
   onDeleteTipoOperacaoDiaria?: (id: string) => void;
   onMarcarDiaOperacao?: (registro: RegistroDiaOperacao) => void;
@@ -91,6 +95,9 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
   registrosDiaOperacao = [],
   faixasVolumeOperacao = [],
   coletasOperacao = [],
+  mesesFechadosOperacao = [],
+  onFecharMesOperacao,
+  onReabrirMesOperacao,
   onSaveTipoOperacaoDiaria,
   onDeleteTipoOperacaoDiaria,
   onMarcarDiaOperacao,
@@ -343,6 +350,9 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
                 faixasVolume={faixasVolumeOperacao}
                 coletas={coletasOperacao}
                 clientes={sectorClientes}
+                mesesFechados={mesesFechadosOperacao}
+                onFecharMes={onFecharMesOperacao}
+                onReabrirMes={onReabrirMesOperacao}
                 onSaveTipo={onSaveTipoOperacaoDiaria}
                 onDeleteTipo={onDeleteTipoOperacaoDiaria || (() => {})}
                 onMarcarDia={onMarcarDiaOperacao}

@@ -164,6 +164,16 @@ export interface ColetaOperacao {
   criadoEm?: string;
 }
 
+/** Um mês do Acompanhamento Operacional marcado como fechado/conciliado com o parceiro —
+ *  trava novos dias marcados/coletas registradas e edição/exclusão dos já existentes
+ *  naquele mês, pra não mudar sem querer um número já conferido (ex.: com a Unimed). */
+export interface MesFechadoOperacao {
+  id: string; // `${operacaoId}_${periodo}`
+  operacaoId: string;
+  periodo: string; // 'YYYY-MM'
+  fechadoEm?: string;
+}
+
 // Sistema de Autenticação e Permissão de Módulos por Login
 export interface UsuarioLogin {
   id: string;

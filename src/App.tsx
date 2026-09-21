@@ -31,6 +31,7 @@ import {
   RegistroDiaOperacao,
   FaixaVolumeOperacao,
   ColetaOperacao,
+  MesFechadoOperacao,
   UsuarioLogin,
   NotaPagina,
   InstrucaoTrabalho,
@@ -160,6 +161,9 @@ import {
   getColetasOperacao,
   saveColetaOperacao,
   deleteColetaOperacao,
+  getMesesFechadosOperacao,
+  fecharMesOperacao,
+  reabrirMesOperacao,
 } from './utils/operacoesApi';
 // Farma Rodoviário (viagens/telemetria) também já migrado para o Supabase — ver
 // src/utils/viagensApi.ts.
@@ -534,6 +538,7 @@ export default function App() {
   const [registrosDiaOperacao, setRegistrosDiaOperacao] = useState<RegistroDiaOperacao[]>([]);
   const [faixasVolumeOperacao, setFaixasVolumeOperacao] = useState<FaixaVolumeOperacao[]>([]);
   const [coletasOperacao, setColetasOperacao] = useState<ColetaOperacao[]>([]);
+  const [mesesFechadosOperacao, setMesesFechadosOperacao] = useState<MesFechadoOperacao[]>([]);
   // Qualquer operação cadastrada além das 2 originais (Farma Aéreo/Rodoviário continuam com
   // suas próprias telas) — cada uma ganha um <OperacaoView> genérico automaticamente.
   const operacoesExtrasAtivas = useMemo(
@@ -1008,6 +1013,7 @@ export default function App() {
         registrosDia,
         faixasVolume,
         coletas,
+        mesesFechados,
       ] = await Promise.all([
         getCustosOperacionais(),
         getProjetosGerenciais(),
@@ -1022,6 +1028,7 @@ export default function App() {
         getRegistrosDiaOperacao(),
         getFaixasVolumeOperacao(),
         getColetasOperacao(),
+        getMesesFechadosOperacao(),
       ]);
       setCustosOperacionais(custos);
       setProjetos(projetos);
@@ -1035,6 +1042,7 @@ export default function App() {
       setRegistrosDiaOperacao(registrosDia);
       setFaixasVolumeOperacao(faixasVolume);
       setColetasOperacao(coletas);
+      setMesesFechadosOperacao(mesesFechados);
       setOperacoes(ops);
     } catch (err) {
       console.error('Erro ao carregar Custos/Projetos/Agenda/Notas/Instruções/Viagens/Orçamentos (Supabase):', err);
@@ -2464,6 +2472,16 @@ export default function App() {
     await loadGestaoData();
     showToast('Coleta removida.', 'info');
   };
+  const handleFecharMesOperacao = async (operacaoId: string, periodo: string) => {
+    await fecharMesOperacao(operacaoId, periodo);
+    await loadGestaoData();
+    showToast('Mês fechado — dias/coletas desse mês agora estão travados.', 'success');
+  };
+  const handleReabrirMesOperacao = async (operacaoId: string, periodo: string) => {
+    await reabrirMesOperacao(operacaoId, periodo);
+    await loadGestaoData();
+    showToast('Mês reaberto.', 'info');
+  };
 
   // Settings Handlers
   const handleAddEmpregador = async (emp: Empregador) => {
@@ -2873,6 +2891,9 @@ export default function App() {
                 registrosDiaOperacao={registrosDiaOperacao.filter((r) => r.operacaoId === op.id)}
                 faixasVolumeOperacao={faixasVolumeOperacao.filter((f) => f.operacaoId === op.id)}
                 coletasOperacao={coletasOperacao.filter((c) => c.operacaoId === op.id)}
+                mesesFechadosOperacao={mesesFechadosOperacao.filter((m) => m.operacaoId === op.id)}
+                onFecharMesOperacao={(periodo) => handleFecharMesOperacao(op.id, periodo)}
+                onReabrirMesOperacao={(periodo) => handleReabrirMesOperacao(op.id, periodo)}
                 onSaveTipoOperacaoDiaria={handleSaveTipoOperacaoDiaria}
                 onDeleteTipoOperacaoDiaria={handleDeleteTipoOperacaoDiaria}
                 onMarcarDiaOperacao={handleMarcarDiaOperacao}

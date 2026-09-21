@@ -12,6 +12,7 @@ import {
   RegistroDiaOperacao,
   FaixaVolumeOperacao,
   ColetaOperacao,
+  MesFechadoOperacao,
 } from '../types';
 
 function n(v: any): any {
@@ -288,4 +289,37 @@ export async function saveColetaOperacao(item: ColetaOperacao): Promise<void> {
 export async function deleteColetaOperacao(id: string): Promise<void> {
   const { error } = await supabase.from('coletas_operacao').delete().eq('id', id);
   assertNoError(error, 'deleteColetaOperacao');
+}
+
+// ============================================================================
+// MESES FECHADOS DO ACOMPANHAMENTO OPERACIONAL (ver migração 049)
+// ============================================================================
+
+function rowToMesFechadoOperacao(r: any): MesFechadoOperacao {
+  return {
+    id: r.id,
+    operacaoId: r.operacao_id,
+    periodo: r.periodo,
+    fechadoEm: u(r.fechado_em),
+  };
+}
+export async function getMesesFechadosOperacao(): Promise<MesFechadoOperacao[]> {
+  const { data, error } = await supabase.from('meses_fechados_operacao').select('*');
+  assertNoError(error, 'getMesesFechadosOperacao');
+  return (data ?? []).map(rowToMesFechadoOperacao);
+}
+export async function fecharMesOperacao(operacaoId: string, periodo: string): Promise<void> {
+  const { error } = await supabase.from('meses_fechados_operacao').upsert({
+    id: `${operacaoId}_${periodo}`,
+    operacao_id: operacaoId,
+    periodo,
+  });
+  assertNoError(error, 'fecharMesOperacao');
+}
+export async function reabrirMesOperacao(operacaoId: string, periodo: string): Promise<void> {
+  const { error } = await supabase
+    .from('meses_fechados_operacao')
+    .delete()
+    .eq('id', `${operacaoId}_${periodo}`);
+  assertNoError(error, 'reabrirMesOperacao');
 }
