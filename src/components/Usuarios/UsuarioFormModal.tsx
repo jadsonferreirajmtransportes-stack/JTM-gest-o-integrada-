@@ -90,15 +90,8 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       .map(operacaoParaModuloInfo),
   ];
   // Farma Aéreo/Rodoviário + qualquer Operação cadastrada dinamicamente (ex.: Unimed) — todas
-  // usam o mesmo checklist de SecaoOperacoes (um único recorte vale pra todas, não dá pra
-  // restringir cada uma diferente hoje). Sem isso, uma Operação nova nunca acionava o checklist
-  // granular, só Farma Aéreo/Rodoviário (que tinham entrada fixa aqui desde antes das Operações
-  // virarem cadastro dinâmico).
+  // ganham seu próprio checklist de SecaoOperacoes (ver modulosOperacaoMarcadosView abaixo).
   const idsOperacoesGenericas = operacoesExtras.map((op) => op.id);
-  const usaSecoesOperacoes = (mods: GlobalModuleId[]) =>
-    mods.includes('farma_aereo') ||
-    mods.includes('farma_rodoviario') ||
-    idsOperacoesGenericas.some((id) => mods.includes(id));
   const [nome, setNome] = useState('');
   const [login, setLogin] = useState('');
   const [email, setEmail] = useState('');
@@ -120,9 +113,13 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
   const [supervisorId, setSupervisorId] = useState('');
   const [escopoApenasProprioSetor, setEscopoApenasProprioSetor] = useState(false);
   const [secoesDpPermitidas, setSecoesDpPermitidas] = useState<SecaoDp[]>(TODAS_SECOES_DP);
-  const [secoesOperacoesPermitidas, setSecoesOperacoesPermitidas] = useState<SecaoOperacoes[]>(
-    TODAS_SECOES_OPERACOES
-  );
+  // Recorte por módulo de operação (ex.: { farma_aereo: [...], unimed: [...] }) — módulo
+  // ausente do mapa = sem restrição (mostra todas as abas marcadas na UI, ver
+  // getSecoesOperacoesDoModulo abaixo). Populado a partir de secoesOperacoesPorModulo do login
+  // (já no formato novo) ou, se ausente, do campo antigo compartilhado
+  // secoesOperacoesPermitidas (ver useEffect), pra não resetar a restrição de quem já estava
+  // configurado antes dessa mudança.
+  const [secoesOperacoesPorModulo, setSecoesOperacoesPorModulo] = useState<Record<string, SecaoOperacoes[]>>({});
 
   useEffect(() => {
     if (usuarioToEdit) {
@@ -147,11 +144,26 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
           ? [...usuarioToEdit.secoesDpPermitidas]
           : TODAS_SECOES_DP
       );
-      setSecoesOperacoesPermitidas(
-        usuarioToEdit.secoesOperacoesPermitidas && usuarioToEdit.secoesOperacoesPermitidas.length > 0
-          ? [...usuarioToEdit.secoesOperacoesPermitidas]
-          : TODAS_SECOES_OPERACOES
-      );
+      if (usuarioToEdit.secoesOperacoesPorModulo && Object.keys(usuarioToEdit.secoesOperacoesPorModulo).length > 0) {
+        setSecoesOperacoesPorModulo({ ...usuarioToEdit.secoesOperacoesPorModulo });
+      } else if (usuarioToEdit.secoesOperacoesPermitidas && usuarioToEdit.secoesOperacoesPermitidas.length > 0) {
+        // Fallback de migração: login configurado antes do recorte virar por módulo — aplica o
+        // mesmo recorte antigo em cada módulo de operação que ele já tem marcado, só como ponto
+        // de partida na tela (não é gravado até a pessoa salvar de novo).
+        const modulosOperacaoJaMarcados = (usuarioToEdit.modulosPermitidos || []).filter(
+          (id) =>
+            id === 'farma_aereo' ||
+            id === 'farma_rodoviario' ||
+            operacoesExtras.some((op) => op.id === id)
+        );
+        const migrado: Record<string, SecaoOperacoes[]> = {};
+        modulosOperacaoJaMarcados.forEach((id) => {
+          migrado[id] = [...usuarioToEdit.secoesOperacoesPermitidas!];
+        });
+        setSecoesOperacoesPorModulo(migrado);
+      } else {
+        setSecoesOperacoesPorModulo({});
+      }
       setErrorMsg('');
     } else {
       // Default new user
@@ -168,7 +180,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       setSupervisorId('');
       setEscopoApenasProprioSetor(false);
       setSecoesDpPermitidas(TODAS_SECOES_DP);
-      setSecoesOperacoesPermitidas(TODAS_SECOES_OPERACOES);
+      setSecoesOperacoesPorModulo({});
       setErrorMsg('');
     }
   }, [usuarioToEdit, isOpen]);
@@ -222,12 +234,20 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
     }
   };
 
-  const toggleSecaoOperacoes = (secaoId: SecaoOperacoes) => {
-    if (secoesOperacoesPermitidas.includes(secaoId)) {
-      setSecoesOperacoesPermitidas(secoesOperacoesPermitidas.filter((id) => id !== secaoId));
-    } else {
-      setSecoesOperacoesPermitidas([...secoesOperacoesPermitidas, secaoId]);
-    }
+  // Sem entrada no mapa pra esse módulo ainda = considera "todas marcadas" (sem restrição,
+  // comportamento padrão) — é o valor que a UI mostra até a pessoa mexer em algum checkbox
+  // daquele módulo pela primeira vez.
+  const getSecoesOperacoesDoModulo = (moduloId: string): SecaoOperacoes[] =>
+    secoesOperacoesPorModulo[moduloId] ?? TODAS_SECOES_OPERACOES;
+
+  const toggleSecaoOperacoes = (moduloId: string, secaoId: SecaoOperacoes) => {
+    const atual = getSecoesOperacoesDoModulo(moduloId);
+    const nova = atual.includes(secaoId) ? atual.filter((id) => id !== secaoId) : [...atual, secaoId];
+    setSecoesOperacoesPorModulo({ ...secoesOperacoesPorModulo, [moduloId]: nova });
+  };
+
+  const setSecoesOperacoesDoModulo = (moduloId: string, secoes: SecaoOperacoes[]) => {
+    setSecoesOperacoesPorModulo({ ...secoesOperacoesPorModulo, [moduloId]: secoes });
   };
 
   const clearAllModules = () => {
@@ -317,22 +337,36 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       return;
     }
 
-    const usaOperacoes = usaSecoesOperacoes(modulosPermitidos);
-    if (usaOperacoes && secoesOperacoesPermitidas.length === 0) {
-      setErrorMsg('Marque pelo menos 1 (uma) aba de Operações, ou desmarque o(s) módulo(s) de operação.');
+    // Todo módulo de operação (fixo ou dinâmico) atualmente marcado precisa ter pelo menos 1
+    // aba liberada — cada um com seu próprio recorte agora, então checa um por um.
+    const modulosOperacaoMarcados = modulosPermitidos.filter(
+      (id) => id === 'farma_aereo' || id === 'farma_rodoviario' || operacoesExtras.some((op) => op.id === id)
+    );
+    const moduloSemAbaAlguma = modulosOperacaoMarcados.find(
+      (id) => getSecoesOperacoesDoModulo(id).length === 0
+    );
+    if (moduloSemAbaAlguma) {
+      const nomeModulo = modulosDisponiveis.find((m) => m.id === moduloSemAbaAlguma)?.nome || moduloSemAbaAlguma;
+      setErrorMsg(`Marque pelo menos 1 (uma) aba de "${nomeModulo}", ou desmarque esse módulo.`);
       return;
     }
 
     // Todas as seções marcadas = sem restrição (equivalente a não ter secoesDpPermitidas
-    // nenhuma) — só grava a lista quando é de fato um recorte menor que o total.
+    // nenhuma) — só grava a lista quando é de fato um recorte menor que o total. Só grava
+    // entrada no mapa pros módulos de operação que continuam marcados (evita lixo acumulado de
+    // um módulo que a pessoa desmarcou antes de salvar).
     const secoesDpParaSalvar: SecaoDp[] | undefined =
       modulosPermitidos.includes('dp') && secoesDpPermitidas.length < TODAS_SECOES_DP.length
         ? secoesDpPermitidas
         : undefined;
-    const secoesOperacoesParaSalvar: SecaoOperacoes[] | undefined =
-      usaOperacoes && secoesOperacoesPermitidas.length < TODAS_SECOES_OPERACOES.length
-        ? secoesOperacoesPermitidas
-        : undefined;
+    const secoesOperacoesPorModuloParaSalvar: Record<string, SecaoOperacoes[]> | undefined = (() => {
+      const mapa: Record<string, SecaoOperacoes[]> = {};
+      modulosOperacaoMarcados.forEach((id) => {
+        const secoes = getSecoesOperacoesDoModulo(id);
+        if (secoes.length < TODAS_SECOES_OPERACOES.length) mapa[id] = secoes;
+      });
+      return Object.keys(mapa).length > 0 ? mapa : undefined;
+    })();
 
     const userToSave: UsuarioLogin = {
       id: usuarioToEdit ? usuarioToEdit.id : `usr-${Date.now()}`,
@@ -352,12 +386,18 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
       supervisorId: supervisorId || undefined,
       secoesDpPermitidas: secoesDpParaSalvar,
       escopoApenasProprioSetor: supervisorId ? escopoApenasProprioSetor : false,
-      secoesOperacoesPermitidas: secoesOperacoesParaSalvar,
+      secoesOperacoesPorModulo: secoesOperacoesPorModuloParaSalvar,
     };
 
     onSave(userToSave);
     onClose();
   };
+
+  // Módulos de operação (fixos + dinâmicos) atualmente marcados — um checklist de abas
+  // aparece pra cada um, individualmente.
+  const modulosOperacaoMarcadosView = modulosPermitidos.filter(
+    (id) => id === 'farma_aereo' || id === 'farma_rodoviario' || idsOperacoesGenericas.includes(id)
+  );
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-150">
@@ -786,68 +826,71 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
               </div>
             )}
 
-            {/* Mesmo recorte, agora pras abas de dentro de Farma Aéreo/Farma Rodoviário e de
-                qualquer Operação cadastrada dinamicamente (ex.: Unimed) — um único checklist
-                vale pra todas (não dá pra restringir cada uma diferente hoje). Só aparece se
-                pelo menos um módulo de operação estiver marcado acima. */}
-            {usaSecoesOperacoes(modulosPermitidos) && (
-              <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                  <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <UserCog className="w-3.5 h-3.5 text-[#C48229]" />
-                    Dentro de Farma Aéreo/Rodoviário e das Operações (ex.: Unimed), quais abas esse login vê? (
-                    {secoesOperacoesPermitidas.length} de {TODAS_SECOES_OPERACOES.length})
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setSecoesOperacoesPermitidas(TODAS_SECOES_OPERACOES)}
-                      className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-md text-[11px] font-semibold transition-colors"
-                    >
-                      Marcar Todas
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSecoesOperacoesPermitidas(['empresas', 'equipe'])}
-                      className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-md text-[11px] font-semibold transition-colors"
-                      title="Empresas Atreladas + Equipe do Setor, sem Visão Geral/Faturamento/Custos"
-                    >
-                      Supervisor de Campo
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {SECOES_OPERACOES.map((secao) => {
-                    const isChecked = secoesOperacoesPermitidas.includes(secao.id);
-                    return (
-                      <label
-                        key={secao.id}
-                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer select-none transition-colors ${
-                          isChecked
-                            ? 'bg-white border-[#C48229]/40 text-slate-800'
-                            : 'bg-white/60 border-slate-200 text-slate-400'
-                        }`}
+            {/* Um checklist de abas POR módulo de operação marcado (fixo ou dinâmico, ex.:
+                Unimed) — cada um com seu próprio recorte, dá pra liberar Faturamento na Unimed
+                sem liberar no Farma Aéreo pro mesmo login. */}
+            {modulosOperacaoMarcadosView.map((moduloId) => {
+              const nomeModulo = modulosDisponiveis.find((m) => m.id === moduloId)?.nome || moduloId;
+              const secoesDoModulo = getSecoesOperacoesDoModulo(moduloId);
+              return (
+                <div key={moduloId} className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                    <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <UserCog className="w-3.5 h-3.5 text-[#C48229]" />
+                      Dentro de {nomeModulo}, quais abas esse login vê? (
+                      {secoesDoModulo.length} de {TODAS_SECOES_OPERACOES.length})
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setSecoesOperacoesDoModulo(moduloId, TODAS_SECOES_OPERACOES)}
+                        className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-md text-[11px] font-semibold transition-colors"
                       >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleSecaoOperacoes(secao.id)}
-                          className="w-3.5 h-3.5 accent-[#C48229]"
-                        />
-                        <span className="text-[11px] font-medium">{secao.label}</span>
-                      </label>
-                    );
-                  })}
+                        Marcar Todas
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSecoesOperacoesDoModulo(moduloId, ['empresas', 'equipe'])}
+                        className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-md text-[11px] font-semibold transition-colors"
+                        title="Empresas Atreladas + Equipe do Setor, sem Visão Geral/Faturamento/Custos"
+                      >
+                        Supervisor de Campo
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {SECOES_OPERACOES.map((secao) => {
+                      const isChecked = secoesDoModulo.includes(secao.id);
+                      return (
+                        <label
+                          key={secao.id}
+                          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer select-none transition-colors ${
+                            isChecked
+                              ? 'bg-white border-[#C48229]/40 text-slate-800'
+                              : 'bg-white/60 border-slate-200 text-slate-400'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSecaoOperacoes(moduloId, secao.id)}
+                            className="w-3.5 h-3.5 accent-[#C48229]"
+                          />
+                          <span className="text-[11px] font-medium">{secao.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {secoesDoModulo.length === 0 && (
+                    <p className="text-[11px] text-rose-600 font-semibold mt-2">
+                      Nenhuma aba marcada — esse login vai entrar em {nomeModulo} e não ver nada.
+                      Marque ao menos uma.
+                    </p>
+                  )}
                 </div>
-                {secoesOperacoesPermitidas.length === 0 && (
-                  <p className="text-[11px] text-rose-600 font-semibold mt-2">
-                    Nenhuma aba marcada — esse login vai entrar no(s) módulo(s) de operação e não
-                    ver nada. Marque ao menos uma.
-                  </p>
-                )}
-              </div>
-            )}
+              );
+            })}
           </div>
 
           {/* Section 3: Observações */}

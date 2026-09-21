@@ -41,6 +41,7 @@ function rowToUsuario(r: any): UsuarioLogin {
     secoesDpPermitidas: u(r.secoes_dp_permitidas),
     escopoApenasProprioSetor: r.escopo_apenas_proprio_setor ?? false,
     secoesOperacoesPermitidas: u(r.secoes_operacoes_permitidas),
+    secoesOperacoesPorModulo: u(r.secoes_operacoes_por_modulo),
   };
 }
 function usuarioToRow(usr: UsuarioLogin) {
@@ -64,6 +65,10 @@ function usuarioToRow(usr: UsuarioLogin) {
     escopo_apenas_proprio_setor: usr.escopoApenasProprioSetor ?? false,
     secoes_operacoes_permitidas:
       usr.secoesOperacoesPermitidas && usr.secoesOperacoesPermitidas.length > 0 ? usr.secoesOperacoesPermitidas : null,
+    secoes_operacoes_por_modulo:
+      usr.secoesOperacoesPorModulo && Object.keys(usr.secoesOperacoesPorModulo).length > 0
+        ? usr.secoesOperacoesPorModulo
+        : null,
   };
 }
 

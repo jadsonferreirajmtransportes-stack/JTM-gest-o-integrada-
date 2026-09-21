@@ -122,9 +122,9 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
 
   const ORDEM_ABAS_OPERACOES = ['visao_geral', 'empresas', 'equipe', 'faturamento', 'custos'] as const;
   // Uma aba só aparece se a Operação a tiver habilitada (cadastro) E o login tiver permissão
-  // pra vê-la (secoesOperacoesPermitidas) — as duas checagens são independentes.
+  // pra vê-la (secoesOperacoesPorModulo[operacao.id]) — as duas checagens são independentes.
   const podeVerAba = (aba: (typeof ORDEM_ABAS_OPERACOES)[number]) =>
-    operacaoTemAba(operacao.secoesAtivas, aba) && podeVerAbaOperacoes(currentUser, aba);
+    operacaoTemAba(operacao.secoesAtivas, aba) && podeVerAbaOperacoes(currentUser, aba, operacao.id);
   const [activeSubTab, setActiveSubTab] = useState<
     'visao_geral' | 'empresas' | 'equipe' | 'faturamento' | 'custos'
   >(() => ORDEM_ABAS_OPERACOES.find((aba) => podeVerAba(aba)) || 'visao_geral');

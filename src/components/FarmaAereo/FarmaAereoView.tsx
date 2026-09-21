@@ -114,7 +114,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
   ] as const;
   const [activeSubTab, setActiveSubTab] = useState<
     'visao_geral' | 'empresas' | 'equipe' | 'faturamento' | 'controle_financeiro' | 'custos'
-  >(() => ORDEM_ABAS_OPERACOES.find((aba) => podeVerAbaOperacoes(currentUser, aba)) || 'visao_geral');
+  >(() => ORDEM_ABAS_OPERACOES.find((aba) => podeVerAbaOperacoes(currentUser, aba, 'farma_aereo')) || 'visao_geral');
 
   // Custo Operacional Modal state
   const [isCustoModalOpen, setIsCustoModalOpen] = useState(false);
@@ -181,7 +181,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
 
       {/* Sub-Navigation Tabs */}
       <div className="flex items-center overflow-x-auto border-b border-slate-200 gap-2 bg-white px-3 pt-2 rounded-xl shadow-xs">
-        {podeVerAbaOperacoes(currentUser, 'visao_geral') && (
+        {podeVerAbaOperacoes(currentUser, 'visao_geral', 'farma_aereo') && (
           <button
             onClick={() => setActiveSubTab('visao_geral')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -195,7 +195,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           </button>
         )}
 
-        {podeVerAbaOperacoes(currentUser, 'empresas') && (
+        {podeVerAbaOperacoes(currentUser, 'empresas', 'farma_aereo') && (
           <button
             onClick={() => setActiveSubTab('empresas')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -209,7 +209,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           </button>
         )}
 
-        {podeVerAbaOperacoes(currentUser, 'equipe') && (
+        {podeVerAbaOperacoes(currentUser, 'equipe', 'farma_aereo') && (
           <button
             onClick={() => setActiveSubTab('equipe')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -223,7 +223,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           </button>
         )}
 
-        {podeVerAbaOperacoes(currentUser, 'faturamento') && (
+        {podeVerAbaOperacoes(currentUser, 'faturamento', 'farma_aereo') && (
           <button
             onClick={() => setActiveSubTab('faturamento')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -237,7 +237,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           </button>
         )}
 
-        {podeVerAbaOperacoes(currentUser, 'controle_financeiro') && (
+        {podeVerAbaOperacoes(currentUser, 'controle_financeiro', 'farma_aereo') && (
           <button
             onClick={() => setActiveSubTab('controle_financeiro')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -251,7 +251,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           </button>
         )}
 
-        {podeVerAbaOperacoes(currentUser, 'custos') && (
+        {podeVerAbaOperacoes(currentUser, 'custos', 'farma_aereo') && (
           <button
             onClick={() => setActiveSubTab('custos')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
@@ -267,7 +267,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
       </div>
 
       {/* TAB 1: VISÃO GERAL GERENCIAL & DRE */}
-      {activeSubTab === 'visao_geral' && podeVerAbaOperacoes(currentUser, 'visao_geral') && (
+      {activeSubTab === 'visao_geral' && podeVerAbaOperacoes(currentUser, 'visao_geral', 'farma_aereo') && (
         <SectorManagerialDashboard
           setor="farma_aereo"
           metrics={metrics}
@@ -279,7 +279,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
       )}
 
       {/* TAB 2: EMPRESAS ATRELADAS */}
-      {activeSubTab === 'empresas' && podeVerAbaOperacoes(currentUser, 'empresas') && (
+      {activeSubTab === 'empresas' && podeVerAbaOperacoes(currentUser, 'empresas', 'farma_aereo') && (
         <SectorClientsTab
           setor="farma_aereo"
           allClientes={clientes}
@@ -292,7 +292,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
       )}
 
       {/* TAB 3: EQUIPE DO SETOR */}
-      {activeSubTab === 'equipe' && podeVerAbaOperacoes(currentUser, 'equipe') && (
+      {activeSubTab === 'equipe' && podeVerAbaOperacoes(currentUser, 'equipe', 'farma_aereo') && (
         <SectorEmployeesTab
           setor="farma_aereo"
           allColaboradores={colaboradores}
@@ -305,7 +305,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
       )}
 
       {/* TAB 4: FATURAMENTO & RECEITAS */}
-      {activeSubTab === 'faturamento' && podeVerAbaOperacoes(currentUser, 'faturamento') && (
+      {activeSubTab === 'faturamento' && podeVerAbaOperacoes(currentUser, 'faturamento', 'farma_aereo') && (
         <SectorRevenueTab
           setor="farma_aereo"
           metrics={metrics}
@@ -317,7 +317,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
       )}
 
       {/* TAB: CONTROLE FINANCEIRO — FATURAMENTO (CT-Es / Faturas) */}
-      {activeSubTab === 'controle_financeiro' && podeVerAbaOperacoes(currentUser, 'controle_financeiro') && (
+      {activeSubTab === 'controle_financeiro' && podeVerAbaOperacoes(currentUser, 'controle_financeiro', 'farma_aereo') && (
         <FaturamentoAereoView
           lancamentos={lancamentosDoSetor}
           faturas={faturasDoSetor}
@@ -336,7 +336,7 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
       )}
 
       {/* TAB 5: CUSTOS OPERACIONAIS */}
-      {activeSubTab === 'custos' && podeVerAbaOperacoes(currentUser, 'custos') && (
+      {activeSubTab === 'custos' && podeVerAbaOperacoes(currentUser, 'custos', 'farma_aereo') && (
         <SectorCostsTab
           setor="farma_aereo"
           metrics={metrics}

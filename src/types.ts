@@ -244,10 +244,16 @@ export interface UsuarioLogin {
    *  está sob a responsabilidade do Supervisor vinculado (supervisorId) — não dá acesso a
    *  nada novo, só filtra o que já era visível pra só a própria equipe/carteira. */
   escopoApenasProprioSetor?: boolean;
-  /** Restringe as abas internas de Farma Aéreo/Farma Rodoviário (já liberados em
-   *  modulosPermitidos) a só estas — ausente ou vazio = acesso a TODAS (comportamento de
-   *  sempre). Mesmo raciocínio de secoesDpPermitidas, um recorte pros dois setores. */
+  /** @deprecated Substituído por `secoesOperacoesPorModulo` (recorte por operação em vez de um
+   *  único recorte compartilhado). Mantido só como fallback de leitura pra logins configurados
+   *  antes dessa mudança — ver podeVerAbaOperacoes em visibilidadeUtils.ts. Nunca mais é
+   *  gravado por UsuarioFormModal.tsx. */
   secoesOperacoesPermitidas?: SecaoOperacoes[];
+  /** Restringe as abas internas de CADA módulo de operação (Farma Aéreo/Rodoviário + qualquer
+   *  Operação cadastrada dinamicamente, ex.: Unimed) individualmente — chave é o GlobalModuleId
+   *  do módulo ('farma_aereo', 'farma_rodoviario', ou o id da Operação). Módulo ausente do mapa,
+   *  ou com lista vazia = acesso a TODAS as abas daquele módulo (comportamento de sempre). */
+  secoesOperacoesPorModulo?: Record<string, SecaoOperacoes[]>;
 }
 
 export type EstadoCivil = 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)' | 'União estável';

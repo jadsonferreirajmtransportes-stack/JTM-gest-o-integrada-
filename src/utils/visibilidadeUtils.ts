@@ -76,13 +76,25 @@ export function filtrarClientesDoSupervisor(clientes: Cliente[], nomeSupervisor?
   return clientes.filter((c) => (c.gerenteContaResponsavel || '').trim().toLowerCase() === alvo);
 }
 
-/** Essa aba de dentro de Farma Aéreo/Farma Rodoviário está liberada pro login atual? Sem
- *  restrição cadastrada (secoesOperacoesPermitidas ausente/vazio) = liberado, preservando o
- *  comportamento de todo login já cadastrado. Mesmo raciocínio de podeVerSecaoDp, só que pra
- *  abas internas de um painel em vez de seções separadas na barra lateral. */
-export function podeVerAbaOperacoes(currentUser: UsuarioLogin | undefined, aba: SecaoOperacoes): boolean {
-  if (!currentUser?.secoesOperacoesPermitidas || currentUser.secoesOperacoesPermitidas.length === 0) return true;
-  return currentUser.secoesOperacoesPermitidas.includes(aba);
+/** Essa aba de dentro de um módulo de operação (Farma Aéreo/Farma Rodoviário/Operação
+ *  dinâmica, ex.: Unimed) está liberada pro login atual? O recorte é POR módulo
+ *  (secoesOperacoesPorModulo[moduloId]) — dá pra liberar Faturamento na Unimed sem liberar no
+ *  Farma Aéreo pro mesmo login. Sem entrada cadastrada pra esse módulo, cai no campo antigo
+ *  compartilhado (secoesOperacoesPermitidas, só leitura — ver @deprecated em types.ts) pra não
+ *  resetar a restrição de quem já estava configurado antes dessa mudança; sem nenhum dos dois,
+ *  libera tudo (comportamento de sempre). */
+export function podeVerAbaOperacoes(
+  currentUser: UsuarioLogin | undefined,
+  aba: SecaoOperacoes,
+  moduloId: string
+): boolean {
+  if (!currentUser) return true;
+  const porModulo = currentUser.secoesOperacoesPorModulo?.[moduloId];
+  if (porModulo && porModulo.length > 0) return porModulo.includes(aba);
+  if (currentUser.secoesOperacoesPermitidas && currentUser.secoesOperacoesPermitidas.length > 0) {
+    return currentUser.secoesOperacoesPermitidas.includes(aba);
+  }
+  return true;
 }
 
 export function podeVerRegistroCompartilhado(params: {
