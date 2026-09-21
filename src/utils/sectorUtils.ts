@@ -4,6 +4,9 @@ import {
   CustoOperacional,
   LancamentoFaturamentoAereo,
   LancamentoFaturamentoOperacao,
+  ColetaOperacao,
+  RegistroDiaOperacao,
+  TipoOperacaoDiaria,
 } from '../types';
 
 // Os 2 literais continuam documentando os setores originais; `| string` abre espaço pra
@@ -79,20 +82,41 @@ export function computeFaturamentoRealAereo(
 
 /** Mesmo cálculo acima, só que a partir dos Lançamentos de Faturamento de uma Operação
  *  genérica (ex.: Unimed) — conciliados mês a mês com o parceiro, em vez de CT-e/AWB. Usa
- *  `periodo` (já vem como 'YYYY-MM') no lugar de `dataEmissao`. */
+ *  `periodo` (já vem como 'YYYY-MM') no lugar de `dataEmissao`. Também soma o que já foi
+ *  apurado automaticamente no Acompanhamento Operacional (dias marcados × valor diário do
+ *  tipo, e coletas com valor já congelado pela tabela de faixas) — a partir do mês em que o
+ *  usuário passa a registrar direto na tela em vez de lançar o valor pronto, o Faturamento
+ *  Real continua contando esse mês sem exigir um lançamento manual também. */
 export function computeFaturamentoRealOperacao(
-  lancamentos: LancamentoFaturamentoOperacao[]
+  lancamentos: LancamentoFaturamentoOperacao[],
+  coletas: ColetaOperacao[] = [],
+  registrosDia: RegistroDiaOperacao[] = [],
+  tiposOperacaoDiaria: TipoOperacaoDiaria[] = []
 ): FaturamentoRealSetor {
   const totalPorChave: Record<string, number> = {};
   const meses = new Set<string>();
   let totalGeral = 0;
 
-  (lancamentos || []).forEach((l) => {
-    const valor = Number(l.valor) || 0;
+  const somar = (valor: number, periodo: string | undefined, chave: string) => {
     totalGeral += valor;
-    const chave = l.clienteId || `periodo:${l.periodo}`;
     totalPorChave[chave] = (totalPorChave[chave] || 0) + valor;
-    if (l.periodo) meses.add(l.periodo);
+    if (periodo) meses.add(periodo);
+  };
+
+  (lancamentos || []).forEach((l) => {
+    somar(Number(l.valor) || 0, l.periodo, l.clienteId || `periodo:${l.periodo}`);
+  });
+
+  (coletas || []).forEach((c) => {
+    const periodo = c.data ? c.data.slice(0, 7) : undefined;
+    somar(Number(c.valor) || 0, periodo, `periodo:${periodo}`);
+  });
+
+  const valorDiarioPorTipo = new Map((tiposOperacaoDiaria || []).map((t) => [t.id, t.valorDiario]));
+  (registrosDia || []).forEach((r) => {
+    const periodo = r.data ? r.data.slice(0, 7) : undefined;
+    const valor = valorDiarioPorTipo.get(r.tipoOperacaoId) || 0;
+    somar(valor, periodo, `periodo:${periodo}`);
   });
 
   const mesesComDados = Math.max(meses.size, 1);

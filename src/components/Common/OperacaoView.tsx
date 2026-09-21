@@ -126,11 +126,17 @@ export const OperacaoView: React.FC<OperacaoViewProps> = ({
   const [selectedCustoEdit, setSelectedCustoEdit] = useState<CustoOperacional | null>(null);
 
   // Sem Controle Financeiro de CT-e/NF — o "faturamento real" aqui vem dos meses conciliados
-  // manualmente (LancamentosFaturamentoOperacaoSection). Enquanto não existir nenhum, cai no
-  // fallback "estimado" por cliente (mesmo comportamento de antes).
+  // manualmente (LancamentosFaturamentoOperacaoSection) OU do que já foi apurado sozinho no
+  // Acompanhamento Operacional (dias marcados / coletas registradas). Só sem nenhum dos dois
+  // é que cai no fallback "estimado" por cliente (mesmo comportamento de antes).
+  const temFaturamentoReal =
+    lancamentosFaturamento.length > 0 || coletasOperacao.length > 0 || registrosDiaOperacao.length > 0;
   const faturamentoReal = useMemo(
-    () => (lancamentosFaturamento.length > 0 ? computeFaturamentoRealOperacao(lancamentosFaturamento) : undefined),
-    [lancamentosFaturamento]
+    () =>
+      temFaturamentoReal
+        ? computeFaturamentoRealOperacao(lancamentosFaturamento, coletasOperacao, registrosDiaOperacao, tiposOperacaoDiaria)
+        : undefined,
+    [temFaturamentoReal, lancamentosFaturamento, coletasOperacao, registrosDiaOperacao, tiposOperacaoDiaria]
   );
   const metrics = useMemo(
     () => calcFinancialsSetor(operacao.id, clientes, colaboradores, custosOperacionais, faturamentoReal),
