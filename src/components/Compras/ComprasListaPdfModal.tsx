@@ -90,6 +90,7 @@ export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ iten
                   <tr className="border-b-2 border-[#cbd5e1] text-left">
                     <th className="py-2 pr-2">Item</th>
                     <th className="py-2 px-2 text-center">Qtd.</th>
+                    <th className="py-2 px-2">Setor</th>
                     <th className="py-2 px-2">Urgência</th>
                     <th className="py-2 px-2">Solicitante</th>
                     <th className="py-2 pl-2 text-right">Valor Estimado</th>
@@ -100,6 +101,7 @@ export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ iten
                     <tr key={s.id} className="border-b border-[#e2e8f0]">
                       <td className="py-2 pr-2 font-semibold">{s.item}</td>
                       <td className="py-2 px-2 text-center">{s.quantidade}</td>
+                      <td className="py-2 px-2">{s.setor || '—'}</td>
                       <td className="py-2 px-2">{s.urgencia}</td>
                       <td className="py-2 px-2">
                         {s.solicitanteNome}
@@ -113,7 +115,7 @@ export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ iten
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan={4} className="pt-3 text-right font-bold">
+                    <td colSpan={5} className="pt-3 text-right font-bold">
                       Total estimado
                     </td>
                     <td className="pt-3 pl-2 text-right font-bold">{formatCurrency(totalEstimado)}</td>

@@ -65,6 +65,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
   const [itens, setItens] = useState<{ item: string; quantidade: string; valorEstimado: string }[]>([
     { item: '', quantidade: '1', valorEstimado: '' },
   ]);
+  const [setor, setSetor] = useState('');
   const [justificativa, setJustificativa] = useState('');
   const [fornecedorSugerido, setFornecedorSugerido] = useState('');
   const [urgencia, setUrgencia] = useState<UrgenciaSolicitacaoCompra>('Normal');
@@ -110,6 +111,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
   const resetForm = () => {
     setEditingId(null);
     setItens([{ item: '', quantidade: '1', valorEstimado: '' }]);
+    setSetor('');
     setJustificativa('');
     setFornecedorSugerido('');
     setUrgencia('Normal');
@@ -128,6 +130,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
         valorEstimado: s.valorEstimado !== undefined ? s.valorEstimado.toFixed(2).replace('.', ',') : '',
       },
     ]);
+    setSetor(s.setor || '');
     setJustificativa(s.justificativa || '');
     setFornecedorSugerido(s.fornecedorSugerido || '');
     setUrgencia(s.urgencia);
@@ -172,6 +175,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
         grupoId: editingId ? existente?.grupoId : grupoId,
         item: linha.item.trim(),
         quantidade: Number(linha.quantidade) || 1,
+        setor: setor.trim() || undefined,
         justificativa: justificativa.trim() || undefined,
         valorEstimado: linha.valorEstimado ? Number(linha.valorEstimado.replace(/\./g, '').replace(',', '.')) : undefined,
         fornecedorSugerido: fornecedorSugerido.trim() || undefined,
@@ -350,6 +354,11 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
                   {s.urgencia === 'Urgente' && (
                     <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-full">
                       Urgente
+                    </span>
+                  )}
+                  {s.setor && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 rounded-full">
+                      {s.setor}
                     </span>
                   )}
                   {s.valorEstimado !== undefined && (
@@ -547,16 +556,28 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
                   className="w-full p-2 border border-slate-200 rounded-lg"
                 />
               </div>
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">Urgência</label>
-                <select
-                  value={urgencia}
-                  onChange={(e) => setUrgencia(e.target.value as UrgenciaSolicitacaoCompra)}
-                  className="w-full p-2 border border-slate-200 rounded-lg bg-white"
-                >
-                  <option value="Normal">Normal</option>
-                  <option value="Urgente">Urgente</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Urgência</label>
+                  <select
+                    value={urgencia}
+                    onChange={(e) => setUrgencia(e.target.value as UrgenciaSolicitacaoCompra)}
+                    className="w-full p-2 border border-slate-200 rounded-lg bg-white"
+                  >
+                    <option value="Normal">Normal</option>
+                    <option value="Urgente">Urgente</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Setor</label>
+                  <input
+                    type="text"
+                    value={setor}
+                    onChange={(e) => setSetor(e.target.value)}
+                    placeholder="Ex: Departamento Pessoal, Manutenção..."
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

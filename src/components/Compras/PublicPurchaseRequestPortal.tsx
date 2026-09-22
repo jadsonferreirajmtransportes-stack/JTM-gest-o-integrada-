@@ -32,6 +32,7 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
   const [itens, setItens] = useState<{ item: string; quantidade: string; valorEstimado: string }[]>([
     { item: '', quantidade: '1', valorEstimado: '' },
   ]);
+  const [setor, setSetor] = useState('');
   const [justificativa, setJustificativa] = useState('');
   const [fornecedorSugerido, setFornecedorSugerido] = useState('');
   const [urgencia, setUrgencia] = useState<UrgenciaSolicitacaoCompra>('Normal');
@@ -76,6 +77,7 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
 
   const resetForm = () => {
     setItens([{ item: '', quantidade: '1', valorEstimado: '' }]);
+    setSetor('');
     setJustificativa('');
     setFornecedorSugerido('');
     setUrgencia('Normal');
@@ -113,6 +115,7 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
       grupoId,
       item: linha.item.trim(),
       quantidade: Number(linha.quantidade) || 1,
+      setor: setor.trim() || undefined,
       justificativa: justificativa.trim() || undefined,
       valorEstimado: linha.valorEstimado ? Number(linha.valorEstimado.replace(/\./g, '').replace(',', '.')) : undefined,
       fornecedorSugerido: fornecedorSugerido.trim() || undefined,
@@ -293,14 +296,24 @@ export const PublicPurchaseRequestPortal: React.FC<PublicPurchaseRequestPortalPr
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Fornecedor Sugerido</label>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Setor</label>
                   <input
                     type="text"
-                    value={fornecedorSugerido}
-                    onChange={(e) => setFornecedorSugerido(e.target.value)}
+                    value={setor}
+                    onChange={(e) => setSetor(e.target.value)}
+                    placeholder="Ex: Departamento Pessoal"
                     className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">Fornecedor Sugerido</label>
+                <input
+                  type="text"
+                  value={fornecedorSugerido}
+                  onChange={(e) => setFornecedorSugerido(e.target.value)}
+                  className="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#C48229]"
+                />
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1.5">Prazo Necessário</label>

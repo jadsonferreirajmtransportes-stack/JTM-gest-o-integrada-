@@ -189,6 +189,10 @@ export interface SolicitacaoCompra {
   grupoId?: string;
   item: string;
   quantidade: number;
+  /** Setor/destino da compra, digitado livremente (não é uma lista fixa) — só pra distinguir
+   *  pra onde a compra está indo (ex.: "Departamento Pessoal", "Manutenção", "Farma Aéreo").
+   *  Opcional: item sem setor marcado continua aparecendo normalmente. */
+  setor?: string;
   justificativa?: string;
   valorEstimado?: number;
   fornecedorSugerido?: string;
