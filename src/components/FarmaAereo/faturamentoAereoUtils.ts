@@ -1584,13 +1584,25 @@ export function mapRowsToFaturamentoAereo(
     // reconhecimento (nome contém BIOMEDICAL ou BOMI) já usado em getTemplateParaFatura pra
     // escolher o modelo de exportação certo por região — aqui é o espelho do lado da
     // IMPORTAÇÃO, então os dois pontos do sistema tratam a BOMI da mesma forma.
+    // Caso especial Cargo Brasil: relatórios que a própria Cargo Brasil envia usam a razão
+    // social completa ("CARGO BRASIL LTDA"), enquanto o cadastro no sistema é o nome fantasia
+    // ("Cargo Brasil Urgente") — "urgente" no MEIO do nome quebra o includes() nos dois
+    // sentidos (nem "cargo brasil ltda" contém "cargo brasil urgente", nem o inverso), e a
+    // importação criava "CARGO BRASIL LTDA" como cliente fantasma separado em vez de cair no
+    // cadastro certo. Mesmo raciocínio do caso BOMI acima.
     const alvo = normalizeKey(clienteNomeBruto);
     const pareceBomiOuBiomedical = (n: string) => n.includes('biomedical') || n.includes('bomi');
+    const pareceCargoBrasil = (n: string) => n.includes('cargo brasil');
     const clienteEncontrado = clientesConhecidos.find((c) => {
       if (pareceBomiOuBiomedical(alvo)) {
         return (
           pareceBomiOuBiomedical(normalizeKey(c.razaoSocial || '')) ||
           pareceBomiOuBiomedical(normalizeKey(c.nomeFantasia || ''))
+        );
+      }
+      if (pareceCargoBrasil(alvo)) {
+        return (
+          pareceCargoBrasil(normalizeKey(c.razaoSocial || '')) || pareceCargoBrasil(normalizeKey(c.nomeFantasia || ''))
         );
       }
       return (
