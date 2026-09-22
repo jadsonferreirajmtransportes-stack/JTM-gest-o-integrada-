@@ -153,7 +153,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
   const clienteTemDuasTabelas = !!cliente?.tabelaFreteRodoviario;
 
   return (
-    <tr className="align-middle">
+    <tr className={`align-middle ${showSelecao && selecionado ? 'bg-emerald-50' : ''}`}>
       {showSelecao && (
         <td className="px-2 py-1.5">
           <input
