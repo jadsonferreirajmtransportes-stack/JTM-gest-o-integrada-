@@ -69,7 +69,13 @@ export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ iten
         </div>
 
         <div className="overflow-y-auto flex-1">
-          <div id={ELEMENT_ID} className="jmt-print-doc bg-white text-slate-900 p-6 text-xs">
+          {/* Cores em hex literal, não classes de paleta (ex.: text-slate-900), de propósito:
+              a paleta do Tailwind v4 usa oklch() nas variáveis de cor, e o html2canvas (que o
+              "Baixar PDF" usa pra capturar este elemento — ver pdfExportUtils.ts) não sabe
+              interpretar oklch() no computed style, falhando com "Não foi possível gerar o PDF"
+              silenciosamente. Mesma razão pela qual EpiFichaDocumento.tsx (o outro documento que
+              já usa html2canvas) só usa preto, branco e hex literal, nunca a paleta slate/emerald. */}
+          <div id={ELEMENT_ID} className="jmt-print-doc bg-white text-[#0f172a] p-6 text-xs">
             <PrintDocumentHeader
               titulo="LISTA DE COMPRAS"
               subtitulo={filtroLabel}
@@ -77,11 +83,11 @@ export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ iten
             />
 
             {itens.length === 0 ? (
-              <p className="text-center text-slate-400 py-8">Nenhum item nesta lista.</p>
+              <p className="text-center text-[#94a3b8] py-8">Nenhum item nesta lista.</p>
             ) : (
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b-2 border-slate-300 text-left">
+                  <tr className="border-b-2 border-[#cbd5e1] text-left">
                     <th className="py-2 pr-2">Item</th>
                     <th className="py-2 px-2 text-center">Qtd.</th>
                     <th className="py-2 px-2">Urgência</th>
@@ -91,7 +97,7 @@ export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ iten
                 </thead>
                 <tbody>
                   {itens.map((s) => (
-                    <tr key={s.id} className="border-b border-slate-200">
+                    <tr key={s.id} className="border-b border-[#e2e8f0]">
                       <td className="py-2 pr-2 font-semibold">{s.item}</td>
                       <td className="py-2 px-2 text-center">{s.quantidade}</td>
                       <td className="py-2 px-2">{s.urgencia}</td>
