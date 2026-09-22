@@ -13,9 +13,11 @@ import {
   XCircle,
   Clock,
   PackageCheck,
+  FileDown,
 } from 'lucide-react';
 import { SolicitacaoCompra, StatusSolicitacaoCompra, UrgenciaSolicitacaoCompra, UsuarioLogin } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { ComprasListaPdfModal } from './ComprasListaPdfModal';
 
 interface ComprasViewProps {
   solicitacoes: SolicitacaoCompra[];
@@ -53,6 +55,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
   onOpenLinkModal,
 }) => {
   const [filtroStatus, setFiltroStatus] = useState<StatusSolicitacaoCompra | 'Todas'>('Pendente');
+  const [showPdfModal, setShowPdfModal] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -225,6 +228,16 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
             ))}
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowPdfModal(true)}
+              disabled={filtradas.length === 0}
+              title="Baixa/imprime em PDF a lista de itens do filtro atual"
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 disabled:opacity-60"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              <span>Baixar PDF</span>
+            </button>
             <button
               type="button"
               onClick={onOpenLinkModal}
@@ -443,6 +456,15 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* Modal: Lista de Compras em PDF (respeita o filtro de status atual) */}
+      {showPdfModal && (
+        <ComprasListaPdfModal
+          itens={filtradas}
+          filtroLabel={filtroStatus}
+          onClose={() => setShowPdfModal(false)}
+        />
+      )}
 
       {/* Modal: Nova/Editar Solicitação */}
       {showForm && (
