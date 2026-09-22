@@ -399,6 +399,11 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   // notas/CT-es exibidos quando a fatura está expandida, sem afetar as demais faturas abertas.
   const [buscaPorFatura, setBuscaPorFatura] = useState<Record<string, string>>({});
 
+  // Filtro de data por fatura (mesmo raciocínio de buscaPorFatura, chaveado por fatura.id) —
+  // filtra pela Data de Conclusão do lançamento (ou Data de Emissão, quando não tem conclusão
+  // ainda — mesmo fallback já usado no input de data de LancamentoRow).
+  const [buscaDataPorFatura, setBuscaDataPorFatura] = useState<Record<string, string>>({});
+
   // Busca global por NF/CT-e — encontra o lançamento em qualquer fatura (ou sem fatura
   // vinculada) e leva o usuário direto até ele, sem precisar abrir fatura por fatura.
   const [buscaGlobal, setBuscaGlobal] = useState('');
@@ -1082,22 +1087,23 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
               const lancamentosDaFatura = lancamentos.filter((l) => l.faturaId === fatura.id);
               const clienteDaFatura = findClienteById(clientes, fatura.clienteId);
 
-              // Filtra os lançamentos desta fatura pelo termo de busca próprio dela (vírgula
-              // separa vários termos, mesmo padrão da busca de "Sem Fatura Vinculada").
+              // Filtra os lançamentos desta fatura pelo termo de busca própria dela (vírgula
+              // separa vários termos, mesmo padrão da busca de "Sem Fatura Vinculada") E pela
+              // data escolhida (quando marcada) — os dois filtros se combinam (E, não OU).
               const termoFatura = buscaPorFatura[fatura.id] || '';
               const termosFatura = termoFatura
                 .split(',')
                 .map((t) => t.trim().toLowerCase())
                 .filter(Boolean);
-              const lancamentosDaFaturaFiltrados =
-                termosFatura.length === 0
-                  ? lancamentosDaFatura
-                  : lancamentosDaFatura.filter((l) => {
-                      const campos = [l.clienteNome, l.destinatario, l.notaFiscal, l.numeroCte, l.cidadeDestino]
-                        .filter(Boolean)
-                        .map((campo) => String(campo).toLowerCase());
-                      return termosFatura.some((termo) => campos.some((campo) => campo.includes(termo)));
-                    });
+              const dataFatura = buscaDataPorFatura[fatura.id] || '';
+              const lancamentosDaFaturaFiltrados = lancamentosDaFatura.filter((l) => {
+                if (dataFatura && (l.dataConclusao || l.dataEmissao) !== dataFatura) return false;
+                if (termosFatura.length === 0) return true;
+                const campos = [l.clienteNome, l.destinatario, l.notaFiscal, l.numeroCte, l.cidadeDestino]
+                  .filter(Boolean)
+                  .map((campo) => String(campo).toLowerCase());
+                return termosFatura.some((termo) => campos.some((campo) => campo.includes(termo)));
+              });
 
               return (
                 <div key={fatura.id} id={`fatura-aerea-${fatura.id}`}>
@@ -1408,35 +1414,63 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                         <p className="text-[11px] text-slate-400 py-2">Nenhum lançamento vinculado.</p>
                       ) : (
                         <>
-                          {/* Busca dentro da fatura — filtra por cliente, destinatário, NF, CT-e ou cidade */}
+                          {/* Busca dentro da fatura — filtra por cliente, destinatário, NF, CT-e ou
+                              cidade, e (opcionalmente) por data de conclusão/emissão, lado a lado */}
                           <div className="mb-2">
-                            <div className="relative max-w-sm">
-                              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-                              <input
-                                type="text"
-                                value={termoFatura}
-                                onClick={(e) => e.stopPropagation()}
-                                onChange={(e) =>
-                                  setBuscaPorFatura((prev) => ({ ...prev, [fatura.id]: e.target.value }))
-                                }
-                                placeholder="Buscar NF, CT-e, destinatário ou cidade nesta fatura..."
-                                className="w-full pl-8 pr-7 py-1.5 border border-slate-200 rounded-lg text-[11px] bg-white focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                              />
-                              {termoFatura && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setBuscaPorFatura((prev) => ({ ...prev, [fatura.id]: '' }));
-                                  }}
-                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"
-                                  title="Limpar busca"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="relative max-w-sm flex-1 min-w-[180px]">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                                <input
+                                  type="text"
+                                  value={termoFatura}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) =>
+                                    setBuscaPorFatura((prev) => ({ ...prev, [fatura.id]: e.target.value }))
+                                  }
+                                  placeholder="Buscar NF, CT-e, destinatário ou cidade nesta fatura..."
+                                  className="w-full pl-8 pr-7 py-1.5 border border-slate-200 rounded-lg text-[11px] bg-white focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                />
+                                {termoFatura && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setBuscaPorFatura((prev) => ({ ...prev, [fatura.id]: '' }));
+                                    }}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"
+                                    title="Limpar busca"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="relative shrink-0">
+                                <input
+                                  type="date"
+                                  value={dataFatura}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) =>
+                                    setBuscaDataPorFatura((prev) => ({ ...prev, [fatura.id]: e.target.value }))
+                                  }
+                                  title="Filtrar lançamentos desta fatura por data (Data de Conclusão, ou Emissão quando não tem conclusão)"
+                                  className="pl-2 pr-7 py-1.5 border border-slate-200 rounded-lg text-[11px] bg-white focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                />
+                                {dataFatura && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setBuscaDataPorFatura((prev) => ({ ...prev, [fatura.id]: '' }));
+                                    }}
+                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"
+                                    title="Limpar filtro de data"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            {termoFatura && (
+                            {(termoFatura || dataFatura) && (
                               <p className="text-[10px] text-slate-400 mt-1">
                                 {lancamentosDaFaturaFiltrados.length} de {lancamentosDaFatura.length} nota(s)
                                 encontrada(s)
@@ -1446,7 +1480,11 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
 
                           {lancamentosDaFaturaFiltrados.length === 0 ? (
                             <p className="text-[11px] text-slate-400 py-2">
-                              Nenhuma nota encontrada para "{termoFatura}" nesta fatura.
+                              {termoFatura && dataFatura
+                                ? `Nenhuma nota encontrada para "${termoFatura}" em ${formatDateBR(dataFatura)} nesta fatura.`
+                                : termoFatura
+                                ? `Nenhuma nota encontrada para "${termoFatura}" nesta fatura.`
+                                : `Nenhuma nota encontrada em ${formatDateBR(dataFatura)} nesta fatura.`}
                             </p>
                           ) : (
                             <div className="border border-slate-200 rounded-xl overflow-x-auto bg-white">
