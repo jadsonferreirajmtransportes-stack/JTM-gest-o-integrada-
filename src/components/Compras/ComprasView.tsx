@@ -19,6 +19,7 @@ import { SolicitacaoCompra, StatusSolicitacaoCompra, UrgenciaSolicitacaoCompra, 
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { ComprasListaPdfModal } from './ComprasListaPdfModal';
 import { getAnexoSolicitacaoCompra } from '../../utils/comprasApi';
+import { baixarArquivo } from '../../utils/downloadUtils';
 
 interface ComprasViewProps {
   solicitacoes: SolicitacaoCompra[];
@@ -54,12 +55,7 @@ const BotaoAnexoCompra: React.FC<{ solicitacao: SolicitacaoCompra }> = ({ solici
         alert('Arquivo não encontrado.');
         return;
       }
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = solicitacao.anexoNome || 'anexo';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      baixarArquivo(url, solicitacao.anexoNome || 'anexo');
     } catch (err) {
       console.error('Erro ao baixar anexo da solicitação:', err);
       alert('Não foi possível baixar o anexo. Tente novamente.');

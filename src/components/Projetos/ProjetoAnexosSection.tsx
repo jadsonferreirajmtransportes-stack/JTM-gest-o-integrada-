@@ -28,6 +28,7 @@ import {
   CategoriaDocumentoProjeto,
   UserRole,
 } from '../../types';
+import { baixarArquivo } from '../../utils/downloadUtils';
 
 interface ProjetoAnexosSectionProps {
   projeto: ProjetoGerencial;
@@ -303,12 +304,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
       return;
     }
 
-    const a = document.createElement('a');
-    a.href = fileUrl;
-    a.download = doc.nome;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    baixarArquivo(fileUrl, doc.nome);
     triggerFeedback(`Iniciando download de "${doc.nome}"...`);
   };
 
