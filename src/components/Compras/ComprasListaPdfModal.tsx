@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Printer, Download, Loader2 } from 'lucide-react';
 import { SolicitacaoCompra } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { exportarElementoComoPdf } from '../../utils/pdfExportUtils';
+import { gerarPdfListaCompras } from './comprasPdf';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
 
 const ELEMENT_ID = 'compras-lista-pdf-doc';
@@ -26,11 +26,13 @@ export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ iten
 
   const handlePrint = () => window.print();
 
+  // Gerado direto como documento (comprasPdf.ts), não como "foto" do elemento abaixo via
+  // html2canvas — ver comentário em comprasPdf.ts. O elemento continua sendo o que "Imprimir" usa.
   const handleBaixarPdf = async () => {
     setBaixando(true);
     try {
       const data = new Date().toISOString().slice(0, 10);
-      await exportarElementoComoPdf(ELEMENT_ID, `Lista_de_Compras_${filtroLabel}_${data}`);
+      gerarPdfListaCompras(itens, filtroLabel, `Lista_de_Compras_${filtroLabel}_${data}`);
     } catch (err) {
       console.error('Erro ao gerar PDF da lista de compras:', err);
       alert('Não foi possível gerar o PDF. Tente novamente.');

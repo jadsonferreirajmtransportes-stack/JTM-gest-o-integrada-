@@ -1,9 +1,10 @@
 import jsPDF from 'jspdf';
-// html2canvas-pro (fork do html2canvas, mesma API) em vez do html2canvas original: o original
-// não entende as cores oklch() da paleta do Tailwind v4 e falhava com "Não foi possível gerar
-// o PDF" em qualquer documento com cor de paleta herdada (ex.: Lista de Compras, set/2026) —
-// com o -pro não precisa mais evitar classes slate-*/emerald-* no elemento capturado.
-import html2canvas from 'html2canvas-pro';
+// Atenção: html2canvas não entende as cores oklch() da paleta do Tailwind v4 — o elemento
+// capturado só pode usar hex literal/preto/branco. (O fork html2canvas-pro foi testado em
+// set/2026 e resolve o oklch, mas captura o elemento SEM os estilos da página — PDF saía
+// todo desformatado. Documento em tabela/lista deve ser gerado direto com jsPDF, ver
+// comprasPdf.ts, em vez de "foto" da tela.)
+import html2canvas from 'html2canvas';
 
 /**
  * Baixa um elemento já renderizado na tela (ex.: a ficha de EPI em `.jmt-print-doc`) como um
