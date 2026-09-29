@@ -80,10 +80,15 @@ export async function getSolicitacoesCompra(): Promise<SolicitacaoCompra[]> {
   return (data ?? []).map(rowToSolicitacaoCompra);
 }
 
-export async function saveSolicitacaoCompra(item: SolicitacaoCompra): Promise<void> {
+/** Devolve o registro exatamente como foi gravado (id gerado, datas) — quem chama atualiza o
+ *  item no estado local em vez de baixar a lista inteira de novo (cada item pode ter um anexo
+ *  em base64, então recarregar tudo a cada aprovação/recusa pesava no Egress do Supabase). */
+export async function saveSolicitacaoCompra(item: SolicitacaoCompra): Promise<SolicitacaoCompra> {
   const registro = item.id ? item : { ...item, id: `compra-${Date.now()}` };
-  const { error } = await supabase.from('solicitacoes_compra').upsert(solicitacaoCompraToRow(registro));
+  const row = solicitacaoCompraToRow(registro);
+  const { error } = await supabase.from('solicitacoes_compra').upsert(row);
   assertNoError(error, 'saveSolicitacaoCompra');
+  return rowToSolicitacaoCompra(row);
 }
 
 /** Só pro Formulário Público de Compras (papel "anon"). `upsert` (usado em saveSolicitacaoCompra

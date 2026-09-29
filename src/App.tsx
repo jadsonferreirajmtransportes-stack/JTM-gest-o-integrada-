@@ -307,6 +307,35 @@ import {
 import { playNotificationSound } from './utils/notificationSound';
 import { verificarEMarcarLembretesPendentes, formatarTextoLembrete } from './utils/lembretesAgendaUtils';
 
+/** Tabelas de Gestão que recarregarGestao sabe buscar sozinhas (uma por gravação). */
+type ParteGestao =
+  | 'custos'
+  | 'projetos'
+  | 'atividades'
+  | 'notas'
+  | 'instrucoes'
+  | 'viagens'
+  | 'lancamentosOperacao'
+  | 'tiposDiaria'
+  | 'registrosDia'
+  | 'faixasVolume'
+  | 'coletas'
+  | 'mesesFechados';
+
+/** Tabelas de DP que recarregarDp sabe buscar sozinhas. */
+type ParteDp =
+  | 'colaboradores'
+  | 'empregadores'
+  | 'supervisores'
+  | 'cargos'
+  | 'feriados'
+  | 'ferias'
+  | 'entregasEpi'
+  | 'ocorrencias'
+  | 'quinzenasVA'
+  | 'lancamentosVA'
+  | 'preAdmissoes';
+
 export default function App() {
   // Primary Pages / Modules State
   const [activeGlobalModule, setActiveGlobalModule] = useState<GlobalModuleId>(() => getStoredGlobalModule());
@@ -1073,6 +1102,33 @@ export default function App() {
     }
   }, []);
 
+  // Depois de uma gravação, recarrega SÓ a(s) tabela(s) que ela mudou — antes cada gravação em
+  // qualquer tela de Gestão chamava loadGestaoData() e baixava as 15 tabelas inteiras de novo,
+  // o que (junto com os anexos em base64) estourou o Egress do plano gratuito do Supabase em
+  // set/2026. loadGestaoData continua sendo usado no carregamento inicial.
+  const recarregarGestao = useCallback(async (...partes: ParteGestao[]) => {
+    const carregadores: Record<ParteGestao, () => Promise<void>> = {
+      custos: async () => setCustosOperacionais(await getCustosOperacionais()),
+      projetos: async () => setProjetos(await getProjetosGerenciais()),
+      atividades: async () => setAtividadesGestao(await getAtividadesGestao()),
+      notas: async () => setNotasPaginas(await getNotasPaginas()),
+      instrucoes: async () => setInstrucoesTrabalho(await getInstrucoesTrabalho()),
+      viagens: async () => setViagensRodoviarias(await getViagensRodoviarias()),
+      lancamentosOperacao: async () => setLancamentosFaturamentoOperacao(await getLancamentosFaturamentoOperacao()),
+      tiposDiaria: async () => setTiposOperacaoDiaria(await getTiposOperacaoDiaria()),
+      registrosDia: async () => setRegistrosDiaOperacao(await getRegistrosDiaOperacao()),
+      faixasVolume: async () => setFaixasVolumeOperacao(await getFaixasVolumeOperacao()),
+      coletas: async () => setColetasOperacao(await getColetasOperacao()),
+      mesesFechados: async () => setMesesFechadosOperacao(await getMesesFechadosOperacao()),
+    };
+    try {
+      await Promise.all(partes.map((p) => carregadores[p]()));
+    } catch (err) {
+      console.error(`Erro ao recarregar ${partes.join(', ')} (Supabase):`, err);
+      showToast('Não foi possível atualizar a tela. Recarregue a página se algo parecer desatualizado.', 'info');
+    }
+  }, []);
+
   // Departamento Pessoal já mora no Supabase (banco em nuvem) — essas 9 entidades são buscadas
   // à parte, de forma assíncrona. Erros aqui (ex.: sem internet, sessão expirada) viram um toast
   // em vez de travar a tela em branco.
@@ -1107,6 +1163,31 @@ export default function App() {
     } catch (err) {
       console.error('Erro ao carregar dados do Departamento Pessoal (Supabase):', err);
       showToast('Não foi possível carregar os dados do Departamento Pessoal. Verifique sua conexão.', 'info');
+    }
+  }, []);
+
+  // Mesmo motivo do recarregarGestao: depois de uma gravação em DP, busca só a(s) tabela(s)
+  // afetada(s) em vez das 11 de loadDpData — EPI, Férias e Ocorrências carregam comprovantes,
+  // fotos e assinaturas em base64, então baixar tudo a cada clique pesava no Egress.
+  const recarregarDp = useCallback(async (...partes: ParteDp[]) => {
+    const carregadores: Record<ParteDp, () => Promise<void>> = {
+      colaboradores: async () => setColaboradores(await getColaboradoresResumo()),
+      empregadores: async () => setEmpregadores(await getEmpregadores()),
+      supervisores: async () => setSupervisores(await getSupervisores()),
+      cargos: async () => setCargos(await getCargos()),
+      feriados: async () => setFeriados(await getFeriados()),
+      ferias: async () => setFeriasList(await getFerias()),
+      entregasEpi: async () => setEntregasEpi(await getEntregasEpi()),
+      ocorrencias: async () => setOcorrencias(await getOcorrencias()),
+      quinzenasVA: async () => setQuinzenasVA(await getQuinzenasValeAlimentacao()),
+      lancamentosVA: async () => setLancamentosVA(await getLancamentosValeAlimentacao()),
+      preAdmissoes: async () => setPreAdmissoes(await getPreAdmissoes()),
+    };
+    try {
+      await Promise.all(partes.map((p) => carregadores[p]()));
+    } catch (err) {
+      console.error(`Erro ao recarregar ${partes.join(', ')} (Supabase):`, err);
+      showToast('Não foi possível atualizar a tela. Recarregue a página se algo parecer desatualizado.', 'info');
     }
   }, []);
 
@@ -1664,7 +1745,7 @@ export default function App() {
       usuariosMarcadosIds,
     };
     await saveProjetoGerencial(registro);
-    await loadGestaoData();
+    await recarregarGestao('projetos');
     showToast(`Projeto "${proj.titulo}" salvo com sucesso!`, 'success');
   };
 
@@ -1689,13 +1770,13 @@ export default function App() {
 
   const handleDeleteProjeto = async (id: string) => {
     await deleteProjetoGerencial(id);
-    await loadGestaoData();
+    await recarregarGestao('projetos');
     showToast('Projeto removido do portfólio.', 'info');
   };
 
   const handleUpdateProjetoStatus = async (id: string, newStatus: StatusProjeto) => {
     await updateProjetoStatus(id, newStatus);
-    await loadGestaoData();
+    await recarregarGestao('projetos');
     showToast(`Status do projeto atualizado para "${newStatus}".`, 'success');
   };
 
@@ -1720,19 +1801,19 @@ export default function App() {
       usuariosMarcadosIds,
     };
     await saveAtividadeGestao(registro);
-    await loadGestaoData();
+    await recarregarGestao('atividades');
     showToast(`Atividade "${item.titulo}" salva na agenda da gestão!`, 'success');
   };
 
   const handleDeleteAtividadeGestao = async (id: string) => {
     await deleteAtividadeGestao(id);
-    await loadGestaoData();
+    await recarregarGestao('atividades');
     showToast('Atividade removida da agenda.', 'info');
   };
 
   const handleUpdateAtividadeStatus = async (id: string, newStatus: StatusAtividadeGestao) => {
     await updateAtividadeStatus(id, newStatus);
-    await loadGestaoData();
+    await recarregarGestao('atividades');
     showToast(`Status da atividade atualizado para "${newStatus}".`, 'success');
   };
 
@@ -1750,12 +1831,12 @@ export default function App() {
       usuariosMarcadosIds,
     };
     await saveNotaPagina(registro);
-    await loadGestaoData();
+    await recarregarGestao('notas');
   };
 
   const handleDeleteNotaPagina = async (id: string) => {
     await deleteNotaPagina(id);
-    await loadGestaoData();
+    await recarregarGestao('notas');
     showToast('Página removida das Notas.', 'info');
   };
 
@@ -1773,12 +1854,12 @@ export default function App() {
       usuariosMarcadosIds,
     };
     await saveInstrucaoTrabalho(registro);
-    await loadGestaoData();
+    await recarregarGestao('instrucoes');
   };
 
   const handleDeleteInstrucaoTrabalho = async (id: string) => {
     await deleteInstrucaoTrabalho(id);
-    await loadGestaoData();
+    await recarregarGestao('instrucoes');
     showToast('Instrução de trabalho removida.', 'info');
   };
 
@@ -1786,7 +1867,7 @@ export default function App() {
     const target = atividadesGestao.find((a) => a.id === id);
     if (target) {
       await saveAtividadeGestao({ ...target, deliberacoes });
-      await loadGestaoData();
+      await recarregarGestao('atividades');
       showToast('Deliberações e ata da reunião atualizadas com sucesso!', 'success');
     }
   };
@@ -1899,7 +1980,7 @@ export default function App() {
   ) => {
     try {
       await inativarColaborador(colaboradorId, dataDemissao, motivo, dataExameDemissional, observacoes);
-      await loadDpData();
+      await recarregarDp('colaboradores');
       setDismissalTargetColaborador(null);
       if (selectedColaboradorDetail?.id === colaboradorId) {
         setSelectedColaboradorDetail(null);
@@ -1913,19 +1994,19 @@ export default function App() {
 
   const handleSaveFerias = async (ferias: ProgramacaoFerias) => {
     await saveFerias(ferias);
-    await loadDpData();
+    await recarregarDp('ferias');
     showToast('Programação de férias atualizada com sucesso!');
   };
 
   const handleUpdateStatusFerias = async (feriasId: string, novoStatus: StatusFerias) => {
     await updateStatusFerias(feriasId, novoStatus);
-    await loadDpData();
+    await recarregarDp('ferias');
     showToast(`Status das férias alterado para ${novoStatus}!`);
   };
 
   const handleSaveEntregaEpi = async (entrega: EntregaEpi) => {
     await saveEntregaEpi(entrega);
-    await loadDpData();
+    await recarregarDp('entregasEpi');
     showToast('Entrega de EPI registrada com sucesso!');
   };
 
@@ -1940,7 +2021,7 @@ export default function App() {
 
   const handleDeleteEntregaEpi = async (id: string) => {
     await deleteEntregaEpi(id);
-    await loadDpData();
+    await recarregarDp('entregasEpi');
     showToast('Registro de entrega de EPI excluído.', 'info');
   };
 
@@ -1953,7 +2034,7 @@ export default function App() {
       showToast(`Não foi possível salvar a ocorrência. Detalhe técnico: ${motivo}`, 'error');
       throw err; // deixa o formulário aberto (ver handleSaveModal em OccurrencesView.tsx)
     }
-    await loadDpData();
+    await recarregarDp('ocorrencias');
     setIsPublicOccurrenceFormOpen(false);
     showToast('Ocorrência registrada com sucesso no prontuário do colaborador!');
   };
@@ -1974,13 +2055,13 @@ export default function App() {
       showToast('Não foi possível excluir a ocorrência. Tente novamente.', 'error');
       return;
     }
-    await loadDpData();
+    await recarregarDp('ocorrencias');
     showToast('Ocorrência excluída.', 'info');
   };
 
   const handleSaveQuinzenaVA = async (quinzena: QuinzenaValeAlimentacao) => {
     await saveQuinzenaValeAlimentacao(quinzena);
-    await loadDpData();
+    await recarregarDp('quinzenasVA');
     showToast('Quinzena de Vale Alimentação salva com sucesso!');
   };
 
@@ -1990,7 +2071,7 @@ export default function App() {
     await deleteQuinzenaValeAlimentacao(id);
     const restantes = lancamentosVA.filter((l) => l.quinzenaId !== id);
     await saveLancamentosValeAlimentacao(restantes);
-    await loadDpData();
+    await recarregarDp('quinzenasVA', 'lancamentosVA');
     showToast('Quinzena excluída.', 'info');
   };
 
@@ -2036,7 +2117,7 @@ export default function App() {
       };
     });
     await saveLancamentosValeAlimentacao(novos);
-    await loadDpData();
+    await recarregarDp('lancamentosVA');
     showToast(`${novos.length} lançamento(s) de Vale Alimentação gerado(s)!`);
   };
 
@@ -2090,7 +2171,7 @@ export default function App() {
       });
     if (alterados > 0) {
       await saveLancamentosValeAlimentacao(atualizados);
-      await loadDpData();
+      await recarregarDp('lancamentosVA');
     }
     showToast(
       alterados > 0
@@ -2139,7 +2220,7 @@ export default function App() {
     checked: boolean
   ) => {
     await updateOnboardingItem(colaboradorId, itemKey, checked);
-    await loadDpData();
+    await recarregarDp('colaboradores');
     showToast('Item de Onboarding / EPI atualizado.');
   };
 
@@ -2176,7 +2257,7 @@ export default function App() {
       showToast(`Não foi possível salvar a renovação do exame. Detalhe técnico: ${motivo}`, 'error');
       throw err; // deixa o modal aberto (ver handleSaveRenew em AnvisaExamsView.tsx)
     }
-    await loadDpData();
+    await recarregarDp('colaboradores');
     showToast('Exame ASO RDC 430 renovado com sucesso!');
   };
 
@@ -2195,20 +2276,20 @@ export default function App() {
       showToast(`Não foi possível salvar o agendamento. Detalhe técnico: ${motivo}`, 'error');
       throw err; // deixa o modal aberto (ver handleSalvarAgendamento em AnvisaExamsView.tsx)
     }
-    await loadDpData();
+    await recarregarDp('colaboradores');
     showToast('Agendamento salvo — o exame continua pendente até a renovação ser concluída.');
   };
 
   // Pre-admission handlers
   const handleUpdatePreAdmissaoStatus = async (id: string, status: StatusPreAdmissao, motivoRecusa?: string) => {
     await updatePreAdmissaoStatus(id, status, motivoRecusa);
-    await loadDpData();
+    await recarregarDp('preAdmissoes');
     showToast(`Status da pré-admissão atualizado para: ${status}`);
   };
 
   const handleDeletePreAdmissao = async (id: string) => {
     await deletePreAdmissao(id);
-    await loadDpData();
+    await recarregarDp('preAdmissoes');
     showToast('Ficha de pré-admissão removida.', 'info');
   };
 
@@ -2226,7 +2307,7 @@ export default function App() {
       if (preAtualizado) {
         await savePreAdmissao({ ...preAtualizado, colaboradorEfetivadoId: colab.id });
       }
-      await loadDpData();
+      await recarregarDp('preAdmissoes', 'colaboradores');
       showToast(`Admissão de ${colab.nomeCompleto} efetivada com sucesso no quadro de ativos!`, 'success');
       setSelectedColaboradorDetail(colab);
     } catch (err) {
@@ -2407,7 +2488,7 @@ export default function App() {
   const handleSaveViagemRodoviaria = async (viagem: ViagemRodoviaria) => {
     try {
       await saveViagemRodoviaria(viagem);
-      await loadGestaoData();
+      await recarregarGestao('viagens');
       showToast(`Viagem rodoviária placa ${viagem.veiculoPlaca} salva com sucesso!`, 'success');
     } catch (err) {
       console.error('Erro ao salvar viagem rodoviária (Supabase):', err);
@@ -2418,7 +2499,7 @@ export default function App() {
   const handleDeleteViagemRodoviaria = async (id: string) => {
     try {
       await deleteViagemRodoviaria(id);
-      await loadGestaoData();
+      await recarregarGestao('viagens');
       showToast('Viagem rodoviária removida.', 'info');
     } catch (err) {
       console.error('Erro ao remover viagem rodoviária (Supabase):', err);
@@ -2429,13 +2510,13 @@ export default function App() {
   // Custos Operacionais Handlers
   const handleSaveCustoOperacional = async (custo: CustoOperacional) => {
     await saveCustoOperacional(custo);
-    await loadGestaoData();
+    await recarregarGestao('custos');
     showToast(`Custo operacional "${custo.descricao}" salvo com sucesso!`, 'success');
   };
 
   const handleDeleteCustoOperacional = async (id: string) => {
     await deleteCustoOperacional(id);
-    await loadGestaoData();
+    await recarregarGestao('custos');
     showToast('Custo operacional removido com sucesso.', 'info');
   };
 
@@ -2455,13 +2536,13 @@ export default function App() {
   // Lançamentos de Faturamento por Operação (meses conciliados manualmente, ex.: Unimed)
   const handleSaveLancamentoFaturamentoOperacao = async (lancamento: LancamentoFaturamentoOperacao) => {
     await saveLancamentoFaturamentoOperacao(lancamento);
-    await loadGestaoData();
+    await recarregarGestao('lancamentosOperacao');
     showToast('Lançamento de faturamento salvo com sucesso!', 'success');
   };
 
   const handleDeleteLancamentoFaturamentoOperacao = async (id: string) => {
     await deleteLancamentoFaturamentoOperacao(id);
-    await loadGestaoData();
+    await recarregarGestao('lancamentosOperacao');
     showToast('Lançamento removido com sucesso.', 'info');
   };
 
@@ -2469,77 +2550,85 @@ export default function App() {
   // AcompanhamentoOperacionalSection.tsx e migração 043.
   const handleSaveTipoOperacaoDiaria = async (tipo: TipoOperacaoDiaria) => {
     await saveTipoOperacaoDiaria(tipo);
-    await loadGestaoData();
+    await recarregarGestao('tiposDiaria');
     showToast('Tipo de operação salvo!', 'success');
   };
   const handleDeleteTipoOperacaoDiaria = async (id: string) => {
     await deleteTipoOperacaoDiaria(id);
-    await loadGestaoData();
+    await recarregarGestao('tiposDiaria');
     showToast('Tipo de operação removido.', 'info');
   };
   const handleMarcarDiaOperacao = async (registro: RegistroDiaOperacao) => {
     await marcarRegistroDiaOperacao(registro);
-    await loadGestaoData();
+    await recarregarGestao('registrosDia');
   };
   const handleDesmarcarDiaOperacao = async (id: string) => {
     await desmarcarRegistroDiaOperacao(id);
-    await loadGestaoData();
+    await recarregarGestao('registrosDia');
   };
   const handleSaveFaixaVolumeOperacao = async (faixa: FaixaVolumeOperacao) => {
     await saveFaixaVolumeOperacao(faixa);
-    await loadGestaoData();
+    await recarregarGestao('faixasVolume');
     showToast('Faixa de volume salva!', 'success');
   };
   const handleDeleteFaixaVolumeOperacao = async (id: string) => {
     await deleteFaixaVolumeOperacao(id);
-    await loadGestaoData();
+    await recarregarGestao('faixasVolume');
     showToast('Faixa de volume removida.', 'info');
   };
   const handleSaveColetaOperacao = async (coleta: ColetaOperacao) => {
     await saveColetaOperacao(coleta);
-    await loadGestaoData();
+    await recarregarGestao('coletas');
     showToast('Coleta registrada!', 'success');
   };
   const handleDeleteColetaOperacao = async (id: string) => {
     await deleteColetaOperacao(id);
-    await loadGestaoData();
+    await recarregarGestao('coletas');
     showToast('Coleta removida.', 'info');
   };
   const handleFecharMesOperacao = async (operacaoId: string, periodo: string) => {
     await fecharMesOperacao(operacaoId, periodo);
-    await loadGestaoData();
+    await recarregarGestao('mesesFechados');
     showToast('Mês fechado — dias/coletas desse mês agora estão travados.', 'success');
   };
   const handleReabrirMesOperacao = async (operacaoId: string, periodo: string) => {
     await reabrirMesOperacao(operacaoId, periodo);
-    await loadGestaoData();
+    await recarregarGestao('mesesFechados');
     showToast('Mês reaberto.', 'info');
   };
 
   // Compras Handlers
+  // Compras atualiza só o item gravado no estado local (saveSolicitacaoCompra devolve o
+  // registro como ficou no banco) — cada solicitação pode ter anexo em base64, e baixar a
+  // lista inteira de novo a cada aprovação/recusa pesava no Egress do Supabase.
+  const aplicarSolicitacaoCompraLocal = (salvo: SolicitacaoCompra) =>
+    setSolicitacoesCompra((prev) =>
+      prev.some((s) => s.id === salvo.id) ? prev.map((s) => (s.id === salvo.id ? salvo : s)) : [salvo, ...prev]
+    );
   const handleSaveSolicitacaoCompra = async (item: SolicitacaoCompra) => {
-    await saveSolicitacaoCompra(item);
-    await loadGestaoData();
-    showToast(item.id && solicitacoesCompra.some((s) => s.id === item.id) ? 'Solicitação atualizada!' : 'Solicitação de compra enviada!', 'success');
+    const eraExistente = !!item.id && solicitacoesCompra.some((s) => s.id === item.id);
+    aplicarSolicitacaoCompraLocal(await saveSolicitacaoCompra(item));
+    showToast(eraExistente ? 'Solicitação atualizada!' : 'Solicitação de compra enviada!', 'success');
   };
   const handleDeleteSolicitacaoCompra = async (id: string) => {
     await deleteSolicitacaoCompra(id);
-    await loadGestaoData();
+    setSolicitacoesCompra((prev) => prev.filter((s) => s.id !== id));
     showToast('Solicitação removida.', 'info');
   };
   const handleAprovarSolicitacaoCompra = async (item: SolicitacaoCompra) => {
-    await saveSolicitacaoCompra({ ...item, status: 'Aprovado', aprovadoPor: currentUser?.nome, motivoRecusa: undefined });
-    await loadGestaoData();
+    aplicarSolicitacaoCompraLocal(
+      await saveSolicitacaoCompra({ ...item, status: 'Aprovado', aprovadoPor: currentUser?.nome, motivoRecusa: undefined })
+    );
     showToast('Solicitação aprovada!', 'success');
   };
   const handleRecusarSolicitacaoCompra = async (item: SolicitacaoCompra, motivo?: string) => {
-    await saveSolicitacaoCompra({ ...item, status: 'Recusado', aprovadoPor: currentUser?.nome, motivoRecusa: motivo });
-    await loadGestaoData();
+    aplicarSolicitacaoCompraLocal(
+      await saveSolicitacaoCompra({ ...item, status: 'Recusado', aprovadoPor: currentUser?.nome, motivoRecusa: motivo })
+    );
     showToast('Solicitação recusada.', 'info');
   };
   const handleMarcarCompradoSolicitacaoCompra = async (item: SolicitacaoCompra) => {
-    await saveSolicitacaoCompra({ ...item, status: 'Comprado' });
-    await loadGestaoData();
+    aplicarSolicitacaoCompraLocal(await saveSolicitacaoCompra({ ...item, status: 'Comprado' }));
     showToast('Solicitação marcada como comprada!', 'success');
   };
   // Só pro Formulário Público (papel "anon") — ver criarSolicitacaoCompraPublica. Não chama
@@ -2552,25 +2641,25 @@ export default function App() {
   // Settings Handlers
   const handleAddEmpregador = async (emp: Empregador) => {
     await saveEmpregador(emp);
-    await loadDpData();
+    await recarregarDp('empregadores');
     showToast(`Empresa ${emp.razaoSocial} cadastrada!`);
   };
 
   const handleAddCargo = async (cargo: CargoSalario) => {
     await saveCargo(cargo);
-    await loadDpData();
+    await recarregarDp('cargos');
     showToast(`Cargo ${cargo.cargo} cadastrado!`);
   };
 
   const handleAddSupervisor = async (sup: Supervisor) => {
     await saveSupervisor(sup);
-    await loadDpData();
+    await recarregarDp('supervisores');
     showToast(`Supervisor ${sup.nome} cadastrado!`);
   };
 
   const handleAddFeriado = async (feriado: FeriadoEmpresa) => {
     await saveFeriado(feriado);
-    await loadDpData();
+    await recarregarDp('feriados');
     showToast(`Feriado ${feriado.descricao} adicionado!`);
   };
 
