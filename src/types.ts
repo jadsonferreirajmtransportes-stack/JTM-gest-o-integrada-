@@ -199,7 +199,10 @@ export interface SolicitacaoCompra {
   urgencia: UrgenciaSolicitacaoCompra;
   prazoNecessario?: string; // 'YYYY-MM-DD'
   anexoNome?: string;
+  /** Conteúdo do arquivo (data URL) — vazio na lista (getSolicitacoesCompra), buscar com
+   *  getAnexoSolicitacaoCompra(id). Salvar sem conteúdo preserva o arquivo já gravado. */
   anexoUrl?: string;
+  temAnexo?: boolean;
   /** Quem pediu — login interno (nome + login do UsuarioLogin) ou alguém externo via link
    *  público (nome + contato digitados livremente, sem cadastro no sistema). */
   solicitanteNome: string;

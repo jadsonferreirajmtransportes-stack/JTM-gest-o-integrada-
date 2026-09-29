@@ -35,6 +35,7 @@ function rowToSolicitacaoCompra(r: any): SolicitacaoCompra {
     prazoNecessario: u(r.prazo_necessario),
     anexoNome: u(r.anexo_nome),
     anexoUrl: u(r.anexo_url),
+    temAnexo: !!(r.anexo_url || r.anexo_nome),
     solicitanteNome: r.solicitante_nome,
     solicitanteLogin: u(r.solicitante_login),
     solicitanteContato: u(r.solicitante_contato),
@@ -47,7 +48,12 @@ function rowToSolicitacaoCompra(r: any): SolicitacaoCompra {
 }
 
 function solicitacaoCompraToRow(s: SolicitacaoCompra) {
-  return {
+  // A lista vem sem o arquivo (ver getSolicitacoesCompra), então "sem conteúdo" NÃO quer dizer
+  // "sem anexo" — anexo_url só entra no upsert quando há um arquivo novo; fora isso fica de fora
+  // e o arquivo já gravado no banco é preservado (upsert só atualiza as colunas enviadas). O
+  // formulário não tem "remover anexo", só trocar o arquivo.
+  const anexoIntocado = !s.anexoUrl;
+  const { anexo_url, ...row } = {
     id: s.id,
     grupo_id: n(s.grupoId),
     item: s.item,
@@ -69,15 +75,31 @@ function solicitacaoCompraToRow(s: SolicitacaoCompra) {
     criado_em: s.criadoEm || new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   };
+  return anexoIntocado ? row : { ...row, anexo_url };
 }
 
+/** Lista SEM o conteúdo dos anexos (anexo_url fica de fora) — cada solicitação pode ter um
+ *  arquivo em base64, repetido em cada item de um pedido com vários itens, e a lista inteira
+ *  vem em toda abertura do sistema. `temAnexo` indica quem tem arquivo; o conteúdo vem de
+ *  getAnexoSolicitacaoCompra(id) na hora de baixar. */
 export async function getSolicitacoesCompra(): Promise<SolicitacaoCompra[]> {
   const { data, error } = await supabase
     .from('solicitacoes_compra')
-    .select('*')
+    .select(
+      'id, grupo_id, item, quantidade, setor, justificativa, valor_estimado, fornecedor_sugerido, urgencia, ' +
+        'prazo_necessario, anexo_nome, solicitante_nome, solicitante_login, solicitante_contato, status, ' +
+        'aprovado_por, motivo_recusa, criado_em, atualizado_em'
+    )
     .order('criado_em', { ascending: false });
   assertNoError(error, 'getSolicitacoesCompra');
   return (data ?? []).map(rowToSolicitacaoCompra);
+}
+
+/** Conteúdo (data URL) do anexo de UMA solicitação. */
+export async function getAnexoSolicitacaoCompra(id: string): Promise<string | null> {
+  const { data, error } = await supabase.from('solicitacoes_compra').select('anexo_url').eq('id', id).maybeSingle();
+  assertNoError(error, 'getAnexoSolicitacaoCompra');
+  return data?.anexo_url ?? null;
 }
 
 /** Devolve o registro exatamente como foi gravado (id gerado, datas) — quem chama atualiza o

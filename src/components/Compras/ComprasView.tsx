@@ -18,6 +18,7 @@ import {
 import { SolicitacaoCompra, StatusSolicitacaoCompra, UrgenciaSolicitacaoCompra, UsuarioLogin } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { ComprasListaPdfModal } from './ComprasListaPdfModal';
+import { getAnexoSolicitacaoCompra } from '../../utils/comprasApi';
 
 interface ComprasViewProps {
   solicitacoes: SolicitacaoCompra[];
@@ -38,6 +39,45 @@ const STATUS_STYLE: Record<StatusSolicitacaoCompra, { badge: string; icon: React
   Aprovado: { badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: <CheckCircle2 className="w-3 h-3" /> },
   Recusado: { badge: 'bg-rose-50 text-rose-700 border-rose-200', icon: <XCircle className="w-3 h-3" /> },
   Comprado: { badge: 'bg-blue-50 text-blue-700 border-blue-200', icon: <PackageCheck className="w-3 h-3" /> },
+};
+
+/** Link de download do anexo — a lista vem sem o conteúdo do arquivo (ver getSolicitacoesCompra),
+ *  então busca na hora do clique. */
+const BotaoAnexoCompra: React.FC<{ solicitacao: SolicitacaoCompra }> = ({ solicitacao }) => {
+  const [carregando, setCarregando] = useState(false);
+
+  const handleClick = async () => {
+    setCarregando(true);
+    try {
+      const url = solicitacao.anexoUrl || (await getAnexoSolicitacaoCompra(solicitacao.id));
+      if (!url) {
+        alert('Arquivo não encontrado.');
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = solicitacao.anexoNome || 'anexo';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Erro ao baixar anexo da solicitação:', err);
+      alert('Não foi possível baixar o anexo. Tente novamente.');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={carregando}
+      className="inline-flex items-center gap-1 text-[11px] text-[#92611F] hover:underline mt-1 disabled:opacity-60"
+    >
+      <FileText className="w-3 h-3" /> {carregando ? 'Baixando...' : solicitacao.anexoNome || 'Anexo'}
+    </button>
+  );
 };
 
 /** Módulo Compras: qualquer login solicita um item; admin/diretoria aprova ou recusa; depois
@@ -400,15 +440,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
                           {s.status === 'Recusado' ? 'Recusado' : 'Aprovado'} por {s.aprovadoPor}
                         </p>
                       )}
-                      {s.anexoUrl && (
-                        <a
-                          href={s.anexoUrl}
-                          download={s.anexoNome}
-                          className="inline-flex items-center gap-1 text-[11px] text-[#92611F] hover:underline mt-1"
-                        >
-                          <FileText className="w-3 h-3" /> {s.anexoNome || 'Anexo'}
-                        </a>
-                      )}
+                      {(s.anexoUrl || s.temAnexo) && <BotaoAnexoCompra solicitacao={s} />}
                     </div>
                     {renderAcoes(s)}
                   </div>
@@ -436,15 +468,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
                       {primeiro.prazoNecessario ? ` • Prazo: ${formatDate(primeiro.prazoNecessario)}` : ''}
                     </p>
                     {primeiro.justificativa && <p className="text-[11px] text-slate-600 mt-1">{primeiro.justificativa}</p>}
-                    {primeiro.anexoUrl && (
-                      <a
-                        href={primeiro.anexoUrl}
-                        download={primeiro.anexoNome}
-                        className="inline-flex items-center gap-1 text-[11px] text-[#92611F] hover:underline mt-1"
-                      >
-                        <FileText className="w-3 h-3" /> {primeiro.anexoNome || 'Anexo'}
-                      </a>
-                    )}
+                    {(primeiro.anexoUrl || primeiro.temAnexo) && <BotaoAnexoCompra solicitacao={primeiro} />}
                   </div>
                   <div className="space-y-1.5 pl-3 border-l-2 border-orange-200">
                     {grupo.map((s) => (
