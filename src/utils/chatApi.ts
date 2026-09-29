@@ -14,6 +14,7 @@ function assertNoError(error: { message: string } | null, contexto: string) {
 }
 
 function rowToMensagem(r: any): MensagemChat {
+  if (r.anexo_url) cacheAnexos.set(r.id, r.anexo_url);
   return {
     id: r.id,
     conversaId: r.conversa_id,
@@ -23,8 +24,13 @@ function rowToMensagem(r: any): MensagemChat {
     anexoUrl: r.anexo_url ?? undefined,
     anexoNome: r.anexo_nome ?? undefined,
     anexoTipo: r.anexo_tipo ?? undefined,
+    temAnexo: !!(r.anexo_url || r.anexo_nome || r.anexo_tipo),
   };
 }
+
+// Conteúdo dos anexos (data URL em base64) já baixados nesta sessão, por id da mensagem — abrir
+// de novo a mesma conversa não baixa a mesma imagem outra vez.
+const cacheAnexos = new Map<string, string>();
 
 function gerarId(prefixo: string): string {
   return `${prefixo}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -184,14 +190,37 @@ export async function criarConversaGrupo(
 // MENSAGENS
 // ============================================================================
 
+/** Histórico da conversa SEM o conteúdo dos anexos (anexo_url fica de fora) — antes cada
+ *  abertura de conversa baixava todas as imagens/PDFs do histórico em base64, o que pesava no
+ *  Egress do Supabase. `temAnexo` indica quem tem arquivo; o conteúdo vem de getAnexoMensagem.
+ *  Anexos já baixados nesta sessão voltam do cache direto em anexoUrl. */
 export async function getMensagens(conversaId: string): Promise<MensagemChat[]> {
   const { data, error } = await supabase
     .from('chat_mensagens')
-    .select('*')
+    .select('id, conversa_id, autor_id, texto, criado_em, anexo_nome, anexo_tipo')
     .eq('conversa_id', conversaId)
     .order('criado_em', { ascending: true });
   assertNoError(error, 'getMensagens');
-  return (data ?? []).map(rowToMensagem);
+  return (data ?? []).map((r) => {
+    const msg = rowToMensagem(r);
+    const emCache = cacheAnexos.get(msg.id);
+    return emCache ? { ...msg, anexoUrl: emCache } : msg;
+  });
+}
+
+/** Conteúdo (data URL) do anexo de UMA mensagem — do cache da sessão se já foi baixado. */
+export async function getAnexoMensagem(mensagemId: string): Promise<string | null> {
+  const emCache = cacheAnexos.get(mensagemId);
+  if (emCache) return emCache;
+  const { data, error } = await supabase
+    .from('chat_mensagens')
+    .select('anexo_url')
+    .eq('id', mensagemId)
+    .maybeSingle();
+  assertNoError(error, 'getAnexoMensagem');
+  const url: string | null = data?.anexo_url ?? null;
+  if (url) cacheAnexos.set(mensagemId, url);
+  return url;
 }
 
 export interface AnexoMensagemChat {

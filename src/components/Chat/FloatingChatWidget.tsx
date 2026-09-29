@@ -222,7 +222,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                       <p className="text-[9px] font-bold text-[#92611F] mb-0.5">{autor?.nome || 'Alguém'}</p>
                     )}
                     {m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>}
-                    {m.anexoUrl && !m.texto && (
+                    {(m.anexoUrl || m.temAnexo) && !m.texto && (
                       <p className="italic opacity-80">📎 {m.anexoNome || 'Anexo'}</p>
                     )}
                     <p className={`text-[8px] mt-0.5 text-right ${propria ? 'text-white/70' : 'text-slate-400'}`}>

@@ -1777,6 +1777,9 @@ export interface MensagemChat {
   anexoUrl?: string;
   anexoNome?: string;
   anexoTipo?: string;
+  /** true quando a mensagem tem anexo — o histórico (getMensagens) vem sem o conteúdo do
+   *  arquivo (anexoUrl vazio); buscar sob demanda com getAnexoMensagem(id). */
+  temAnexo?: boolean;
 }
 
 // ==========================================
