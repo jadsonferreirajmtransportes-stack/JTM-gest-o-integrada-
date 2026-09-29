@@ -266,7 +266,7 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
         tipo: file.type || 'application/octet-stream',
         tamanho: sizeFormatted,
         dataUpload: new Date().toISOString().slice(0, 10),
-        url: base64,
+        // Só em arquivoUrl — gravar também em `url` duplicava o arquivo inteiro no banco.
         arquivoUrl: base64,
         observacao: novoDocObs.trim() || undefined,
         categoria: novoDocCategoria,

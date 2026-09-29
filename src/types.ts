@@ -1514,6 +1514,9 @@ export interface AnexoDocumentoProjeto {
   dataUpload: string;
   url?: string;
   arquivoUrl?: string;
+  /** true quando o registro veio da lista leve (obter_projetos_gerenciais_resumo) — o arquivo
+   *  existe no banco mas não foi baixado; buscar com getProjetoGerencialCompleto. */
+  arquivoOmitido?: boolean;
   observacao?: string;
   categoria?: CategoriaDocumentoProjeto;
   autor?: string;

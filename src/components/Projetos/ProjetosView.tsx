@@ -33,6 +33,7 @@ import { ProjetoFormModal } from './ProjetoFormModal';
 import { ProjetoDetailModal } from './ProjetoDetailModal';
 import { ProjetoResumoModal } from './ProjetoResumoModal';
 import { StrategicGuidelinesBanner } from '../Common/StrategicGuidelinesBanner';
+import { getProjetoGerencialCompleto } from '../../utils/gestaoApi';
 
 interface ProjetosViewProps {
   projetos: ProjetoGerencial[];
@@ -80,14 +81,32 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
     setIsFormModalOpen(true);
   };
 
-  const handleOpenEdit = (projeto: ProjetoGerencial) => {
-    setEditingProjeto(projeto);
+  // A lista `projetos` vem sem o conteúdo dos anexos (ver getProjetosGerenciais) — ao abrir
+  // um projeto, busca o registro completo pra dar pra ver/baixar os arquivos. Se a busca
+  // falhar, segue com o que já tem: salvar continua seguro (saveProjetoGerencial restaura os
+  // arquivos omitidos), só a visualização do anexo fica indisponível.
+  const carregarCompleto = async (projeto: ProjetoGerencial): Promise<ProjetoGerencial> => {
+    if (!(projeto.documentos || []).some((d) => d.arquivoOmitido)) return projeto;
+    try {
+      return (await getProjetoGerencialCompleto(projeto.id)) || projeto;
+    } catch (err) {
+      console.error('Erro ao carregar anexos do projeto:', err);
+      return projeto;
+    }
+  };
+
+  const handleOpenEdit = async (projeto: ProjetoGerencial) => {
+    setEditingProjeto(await carregarCompleto(projeto));
     setIsFormModalOpen(true);
   };
 
   const handleOpenDetail = (projeto: ProjetoGerencial) => {
     setSelectedDetailProjeto(projeto);
     setIsDetailModalOpen(true);
+    carregarCompleto(projeto).then((completo) => {
+      if (completo === projeto) return;
+      setSelectedDetailProjeto((atual) => (atual && atual.id === completo.id ? completo : atual));
+    });
   };
 
   // Chegou uma menção do Chat pedindo pra abrir um projeto específico.

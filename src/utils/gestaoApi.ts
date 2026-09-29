@@ -9,6 +9,7 @@ import { supabase } from './supabaseClient';
 import {
   CustoOperacional,
   ProjetoGerencial,
+  AnexoDocumentoProjeto,
   StatusProjeto,
   AtividadeGestao,
   StatusAtividadeGestao,
@@ -174,13 +175,52 @@ function projetoToRow(p: ProjetoGerencial) {
     usuarios_marcados_ids: j(p.usuariosMarcadosIds),
   };
 }
+/** Lista de projetos sem o conteúdo dos anexos (base64) — cada anexo vem com
+ *  `arquivoOmitido: true` no lugar do arquivo. Evita baixar dezenas de MB a cada
+ *  recarga de Gestão; ver migração 055_projetos_gerenciais_resumo_leve.sql. Quem precisa
+ *  ver/baixar o arquivo usa getProjetoGerencialCompleto(id) ao abrir o projeto. */
 export async function getProjetosGerenciais(): Promise<ProjetoGerencial[]> {
-  const { data, error } = await supabase.from('projetos_gerenciais').select('*').order('criado_em', { ascending: false });
+  const { data, error } = await supabase.rpc('obter_projetos_gerenciais_resumo');
   assertNoError(error, 'getProjetosGerenciais');
   return (data ?? []).map(rowToProjeto);
 }
+
+/** Registro completo de UM projeto, com os arquivos de verdade dos anexos. */
+export async function getProjetoGerencialCompleto(id: string): Promise<ProjetoGerencial | null> {
+  const { data, error } = await supabase.from('projetos_gerenciais').select('*').eq('id', id).maybeSingle();
+  assertNoError(error, 'getProjetoGerencialCompleto');
+  return data ? rowToProjeto(data) : null;
+}
+
+/** Salvar a partir da lista leve (ex.: arrastar no Kanban) não pode apagar os arquivos que
+ *  não vieram — por isso, se algum anexo está marcado como `arquivoOmitido`, busca o
+ *  arquivo gravado no banco (pelo id do anexo) e devolve antes de gravar. */
+async function restaurarArquivosOmitidos(item: ProjetoGerencial): Promise<ProjetoGerencial> {
+  const docs = item.documentos || [];
+  if (!item.id || !docs.some((d) => d.arquivoOmitido)) return item;
+  const { data, error } = await supabase
+    .from('projetos_gerenciais')
+    .select('documentos')
+    .eq('id', item.id)
+    .maybeSingle();
+  assertNoError(error, 'restaurarArquivosOmitidos');
+  const gravados = new Map<string, AnexoDocumentoProjeto>(
+    (j(data?.documentos) as AnexoDocumentoProjeto[]).map((d) => [d.id, d])
+  );
+  return {
+    ...item,
+    documentos: docs.map((d) => {
+      if (!d.arquivoOmitido) return d;
+      const { arquivoOmitido: _omitido, ...resto } = d;
+      const gravado = gravados.get(d.id);
+      return gravado ? { ...resto, arquivoUrl: gravado.arquivoUrl, url: gravado.url } : resto;
+    }),
+  };
+}
+
 export async function saveProjetoGerencial(item: ProjetoGerencial): Promise<void> {
-  const registro = item.id ? item : { ...item, id: `prj-${Date.now()}` };
+  const base = item.id ? item : { ...item, id: `prj-${Date.now()}` };
+  const registro = await restaurarArquivosOmitidos(base);
   const { error } = await supabase.from('projetos_gerenciais').upsert(projetoToRow(registro));
   assertNoError(error, 'saveProjetoGerencial');
 }

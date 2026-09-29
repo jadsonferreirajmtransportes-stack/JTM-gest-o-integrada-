@@ -196,7 +196,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
         tipo: file.type || 'application/octet-stream',
         tamanho: sizeFormatted,
         dataUpload: new Date().toISOString().slice(0, 10),
-        url: base64Data,
+        // Só em arquivoUrl — gravar também em `url` duplicava o arquivo inteiro no banco.
         arquivoUrl: base64Data,
         observacao: observacao.trim() || undefined,
         categoria,
@@ -295,7 +295,11 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
   const handleDownload = (doc: AnexoDocumentoProjeto) => {
     const fileUrl = doc.arquivoUrl || doc.url;
     if (!fileUrl) {
-      alert('Arquivo não disponível para download.');
+      alert(
+        doc.arquivoOmitido
+          ? 'O arquivo ainda está sendo carregado. Tente novamente em alguns segundos.'
+          : 'Arquivo não disponível para download.'
+      );
       return;
     }
 
