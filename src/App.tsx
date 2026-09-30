@@ -242,6 +242,7 @@ import { EpiView } from './components/Epi/EpiView';
 import { EpiPublicView } from './components/Epi/EpiPublicView';
 import { ContrachequePublicView } from './components/Contracheques/ContrachequePublicView';
 import { DocumentosAssinaturaView } from './components/Contracheques/DocumentosAssinaturaView';
+import { DisciplinarView } from './components/Disciplinar/DisciplinarView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
 import { EpiFormularioLinkModal } from './components/Epi/EpiFormularioLinkModal';
 import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
@@ -3422,6 +3423,18 @@ export default function App() {
               onOpenPublicFormModal={() => setIsPublicOccurrenceFormOpen(true)}
               onOpenOccurrenceLinkModal={() => setIsOccurrenceLinkModalOpen(true)}
               onOpenPortalView={() => setIsOccurrencePortalView(true)}
+            />
+          )}
+
+          {activeGlobalModule === 'dp' && activeSection === 'disciplinar' && podeVerSecaoDp(currentUser, 'disciplinar') && (
+            <DisciplinarView
+              colaboradores={colaboradoresEquipeVisiveis}
+              empregadores={empregadores}
+              ocorrencias={ocorrenciasEquipeVisiveis}
+              currentUser={currentUser}
+              userRole={userRole}
+              onSalvarOcorrencia={handleSaveOcorrencia}
+              onExcluirOcorrencia={handleDeleteOcorrencia}
             />
           )}
 

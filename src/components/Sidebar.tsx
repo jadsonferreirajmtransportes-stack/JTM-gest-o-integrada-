@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   HardHat,
   FileSignature,
+  Gavel,
   Thermometer,
   Layers,
   FileText,
@@ -66,6 +67,7 @@ export type NavSection =
   | 'epis'
   | 'contracheques'
   | 'ocorrencias'
+  | 'disciplinar'
   | 'onboarding'
   | 'arquivo'
   | 'aniversariantes'
@@ -407,6 +409,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: AlertTriangle,
       badge: counts.ocorrenciasAbertas > 0 ? counts.ocorrenciasAbertas : undefined,
       badgeColor: 'bg-amber-100 text-amber-800 border border-amber-300',
+      roles: ['admin', 'supervisor'],
+      group: 'operacional',
+    },
+    {
+      id: 'disciplinar',
+      label: 'Disciplinar (Advertências)',
+      icon: Gavel,
+      // Supervisor propõe a medida; administrador aprova (ver DisciplinarView).
       roles: ['admin', 'supervisor'],
       group: 'operacional',
     },

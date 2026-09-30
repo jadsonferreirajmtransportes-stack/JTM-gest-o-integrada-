@@ -117,6 +117,10 @@ const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = 
     title: 'Programação do Vale Alimentação',
     subtitle: 'Quinzenas do ano e lançamentos por colaborador, com diárias calculadas automaticamente',
   },
+  disciplinar: {
+    title: 'Disciplinar',
+    subtitle: 'Advertências e suspensões com gradação, aprovação e ciência do colaborador (CLT art. 482 e 474)',
+  },
   contracheques: {
     title: 'Contracheques',
     subtitle: 'Importação da folha, envio por WhatsApp e assinatura digital pelo colaborador',

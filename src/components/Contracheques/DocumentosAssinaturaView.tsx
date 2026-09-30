@@ -59,6 +59,14 @@ const TEXTOS: Record<CategoriaDocumentoAssinatura, { titulo: string; descricao: 
     importar: 'Importar Aviso / Recibo',
     vazio: 'Nenhum documento de férias importado ainda. Clique em Importar Aviso / Recibo e escolha os PDFs da contabilidade.',
   },
+  // Documentos disciplinares são gerados e acompanhados no Módulo Disciplinar (não usam esta
+  // tela) — entrada só pra completar o mapa por categoria.
+  disciplinar: {
+    titulo: 'Medidas Disciplinares',
+    descricao: 'Documentos de advertência/suspensão enviados para ciência do colaborador.',
+    importar: 'Importar',
+    vazio: 'Nenhum documento disciplinar.',
+  },
 };
 
 const STATUS_ESTILO: Record<DocumentoAssinatura['status'], { classe: string; icone: React.ReactNode }> = {
