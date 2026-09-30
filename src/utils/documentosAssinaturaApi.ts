@@ -30,8 +30,20 @@ export interface DocumentoAssinatura {
   declaracao?: string;
   navegador?: string;
   loteId?: string;
+  /** Onde desenhar a assinatura no PDF (linhas do empregado) — ver migração 058. */
+  camposAssinatura?: CampoAssinaturaPdf[];
   criadoEm: string;
   criadoPor?: string;
+}
+
+/** Área em pontos do PDF (origem no canto inferior esquerdo) — mesmo formato de
+ *  CampoAssinatura em contrachequePdfUtils.ts. */
+export interface CampoAssinaturaPdf {
+  pagina: number;
+  x: number;
+  y: number;
+  largura: number;
+  altura: number;
 }
 
 /** Quanto tempo o link enviado por WhatsApp vale (e o link assinado do PDF junto). */
@@ -64,6 +76,7 @@ function rowToDocumento(r: any): DocumentoAssinatura {
     declaracao: u(r.declaracao),
     navegador: u(r.navegador),
     loteId: u(r.lote_id),
+    camposAssinatura: Array.isArray(r.campos_assinatura) ? r.campos_assinatura : undefined,
     criadoEm: r.criado_em,
     criadoPor: u(r.criado_por),
   };
@@ -107,6 +120,7 @@ export interface NovoDocumentoAssinatura {
   tipo: string;
   titulo: string;
   arquivo: File;
+  camposAssinatura?: CampoAssinaturaPdf[];
   loteId?: string;
   criadoPor?: string;
 }
@@ -132,6 +146,9 @@ export async function criarDocumentoAssinatura(novo: NovoDocumentoAssinatura): P
     link_expira_em: expiraEm,
     status: 'Pendente',
     lote_id: novo.loteId ?? null,
+    // Só envia a coluna quando há campos — assim a importação continua funcionando mesmo antes
+    // de a migração 058 rodar (documento sem campos = assinatura só na página de comprovante).
+    ...(novo.camposAssinatura && novo.camposAssinatura.length > 0 ? { campos_assinatura: novo.camposAssinatura } : {}),
     criado_por: novo.criadoPor ?? null,
     criado_em: new Date().toISOString(),
   };

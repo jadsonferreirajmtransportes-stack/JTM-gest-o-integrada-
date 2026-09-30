@@ -3,17 +3,21 @@ import { X, Upload, FileText, Loader2, CheckCircle2, AlertTriangle, ScanSearch }
 import { Colaborador } from '../../types';
 import { criarDocumentoAssinatura, DocumentoAssinatura } from '../../utils/documentosAssinaturaApi';
 import {
-  extrairTextoDasPaginas,
+  extrairPaginasComPosicao,
   identificarPaginas,
   detectarTipoFerias,
   extrairPeriodoGozo,
   formatarDataBr,
+  camposDasPartes,
+  CampoAssinatura,
   TipoDocumentoFerias,
   TIPOS_DOCUMENTO_FERIAS,
 } from './contrachequePdfUtils';
 
 interface ItemFerias {
   arquivo: File;
+  /** Linhas "Empregado"/"Assinatura do Empregado" onde a assinatura vai ser desenhada. */
+  camposAssinatura: CampoAssinatura[];
   colaboradorId?: string;
   tipo?: TipoDocumentoFerias;
   inicioGozo?: string;
@@ -73,7 +77,8 @@ export const ImportarDocumentosFeriasModal: React.FC<ImportarDocumentosFeriasMod
     const falhas: string[] = [];
     for (const arquivo of Array.from(lista)) {
       try {
-        const textos = await extrairTextoDasPaginas(arquivo);
+        const paginasPdf = await extrairPaginasComPosicao(arquivo);
+        const textos = paginasPdf.map((p) => p.texto);
         const paginas = identificarPaginas(textos, colaboradores);
         // O colaborador do arquivo é o que mais aparece nas páginas (a 2ª página do recibo, por
         // exemplo, não tem CPF — só o nome).
@@ -84,6 +89,11 @@ export const ImportarDocumentosFeriasModal: React.FC<ImportarDocumentosFeriasMod
         const periodo = extrairPeriodoGozo(textoCompleto);
         const item: ItemFerias = {
           arquivo,
+          // O arquivo vai inteiro (um por colaborador), então cada página entra como está.
+          camposAssinatura: camposDasPartes(
+            paginasPdf,
+            paginasPdf.map((_, indice) => ({ indice, parte: 0, totalPartes: 1 }))
+          ),
           colaboradorId,
           tipo: detectarTipoFerias(textoCompleto),
           inicioGozo: periodo?.inicio,
@@ -128,6 +138,7 @@ export const ImportarDocumentosFeriasModal: React.FC<ImportarDocumentosFeriasMod
             tipo: it.tipo!,
             titulo: tituloDocumentoFerias(it.tipo!, it.inicioGozo, it.fimGozo),
             arquivo: it.arquivo,
+            camposAssinatura: it.camposAssinatura,
             loteId,
             criadoPor,
           })

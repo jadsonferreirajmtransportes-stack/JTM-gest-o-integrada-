@@ -42,11 +42,61 @@ export async function carregarPdfJs() {
   return pdfjs;
 }
 
+export interface ItemTextoPdf {
+  str: string;
+  /** Posição em pontos, origem no canto inferior esquerdo da página (padrão do PDF). */
+  x: number;
+  y: number;
+  /** Largura do trecho em pontos. */
+  w: number;
+}
+
 export interface PaginaComPosicao {
   texto: string;
-  /** Cada trecho de texto com a altura (y) em pontos, medida de BAIXO pra cima (padrão do PDF). */
-  itens: { str: string; y: number }[];
+  itens: ItemTextoPdf[];
   altura: number;
+}
+
+/** Área (em pontos do PDF) onde a assinatura do colaborador deve ser desenhada. */
+export interface CampoAssinatura {
+  /** Página do PDF FINAL do documento (0 = primeira). */
+  pagina: number;
+  x: number;
+  y: number;
+  largura: number;
+  altura: number;
+}
+
+// "Empregado", "Assinatura do Empregado", "Funcionário", "Assinatura do Colaborador"... — o
+// rótulo que fica EMBAIXO da linha onde o colaborador assina. "Empregador" e "Responsável"
+// (menor de idade) ficam de fora de propósito.
+const REGEX_ROTULO_ASSINATURA = /^(ASSINATURA D[OA] )?(EMPREGAD[OA]|FUNCIONARI[OA]|COLABORADOR(A)?)$/;
+
+/** Acha as linhas "______" de assinatura do empregado numa página: uma linha de sublinhados
+ *  com o rótulo do empregado logo abaixo (até ~25pt) e centralizado nela. O "Empregado :" do
+ *  cabeçalho não tem linha em cima, então não conta. Devolve a área logo acima da linha. */
+export function acharCamposAssinatura(itens: ItemTextoPdf[]): Omit<CampoAssinatura, 'pagina'>[] {
+  const linhas = itens.filter((it) => /_{8,}/.test(it.str) && it.w > 60);
+  const rotulos = itens.filter((it) => REGEX_ROTULO_ASSINATURA.test(normalizarTexto(it.str)));
+  const campos: Omit<CampoAssinatura, 'pagina'>[] = [];
+  rotulos.forEach((r) => {
+    const centro = r.x + r.w / 2;
+    const linha = linhas
+      .filter((l) => l.y > r.y && l.y - r.y <= 25 && centro >= l.x && centro <= l.x + l.w)
+      .sort((a, b) => a.y - b.y)[0];
+    if (!linha) return;
+    if (campos.some((c) => Math.abs(c.x - linha.x) < 1 && Math.abs(c.y - (linha.y + 1)) < 1)) return;
+    // Altura limitada pelo texto logo acima da linha (na mesma faixa horizontal) — sem isso a
+    // assinatura cobria o parágrafo de cima (caso do Recibo de Férias, com a linha colada no
+    // texto). Espaço apertado demais: fica pequena e encosta de leve, como assinatura à mão.
+    const textoAcima = itens
+      .filter((it) => it.y > linha.y + 1 && it.str.trim() && !/_{8,}/.test(it.str) && it.x < linha.x + linha.w && it.x + it.w > linha.x)
+      .sort((a, b) => a.y - b.y)[0];
+    const espacoLivre = textoAcima ? textoAcima.y - linha.y - 4 : 40;
+    const altura = Math.max(16, Math.min(34, espacoLivre));
+    campos.push({ x: linha.x, y: linha.y + 1, largura: linha.w, altura });
+  });
+  return campos;
 }
 
 /** Texto de cada página com a posição vertical de cada trecho — usado pra achar quantos
@@ -59,9 +109,10 @@ export async function extrairPaginasComPosicao(arquivo: File): Promise<PaginaCom
     const pagina = await pdf.getPage(i);
     const [, y0, , y1] = pagina.view;
     const conteudo = await pagina.getTextContent();
+    const [x0] = pagina.view;
     const itens = conteudo.items
-      .filter((item): item is typeof item & { str: string; transform: number[] } => 'str' in item)
-      .map((item) => ({ str: item.str, y: item.transform[5] - y0 }));
+      .filter((item): item is typeof item & { str: string; transform: number[]; width: number } => 'str' in item)
+      .map((item) => ({ str: item.str, x: item.transform[4] - x0, y: item.transform[5] - y0, w: item.width }));
     paginas.push({ texto: itens.map((it) => it.str).join(' '), itens, altura: y1 - y0 });
   }
   await pdf.destroy();
@@ -223,6 +274,32 @@ export function identificarPartes(paginas: PaginaComPosicao[], colaboradores: Co
     });
   });
   return resultado;
+}
+
+/** Campos de assinatura do PDF que `montar(partes)` gera: mesma ordem de páginas, e em faixa de
+ *  página (2+ contracheques por página) a posição é trazida pra dentro da faixa — a página nova
+ *  tem só a altura da faixa. */
+export function camposDasPartes(
+  paginas: PaginaComPosicao[],
+  partes: { indice: number; parte: number; totalPartes: number }[]
+): CampoAssinatura[] {
+  const campos: CampoAssinatura[] = [];
+  partes.forEach((p, paginaFinal) => {
+    const pagina = paginas[p.indice];
+    if (!pagina) return;
+    if (p.totalPartes <= 1) {
+      acharCamposAssinatura(pagina.itens).forEach((c) => campos.push({ ...c, pagina: paginaFinal }));
+      return;
+    }
+    const faixa = pagina.altura / p.totalPartes;
+    const topo = pagina.altura - p.parte * faixa;
+    const base = topo - faixa;
+    const itensDaFaixa = pagina.itens.filter((it) => it.y <= topo && it.y > base).map((it) => ({ ...it, y: it.y - base }));
+    acharCamposAssinatura(itensDaFaixa).forEach((c) =>
+      campos.push({ ...c, pagina: paginaFinal, altura: Math.max(10, Math.min(c.altura, faixa - c.y - 2)) })
+    );
+  });
+  return campos;
 }
 
 /** Monta o PDF de cada colaborador a partir das partes dele. Página inteira é copiada como está

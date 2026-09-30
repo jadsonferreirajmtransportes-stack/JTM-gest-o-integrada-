@@ -11,6 +11,7 @@ import { DocumentoAssinatura } from '../../utils/documentosAssinaturaApi';
 import { obterUrlArquivo } from '../../utils/arquivosStorage';
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { STRATEGIC_GUIDELINES } from '../../data/strategicGuidelines';
+import { extrairPaginasComPosicao, camposDasPartes } from './contrachequePdfUtils';
 
 // As fontes padrão do PDF (Helvetica) só codificam o conjunto WinAnsi — um caractere fora dele
 // (ex.: emoji ou símbolo num user agent) faria o pdf-lib lançar erro e o download falhar.
@@ -40,6 +41,52 @@ function dataHora(iso?: string): string {
   });
 }
 
+/** A imagem vem do campo de desenho inteiro (largo, com muito espaço vazio em volta do traço) —
+ *  recorta só a área desenhada, pra assinatura ocupar a linha do documento no tamanho certo. */
+async function recortarAssinatura(dataUrl: string): Promise<Uint8Array> {
+  // onload em vez de img.decode(): decode() fica pendente com a aba em segundo plano (visto no
+  // teste), e gerar vários PDFs no "Baixar todos assinados" pode levar tempo com a aba trocada.
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('Não foi possível ler a imagem da assinatura'));
+    img.src = dataUrl;
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(img, 0, 0);
+  const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let minX = width, minY = height, maxX = -1, maxY = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * 4 + 3] > 10) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  const margem = 6;
+  const recorte = document.createElement('canvas');
+  if (maxX < 0) {
+    recorte.width = 1;
+    recorte.height = 1;
+  } else {
+    const x0 = Math.max(0, minX - margem);
+    const y0 = Math.max(0, minY - margem);
+    recorte.width = Math.min(width, maxX + margem) - x0;
+    recorte.height = Math.min(height, maxY + margem) - y0;
+    recorte.getContext('2d')!.drawImage(canvas, x0, y0, recorte.width, recorte.height, 0, 0, recorte.width, recorte.height);
+  }
+  const blob = await new Promise<Blob>((resolve, reject) =>
+    recorte.toBlob((b) => (b ? resolve(b) : reject(new Error('Falha ao preparar a assinatura'))), 'image/png')
+  );
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
 async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
   const hash = await crypto.subtle.digest('SHA-256', bytes);
   return Array.from(new Uint8Array(hash))
@@ -60,6 +107,32 @@ export async function gerarPdfAssinado(doc: DocumentoAssinatura, cpfColaborador?
   const hash = await sha256Hex(bytesOriginais);
 
   const pdf = await PDFDocument.load(bytesOriginais);
+  const assinaturaRecortada = await pdf.embedPng(await recortarAssinatura(doc.assinaturaImagem));
+
+  // Assinatura desenhada em cima de cada linha do empregado no próprio documento. Os campos vêm
+  // da importação (migração 058); documento importado antes disso não tem — tenta achar agora
+  // pelo texto do PDF (funciona quando o PDF tem texto; faixa de contracheque gravada como
+  // imagem não tem, e aí fica só a página de comprovante).
+  let campos = doc.camposAssinatura;
+  if (!campos) {
+    try {
+      const paginas = await extrairPaginasComPosicao(new File([bytesOriginais.slice(0)], 'original.pdf'));
+      campos = camposDasPartes(paginas, paginas.map((_, indice) => ({ indice, parte: 0, totalPartes: 1 })));
+    } catch (err) {
+      console.error('Não foi possível localizar as linhas de assinatura no PDF:', err);
+      campos = [];
+    }
+  }
+  const paginasOriginais = pdf.getPages();
+  campos.forEach((c) => {
+    const pagina = paginasOriginais[c.pagina];
+    if (!pagina) return;
+    const escala = Math.min(c.largura / assinaturaRecortada.width, c.altura / assinaturaRecortada.height);
+    const w = assinaturaRecortada.width * escala;
+    const h = assinaturaRecortada.height * escala;
+    pagina.drawImage(assinaturaRecortada, { x: c.x + (c.largura - w) / 2, y: c.y, width: w, height: h });
+  });
+
   const fonte = await pdf.embedFont(StandardFonts.Helvetica);
   const negrito = await pdf.embedFont(StandardFonts.HelveticaBold);
   const bronze = rgb(196 / 255, 130 / 255, 41 / 255);
@@ -139,7 +212,7 @@ export async function gerarPdfAssinado(doc: DocumentoAssinatura, cpfColaborador?
   // Assinatura desenhada.
   pagina.drawText('ASSINATURA', { x: margem, y, size: 9, font: negrito, color: cinza });
   y -= 8;
-  const assinatura = await pdf.embedPng(doc.assinaturaImagem);
+  const assinatura = assinaturaRecortada;
   const boxLargura = 260;
   const boxAltura = 100;
   const escala = Math.min(boxLargura / assinatura.width, boxAltura / assinatura.height);

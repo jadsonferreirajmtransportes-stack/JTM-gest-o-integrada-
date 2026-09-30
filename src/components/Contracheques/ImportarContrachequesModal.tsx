@@ -4,9 +4,11 @@ import { Colaborador } from '../../types';
 import { criarDocumentoAssinatura, DocumentoAssinatura } from '../../utils/documentosAssinaturaApi';
 import {
   ParteIdentificada,
+  PaginaComPosicao,
   extrairPaginasComPosicao,
   identificarPartes,
   criarSeparadorDePdf,
+  camposDasPartes,
   chaveParte,
   formatarCompetencia,
 } from './contrachequePdfUtils';
@@ -62,6 +64,9 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
   const [tipo, setTipo] = useState(TIPOS_CONTRACHEQUE[0]);
   const [lendo, setLendo] = useState(false);
   const [paginas, setPaginas] = useState<ParteIdentificada[] | null>(null);
+  // Texto com posição de cada página do PDF da folha — usado na importação pra achar a linha de
+  // assinatura do empregado de cada contracheque (camposDasPartes).
+  const [paginasPdf, setPaginasPdf] = useState<PaginaComPosicao[]>([]);
   const [ignorados, setIgnorados] = useState<Set<string>>(new Set());
   const [importando, setImportando] = useState(false);
   const [progresso, setProgresso] = useState({ feito: 0, total: 0 });
@@ -91,7 +96,9 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
     setErro(null);
     setLendo(true);
     try {
-      const identificadas = identificarPartes(await extrairPaginasComPosicao(arquivo), colaboradores);
+      const lidas = await extrairPaginasComPosicao(arquivo);
+      const identificadas = identificarPartes(lidas, colaboradores);
+      setPaginasPdf(lidas);
       setPaginas(identificadas);
       // Quem já tem contracheque dessa competência/tipo começa desmarcado — evita duplicar
       // quando a mesma folha é importada duas vezes por engano.
@@ -165,6 +172,7 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
             tipo,
             titulo,
             arquivo: pdf,
+            camposAssinatura: camposDasPartes(paginasPdf, partes),
             loteId,
             criadoPor,
           })
