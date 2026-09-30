@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Calendar,
   Plus,
@@ -31,6 +31,22 @@ import {
 } from '../../types';
 import { FeriasComprovanteUploader } from './FeriasComprovanteUploader';
 import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
+import { DocumentoAssinatura, getDocumentosAssinatura } from '../../utils/documentosAssinaturaApi';
+
+/** Aviso/Recibo importados pra assinatura que pertencem a esta programação — mesmo colaborador
+ *  e início do gozo (a referência do documento) dentro do período marcado ou de uma das etapas
+ *  do fracionamento. */
+function documentosDaProgramacao(f: ProgramacaoFerias, documentos: DocumentoAssinatura[]): DocumentoAssinatura[] {
+  const periodos = [
+    ...(f.dataInicio && f.dataFim ? [{ inicio: f.dataInicio, fim: f.dataFim }] : []),
+    ...(f.fracionamento || []).map((e) => ({ inicio: e.dataInicio, fim: e.dataFim })),
+  ];
+  return documentos.filter(
+    (d) =>
+      d.colaboradorId === f.colaboradorId &&
+      periodos.some((p) => d.referencia >= p.inicio && d.referencia <= p.fim)
+  );
+}
 import {
   formatDate,
   formatMoney,
@@ -82,6 +98,17 @@ export const VacationView: React.FC<VacationViewProps> = ({
   // Aviso/Recibo de férias pra assinatura por link — só admin (o recibo tem valores de salário,
   // mesma regra dos Contracheques).
   const [isDocumentosAssinaturaAberto, setIsDocumentosAssinaturaAberto] = useState(false);
+  const [documentosFerias, setDocumentosFerias] = useState<DocumentoAssinatura[]>([]);
+
+  // Selos de Aviso/Recibo na lista (só admin, mesma regra do botão). A lista de documentos é
+  // leve (sem PDF nem imagem da assinatura), então busca uma vez ao abrir a tela; depois a tela
+  // de Aviso & Recibo mantém em dia via onDocumentosChange.
+  useEffect(() => {
+    if (userRole !== 'admin') return;
+    getDocumentosAssinatura('ferias')
+      .then(setDocumentosFerias)
+      .catch((err) => console.error('Erro ao carregar documentos de férias para assinatura:', err));
+  }, [userRole]);
   const [selectedStatus, setSelectedStatus] = useState('todos');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFerias, setEditingFerias] = useState<ProgramacaoFerias | null>(null);
@@ -331,7 +358,13 @@ export const VacationView: React.FC<VacationViewProps> = ({
       </div>
 
       {isDocumentosAssinaturaAberto && userRole === 'admin' && (
-        <DocumentosAssinaturaView categoria="ferias" colaboradores={colaboradores} currentUser={currentUser} compacto />
+        <DocumentosAssinaturaView
+          categoria="ferias"
+          colaboradores={colaboradores}
+          currentUser={currentUser}
+          compacto
+          onDocumentosChange={setDocumentosFerias}
+        />
       )}
 
       {/* Control Bar: Search & Status Filter */}
@@ -498,6 +531,44 @@ export const VacationView: React.FC<VacationViewProps> = ({
                         ) : (
                           <span className="text-slate-400 italic">Não agendada</span>
                         )}
+                        {userRole === 'admin' &&
+                          (() => {
+                            const docs = documentosDaProgramacao(item, documentosFerias);
+                            if (docs.length === 0) return null;
+                            return (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {(['Aviso de Férias', 'Recibo de Férias'] as const).map((tipo) => {
+                                  const doDoTipo = docs.filter((d) => d.tipo === tipo);
+                                  if (doDoTipo.length === 0) return null;
+                                  const assinado = doDoTipo.some((d) => d.status === 'Assinado');
+                                  const visto = doDoTipo.some((d) => d.status === 'Visualizado');
+                                  const rotulo = tipo === 'Aviso de Férias' ? 'Aviso' : 'Recibo';
+                                  return (
+                                    <span
+                                      key={tipo}
+                                      title={
+                                        assinado
+                                          ? `${tipo} assinado pelo colaborador`
+                                          : visto
+                                            ? `${tipo} aberto pelo colaborador, ainda sem assinatura`
+                                            : `${tipo} enviado/importado, ainda não aberto`
+                                      }
+                                      className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${
+                                        assinado
+                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                          : visto
+                                            ? 'bg-amber-50 text-[#92611F] border-amber-200'
+                                            : 'bg-slate-50 text-slate-500 border-slate-200'
+                                      }`}
+                                    >
+                                      {assinado ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}
+                                      {rotulo} {assinado ? 'assinado' : visto ? 'visto' : 'pendente'}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
                       </td>
 
                       {/* Dias / Abono */}

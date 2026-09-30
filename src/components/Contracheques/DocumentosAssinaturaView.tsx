@@ -36,6 +36,9 @@ interface DocumentosAssinaturaViewProps {
   currentUser?: UsuarioLogin;
   /** Sem o cabeçalho grande — quando a lista aparece dentro de outra tela (ex.: Férias). */
   compacto?: boolean;
+  /** Avisa a tela de fora quando a lista muda (importou, excluiu, renovou) — Férias usa pra
+   *  atualizar os selos de Aviso/Recibo na lista de programações sem recarregar. */
+  onDocumentosChange?: (documentos: DocumentoAssinatura[]) => void;
 }
 
 const TEXTOS: Record<CategoriaDocumentoAssinatura, { titulo: string; descricao: string; importar: string; vazio: string }> = {
@@ -72,6 +75,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
   colaboradores,
   currentUser,
   compacto = false,
+  onDocumentosChange,
 }) => {
   const textos = TEXTOS[categoria];
   const ehContracheque = categoria === 'contracheque';
@@ -100,6 +104,11 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
       })
       .finally(() => setCarregando(false));
   }, [categoria, ehContracheque]);
+
+  useEffect(() => {
+    if (!carregando) onDocumentosChange?.(documentos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentos, carregando]);
 
   const colaboradorPorId = useMemo(() => new Map(colaboradores.map((c) => [c.id, c])), [colaboradores]);
   const competencias = useMemo(
