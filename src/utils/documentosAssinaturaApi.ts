@@ -32,8 +32,21 @@ export interface DocumentoAssinatura {
   loteId?: string;
   /** Onde desenhar a assinatura no PDF (linhas do empregado) — ver migração 058. */
   camposAssinatura?: CampoAssinaturaPdf[];
+  /** Assinaturas anteriores substituídas por "Solicitar nova assinatura" (migração 059) — só
+   *  vem no registro completo (getDocumentoAssinatura). */
+  historicoAssinaturas?: AssinaturaAnterior[];
   criadoEm: string;
   criadoPor?: string;
+}
+
+export interface AssinaturaAnterior {
+  assinadoEm?: string;
+  visualizadoEm?: string;
+  assinaturaImagem?: string;
+  declaracao?: string;
+  navegador?: string;
+  substituidaEm: string;
+  motivo?: string;
 }
 
 /** Área em pontos do PDF (origem no canto inferior esquerdo) — mesmo formato de
@@ -82,6 +95,7 @@ function rowToDocumento(r: any): DocumentoAssinatura {
     navegador: u(r.navegador),
     loteId: u(r.lote_id),
     camposAssinatura: Array.isArray(r.campos_assinatura) ? r.campos_assinatura : undefined,
+    historicoAssinaturas: Array.isArray(r.historico_assinaturas) ? r.historico_assinaturas : undefined,
     criadoEm: r.criado_em,
     criadoPor: u(r.criado_por),
   };
@@ -180,6 +194,34 @@ export async function renovarLinkDocumento(doc: DocumentoAssinatura): Promise<Do
     .eq('id', doc.id);
   assertNoError(error, 'renovarLinkDocumento');
   return { ...doc, linkExpiraEm: expiraEm };
+}
+
+/** Documento já assinado precisa ser assinado de novo (ex.: assinatura ilegível, documento
+ *  corrigido): guarda a assinatura atual no histórico, volta pra "Pendente" com um link NOVO (o
+ *  antigo para de funcionar) — sem excluir nem reimportar o arquivo. Ver migração 059. */
+export async function solicitarNovaAssinatura(doc: DocumentoAssinatura, motivo: string): Promise<DocumentoAssinatura> {
+  const { arquivoLink, expiraEm } = await gerarLinkArquivo(doc.arquivoRef);
+  const novoToken = gerarToken();
+  const { data, error } = await supabase.rpc('reabrir_documento_assinatura', {
+    p_id: doc.id,
+    p_motivo: motivo,
+    p_novo_token: novoToken,
+    p_novo_link: arquivoLink,
+    p_expira_em: expiraEm,
+  });
+  assertNoError(error, 'solicitarNovaAssinatura');
+  if (!data) throw new Error('O documento não está mais como assinado — atualize a página.');
+  return {
+    ...doc,
+    token: novoToken,
+    linkExpiraEm: expiraEm,
+    status: 'Pendente',
+    assinadoEm: undefined,
+    visualizadoEm: undefined,
+    assinaturaImagem: undefined,
+    declaracao: undefined,
+    navegador: undefined,
+  };
 }
 
 export async function excluirDocumentoAssinatura(doc: DocumentoAssinatura): Promise<void> {

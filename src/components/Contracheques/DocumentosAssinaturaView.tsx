@@ -14,6 +14,7 @@ import {
   X,
   Search,
   Download,
+  RotateCcw,
 } from 'lucide-react';
 import { gerarPdfAssinado } from './pdfAssinadoUtils';
 import { Colaborador, UsuarioLogin } from '../../types';
@@ -25,6 +26,7 @@ import {
   excluirDocumentoAssinatura,
   renovarLinkDocumento,
   montarLinkDocumento,
+  solicitarNovaAssinatura,
 } from '../../utils/documentosAssinaturaApi';
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
@@ -238,6 +240,29 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
       }
     } finally {
       setZipProgresso(null);
+    }
+  };
+
+  // Documento assinado que precisa ser assinado de novo, sem excluir/reimportar o arquivo: a
+  // assinatura atual vai pro histórico e um link novo é gerado (ver solicitarNovaAssinatura).
+  const handleSolicitarNovaAssinatura = async (d: DocumentoAssinatura) => {
+    const motivo = window.prompt(
+      `Solicitar nova assinatura de "${d.titulo}" para ${d.colaboradorNome}?\n\n` +
+        'A assinatura atual fica guardada no histórico (não é apagada), o link antigo para de funcionar e um link novo é gerado para enviar.\n\n' +
+        'Motivo (ex.: assinatura ilegível, documento corrigido):'
+    );
+    if (motivo === null) return;
+    setAcaoEmAndamento(d.id);
+    try {
+      const atualizado = await solicitarNovaAssinatura(d, motivo.trim());
+      setDocumentos((prev) => prev.map((x) => (x.id === d.id ? atualizado : x)));
+      setComprovante(null);
+      if (window.confirm('Novo link gerado. Enviar agora pelo WhatsApp?')) handleWhatsApp(atualizado);
+    } catch (err) {
+      console.error(err);
+      alert(`Não foi possível solicitar a nova assinatura. ${err instanceof Error ? err.message : ''}`);
+    } finally {
+      setAcaoEmAndamento(null);
     }
   };
 
@@ -475,6 +500,15 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
                               >
                                 Comprovante
                               </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSolicitarNovaAssinatura(d)}
+                                disabled={ocupado}
+                                title="Solicitar nova assinatura (a atual fica no histórico; gera um link novo)"
+                                className="p-1.5 rounded-md text-slate-500 hover:text-[#92611F] hover:bg-amber-50"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                              </button>
                             </>
                           )}
                           <button
@@ -562,6 +596,36 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
                 </div>
               )}
               {comprovante.navegador && <p className="text-[10px] text-slate-400 break-all">Dispositivo: {comprovante.navegador}</p>}
+              {(comprovante.historicoAssinaturas?.length ?? 0) > 0 && (
+                <details className="border border-slate-200 rounded-lg">
+                  <summary className="px-2.5 py-2 cursor-pointer font-semibold text-slate-600">
+                    Assinaturas anteriores ({comprovante.historicoAssinaturas!.length})
+                  </summary>
+                  <div className="divide-y divide-slate-100">
+                    {comprovante.historicoAssinaturas!.map((h, i) => (
+                      <div key={i} className="p-2.5 space-y-1">
+                        <p>
+                          Assinada em <strong>{formatarDataHora(h.assinadoEm)}</strong> — substituída em{' '}
+                          {formatarDataHora(h.substituidaEm)}
+                        </p>
+                        {h.motivo && <p className="text-slate-500">Motivo: {h.motivo}</p>}
+                        {h.assinaturaImagem && (
+                          <img src={h.assinaturaImagem} alt="Assinatura anterior" className="w-full h-16 object-contain bg-white" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              )}
+              <button
+                type="button"
+                onClick={() => handleSolicitarNovaAssinatura(comprovante)}
+                disabled={acaoEmAndamento === comprovante.id}
+                className="w-full py-2 bg-white hover:bg-amber-50 text-[#92611F] border border-amber-300 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-60"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Solicitar nova assinatura
+              </button>
               <button
                 type="button"
                 onClick={() => handleBaixarAssinado(comprovante)}
