@@ -21,6 +21,7 @@ import {
   Printer,
   Paperclip,
   FileSignature,
+  Loader2,
 } from 'lucide-react';
 import {
   Colaborador,
@@ -31,7 +32,8 @@ import {
 } from '../../types';
 import { FeriasComprovanteUploader } from './FeriasComprovanteUploader';
 import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
-import { DocumentoAssinatura, getDocumentosAssinatura } from '../../utils/documentosAssinaturaApi';
+import { DocumentoAssinatura, getDocumentosAssinatura, getDocumentoAssinatura } from '../../utils/documentosAssinaturaApi';
+import { gerarPdfAssinado } from '../Contracheques/pdfAssinadoUtils';
 
 /** Aviso/Recibo importados pra assinatura que pertencem a esta programação — mesmo colaborador
  *  e início do gozo (a referência do documento) dentro do período marcado ou de uma das etapas
@@ -103,6 +105,44 @@ export const VacationView: React.FC<VacationViewProps> = ({
   // Selos de Aviso/Recibo na lista (só admin, mesma regra do botão). A lista de documentos é
   // leve (sem PDF nem imagem da assinatura), então busca uma vez ao abrir a tela; depois a tela
   // de Aviso & Recibo mantém em dia via onDocumentosChange.
+  // "Baixar assinados" da linha: Aviso e/ou Recibo assinados pelo link, já com a assinatura no
+  // documento + comprovante (gerarPdfAssinado). Um só = PDF; os dois = .zip (evita o navegador
+  // bloquear o 2º download como "vários downloads").
+  const [baixandoAssinadosId, setBaixandoAssinadosId] = useState<string | null>(null);
+  const handleBaixarAssinadosDigitais = async (f: ProgramacaoFerias, docs: DocumentoAssinatura[]) => {
+    setBaixandoAssinadosId(f.id);
+    try {
+      const cpf = colaboradores.find((c) => c.id === f.colaboradorId)?.cpf;
+      const arquivos: File[] = [];
+      for (const d of docs) {
+        const completo = (await getDocumentoAssinatura(d.id)) || d;
+        arquivos.push(await gerarPdfAssinado(completo, cpf));
+      }
+      let blob: Blob = arquivos[0];
+      let nome = arquivos[0].name;
+      if (arquivos.length > 1) {
+        const { zipSync } = await import('fflate');
+        const conteudo: Record<string, Uint8Array> = {};
+        for (const a of arquivos) conteudo[a.name] = new Uint8Array(await a.arrayBuffer());
+        blob = new Blob([zipSync(conteudo, { level: 0 })], { type: 'application/zip' });
+        nome = `Ferias_assinadas_${(docs[0].colaboradorNome || 'colaborador').replace(/\s+/g, '_')}_${docs[0].referencia}.zip`;
+      }
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      a.download = nome;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(href), 60_000);
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível gerar os documentos assinados. Tente novamente.');
+    } finally {
+      setBaixandoAssinadosId(null);
+    }
+  };
+
   useEffect(() => {
     if (userRole !== 'admin') return;
     getDocumentosAssinatura('ferias')
@@ -657,6 +697,31 @@ export const VacationView: React.FC<VacationViewProps> = ({
 
                       {/* Actions */}
                       <td className="py-3 px-4 text-right">
+                        {(() => {
+                          const assinadosDigitais =
+                            userRole === 'admin'
+                              ? documentosDaProgramacao(item, documentosFerias).filter((d) => d.status === 'Assinado')
+                              : [];
+                          if (assinadosDigitais.length === 0) return null;
+                          const baixando = baixandoAssinadosId === item.id;
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => handleBaixarAssinadosDigitais(item, assinadosDigitais)}
+                              disabled={baixando}
+                              title="Baixar o Aviso/Recibo assinados pelo colaborador (com a assinatura no documento e o comprovante)"
+                              className="px-2 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 mr-1 text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
+                            >
+                              {baixando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                              <span className="hidden lg:inline">Baixar assinados</span>
+                            </button>
+                          );
+                        })()}
+                        {/* Anexo manual (assinado no papel e escaneado): some quando a assinatura foi
+                            pelo link e não há nada anexado — continua pra quem assina no papel. */}
+                        {(item.comprovanteAssinadoUrl ||
+                          userRole !== 'admin' ||
+                          !documentosDaProgramacao(item, documentosFerias).some((d) => d.status === 'Assinado')) && (
                         <button
                           type="button"
                           onClick={() => setComprovanteFerias(item)}
@@ -676,6 +741,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
                             {item.comprovanteAssinadoUrl ? 'Comprovante' : 'Anexar'}
                           </span>
                         </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => {
