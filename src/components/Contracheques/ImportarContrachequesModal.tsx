@@ -3,13 +3,29 @@ import { X, Upload, FileText, Loader2, CheckCircle2, AlertTriangle, ScanSearch }
 import { Colaborador } from '../../types';
 import { criarDocumentoAssinatura, DocumentoAssinatura } from '../../utils/documentosAssinaturaApi';
 import {
-  PaginaIdentificada,
-  extrairTextoDasPaginas,
-  identificarPaginas,
-  agruparPorColaborador,
-  separarPaginas,
+  ParteIdentificada,
+  extrairPaginasComPosicao,
+  identificarPartes,
+  criarSeparadorDePdf,
+  chaveParte,
   formatarCompetencia,
 } from './contrachequePdfUtils';
+
+/** "Página 3" ou, quando a página tem 2+ contracheques, "Página 3 (parte de cima/de baixo)". */
+function descreverParte(p: { indice: number; parte: number; totalPartes: number }): string {
+  if (p.totalPartes <= 1) return `Página ${p.indice + 1}`;
+  if (p.totalPartes === 2) return `Página ${p.indice + 1} (${p.parte === 0 ? 'metade de cima' : 'metade de baixo'})`;
+  return `Página ${p.indice + 1} (${p.parte + 1}ª de ${p.totalPartes} partes)`;
+}
+
+function agruparPartes(partes: ParteIdentificada[]): Map<string, ParteIdentificada[]> {
+  const grupos = new Map<string, ParteIdentificada[]>();
+  partes.forEach((p) => {
+    if (!p.colaboradorId) return;
+    grupos.set(p.colaboradorId, [...(grupos.get(p.colaboradorId) || []), p]);
+  });
+  return grupos;
+}
 
 const TIPOS_CONTRACHEQUE = ['Mensal', 'Adiantamento', '13º Salário — 1ª parcela', '13º Salário — 2ª parcela', 'Férias', 'Rescisão'];
 
@@ -30,9 +46,10 @@ function competenciaPadrao(): string {
   return d.toISOString().slice(0, 7);
 }
 
-/** Importa o PDF da folha (todos os contracheques num arquivo só, um por página): lê o texto
- *  de cada página, identifica o colaborador pelo CPF/nome, mostra uma prévia pra conferir e
- *  corrigir, e só então separa as páginas e grava um documento por colaborador. */
+/** Importa o PDF da folha (todos os contracheques num arquivo só — um ou mais por página): lê o
+ *  texto de cada página, acha cada contracheque pelo CPF (e a faixa da página onde ele está),
+ *  identifica o colaborador, mostra uma prévia pra conferir e corrigir, e só então separa e
+ *  grava um documento por colaborador. */
 export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProps> = ({
   colaboradores,
   existentes,
@@ -44,7 +61,7 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
   const [competencia, setCompetencia] = useState(competenciaPadrao());
   const [tipo, setTipo] = useState(TIPOS_CONTRACHEQUE[0]);
   const [lendo, setLendo] = useState(false);
-  const [paginas, setPaginas] = useState<PaginaIdentificada[] | null>(null);
+  const [paginas, setPaginas] = useState<ParteIdentificada[] | null>(null);
   const [ignorados, setIgnorados] = useState<Set<string>>(new Set());
   const [importando, setImportando] = useState(false);
   const [progresso, setProgresso] = useState({ feito: 0, total: 0 });
@@ -59,11 +76,12 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
     [colaboradores]
   );
 
-  const grupos: Map<string, number[]> = useMemo(
-    () => (paginas ? agruparPorColaborador(paginas) : new Map<string, number[]>()),
+  const grupos: Map<string, ParteIdentificada[]> = useMemo(
+    () => (paginas ? agruparPartes(paginas) : new Map<string, ParteIdentificada[]>()),
     [paginas]
   );
   const paginasSemColaborador = paginas?.filter((p) => !p.colaboradorId) ?? [];
+  const paginasComProblema = paginasSemColaborador.filter((p) => p.problema);
 
   const jaImportado = (colaboradorId: string) =>
     existentes.some((d) => d.colaboradorId === colaboradorId && d.referencia === competencia && d.tipo === tipo);
@@ -73,14 +91,13 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
     setErro(null);
     setLendo(true);
     try {
-      const textos = await extrairTextoDasPaginas(arquivo);
-      const identificadas = identificarPaginas(textos, colaboradores);
+      const identificadas = identificarPartes(await extrairPaginasComPosicao(arquivo), colaboradores);
       setPaginas(identificadas);
       // Quem já tem contracheque dessa competência/tipo começa desmarcado — evita duplicar
       // quando a mesma folha é importada duas vezes por engano.
       setIgnorados(
         new Set(
-          Array.from(agruparPorColaborador(identificadas).keys()).filter((id) =>
+          Array.from(agruparPartes(identificadas).keys()).filter((id) =>
             existentes.some((d) => d.colaboradorId === id && d.referencia === competencia && d.tipo === tipo)
           )
         )
@@ -93,11 +110,11 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
     }
   };
 
-  const handleAtribuirPagina = (indice: number, colaboradorId: string) => {
+  const handleAtribuirPagina = (chave: string, colaboradorId: string) => {
     setPaginas((prev) =>
       prev
         ? prev.map((p) =>
-            p.indice === indice
+            chaveParte(p) === chave
               ? { ...p, colaboradorId: colaboradorId || undefined, motivo: colaboradorId ? 'manual' : undefined }
               : p
           )
@@ -125,11 +142,20 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
     const titulo = `Contracheque ${tipo} — ${formatarCompetencia(competencia)}`;
     const criados: DocumentoAssinatura[] = [];
     const falhas: string[] = [];
-    for (const [colaboradorId, indices] of aImportar) {
+    let separador: Awaited<ReturnType<typeof criarSeparadorDePdf>> | null = null;
+    try {
+      separador = await criarSeparadorDePdf(arquivo);
+    } catch (err) {
+      console.error(err);
+      setErro('Não foi possível abrir o PDF para separar os contracheques. Tente de novo.');
+      setImportando(false);
+      return;
+    }
+    for (const [colaboradorId, partes] of aImportar) {
       const nome = nomePorId.get(colaboradorId) || 'Colaborador';
       try {
         const nomeArquivo = `Contracheque_${competencia}_${nome.replace(/\s+/g, '_')}.pdf`;
-        const pdf = await separarPaginas(arquivo, indices, nomeArquivo);
+        const pdf = await separador.montar(partes, nomeArquivo);
         criados.push(
           await criarDocumentoAssinatura({
             categoria: 'contracheque',
@@ -149,6 +175,7 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
       }
       setProgresso((p) => ({ ...p, feito: p.feito + 1 }));
     }
+    await separador.fechar().catch(() => {});
     setImportando(false);
     onImportado(criados);
     if (falhas.length > 0) {
@@ -258,11 +285,12 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
           {paginas && (
             <div className="space-y-3">
               <p className="text-slate-600">
-                <strong>{paginas.length}</strong> página(s) lida(s) — <strong>{grupos.size}</strong> colaborador(es)
-                identificado(s)
+                <strong>{new Set(paginas.map((p) => p.indice)).size}</strong> página(s) lida(s),{' '}
+                <strong>{paginas.length}</strong> contracheque(s) encontrado(s) — <strong>{grupos.size}</strong>{' '}
+                colaborador(es) identificado(s)
                 {paginasSemColaborador.length > 0 && (
                   <>
-                    , <strong className="text-amber-700">{paginasSemColaborador.length} página(s) sem identificação</strong>
+                    , <strong className="text-amber-700">{paginasSemColaborador.length} sem identificação</strong>
                   </>
                 )}
                 . Confira antes de importar.
@@ -279,8 +307,8 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {Array.from(grupos.entries()).map(([id, indices]) => {
-                      const motivo = paginas.find((p) => p.indice === indices[0])?.motivo;
+                    {Array.from(grupos.entries()).map(([id, partes]) => {
+                      const motivo = partes[0]?.motivo;
                       const duplicado = jaImportado(id);
                       return (
                         <tr key={id} className={ignorados.has(id) ? 'opacity-50' : ''}>
@@ -300,7 +328,7 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
                               </span>
                             )}
                           </td>
-                          <td className="px-3 py-2 text-slate-600">{indices.map((i) => i + 1).join(', ')}</td>
+                          <td className="px-3 py-2 text-slate-600">{partes.map(descreverParte).join(', ')}</td>
                           <td className="px-3 py-2 text-slate-500">
                             {motivo === 'cpf' ? 'CPF' : motivo === 'nome' ? 'Nome' : 'Escolhido manualmente'}
                           </td>
@@ -311,22 +339,32 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
                 </table>
               </div>
 
-              {paginasSemColaborador.length > 0 && (
+              {paginasComProblema.length > 0 && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 space-y-1">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    {paginasComProblema.length} página(s) com mais de um contracheque não puderam ser separadas e NÃO serão importadas:
+                  </p>
+                  <p>{paginasComProblema.map((p) => `Página ${p.indice + 1}`).join(', ')}. Envie esses contracheques por fora ou me mande um exemplo da página para ajustar a leitura.</p>
+                </div>
+              )}
+
+              {paginasSemColaborador.some((p) => !p.problema) && (
                 <div className="space-y-2">
                   <p className="font-semibold text-amber-800 flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" />
-                    Páginas sem colaborador identificado — escolha de quem é, ou deixe em branco para não importar:
+                    Contracheques sem colaborador identificado — escolha de quem é, ou deixe em branco para não importar:
                   </p>
-                  {paginasSemColaborador.map((p) => (
-                    <div key={p.indice} className="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 bg-amber-50/50 border border-amber-200 rounded-lg">
-                      <span className="font-bold text-slate-700 shrink-0">Página {p.indice + 1}</span>
+                  {paginasSemColaborador.filter((p) => !p.problema).map((p) => (
+                    <div key={chaveParte(p)} className="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 bg-amber-50/50 border border-amber-200 rounded-lg">
+                      <span className="font-bold text-slate-700 shrink-0">{descreverParte(p)}</span>
                       <span className="text-[11px] text-slate-500 flex-1 truncate" title={p.trecho}>
-                        {p.trecho || '(página sem texto)'}
+                        {p.trecho || '(sem texto)'}
                       </span>
                       <select
                         value=""
                         disabled={importando}
-                        onChange={(e) => handleAtribuirPagina(p.indice, e.target.value)}
+                        onChange={(e) => handleAtribuirPagina(chaveParte(p), e.target.value)}
                         className="p-1.5 border border-slate-200 rounded-lg bg-white sm:w-56"
                       >
                         <option value="">Não importar</option>

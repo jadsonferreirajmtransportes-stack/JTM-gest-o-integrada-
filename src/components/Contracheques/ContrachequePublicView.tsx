@@ -72,7 +72,9 @@ const PdfEmTela: React.FC<{ url: string }> = ({ url }) => {
           canvas.style.marginBottom = '8px';
           canvas.style.background = '#fff';
           container.appendChild(canvas);
-          await pagina.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport }).promise;
+          // intent 'print' desenha de uma vez, sem depender de requestAnimationFrame (pausado
+          // quando o celular está com a aba em segundo plano).
+          await pagina.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport, intent: 'print' }).promise;
         }
         if (!cancelado) setEstado('ok');
       } catch (err) {
