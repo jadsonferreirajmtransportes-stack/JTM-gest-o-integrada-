@@ -34,6 +34,7 @@ export type SecaoDp =
   | 'vale_alimentacao'
   | 'saude'
   | 'epis'
+  | 'contracheques'
   | 'ocorrencias'
   | 'onboarding'
   | 'arquivo'

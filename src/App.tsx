@@ -240,6 +240,8 @@ import { MonthlyCostView } from './components/Cost/MonthlyCostView';
 import { VacationView } from './components/Vacation/VacationView';
 import { EpiView } from './components/Epi/EpiView';
 import { EpiPublicView } from './components/Epi/EpiPublicView';
+import { ContrachequePublicView } from './components/Contracheques/ContrachequePublicView';
+import { ContrachequesView } from './components/Contracheques/ContrachequesView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
 import { EpiFormularioLinkModal } from './components/Epi/EpiFormularioLinkModal';
 import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
@@ -625,6 +627,9 @@ export default function App() {
   const [notaPublicaToken, setNotaPublicaToken] = useState<string | undefined>(undefined);
   const [isEpiPublicaView, setIsEpiPublicaView] = useState<boolean>(false);
   const [epiPublicaToken, setEpiPublicaToken] = useState<string | undefined>(undefined);
+  // Link público de contracheque (?form=contracheque&token=...) — colaborador confere e assina.
+  const [isContrachequePublicoView, setIsContrachequePublicoView] = useState(false);
+  const [contrachequePublicoToken, setContrachequePublicoToken] = useState<string | undefined>(undefined);
   const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
   const [isEpiLinkModalOpen, setIsEpiLinkModalOpen] = useState<boolean>(false);
 
@@ -1003,6 +1008,9 @@ export default function App() {
         setIsEpiFormularioPublicoView(true);
       } else if (formParam === 'compras' || hash === '#compras') {
         setIsComprasPortalView(true);
+      } else if (formParam === 'contracheque') {
+        setIsContrachequePublicoView(true);
+        setContrachequePublicoToken(searchParams.get('token') || undefined);
       }
     }
   }, []);
@@ -2810,6 +2818,11 @@ export default function App() {
     );
   }
 
+  // Link público de contracheque (colaborador sem login confere e assina)
+  if (isContrachequePublicoView) {
+    return <ContrachequePublicView token={contrachequePublicoToken} />;
+  }
+
   // IF Public Entrega de EPI filling form is active (link genérico, ?form=epi_entrega)
   if (isEpiFormularioPublicoView) {
     return <PublicEpiEntregaView colaboradores={colaboradoresPublico} onSuccessSubmit={handleSalvarEntregaEpiPublica} />;
@@ -3421,6 +3434,10 @@ export default function App() {
               onDeleteEntrega={handleDeleteEntregaEpi}
               onOpenEpiLinkModal={() => setIsEpiLinkModalOpen(true)}
             />
+          )}
+
+          {activeGlobalModule === 'dp' && activeSection === 'contracheques' && podeVerSecaoDp(currentUser, 'contracheques') && (
+            <ContrachequesView colaboradores={colaboradores} currentUser={currentUser} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'onboarding' && podeVerSecaoDp(currentUser, 'onboarding') && (

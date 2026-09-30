@@ -32,6 +32,7 @@ export function isRotaPublica(): boolean {
     formParam === 'epi_entrega' ||
     hash === '#epi_entrega' ||
     formParam === 'compras' ||
-    hash === '#compras'
+    hash === '#compras' ||
+    formParam === 'contracheque'
   );
 }

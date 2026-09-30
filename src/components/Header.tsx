@@ -117,6 +117,10 @@ const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = 
     title: 'Programação do Vale Alimentação',
     subtitle: 'Quinzenas do ano e lançamentos por colaborador, com diárias calculadas automaticamente',
   },
+  contracheques: {
+    title: 'Contracheques',
+    subtitle: 'Importação da folha, envio por WhatsApp e assinatura digital pelo colaborador',
+  },
   onboarding: {
     title: 'Onboarding & Checklist de Admissão',
     subtitle: 'Apresentação dos Norteadores Estratégicos JMT, treinamento RDC 430 e entrega de EPIs',

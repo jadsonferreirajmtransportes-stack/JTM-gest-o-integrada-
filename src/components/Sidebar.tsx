@@ -21,6 +21,7 @@ import {
   Truck,
   ShieldCheck,
   HardHat,
+  FileSignature,
   Thermometer,
   Layers,
   FileText,
@@ -63,6 +64,7 @@ export type NavSection =
   | 'vale_alimentacao'
   | 'saude'
   | 'epis'
+  | 'contracheques'
   | 'ocorrencias'
   | 'onboarding'
   | 'arquivo'
@@ -380,6 +382,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Entrega de EPI',
       icon: HardHat,
       roles: ['admin', 'supervisor'],
+      group: 'operacional',
+    },
+    {
+      id: 'contracheques',
+      label: 'Contracheques',
+      icon: FileSignature,
+      // Só admin por padrão — contracheque tem salário de todo mundo (mesma regra de 'custos').
+      roles: ['admin'],
       group: 'operacional',
     },
     {
