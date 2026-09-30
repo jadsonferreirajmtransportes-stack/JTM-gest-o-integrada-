@@ -21,8 +21,10 @@ import {
   Phone,
   Mail,
   Printer,
+  MessageCircle,
 } from 'lucide-react';
 import { Colaborador, Empregador, Supervisor, UserRole } from '../../types';
+import { ComunicadoWhatsAppModal } from './ComunicadoWhatsAppModal';
 import {
   formatDate,
   formatMoney,
@@ -81,6 +83,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   const [selectedStatus, setSelectedStatus] = useState<string>('todos');
   const [selectedEmpregador, setSelectedEmpregador] = useState<string>('todos');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [isComunicadoAberto, setIsComunicadoAberto] = useState(false);
 
   // Extract unique sectors
   const setoresUnicos = useMemo(() => {
@@ -118,6 +121,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
 
   return (
     <div className="space-y-4">
+      {isComunicadoAberto && (
+        <ComunicadoWhatsAppModal colaboradores={filteredColaboradores} onClose={() => setIsComunicadoAberto(false)} />
+      )}
       {/* Control Bar: Filters, Search, Export, and Add */}
       <div className="bg-white p-5 rounded-3xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Filters Group */}
@@ -233,6 +239,19 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             <Download className="w-3.5 h-3.5 text-slate-500" />
             <span className="hidden sm:inline">CSV</span>
           </button>
+
+          {userRole !== 'colaborador' && !apenasInativos && (
+            <button
+              type="button"
+              onClick={() => setIsComunicadoAberto(true)}
+              disabled={filteredColaboradores.length === 0}
+              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+              title="Enviar um comunicado por WhatsApp para os colaboradores filtrados na lista"
+            >
+              <MessageCircle className="w-4 h-4 text-emerald-600" />
+              <span className="hidden sm:inline">Comunicado</span>
+            </button>
+          )}
 
           {userRole === 'admin' && (
             <button

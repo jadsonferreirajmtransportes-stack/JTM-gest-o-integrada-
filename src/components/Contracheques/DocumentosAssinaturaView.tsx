@@ -17,6 +17,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { gerarPdfAssinado } from './pdfAssinadoUtils';
+import { EnvioWhatsAppEmMassaModal } from '../Common/EnvioWhatsAppEmMassaModal';
 import { Colaborador, UsuarioLogin } from '../../types';
 import {
   CategoriaDocumentoAssinatura,
@@ -94,6 +95,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
   const [acaoEmAndamento, setAcaoEmAndamento] = useState<string | null>(null);
   const [linkCopiadoId, setLinkCopiadoId] = useState<string | null>(null);
   const [zipProgresso, setZipProgresso] = useState<{ feito: number; total: number } | null>(null);
+  const [isEnvioEmMassaAberto, setIsEnvioEmMassaAberto] = useState(false);
 
   useEffect(() => {
     getDocumentosAssinatura(categoria)
@@ -137,6 +139,8 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
   );
 
   const linkExpirado = (d: DocumentoAssinatura) => new Date(d.linkExpiraEm).getTime() < Date.now();
+  // Envio em massa: só quem ainda não assinou e tem link válido (vencido precisa renovar antes).
+  const pendentesParaEnviar = visiveis.filter((d) => d.status !== 'Assinado' && !linkExpirado(d));
 
   const mensagemWhatsApp = (d: DocumentoAssinatura) => {
     const primeiroNome = d.colaboradorNome.split(' ')[0];
@@ -368,6 +372,20 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
             </div>
             <button
               type="button"
+              onClick={() => setIsEnvioEmMassaAberto(true)}
+              disabled={pendentesParaEnviar.length === 0}
+              title={
+                pendentesParaEnviar.length === 0
+                  ? 'Nenhum documento pendente de assinatura (com link válido) nesta seleção'
+                  : `Enviar pelo WhatsApp o link de todos os ${pendentesParaEnviar.length} ainda não assinados mostrados abaixo`
+              }
+              className="px-3 py-2 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-50 shrink-0"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Enviar pendentes ({pendentesParaEnviar.length})
+            </button>
+            <button
+              type="button"
               onClick={handleBaixarTodosAssinados}
               disabled={!!zipProgresso || totais.assinados === 0}
               title={
@@ -529,6 +547,19 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
             </table>
           </div>
         </>
+      )}
+
+      {isEnvioEmMassaAberto && (
+        <EnvioWhatsAppEmMassaModal
+          titulo={`Enviar ${ehContracheque ? 'contracheques' : 'documentos de férias'} pendentes`}
+          itens={pendentesParaEnviar.map((d) => ({
+            id: d.id,
+            nome: `${d.colaboradorNome} — ${d.titulo}`,
+            telefone: colaboradorPorId.get(d.colaboradorId)?.telefoneWhatsapp,
+            mensagem: mensagemWhatsApp(d),
+          }))}
+          onClose={() => setIsEnvioEmMassaAberto(false)}
+        />
       )}
 
       {showImportar && ehContracheque && (
