@@ -167,9 +167,11 @@ export async function excluirDocumentoAssinatura(doc: DocumentoAssinatura): Prom
   await supabase.storage.from('anexos').remove([doc.arquivoRef.replace(/^storage:/, '')]);
 }
 
-export function montarLinkDocumento(token: string): string {
+/** Link público do documento. Contracheque continua em ?form=contracheque (links já enviados
+ *  usam esse); os demais (Férias) usam ?form=documento — as duas rotas abrem a mesma tela. */
+export function montarLinkDocumento(token: string, categoria: CategoriaDocumentoAssinatura = 'contracheque'): string {
   const base = `${window.location.origin}${window.location.pathname}`;
-  return `${base}?form=contracheque&token=${token}`;
+  return `${base}?form=${categoria === 'contracheque' ? 'contracheque' : 'documento'}&token=${token}`;
 }
 
 /** URL do PDF pra quem está logado (DP) visualizar — link assinado curto, gerado na hora. */

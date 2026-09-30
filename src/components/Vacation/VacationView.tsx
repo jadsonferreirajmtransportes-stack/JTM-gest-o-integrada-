@@ -20,14 +20,17 @@ import {
   Copy,
   Printer,
   Paperclip,
+  FileSignature,
 } from 'lucide-react';
 import {
   Colaborador,
   ProgramacaoFerias,
   StatusFerias,
   UserRole,
+  UsuarioLogin,
 } from '../../types';
 import { FeriasComprovanteUploader } from './FeriasComprovanteUploader';
+import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
 import {
   formatDate,
   formatMoney,
@@ -62,6 +65,7 @@ interface VacationViewProps {
   colaboradores: Colaborador[];
   feriasList: ProgramacaoFerias[];
   userRole: UserRole;
+  currentUser?: UsuarioLogin;
   onSaveFerias: (ferias: ProgramacaoFerias) => void;
   onUpdateStatusFerias: (id: string, newStatus: StatusFerias) => void;
 }
@@ -70,10 +74,14 @@ export const VacationView: React.FC<VacationViewProps> = ({
   colaboradores,
   feriasList,
   userRole,
+  currentUser,
   onSaveFerias,
   onUpdateStatusFerias,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  // Aviso/Recibo de férias pra assinatura por link — só admin (o recibo tem valores de salário,
+  // mesma regra dos Contracheques).
+  const [isDocumentosAssinaturaAberto, setIsDocumentosAssinaturaAberto] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('todos');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFerias, setEditingFerias] = useState<ProgramacaoFerias | null>(null);
@@ -294,6 +302,21 @@ export const VacationView: React.FC<VacationViewProps> = ({
             <span>Relatório PDF por Período</span>
           </button>
 
+          {userRole === 'admin' && (
+            <button
+              type="button"
+              onClick={() => setIsDocumentosAssinaturaAberto((v) => !v)}
+              className={`px-3 py-1.5 border rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                isDocumentosAssinaturaAberto
+                  ? 'bg-amber-50 text-[#92611F] border-amber-300'
+                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+              }`}
+            >
+              <FileSignature className="w-4 h-4 text-[#C48229]" />
+              <span>Aviso & Recibo p/ Assinatura</span>
+            </button>
+          )}
+
           {userRole !== 'colaborador' && (
             <button
               type="button"
@@ -306,6 +329,10 @@ export const VacationView: React.FC<VacationViewProps> = ({
           )}
         </div>
       </div>
+
+      {isDocumentosAssinaturaAberto && userRole === 'admin' && (
+        <DocumentosAssinaturaView categoria="ferias" colaboradores={colaboradores} currentUser={currentUser} compacto />
+      )}
 
       {/* Control Bar: Search & Status Filter */}
       <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">

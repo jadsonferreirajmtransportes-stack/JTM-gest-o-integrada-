@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Colaborador, UsuarioLogin } from '../../types';
 import {
+  CategoriaDocumentoAssinatura,
   DocumentoAssinatura,
   getDocumentosAssinatura,
   getDocumentoAssinatura,
@@ -26,12 +27,31 @@ import {
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { ImportarContrachequesModal } from './ImportarContrachequesModal';
-import { formatarCompetencia } from './contrachequePdfUtils';
+import { ImportarDocumentosFeriasModal } from './ImportarDocumentosFeriasModal';
+import { formatarCompetencia, formatarDataBr } from './contrachequePdfUtils';
 
-interface ContrachequesViewProps {
+interface DocumentosAssinaturaViewProps {
+  categoria: CategoriaDocumentoAssinatura;
   colaboradores: Colaborador[];
   currentUser?: UsuarioLogin;
+  /** Sem o cabeçalho grande — quando a lista aparece dentro de outra tela (ex.: Férias). */
+  compacto?: boolean;
 }
+
+const TEXTOS: Record<CategoriaDocumentoAssinatura, { titulo: string; descricao: string; importar: string; vazio: string }> = {
+  contracheque: {
+    titulo: 'Contracheques',
+    descricao: 'Importe o PDF da folha, envie o link para cada colaborador e acompanhe quem já assinou.',
+    importar: 'Importar Contracheques',
+    vazio: 'Nenhum contracheque importado ainda. Clique em Importar Contracheques e escolha o PDF da folha.',
+  },
+  ferias: {
+    titulo: 'Documentos de Férias para Assinatura',
+    descricao: 'Importe o Aviso e o Recibo de férias que a contabilidade manda, envie o link e acompanhe as assinaturas.',
+    importar: 'Importar Aviso / Recibo',
+    vazio: 'Nenhum documento de férias importado ainda. Clique em Importar Aviso / Recibo e escolha os PDFs da contabilidade.',
+  },
+};
 
 const STATUS_ESTILO: Record<DocumentoAssinatura['status'], { classe: string; icone: React.ReactNode }> = {
   Pendente: { classe: 'bg-slate-100 text-slate-600 border-slate-200', icone: <EyeOff className="w-3 h-3" /> },
@@ -44,10 +64,17 @@ function formatarDataHora(iso?: string): string {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-/** DP → Contracheques: importa o PDF da folha, envia o link de cada colaborador por WhatsApp e
- *  acompanha quem já visualizou/assinou. O colaborador assina pela tela pública
- *  (ContrachequePublicView), sem login. */
-export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaboradores, currentUser }) => {
+/** Documentos pro colaborador assinar por link — DP → Contracheques (PDF da folha) e Férias
+ *  (Aviso/Recibo da contabilidade). Importa, envia o link por WhatsApp e acompanha quem já
+ *  visualizou/assinou. O colaborador assina pela tela pública (ContrachequePublicView), sem login. */
+export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> = ({
+  categoria,
+  colaboradores,
+  currentUser,
+  compacto = false,
+}) => {
+  const textos = TEXTOS[categoria];
+  const ehContracheque = categoria === 'contracheque';
   const [documentos, setDocumentos] = useState<DocumentoAssinatura[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -60,17 +87,19 @@ export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaborado
   const [linkCopiadoId, setLinkCopiadoId] = useState<string | null>(null);
 
   useEffect(() => {
-    getDocumentosAssinatura('contracheque')
+    getDocumentosAssinatura(categoria)
       .then((lista) => {
         setDocumentos(lista);
-        if (lista.length > 0) setCompetencia(lista[0].referencia);
+        // Contracheque abre já na competência mais recente; Férias mostra tudo (cada documento
+        // tem a própria data de gozo, não há "mês da folha").
+        if (ehContracheque && lista.length > 0) setCompetencia(lista[0].referencia);
       })
       .catch((err) => {
         console.error(err);
-        setErro('Não foi possível carregar os contracheques. Verifique sua conexão.');
+        setErro('Não foi possível carregar os documentos. Verifique sua conexão.');
       })
       .finally(() => setCarregando(false));
-  }, []);
+  }, [categoria, ehContracheque]);
 
   const colaboradorPorId = useMemo(() => new Map(colaboradores.map((c) => [c.id, c])), [colaboradores]);
   const competencias = useMemo(
@@ -99,7 +128,7 @@ export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaborado
     const primeiroNome = d.colaboradorNome.split(' ')[0];
     return (
       `Olá, ${primeiroNome}! Seu ${d.titulo} já está disponível.\n\n` +
-      `Acesse o link abaixo, confira e assine (para abrir, informe seu CPF):\n${montarLinkDocumento(d.token)}\n\n` +
+      `Acesse o link abaixo, confira e assine (para abrir, informe seu CPF):\n${montarLinkDocumento(d.token, d.categoria)}\n\n` +
       `JM Transportes — Departamento Pessoal`
     );
   };
@@ -116,11 +145,11 @@ export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaborado
 
   const handleCopiarLink = async (d: DocumentoAssinatura) => {
     try {
-      await navigator.clipboard.writeText(montarLinkDocumento(d.token));
+      await navigator.clipboard.writeText(montarLinkDocumento(d.token, d.categoria));
       setLinkCopiadoId(d.id);
       setTimeout(() => setLinkCopiadoId((atual) => (atual === d.id ? null : atual)), 2000);
     } catch {
-      window.prompt('Copie o link:', montarLinkDocumento(d.token));
+      window.prompt('Copie o link:', montarLinkDocumento(d.token, d.categoria));
     }
   };
 
@@ -140,8 +169,8 @@ export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaborado
   const handleExcluir = async (d: DocumentoAssinatura) => {
     const aviso =
       d.status === 'Assinado'
-        ? `Este contracheque JÁ FOI ASSINADO por ${d.colaboradorNome}. Excluir apaga também o comprovante de assinatura. Tem certeza?`
-        : `Excluir o contracheque de ${d.colaboradorNome}? O link enviado deixa de funcionar.`;
+        ? `"${d.titulo}" JÁ FOI ASSINADO por ${d.colaboradorNome}. Excluir apaga também o comprovante de assinatura. Tem certeza?`
+        : `Excluir "${d.titulo}" de ${d.colaboradorNome}? O link enviado deixa de funcionar.`;
     if (!window.confirm(aviso)) return;
     setAcaoEmAndamento(d.id);
     try {
@@ -168,26 +197,32 @@ export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaborado
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className={compacto ? 'space-y-4' : 'space-y-6'}>
+      <div
+        className={`bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+          compacto ? 'p-4' : 'p-5'
+        }`}
+      >
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0">
-            <FileSignature className="w-6 h-6" />
+          <div
+            className={`rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0 ${
+              compacto ? 'w-10 h-10' : 'w-12 h-12'
+            }`}
+          >
+            <FileSignature className={compacto ? 'w-5 h-5' : 'w-6 h-6'} />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">Contracheques</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Importe o PDF da folha, envie o link para cada colaborador e acompanhe quem já assinou.
-            </p>
+            <h1 className={`${compacto ? 'text-sm' : 'text-xl'} font-black text-slate-900 tracking-tight`}>{textos.titulo}</h1>
+            <p className="text-xs text-slate-500 mt-0.5">{textos.descricao}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => setShowImportar(true)}
-          className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2"
+          className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0"
         >
           <Upload className="w-4 h-4" />
-          Importar Contracheques
+          {textos.importar}
         </button>
       </div>
 
@@ -199,23 +234,25 @@ export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaborado
         </div>
       ) : documentos.length === 0 ? (
         <div className="bg-white p-10 rounded-2xl border border-dashed border-slate-300 text-center text-xs text-slate-500">
-          Nenhum contracheque importado ainda. Clique em <strong>Importar Contracheques</strong> e escolha o PDF da folha.
+          {textos.vazio}
         </div>
       ) : (
         <>
           <div className="flex flex-col sm:flex-row gap-3">
-            <select
-              value={competencia}
-              onChange={(e) => setCompetencia(e.target.value)}
-              className="p-2 border border-slate-200 rounded-lg bg-white text-xs font-semibold"
-            >
-              <option value="">Todas as competências</option>
-              {competencias.map((c) => (
-                <option key={c} value={c}>
-                  {formatarCompetencia(c)}
-                </option>
-              ))}
-            </select>
+            {ehContracheque && (
+              <select
+                value={competencia}
+                onChange={(e) => setCompetencia(e.target.value)}
+                className="p-2 border border-slate-200 rounded-lg bg-white text-xs font-semibold"
+              >
+                <option value="">Todas as competências</option>
+                {competencias.map((c) => (
+                  <option key={c} value={c}>
+                    {formatarCompetencia(c)}
+                  </option>
+                ))}
+              </select>
+            )}
             <div className="relative flex-1">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input
@@ -246,7 +283,7 @@ export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaborado
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
                   <th className="px-4 py-2.5">Colaborador</th>
-                  <th className="px-3 py-2.5">Competência / Tipo</th>
+                  <th className="px-3 py-2.5">{ehContracheque ? 'Competência / Tipo' : 'Documento / Início do gozo'}</th>
                   <th className="px-3 py-2.5">Status</th>
                   <th className="px-3 py-2.5">Visualizado</th>
                   <th className="px-3 py-2.5">Assinado</th>
@@ -262,7 +299,15 @@ export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaborado
                     <tr key={d.id} className="hover:bg-slate-50/60">
                       <td className="px-4 py-2.5 font-semibold text-slate-800">{d.colaboradorNome}</td>
                       <td className="px-3 py-2.5 text-slate-600">
-                        {formatarCompetencia(d.referencia)} <span className="text-slate-400">• {d.tipo}</span>
+                        {ehContracheque ? (
+                          <>
+                            {formatarCompetencia(d.referencia)} <span className="text-slate-400">• {d.tipo}</span>
+                          </>
+                        ) : (
+                          <>
+                            {d.tipo} <span className="text-slate-400">• {formatarDataBr(d.referencia)}</span>
+                          </>
+                        )}
                       </td>
                       <td className="px-3 py-2.5">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${estilo.classe}`}>
@@ -346,7 +391,7 @@ export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaborado
         </>
       )}
 
-      {showImportar && (
+      {showImportar && ehContracheque && (
         <ImportarContrachequesModal
           colaboradores={colaboradores.filter((c) => c.status !== 'Inativo')}
           existentes={documentos}
@@ -356,6 +401,20 @@ export const ContrachequesView: React.FC<ContrachequesViewProps> = ({ colaborado
             if (novos.length === 0) return;
             setDocumentos((prev) => [...novos, ...prev]);
             setCompetencia(novos[0].referencia);
+          }}
+        />
+      )}
+      {showImportar && !ehContracheque && (
+        <ImportarDocumentosFeriasModal
+          colaboradores={colaboradores.filter((c) => c.status !== 'Inativo')}
+          existentes={documentos}
+          criadoPor={currentUser?.nome}
+          onClose={() => setShowImportar(false)}
+          onImportado={(novos) => {
+            if (novos.length === 0) return;
+            setDocumentos((prev) =>
+              [...novos, ...prev].sort((a, b) => b.referencia.localeCompare(a.referencia))
+            );
           }}
         />
       )}

@@ -113,6 +113,32 @@ export async function separarPaginas(arquivo: File, indices: number[], nomeArqui
   return new File([bytes], nomeArquivo, { type: 'application/pdf' });
 }
 
+export type TipoDocumentoFerias = 'Aviso de Férias' | 'Recibo de Férias';
+export const TIPOS_DOCUMENTO_FERIAS: TipoDocumentoFerias[] = ['Aviso de Férias', 'Recibo de Férias'];
+
+/** Aviso ou Recibo, pelo título impresso no PDF da contabilidade ("AVISO PRÉVIO DE FÉRIAS" /
+ *  "DEMONSTRATIVO DE FÉRIAS" + "RECIBO DE FÉRIAS"). */
+export function detectarTipoFerias(texto: string): TipoDocumentoFerias | undefined {
+  const t = normalizarTexto(texto);
+  if (t.includes('RECIBO DE FERIAS') || t.includes('DEMONSTRATIVO DE FERIAS')) return 'Recibo de Férias';
+  if (t.includes('AVISO PREVIO DE FERIAS') || t.includes('AVISO DE FERIAS')) return 'Aviso de Férias';
+  return undefined;
+}
+
+/** "Período de Gozo (de) 06/04/2026 a 05/05/2026" → { inicio: '2026-04-06', fim: '2026-05-05' }. */
+export function extrairPeriodoGozo(texto: string): { inicio: string; fim: string } | undefined {
+  const m = texto.match(/Per[ií]odo\s+de\s+Gozo\s*(?:de\s*)?(\d{2})\/(\d{2})\/(\d{4})\s*a\s*(\d{2})\/(\d{2})\/(\d{4})/i);
+  if (!m) return undefined;
+  return { inicio: `${m[3]}-${m[2]}-${m[1]}`, fim: `${m[6]}-${m[5]}-${m[4]}` };
+}
+
+/** 'YYYY-MM-DD' → 'DD/MM/YYYY'. */
+export function formatarDataBr(iso?: string): string {
+  if (!iso) return '';
+  const [a, m, d] = iso.split('-');
+  return d && m && a ? `${d}/${m}/${a}` : iso;
+}
+
 /** 'YYYY-MM' → 'Setembro/2026'. */
 export function formatarCompetencia(competencia: string): string {
   const [ano, mes] = competencia.split('-').map(Number);

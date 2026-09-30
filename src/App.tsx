@@ -241,7 +241,7 @@ import { VacationView } from './components/Vacation/VacationView';
 import { EpiView } from './components/Epi/EpiView';
 import { EpiPublicView } from './components/Epi/EpiPublicView';
 import { ContrachequePublicView } from './components/Contracheques/ContrachequePublicView';
-import { ContrachequesView } from './components/Contracheques/ContrachequesView';
+import { DocumentosAssinaturaView } from './components/Contracheques/DocumentosAssinaturaView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
 import { EpiFormularioLinkModal } from './components/Epi/EpiFormularioLinkModal';
 import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
@@ -630,6 +630,9 @@ export default function App() {
   // Link público de contracheque (?form=contracheque&token=...) — colaborador confere e assina.
   const [isContrachequePublicoView, setIsContrachequePublicoView] = useState(false);
   const [contrachequePublicoToken, setContrachequePublicoToken] = useState<string | undefined>(undefined);
+  // ?form=contracheque (contracheque) ou ?form=documento (Férias e demais) — só muda o título
+  // da tela antes do CPF; o documento em si vem do token.
+  const [contrachequePublicoEhContracheque, setContrachequePublicoEhContracheque] = useState(true);
   const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
   const [isEpiLinkModalOpen, setIsEpiLinkModalOpen] = useState<boolean>(false);
 
@@ -1008,9 +1011,10 @@ export default function App() {
         setIsEpiFormularioPublicoView(true);
       } else if (formParam === 'compras' || hash === '#compras') {
         setIsComprasPortalView(true);
-      } else if (formParam === 'contracheque') {
+      } else if (formParam === 'contracheque' || formParam === 'documento') {
         setIsContrachequePublicoView(true);
         setContrachequePublicoToken(searchParams.get('token') || undefined);
+        setContrachequePublicoEhContracheque(formParam === 'contracheque');
       }
     }
   }, []);
@@ -2820,7 +2824,12 @@ export default function App() {
 
   // Link público de contracheque (colaborador sem login confere e assina)
   if (isContrachequePublicoView) {
-    return <ContrachequePublicView token={contrachequePublicoToken} />;
+    return (
+      <ContrachequePublicView
+        token={contrachequePublicoToken}
+        rotulo={contrachequePublicoEhContracheque ? 'Seu contracheque' : 'Seu documento'}
+      />
+    );
   }
 
   // IF Public Entrega de EPI filling form is active (link genérico, ?form=epi_entrega)
@@ -3395,6 +3404,7 @@ export default function App() {
               colaboradores={colaboradores}
               feriasList={feriasList}
               userRole={userRole}
+              currentUser={currentUser}
               onSaveFerias={handleSaveFerias}
               onUpdateStatusFerias={handleUpdateStatusFerias}
             />
@@ -3437,7 +3447,7 @@ export default function App() {
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'contracheques' && podeVerSecaoDp(currentUser, 'contracheques') && (
-            <ContrachequesView colaboradores={colaboradores} currentUser={currentUser} />
+            <DocumentosAssinaturaView categoria="contracheque" colaboradores={colaboradores} currentUser={currentUser} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'onboarding' && podeVerSecaoDp(currentUser, 'onboarding') && (
