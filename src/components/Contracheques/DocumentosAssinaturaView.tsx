@@ -91,6 +91,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
   const [comprovante, setComprovante] = useState<DocumentoAssinatura | null>(null);
   const [acaoEmAndamento, setAcaoEmAndamento] = useState<string | null>(null);
   const [linkCopiadoId, setLinkCopiadoId] = useState<string | null>(null);
+  const [zipProgresso, setZipProgresso] = useState<{ feito: number; total: number } | null>(null);
 
   useEffect(() => {
     getDocumentosAssinatura(categoria)
@@ -195,6 +196,51 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
     }
   };
 
+  // Todos os assinados que estão na tela (competência/busca aplicadas) num .zip — um PDF assinado
+  // por colaborador, pra arquivar o mês inteiro de uma vez. Gera um por um (cada um baixa o PDF
+  // original do Storage), mostrando o progresso.
+  const handleBaixarTodosAssinados = async () => {
+    const assinados = visiveis.filter((d) => d.status === 'Assinado');
+    if (assinados.length === 0) return;
+    setZipProgresso({ feito: 0, total: assinados.length });
+    const arquivos: Record<string, Uint8Array> = {};
+    const falhas: string[] = [];
+    for (const d of assinados) {
+      try {
+        const completo = (await getDocumentoAssinatura(d.id)) || d;
+        const pdf = await gerarPdfAssinado(completo, colaboradorPorId.get(d.colaboradorId)?.cpf);
+        let nome = pdf.name;
+        for (let n = 2; arquivos[nome]; n++) nome = pdf.name.replace(/\.pdf$/i, `_${n}.pdf`);
+        arquivos[nome] = new Uint8Array(await pdf.arrayBuffer());
+      } catch (err) {
+        console.error(err);
+        falhas.push(d.colaboradorNome);
+      }
+      setZipProgresso((p) => (p ? { ...p, feito: p.feito + 1 } : p));
+    }
+    try {
+      if (Object.keys(arquivos).length > 0) {
+        const { zipSync } = await import('fflate');
+        // PDF já é comprimido — level 0 só empacota, bem mais rápido e do mesmo tamanho.
+        const zip = zipSync(arquivos, { level: 0 });
+        const sufixo = ehContracheque && competencia ? competencia : new Date().toISOString().slice(0, 10);
+        const href = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
+        const a = document.createElement('a');
+        a.href = href;
+        a.download = `${ehContracheque ? 'Contracheques' : 'Ferias'}_assinados_${sufixo}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(href), 60_000);
+      }
+      if (falhas.length > 0) {
+        alert(`Não foi possível incluir no arquivo: ${falhas.join(', ')}. Tente baixar esses individualmente.`);
+      }
+    } finally {
+      setZipProgresso(null);
+    }
+  };
+
   // PDF original + página de comprovante da assinatura eletrônica (ver pdfAssinadoUtils.ts).
   const handleBaixarAssinado = async (d: DocumentoAssinatura) => {
     setAcaoEmAndamento(d.id);
@@ -295,6 +341,22 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
                 className="w-full pl-8 p-2 border border-slate-200 rounded-lg text-xs"
               />
             </div>
+            <button
+              type="button"
+              onClick={handleBaixarTodosAssinados}
+              disabled={!!zipProgresso || totais.assinados === 0}
+              title={
+                totais.assinados === 0
+                  ? 'Nenhum documento assinado nesta seleção'
+                  : `Baixa um .zip com os ${totais.assinados} documento(s) assinado(s) mostrados abaixo`
+              }
+              className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-50 shrink-0"
+            >
+              {zipProgresso ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              {zipProgresso
+                ? `Gerando ${zipProgresso.feito} de ${zipProgresso.total}...`
+                : `Baixar todos assinados (${totais.assinados})`}
+            </button>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
