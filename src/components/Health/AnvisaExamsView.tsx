@@ -102,6 +102,28 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
 
   // Lightbox
   const [viewingAso, setViewingAso] = useState<{ url: string; name: string; colabName: string } | null>(null);
+  const [carregandoAsoId, setCarregandoAsoId] = useState<string | null>(null);
+
+  const handleVerAso = async (colabLeve: Colaborador) => {
+    setCarregandoAsoId(colabLeve.id);
+    try {
+      const url = colabLeve.asoImagemUrl || (await onCarregarColaboradorCompleto(colabLeve.id))?.asoImagemUrl;
+      if (!url) {
+        alert('O arquivo do ASO não foi encontrado no cadastro deste colaborador.');
+        return;
+      }
+      setViewingAso({
+        url,
+        name: colabLeve.asoNomeArquivo || 'ASO_Digitalizado.png',
+        colabName: colabLeve.nomeCompleto,
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível abrir o ASO. Tente novamente.');
+    } finally {
+      setCarregandoAsoId(null);
+    }
+  };
 
   // Comunicar agendamento do exame (WhatsApp/e-mail) — mesmo padrão já usado em Férias.
   const [agendamentoCopiado, setAgendamentoCopiado] = useState(false);
@@ -531,20 +553,19 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                       </td>
 
                       <td className="py-3 px-3">
-                        {c.asoImagemUrl ? (
+                        {/* A lista vem da versão leve dos colaboradores (sem o arquivo do ASO —
+                            ver getColaboradoresResumo), então asoImagemUrl chega sempre vazio
+                            aqui; o nome do arquivo é que indica se há comprovante, e o arquivo
+                            em si é buscado só ao clicar. */}
+                        {c.asoNomeArquivo || c.asoImagemUrl ? (
                           <button
                             type="button"
-                            onClick={() =>
-                              setViewingAso({
-                                url: c.asoImagemUrl!,
-                                name: c.asoNomeArquivo || 'ASO_Digitalizado.png',
-                                colabName: c.nomeCompleto,
-                              })
-                            }
-                            className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-md font-bold text-[10px] transition-colors"
+                            onClick={() => handleVerAso(c)}
+                            disabled={carregandoAsoId === c.id}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-md font-bold text-[10px] transition-colors disabled:opacity-60"
                           >
                             <Eye className="w-3 h-3 text-amber-700" />
-                            <span>Ver ASO</span>
+                            <span>{carregandoAsoId === c.id ? 'Abrindo...' : 'Ver ASO'}</span>
                           </button>
                         ) : (
                           <span className="text-slate-400 text-[10px] italic">Sem anexo</span>
