@@ -65,26 +65,55 @@ export interface CampoAssinatura {
   y: number;
   largura: number;
   altura: number;
+  /** Campo "Data e Assinatura" — escreve a data da assinatura: no espaço "___/___/____" do
+   *  próprio documento quando existe (dataX/dataLargura), senão no começo da linha. */
+  comData?: boolean;
+  dataX?: number;
+  dataLargura?: number;
 }
+
+// "Data e Assinatura" / "Assinatura" com a linha À DIREITA do rótulo, na mesma altura — é o
+// formato do "Recibo de Pagamento" da folha da contabilidade (campo no topo de cada contracheque).
+const REGEX_ROTULO_ASSINATURA_AO_LADO = /^(DATA E )?ASSINATURA( D[OA] (EMPREGAD[OA]|FUNCIONARI[OA]|COLABORADOR(A)?))?$/;
 
 // "Empregado", "Assinatura do Empregado", "Funcionário", "Assinatura do Colaborador"... — o
 // rótulo que fica EMBAIXO da linha onde o colaborador assina. "Empregador" e "Responsável"
 // (menor de idade) ficam de fora de propósito.
 const REGEX_ROTULO_ASSINATURA = /^(ASSINATURA D[OA] )?(EMPREGAD[OA]|FUNCIONARI[OA]|COLABORADOR(A)?)$/;
 
-/** Acha as linhas "______" de assinatura do empregado numa página: uma linha de sublinhados
- *  com o rótulo do empregado logo abaixo (até ~25pt) e centralizado nela. O "Empregado :" do
- *  cabeçalho não tem linha em cima, então não conta. Devolve a área logo acima da linha. */
+/** Acha as linhas "______" de assinatura do empregado numa página, nos dois formatos que a
+ *  contabilidade usa: (1) rótulo do empregado logo ABAIXO da linha e centralizado nela (Aviso e
+ *  Recibo de Férias) — o "Empregado :" do cabeçalho não tem linha em cima, então não conta; (2)
+ *  rótulo "Data e Assinatura" com a linha À DIREITA, na mesma altura (contracheque). Devolve a
+ *  área logo acima de cada linha. */
 export function acharCamposAssinatura(itens: ItemTextoPdf[]): Omit<CampoAssinatura, 'pagina'>[] {
   const linhas = itens.filter((it) => /_{8,}/.test(it.str) && it.w > 60);
-  const rotulos = itens.filter((it) => REGEX_ROTULO_ASSINATURA.test(normalizarTexto(it.str)));
+  // Espaço de data "___/___/____" (no contracheque fica na mesma altura da linha, à esquerda).
+  const espacosData = itens.filter((it) => /_+\s*\/\s*_+\s*\/\s*_+/.test(it.str));
   const campos: Omit<CampoAssinatura, 'pagina'>[] = [];
-  rotulos.forEach((r) => {
-    const centro = r.x + r.w / 2;
-    const linha = linhas
-      .filter((l) => l.y > r.y && l.y - r.y <= 25 && centro >= l.x && centro <= l.x + l.w)
-      .sort((a, b) => a.y - b.y)[0];
-    if (!linha) return;
+  const encontradas: { linha: ItemTextoPdf; comData: boolean }[] = [];
+
+  itens
+    .filter((it) => REGEX_ROTULO_ASSINATURA.test(normalizarTexto(it.str)))
+    .forEach((r) => {
+      const centro = r.x + r.w / 2;
+      const linha = linhas
+        .filter((l) => l.y > r.y && l.y - r.y <= 25 && centro >= l.x && centro <= l.x + l.w)
+        .sort((a, b) => a.y - b.y)[0];
+      if (linha) encontradas.push({ linha, comData: false });
+    });
+
+  itens
+    .filter((it) => REGEX_ROTULO_ASSINATURA_AO_LADO.test(normalizarTexto(it.str)))
+    .forEach((r) => {
+      const fimRotulo = r.x + r.w;
+      const linha = linhas
+        .filter((l) => l.x >= fimRotulo - 5 && l.x - fimRotulo <= 40 && Math.abs(l.y - r.y) <= 15)
+        .sort((a, b) => a.x - b.x)[0];
+      if (linha) encontradas.push({ linha, comData: /DATA/.test(normalizarTexto(r.str)) });
+    });
+
+  encontradas.forEach(({ linha, comData }) => {
     if (campos.some((c) => Math.abs(c.x - linha.x) < 1 && Math.abs(c.y - (linha.y + 1)) < 1)) return;
     // Altura limitada pelo texto logo acima da linha (na mesma faixa horizontal) — sem isso a
     // assinatura cobria o parágrafo de cima (caso do Recibo de Férias, com a linha colada no
@@ -92,9 +121,21 @@ export function acharCamposAssinatura(itens: ItemTextoPdf[]): Omit<CampoAssinatu
     const textoAcima = itens
       .filter((it) => it.y > linha.y + 1 && it.str.trim() && !/_{8,}/.test(it.str) && it.x < linha.x + linha.w && it.x + it.w > linha.x)
       .sort((a, b) => a.y - b.y)[0];
-    const espacoLivre = textoAcima ? textoAcima.y - linha.y - 4 : 40;
+    // Sem texto acima (ex.: linha no alto do quadro do contracheque), 24pt — mais que isso passava
+    // da borda do quadro.
+    const espacoLivre = textoAcima ? textoAcima.y - linha.y - 4 : 24;
     const altura = Math.max(16, Math.min(34, espacoLivre));
-    campos.push({ x: linha.x, y: linha.y + 1, largura: linha.w, altura });
+    const espacoData = comData
+      ? espacosData.find((d) => Math.abs(d.y - linha.y) <= 5 && d.x < linha.x && linha.x - (d.x + d.w) <= 40)
+      : undefined;
+    campos.push({
+      x: linha.x,
+      y: linha.y + 1,
+      largura: linha.w,
+      altura,
+      ...(comData ? { comData: true } : {}),
+      ...(espacoData ? { dataX: espacoData.x, dataLargura: espacoData.w } : {}),
+    });
   });
   return campos;
 }
@@ -180,6 +221,10 @@ export interface ParteIdentificada {
   colaboradorId?: string;
   motivo?: 'cpf' | 'nome' | 'manual';
   trecho: string;
+  /** Competência lida do próprio contracheque ('YYYY-MM'), quando ele traz ("Janeiro de 2026"). */
+  competencia?: string;
+  /** Tipo lido do cabeçalho ("( Folha de Pagamento )" → Mensal), quando dá pra reconhecer. */
+  tipo?: string;
   /** Preenchido quando a página tem mais de um contracheque mas não deu pra separar com
    *  segurança — nesse caso a página NÃO é atribuída sozinha a ninguém. */
   problema?: string;
@@ -187,14 +232,42 @@ export interface ParteIdentificada {
 
 const REGEX_CPF = /(?<![\d./-])\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?![\d./-])/g;
 
+const MESES_NORMALIZADOS = [
+  'JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO',
+  'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
+];
+
+/** "Janeiro de 2026" (em qualquer lugar do texto) → '2026-01'. */
+function extrairCompetencia(texto: string): string | undefined {
+  const m = normalizarTexto(texto).match(new RegExp(`\\b(${MESES_NORMALIZADOS.join('|')}) DE (\\d{4})\\b`));
+  if (!m) return undefined;
+  return `${m[2]}-${String(MESES_NORMALIZADOS.indexOf(m[1]) + 1).padStart(2, '0')}`;
+}
+
+/** Tipo do contracheque pelo texto entre parênteses do cabeçalho ("( Folha de Pagamento )",
+ *  "( Adiantamento de 13º Salário )"...) — mesmos nomes da lista de tipos da importação. */
+function extrairTipoContracheque(texto: string): string | undefined {
+  const m = texto.match(/\(\s*([^()]{4,60}?)\s*\)/);
+  if (!m) return undefined;
+  const t = normalizarTexto(m[1]);
+  if (t.includes('13')) return t.includes('ADIANTAMENTO') || t.includes('1A PARCELA') ? '13º Salário — 1ª parcela' : '13º Salário — 2ª parcela';
+  if (t.includes('ADIANTAMENTO')) return 'Adiantamento';
+  if (t.includes('FERIAS')) return 'Férias';
+  if (t.includes('RESCIS')) return 'Rescisão';
+  if (t.includes('FOLHA') || t.includes('MENSAL')) return 'Mensal';
+  return undefined;
+}
+
 export function chaveParte(p: { indice: number; parte: number }): string {
   return `${p.indice}:${p.parte}`;
 }
 
-/** Quantos contracheques há em cada página (= quantos CPFs diferentes aparecem nela) e de quem
- *  é cada faixa. Se os CPFs não caírem um em cada faixa igual da página, não arrisca separar:
- *  marca a página com `problema` pra revisão manual — atribuir uma página com 2 pessoas a uma
- *  só mandaria o salário de um colaborador pro outro. */
+/** Quantos contracheques há em cada página e de quem é cada faixa. Cada cabeçalho "Recibo de
+ *  Pagamento" é um contracheque — mesmo quando os dois da página são da MESMA pessoa (arquivo
+ *  do ano, com um mês em cima e outro embaixo); sem esse título, conta os CPFs diferentes. Se os
+ *  contracheques não caírem um em cada faixa igual da página, não arrisca separar: marca a página
+ *  com `problema` — atribuir uma página com 2 pessoas a uma só mandaria o salário de um
+ *  colaborador pro outro. */
 export function identificarPartes(paginas: PaginaComPosicao[], colaboradores: Colaborador[]): ParteIdentificada[] {
   const porCpf = new Map<string, Colaborador>();
   colaboradores.forEach((c) => {
@@ -221,13 +294,32 @@ export function identificarPartes(paginas: PaginaComPosicao[], colaboradores: Co
         cpfs.set(d, Math.max(cpfs.get(d) ?? -Infinity, it.y));
       });
     });
-    const blocos = Array.from(cpfs.entries())
-      .map(([digitos, y]) => ({ digitos, y }))
+    const cabecalhos = pagina.itens
+      .filter((it) => normalizarTexto(it.str) === 'RECIBO DE PAGAMENTO')
+      .map((it) => ({ y: it.y }))
       .sort((a, b) => b.y - a.y);
+    const blocos: { y: number }[] =
+      cabecalhos.length > 0
+        ? cabecalhos
+        : Array.from(cpfs.values())
+            .map((y) => ({ y }))
+            .sort((a, b) => b.y - a.y);
+
+    // CPF conhecido dentro de um trecho da página (o primeiro que bater com o cadastro).
+    const colaboradorPorCpfNaFaixa = (topo: number, base: number) => {
+      for (const it of pagina.itens) {
+        if (it.y > topo || it.y <= base) continue;
+        for (const cpf of it.str.match(REGEX_CPF) || []) {
+          const c = porCpf.get(soDigitos(cpf));
+          if (c) return c;
+        }
+      }
+      return undefined;
+    };
 
     if (blocos.length <= 1) {
       const trecho = pagina.texto.replace(/\s+/g, ' ').trim().slice(0, 160);
-      const porCpfUnico = blocos[0] ? porCpf.get(blocos[0].digitos) : undefined;
+      const porCpfUnico = colaboradorPorCpfNaFaixa(Infinity, -Infinity);
       const colaborador = porCpfUnico || acharPorNome(pagina.texto);
       resultado.push({
         indice,
@@ -236,13 +328,19 @@ export function identificarPartes(paginas: PaginaComPosicao[], colaboradores: Co
         colaboradorId: colaborador?.id,
         motivo: colaborador ? (porCpfUnico ? 'cpf' : 'nome') : undefined,
         trecho,
+        competencia: extrairCompetencia(pagina.texto),
+        tipo: extrairTipoContracheque(pagina.texto),
       });
       return;
     }
 
     const total = blocos.length;
     const faixa = pagina.altura / total;
-    const cadaUmNaSuaFaixa = blocos.every((b, k) => b.y <= pagina.altura - k * faixa && b.y > pagina.altura - (k + 1) * faixa);
+    // Mais CPFs diferentes do que contracheques na página = algo fora do padrão (ex.: cabeçalho
+    // que não foi lido) — não separa sozinho.
+    const cadaUmNaSuaFaixa =
+      cpfs.size <= total &&
+      blocos.every((b, k) => b.y <= pagina.altura - k * faixa && b.y > pagina.altura - (k + 1) * faixa);
     if (!cadaUmNaSuaFaixa) {
       resultado.push({
         indice,
@@ -254,14 +352,14 @@ export function identificarPartes(paginas: PaginaComPosicao[], colaboradores: Co
       return;
     }
 
-    blocos.forEach((b, k) => {
+    blocos.forEach((_, k) => {
       const topo = pagina.altura - k * faixa;
       const base = topo - faixa;
       const textoFaixa = pagina.itens
         .filter((it) => it.y <= topo && it.y > base)
         .map((it) => it.str)
         .join(' ');
-      const porCpfDaFaixa = porCpf.get(b.digitos);
+      const porCpfDaFaixa = colaboradorPorCpfNaFaixa(topo, base);
       const colaborador = porCpfDaFaixa || acharPorNome(textoFaixa);
       resultado.push({
         indice,
@@ -270,6 +368,8 @@ export function identificarPartes(paginas: PaginaComPosicao[], colaboradores: Co
         colaboradorId: colaborador?.id,
         motivo: colaborador ? (porCpfDaFaixa ? 'cpf' : 'nome') : undefined,
         trecho: textoFaixa.replace(/\s+/g, ' ').trim().slice(0, 160),
+        competencia: extrairCompetencia(textoFaixa),
+        tipo: extrairTipoContracheque(textoFaixa),
       });
     });
   });

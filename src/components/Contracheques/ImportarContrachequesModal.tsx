@@ -20,13 +20,39 @@ function descreverParte(p: { indice: number; parte: number; totalPartes: number 
   return `Página ${p.indice + 1} (${p.parte + 1}ª de ${p.totalPartes} partes)`;
 }
 
-function agruparPartes(partes: ParteIdentificada[]): Map<string, ParteIdentificada[]> {
-  const grupos = new Map<string, ParteIdentificada[]>();
+/** Um documento a importar = um colaborador + uma competência + um tipo. O arquivo da folha pode
+ *  ser só do mês ou do ANO inteiro (vários meses de cada pessoa, um contracheque por metade de
+ *  página) — cada mês vira um documento próprio pra assinar. */
+interface GrupoContracheque {
+  chave: string;
+  colaboradorId: string;
+  competencia: string;
+  tipo: string;
+  /** true quando competência/tipo vieram do próprio contracheque (e não do padrão do formulário). */
+  lidoDoPdf: boolean;
+  partes: ParteIdentificada[];
+}
+
+function agruparPartes(partes: ParteIdentificada[], competenciaPadrao: string, tipoPadrao: string): GrupoContracheque[] {
+  const grupos = new Map<string, GrupoContracheque>();
   partes.forEach((p) => {
     if (!p.colaboradorId) return;
-    grupos.set(p.colaboradorId, [...(grupos.get(p.colaboradorId) || []), p]);
+    const competencia = p.competencia || competenciaPadrao;
+    const tipo = p.tipo || tipoPadrao;
+    const chave = `${p.colaboradorId}|${competencia}|${tipo}`;
+    const existente = grupos.get(chave);
+    if (existente) existente.partes.push(p);
+    else
+      grupos.set(chave, {
+        chave,
+        colaboradorId: p.colaboradorId,
+        competencia,
+        tipo,
+        lidoDoPdf: !!p.competencia,
+        partes: [p],
+      });
   });
-  return grupos;
+  return Array.from(grupos.values());
 }
 
 const TIPOS_CONTRACHEQUE = ['Mensal', 'Adiantamento', '13º Salário — 1ª parcela', '13º Salário — 2ª parcela', 'Férias', 'Rescisão'];
@@ -40,7 +66,7 @@ interface ImportarContrachequesModalProps {
   onImportado: (novos: DocumentoAssinatura[]) => void;
 }
 
-function competenciaPadrao(): string {
+function competenciaPadraoInicial(): string {
   // Folha costuma ser importada no começo do mês seguinte — sugere o mês anterior.
   const d = new Date();
   d.setDate(1);
@@ -48,10 +74,11 @@ function competenciaPadrao(): string {
   return d.toISOString().slice(0, 7);
 }
 
-/** Importa o PDF da folha (todos os contracheques num arquivo só — um ou mais por página): lê o
- *  texto de cada página, acha cada contracheque pelo CPF (e a faixa da página onde ele está),
- *  identifica o colaborador, mostra uma prévia pra conferir e corrigir, e só então separa e
- *  grava um documento por colaborador. */
+/** Importa o PDF da folha (um ou mais contracheques por página, de um mês ou do ano inteiro): lê
+ *  o texto de cada página, acha cada contracheque (cabeçalho "Recibo de Pagamento") e a faixa da
+ *  página onde ele está, identifica o colaborador pelo CPF/nome e a competência/tipo pelo próprio
+ *  contracheque, mostra uma prévia pra conferir e corrigir, e só então separa e grava um
+ *  documento por colaborador + competência + tipo. */
 export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProps> = ({
   colaboradores,
   existentes,
@@ -60,7 +87,8 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
   onImportado,
 }) => {
   const [arquivo, setArquivo] = useState<File | null>(null);
-  const [competencia, setCompetencia] = useState(competenciaPadrao());
+  // Usados só quando o contracheque não informa a competência/o tipo no próprio texto.
+  const [competencia, setCompetencia] = useState(competenciaPadraoInicial());
   const [tipo, setTipo] = useState(TIPOS_CONTRACHEQUE[0]);
   const [lendo, setLendo] = useState(false);
   const [paginas, setPaginas] = useState<ParteIdentificada[] | null>(null);
@@ -68,6 +96,8 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
   // assinatura do empregado de cada contracheque (camposDasPartes).
   const [paginasPdf, setPaginasPdf] = useState<PaginaComPosicao[]>([]);
   const [ignorados, setIgnorados] = useState<Set<string>>(new Set());
+  // Arquivo do ano inteiro: importar só uma competência ('' = todas).
+  const [somenteCompetencia, setSomenteCompetencia] = useState('');
   const [importando, setImportando] = useState(false);
   const [progresso, setProgresso] = useState({ feito: 0, total: 0 });
   const [erro, setErro] = useState<string | null>(null);
@@ -81,15 +111,27 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
     [colaboradores]
   );
 
-  const grupos: Map<string, ParteIdentificada[]> = useMemo(
-    () => (paginas ? agruparPartes(paginas) : new Map<string, ParteIdentificada[]>()),
-    [paginas]
+  const grupos: GrupoContracheque[] = useMemo(
+    () => (paginas ? agruparPartes(paginas, competencia, tipo) : []),
+    [paginas, competencia, tipo]
   );
+  const competenciasNoArquivo: string[] = useMemo(
+    () => Array.from(new Set(grupos.map((g) => g.competencia))).sort(),
+    [grupos]
+  );
+  const gruposVisiveis = grupos
+    .filter((g) => !somenteCompetencia || g.competencia === somenteCompetencia)
+    .sort(
+      (a, b) =>
+        (nomePorId.get(a.colaboradorId) || '').localeCompare(nomePorId.get(b.colaboradorId) || '') ||
+        a.competencia.localeCompare(b.competencia)
+    );
+  const algumSemCompetenciaNoPdf = grupos.some((g) => !g.lidoDoPdf);
   const paginasSemColaborador = paginas?.filter((p) => !p.colaboradorId) ?? [];
   const paginasComProblema = paginasSemColaborador.filter((p) => p.problema);
 
-  const jaImportado = (colaboradorId: string) =>
-    existentes.some((d) => d.colaboradorId === colaboradorId && d.referencia === competencia && d.tipo === tipo);
+  const jaImportado = (g: { colaboradorId: string; competencia: string; tipo: string }) =>
+    existentes.some((d) => d.colaboradorId === g.colaboradorId && d.referencia === g.competencia && d.tipo === g.tipo);
 
   const handleLer = async () => {
     if (!arquivo) return;
@@ -100,15 +142,10 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
       const identificadas = identificarPartes(lidas, colaboradores);
       setPaginasPdf(lidas);
       setPaginas(identificadas);
+      setSomenteCompetencia('');
       // Quem já tem contracheque dessa competência/tipo começa desmarcado — evita duplicar
       // quando a mesma folha é importada duas vezes por engano.
-      setIgnorados(
-        new Set(
-          Array.from(agruparPartes(identificadas).keys()).filter((id) =>
-            existentes.some((d) => d.colaboradorId === id && d.referencia === competencia && d.tipo === tipo)
-          )
-        )
-      );
+      setIgnorados(new Set(agruparPartes(identificadas, competencia, tipo).filter(jaImportado).map((g) => g.chave)));
     } catch (err) {
       console.error(err);
       setErro('Não foi possível ler este PDF. Confira se é o arquivo da folha (PDF com texto, não uma foto/escaneado).');
@@ -129,16 +166,16 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
     );
   };
 
-  const alternarIgnorado = (colaboradorId: string) => {
+  const alternarIgnorado = (chave: string) => {
     setIgnorados((prev) => {
       const novo = new Set(prev);
-      if (novo.has(colaboradorId)) novo.delete(colaboradorId);
-      else novo.add(colaboradorId);
+      if (novo.has(chave)) novo.delete(chave);
+      else novo.add(chave);
       return novo;
     });
   };
 
-  const aImportar = Array.from(grupos.entries()).filter(([id]) => !ignorados.has(id));
+  const aImportar = gruposVisiveis.filter((g) => !ignorados.has(g.chave));
 
   const handleImportar = async () => {
     if (!arquivo || aImportar.length === 0) return;
@@ -146,7 +183,6 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
     setImportando(true);
     setProgresso({ feito: 0, total: aImportar.length });
     const loteId = `lote-${Date.now()}`;
-    const titulo = `Contracheque ${tipo} — ${formatarCompetencia(competencia)}`;
     const criados: DocumentoAssinatura[] = [];
     const falhas: string[] = [];
     let separador: Awaited<ReturnType<typeof criarSeparadorDePdf>> | null = null;
@@ -158,28 +194,28 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
       setImportando(false);
       return;
     }
-    for (const [colaboradorId, partes] of aImportar) {
-      const nome = nomePorId.get(colaboradorId) || 'Colaborador';
+    for (const g of aImportar) {
+      const nome = nomePorId.get(g.colaboradorId) || 'Colaborador';
       try {
-        const nomeArquivo = `Contracheque_${competencia}_${nome.replace(/\s+/g, '_')}.pdf`;
-        const pdf = await separador.montar(partes, nomeArquivo);
+        const nomeArquivo = `Contracheque_${g.competencia}_${nome.replace(/\s+/g, '_')}.pdf`;
+        const pdf = await separador.montar(g.partes, nomeArquivo);
         criados.push(
           await criarDocumentoAssinatura({
             categoria: 'contracheque',
-            colaboradorId,
+            colaboradorId: g.colaboradorId,
             colaboradorNome: nome,
-            referencia: competencia,
-            tipo,
-            titulo,
+            referencia: g.competencia,
+            tipo: g.tipo,
+            titulo: `Contracheque ${g.tipo} — ${formatarCompetencia(g.competencia)}`,
             arquivo: pdf,
-            camposAssinatura: camposDasPartes(paginasPdf, partes),
+            camposAssinatura: camposDasPartes(paginasPdf, g.partes),
             loteId,
             criadoPor,
           })
         );
       } catch (err) {
         console.error(err);
-        falhas.push(nome);
+        falhas.push(`${nome} (${formatarCompetencia(g.competencia)})`);
       }
       setProgresso((p) => ({ ...p, feito: p.feito + 1 }));
     }
@@ -188,7 +224,7 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
     onImportado(criados);
     if (falhas.length > 0) {
       setErro(
-        `${criados.length} importado(s). Não foi possível importar: ${falhas.join(', ')}. Tente importar de novo só esses (os já importados ficam desmarcados).`
+        `${criados.length} importado(s). Não foi possível importar: ${falhas.join(', ')}. Leia o PDF de novo e importe só esses (os já importados ficam desmarcados).`
       );
       setPaginas(null);
     } else {
@@ -215,10 +251,10 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
-          {/* Passo 1: arquivo, competência e tipo */}
+          {/* Passo 1: arquivo (+ competência/tipo padrão, pra contracheque que não informa) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-3">
-              <label className="font-semibold text-slate-700 block mb-1">PDF da folha (todos os contracheques)</label>
+              <label className="font-semibold text-slate-700 block mb-1">PDF da folha (do mês ou do ano inteiro)</label>
               <label className="flex items-center gap-2 p-3 border-2 border-dashed border-amber-300 hover:border-[#C48229] bg-amber-50/40 rounded-lg cursor-pointer">
                 <FileText className="w-4 h-4 text-[#C48229] shrink-0" />
                 <span className="truncate font-semibold text-slate-700">
@@ -237,37 +273,39 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
                 />
               </label>
             </div>
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">Competência</label>
-              <input
-                type="month"
-                value={competencia}
-                disabled={importando}
-                onChange={(e) => {
-                  setCompetencia(e.target.value);
-                  setPaginas(null);
-                }}
-                className="w-full p-2 border border-slate-200 rounded-lg"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="font-semibold text-slate-700 block mb-1">Tipo</label>
-              <select
-                value={tipo}
-                disabled={importando}
-                onChange={(e) => {
-                  setTipo(e.target.value);
-                  setPaginas(null);
-                }}
-                className="w-full p-2 border border-slate-200 rounded-lg bg-white"
-              >
-                {TIPOS_CONTRACHEQUE.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {(!paginas || algumSemCompetenciaNoPdf) && (
+              <>
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Competência</label>
+                  <input
+                    type="month"
+                    value={competencia}
+                    disabled={importando}
+                    onChange={(e) => setCompetencia(e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="font-semibold text-slate-700 block mb-1">Tipo</label>
+                  <select
+                    value={tipo}
+                    disabled={importando}
+                    onChange={(e) => setTipo(e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg bg-white"
+                  >
+                    {TIPOS_CONTRACHEQUE.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p className="sm:col-span-3 text-[11px] text-slate-500 -mt-1">
+                  Só são usados quando o contracheque não informa a competência e o tipo — normalmente o sistema lê do
+                  próprio PDF ("Competência: Janeiro de 2026", "Folha de Pagamento").
+                </p>
+              </>
+            )}
           </div>
 
           {!paginas && (
@@ -294,8 +332,14 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
             <div className="space-y-3">
               <p className="text-slate-600">
                 <strong>{new Set(paginas.map((p) => p.indice)).size}</strong> página(s) lida(s),{' '}
-                <strong>{paginas.length}</strong> contracheque(s) encontrado(s) — <strong>{grupos.size}</strong>{' '}
-                colaborador(es) identificado(s)
+                <strong>{paginas.length}</strong> contracheque(s) encontrado(s) de{' '}
+                <strong>{new Set(grupos.map((g) => g.colaboradorId)).size}</strong> colaborador(es)
+                {competenciasNoArquivo.length > 1 && (
+                  <>
+                    {' '}
+                    em <strong>{competenciasNoArquivo.length}</strong> competências
+                  </>
+                )}
                 {paginasSemColaborador.length > 0 && (
                   <>
                     , <strong className="text-amber-700">{paginasSemColaborador.length} sem identificação</strong>
@@ -304,39 +348,64 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
                 . Confira antes de importar.
               </p>
 
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-slate-50 text-left text-slate-500">
+              {competenciasNoArquivo.length > 1 && (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 bg-amber-50/50 border border-amber-200 rounded-lg">
+                  <span className="font-semibold text-slate-700 shrink-0">Importar só:</span>
+                  <select
+                    value={somenteCompetencia}
+                    disabled={importando}
+                    onChange={(e) => setSomenteCompetencia(e.target.value)}
+                    className="p-1.5 border border-slate-200 rounded-lg bg-white sm:w-56 font-semibold"
+                  >
+                    <option value="">Todas as competências do arquivo</option>
+                    {competenciasNoArquivo.map((c) => (
+                      <option key={c} value={c}>
+                        {formatarCompetencia(c)}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-[11px] text-slate-500">
+                    O arquivo tem vários meses — escolha o mês que quer enviar agora.
+                  </span>
+                </div>
+              )}
+
+              <div className="border border-slate-200 rounded-xl overflow-x-auto max-h-[45vh] overflow-y-auto">
+                <table className="w-full min-w-[560px]">
+                  <thead className="bg-slate-50 text-left text-slate-500 sticky top-0">
                     <tr>
                       <th className="px-3 py-2 w-8"></th>
                       <th className="px-3 py-2">Colaborador</th>
-                      <th className="px-3 py-2">Página(s)</th>
+                      <th className="px-3 py-2">Competência / Tipo</th>
+                      <th className="px-3 py-2">Página</th>
                       <th className="px-3 py-2">Identificado por</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {Array.from(grupos.entries()).map(([id, partes]) => {
-                      const motivo = partes[0]?.motivo;
-                      const duplicado = jaImportado(id);
+                    {gruposVisiveis.map((g) => {
+                      const motivo = g.partes[0]?.motivo;
                       return (
-                        <tr key={id} className={ignorados.has(id) ? 'opacity-50' : ''}>
+                        <tr key={g.chave} className={ignorados.has(g.chave) ? 'opacity-50' : ''}>
                           <td className="px-3 py-2">
                             <input
                               type="checkbox"
-                              checked={!ignorados.has(id)}
+                              checked={!ignorados.has(g.chave)}
                               disabled={importando}
-                              onChange={() => alternarIgnorado(id)}
+                              onChange={() => alternarIgnorado(g.chave)}
                             />
                           </td>
                           <td className="px-3 py-2 font-semibold text-slate-800">
-                            {nomePorId.get(id)}
-                            {duplicado && (
+                            {nomePorId.get(g.colaboradorId)}
+                            {jaImportado(g) && (
                               <span className="ml-2 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
-                                Já importado nesta competência
+                                Já importado
                               </span>
                             )}
                           </td>
-                          <td className="px-3 py-2 text-slate-600">{partes.map(descreverParte).join(', ')}</td>
+                          <td className="px-3 py-2 text-slate-600">
+                            {formatarCompetencia(g.competencia)} <span className="text-slate-400">• {g.tipo}</span>
+                          </td>
+                          <td className="px-3 py-2 text-slate-600">{g.partes.map(descreverParte).join(', ')}</td>
                           <td className="px-3 py-2 text-slate-500">
                             {motivo === 'cpf' ? 'CPF' : motivo === 'nome' ? 'Nome' : 'Escolhido manualmente'}
                           </td>
@@ -365,7 +434,10 @@ export const ImportarContrachequesModal: React.FC<ImportarContrachequesModalProp
                   </p>
                   {paginasSemColaborador.filter((p) => !p.problema).map((p) => (
                     <div key={chaveParte(p)} className="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 bg-amber-50/50 border border-amber-200 rounded-lg">
-                      <span className="font-bold text-slate-700 shrink-0">{descreverParte(p)}</span>
+                      <span className="font-bold text-slate-700 shrink-0">
+                        {descreverParte(p)}
+                        {p.competencia && <span className="font-normal text-slate-500"> — {formatarCompetencia(p.competencia)}</span>}
+                      </span>
                       <span className="text-[11px] text-slate-500 flex-1 truncate" title={p.trecho}>
                         {p.trecho || '(sem texto)'}
                       </span>

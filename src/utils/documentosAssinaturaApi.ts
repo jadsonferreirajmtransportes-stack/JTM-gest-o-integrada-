@@ -44,6 +44,11 @@ export interface CampoAssinaturaPdf {
   y: number;
   largura: number;
   altura: number;
+  /** Campo "Data e Assinatura": a data da assinatura vai escrita no espaço "___/___/____"
+   *  (dataX/dataLargura) quando existe, senão no começo da linha. */
+  comData?: boolean;
+  dataX?: number;
+  dataLargura?: number;
 }
 
 /** Quanto tempo o link enviado por WhatsApp vale (e o link assinado do PDF junto). */

@@ -123,17 +123,41 @@ export async function gerarPdfAssinado(doc: DocumentoAssinatura, cpfColaborador?
       campos = [];
     }
   }
+  const fonte = await pdf.embedFont(StandardFonts.Helvetica);
   const paginasOriginais = pdf.getPages();
+  const dataAssinatura = doc.assinadoEm ? new Date(doc.assinadoEm).toLocaleDateString('pt-BR') : '';
   campos.forEach((c) => {
     const pagina = paginasOriginais[c.pagina];
     if (!pagina) return;
-    const escala = Math.min(c.largura / assinaturaRecortada.width, c.altura / assinaturaRecortada.height);
+    // Campo "Data e Assinatura" (contracheque): a data vai no espaço "___/___/____" do documento
+    // (centralizada nele) e a assinatura ocupa a linha inteira; sem esse espaço, a data vai no
+    // começo da linha e a assinatura no resto.
+    let x = c.x;
+    let largura = c.largura;
+    if (c.comData && dataAssinatura) {
+      const tamanho = 8.5;
+      const larguraData = fonte.widthOfTextAtSize(dataAssinatura, tamanho);
+      const cor = rgb(0.1, 0.1, 0.1);
+      if (c.dataX !== undefined && c.dataLargura) {
+        pagina.drawText(dataAssinatura, {
+          x: c.dataX + Math.max(0, (c.dataLargura - larguraData) / 2),
+          y: c.y + 2,
+          size: tamanho,
+          font: fonte,
+          color: cor,
+        });
+      } else {
+        pagina.drawText(dataAssinatura, { x: c.x + 2, y: c.y + 2, size: tamanho, font: fonte, color: cor });
+        x += larguraData + 10;
+        largura -= larguraData + 10;
+      }
+    }
+    const escala = Math.min(largura / assinaturaRecortada.width, c.altura / assinaturaRecortada.height);
     const w = assinaturaRecortada.width * escala;
     const h = assinaturaRecortada.height * escala;
-    pagina.drawImage(assinaturaRecortada, { x: c.x + (c.largura - w) / 2, y: c.y, width: w, height: h });
+    pagina.drawImage(assinaturaRecortada, { x: x + (largura - w) / 2, y: c.y, width: w, height: h });
   });
 
-  const fonte = await pdf.embedFont(StandardFonts.Helvetica);
   const negrito = await pdf.embedFont(StandardFonts.HelveticaBold);
   const bronze = rgb(196 / 255, 130 / 255, 41 / 255);
   const texto = rgb(0.2, 0.2, 0.2);
