@@ -19,6 +19,7 @@
 
 import { supabase } from './supabaseClient';
 import { buildColaboradorFromPreAdmissao } from './storage';
+import { trocarRefsPorLinksAssinados } from './arquivosStorage';
 import {
   Empregador,
   Supervisor,
@@ -1111,8 +1112,16 @@ export async function gerarLinkFichaCompartilhada(
   validadeDias = 7
 ): Promise<FichaCompartilhada> {
   const token = gerarTokenFichaCompartilhada();
-  const dados = Object.fromEntries(
-    Object.entries(colaborador).filter(([campo]) => !CAMPOS_INTERNOS_EXCLUIDOS_DA_FICHA.includes(campo))
+  // Anexos no Storage (referência "storage:") viram links assinados válidos pelo mesmo prazo do
+  // link — quem abre a ficha sem login não consegue gerar link assinado sozinho (bucket
+  // privado). Revogar o link esconde a ficha, mas um link de arquivo já copiado por quem abriu
+  // continua valendo até o fim do prazo (mesmo que já acontecia com o arquivo em base64, que
+  // podia ser baixado). Ver arquivosStorage.ts.
+  const dados = await trocarRefsPorLinksAssinados(
+    Object.fromEntries(
+      Object.entries(colaborador).filter(([campo]) => !CAMPOS_INTERNOS_EXCLUIDOS_DA_FICHA.includes(campo))
+    ),
+    validadeDias * 24 * 60 * 60
   );
   const expiraEm = new Date(Date.now() + validadeDias * 24 * 60 * 60 * 1000).toISOString();
 

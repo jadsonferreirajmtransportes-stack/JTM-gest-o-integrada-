@@ -55,7 +55,7 @@ const BotaoAnexoCompra: React.FC<{ solicitacao: SolicitacaoCompra }> = ({ solici
         alert('Arquivo não encontrado.');
         return;
       }
-      baixarArquivo(url, solicitacao.anexoNome || 'anexo');
+      await baixarArquivo(url, solicitacao.anexoNome || 'anexo');
     } catch (err) {
       console.error('Erro ao baixar anexo da solicitação:', err);
       alert('Não foi possível baixar o anexo. Tente novamente.');

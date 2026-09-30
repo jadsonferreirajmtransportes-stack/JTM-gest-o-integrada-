@@ -30,6 +30,7 @@ import {
   formatDaysCountdown,
 } from '../../utils/formatters';
 import { exportExamesReport } from '../../utils/exportUtils';
+import { ehRefStorage } from '../../utils/arquivosStorage';
 import { AsoImageUploader } from '../Common/AsoImageUploader';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { buildWhatsAppLink, buildMailtoLink } from '../../utils/birthdayUtils';
@@ -209,15 +210,27 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
   // marcando que é um ASO substituído, pra manter o histórico em vez de perder o arquivo.
   const handleChangeAsoImagem = (novaUrl: string, novoNome: string) => {
     if (asoImagemUrl && asoNomeArquivo) {
+      // Tamanho/tipo só dá pra tirar do próprio valor quando é base64 (formato antigo); com
+      // referência "storage:" o tipo sai da extensão do nome e o tamanho fica sem informar.
+      const emStorage = ehRefStorage(asoImagemUrl);
       const tamanhoMB = asoImagemUrl.length / (1024 * 1024);
       const mimeMatch = asoImagemUrl.match(/^data:([^;]+);/);
+      const tipoPorNome = /\.pdf$/i.test(asoNomeArquivo)
+        ? 'application/pdf'
+        : /\.(png|jpe?g|webp|gif)$/i.test(asoNomeArquivo)
+          ? `image/${asoNomeArquivo.split('.').pop()!.toLowerCase().replace('jpg', 'jpeg')}`
+          : undefined;
       setAsoAntigoParaArquivar({
         id: `anexo-${Date.now()}`,
         nome: asoNomeArquivo,
         categoria: 'Laudo / Exame',
         dataUpload: new Date().toISOString().slice(0, 10),
-        tamanho: tamanhoMB > 1 ? `${tamanhoMB.toFixed(1)} MB` : `${Math.round(asoImagemUrl.length / 1024)} KB`,
-        tipo: mimeMatch?.[1] || 'application/octet-stream',
+        tamanho: emStorage
+          ? undefined
+          : tamanhoMB > 1
+            ? `${tamanhoMB.toFixed(1)} MB`
+            : `${Math.round(asoImagemUrl.length / 1024)} KB`,
+        tipo: mimeMatch?.[1] || tipoPorNome || 'application/octet-stream',
         arquivoUrl: asoImagemUrl,
         descricao: 'ASO substituído por um comprovante mais recente.',
       });
@@ -751,11 +764,6 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                     setAsoImagemUrl(undefined);
                     setAsoNomeArquivo(undefined);
                   }}
-                  tamanhoOutrosCamposMB={
-                    ((selectedColab.documentos || []).reduce((soma, d) => soma + (d.arquivoUrl?.length || 0), 0) +
-                      (selectedColab.anexos || []).reduce((soma, a) => soma + (a.arquivoUrl?.length || 0), 0)) /
-                    (1024 * 1024)
-                  }
                 />
                 {asoImagemUrl && (
                   <p className="text-[10px] text-slate-400 mt-1.5 px-0.5">

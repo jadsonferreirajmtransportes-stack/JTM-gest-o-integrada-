@@ -1,5 +1,7 @@
 import React from 'react';
-import { X, ZoomIn, Download } from 'lucide-react';
+import { X, ZoomIn, Download, Loader2 } from 'lucide-react';
+import { ehRefStorage, useArquivoUrl } from '../../utils/arquivosStorage';
+import { baixarArquivo } from '../../utils/downloadUtils';
 
 interface ImageViewerModalProps {
   isOpen: boolean;
@@ -18,17 +20,22 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
   subtitle,
   fileName,
 }) => {
+  // imageUrl pode ser data URL (anexo antigo, base64) ou referência "storage:" (anexo novo, no
+  // Supabase Storage) — ver arquivosStorage.ts; o hook devolve uma URL exibível nos dois casos.
+  const { url: urlExibivel, carregando, erro } = useArquivoUrl(isOpen ? imageUrl : undefined);
+
   if (!isOpen || !imageUrl) return null;
 
-  const isPdf = imageUrl.startsWith('data:application/pdf') || fileName?.toLowerCase().endsWith('.pdf');
+  const isPdf =
+    imageUrl.startsWith('data:application/pdf') ||
+    !!fileName?.toLowerCase().endsWith('.pdf') ||
+    (ehRefStorage(imageUrl) && imageUrl.toLowerCase().endsWith('.pdf'));
 
   const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = fileName || 'documento_colaborador';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    baixarArquivo(imageUrl, fileName || 'documento_colaborador').catch((err) => {
+      console.error(err);
+      alert('Não foi possível baixar o arquivo. Tente novamente.');
+    });
   };
 
   return (
@@ -66,10 +73,21 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
 
         {/* Content Viewer */}
         <div className="flex-1 p-4 overflow-auto flex items-center justify-center bg-slate-100 min-h-[300px]">
-          {isPdf ? (
+          {carregando || erro || !urlExibivel ? (
+            <div className="flex flex-col items-center gap-2 text-xs text-slate-500">
+              {erro ? (
+                <span>Não foi possível carregar o arquivo. Feche e tente abrir de novo.</span>
+              ) : (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin text-[#92611F]" />
+                  <span>Carregando arquivo...</span>
+                </>
+              )}
+            </div>
+          ) : isPdf ? (
             <div className="w-full h-[65vh] flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden">
               <iframe
-                src={imageUrl}
+                src={urlExibivel}
                 title={fileName || 'Documento PDF Anexado'}
                 className="w-full flex-1 bg-white"
               />
@@ -90,7 +108,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
           ) : (
             <div className="max-w-full max-h-[70vh] flex items-center justify-center">
               <img
-                src={imageUrl}
+                src={urlExibivel}
                 alt={title}
                 className="max-h-[70vh] max-w-full object-contain rounded-lg border border-slate-200 shadow-md"
               />

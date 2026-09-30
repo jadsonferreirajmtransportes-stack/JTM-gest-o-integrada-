@@ -11,16 +11,17 @@ import {
   FileText,
 } from 'lucide-react';
 import { ImageViewerModal } from './ImageViewerModal';
+import { ImagemArquivo } from './ImagemArquivo';
+import { enviarArquivo, ehRefStorage } from '../../utils/arquivosStorage';
 
 interface AsoImageUploaderProps {
   asoImagemUrl?: string;
   asoNomeArquivo?: string;
-  onImageChange: (dataUrl: string, fileName: string) => void;
+  /** Recebe o novo valor do campo — uma referência "storage:" (arquivo já enviado pro Supabase
+   *  Storage, ver arquivosStorage.ts) — e o nome original do arquivo. */
+  onImageChange: (valor: string, fileName: string) => void;
   onImageRemove: () => void;
   readOnly?: boolean;
-  /** Tamanho (em MB) já ocupado por OUTROS anexos do mesmo colaborador (documentos + dossiê) —
-   *  soma na checagem do limite combinado abaixo. Ver LIMITE_TOTAL_GERAL_MB. */
-  tamanhoOutrosCamposMB?: number;
 }
 
 export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
@@ -29,23 +30,21 @@ export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
   onImageChange,
   onImageRemove,
   readOnly = false,
-  tamanhoOutrosCamposMB = 0,
 }) => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [erroUpload, setErroUpload] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // O ASO fica gravado como base64 numa coluna do próprio cadastro do colaborador (não num
-  // storage de arquivos separado) — um arquivo grande demais nessa mesma gravação estoura o
-  // tempo limite da instrução SQL no banco (testado: 25MB somados no cadastro já falha com
-  // "canceling statement due to statement timeout"). O limite por arquivo sozinho não bastava:
-  // documentos + dossiê + ASO juntos é que precisam ficar dentro do total combinado — ver mesmo
-  // limite em EmployeeDossierSection.tsx e EmployeeFormModal.tsx.
+  // O arquivo vai pro Supabase Storage na hora em que é escolhido, e o cadastro guarda só a
+  // referência — antes ia em base64 dentro do próprio registro do colaborador, com limite
+  // combinado de 20MB (documentos + dossiê + ASO) pra gravação não estourar o statement_timeout.
+  // No Storage não tem mais esse limite combinado, só o limite por arquivo.
   const LIMITE_MB = 8;
-  const LIMITE_TOTAL_GERAL_MB = 20;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if (fileInputRef.current) fileInputRef.current.value = '';
     if (!file) return;
     setErroUpload(null);
 
@@ -54,27 +53,24 @@ export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
       setErroUpload(
         `"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite é ${LIMITE_MB}MB. Comprima a imagem/PDF ou tire uma foto em resolução menor.`
       );
-      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    const totalComEsteMB = tamanhoOutrosCamposMB + tamanhoMB;
-    if (totalComEsteMB > LIMITE_TOTAL_GERAL_MB) {
-      setErroUpload(
-        `Esse arquivo deixaria o total de anexos deste colaborador em ~${totalComEsteMB.toFixed(1)}MB (limite combinado: ${LIMITE_TOTAL_GERAL_MB}MB, somando documentos + dossiê + ASO) — pode falhar ao salvar. Remova algum anexo antigo ou comprima este arquivo antes.`
-      );
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
+    setEnviando(true);
+    try {
+      onImageChange(await enviarArquivo(file, 'dp/aso'), file.name);
+    } catch (err) {
+      console.error(err);
+      setErroUpload(`Não foi possível enviar "${file.name}". Verifique sua conexão e tente novamente.`);
+    } finally {
+      setEnviando(false);
     }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      onImageChange(reader.result as string, file.name);
-    };
-    reader.readAsDataURL(file);
   };
 
-  const isPdf = asoNomeArquivo?.toLowerCase().endsWith('.pdf') || asoImagemUrl?.startsWith('data:application/pdf');
+  const isPdf =
+    asoNomeArquivo?.toLowerCase().endsWith('.pdf') ||
+    asoImagemUrl?.startsWith('data:application/pdf') ||
+    (ehRefStorage(asoImagemUrl) && asoImagemUrl.toLowerCase().endsWith('.pdf'));
 
   return (
     <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
@@ -103,8 +99,8 @@ export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
             {isPdf ? (
               <FileText className="w-8 h-8 text-amber-600" />
             ) : (
-              <img
-                src={asoImagemUrl}
+              <ImagemArquivo
+                valor={asoImagemUrl}
                 alt="ASO Digitalizado"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform"
               />
@@ -137,9 +133,10 @@ export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-[11px] font-medium transition-colors"
+                    disabled={enviando}
+                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-[11px] font-medium transition-colors disabled:opacity-60"
                   >
-                    Substituir
+                    {enviando ? 'Enviando...' : 'Substituir'}
                   </button>
                   <button
                     type="button"
@@ -165,7 +162,7 @@ export const AsoImageUploader: React.FC<AsoImageUploaderProps> = ({
             <Upload className="w-5 h-5" />
           </div>
           <span className="text-xs font-bold text-slate-800 block">
-            Clique para carregar a foto ou PDF do ASO
+            {enviando ? 'Enviando arquivo...' : 'Clique para carregar a foto ou PDF do ASO'}
           </span>
           <span className="text-[11px] text-slate-500 mt-0.5 block">
             Formatos suportados: PNG, JPG, JPEG ou PDF (até {LIMITE_MB}MB)

@@ -6,6 +6,8 @@
 // Blob + object URL não tem esse limite.
 // ============================================================================
 
+import { ehRefStorage, obterUrlArquivo } from './arquivosStorage';
+
 export function dataUrlParaBlob(dataUrl: string): Blob {
   const virgula = dataUrl.indexOf(',');
   const cabecalho = dataUrl.slice(0, virgula);
@@ -20,14 +22,37 @@ export function dataUrlParaBlob(dataUrl: string): Blob {
   return new Blob([bytes], { type: mime });
 }
 
-/** Baixa um arquivo a partir de um data URL (ou de uma URL comum, que só é repassada). */
-export function baixarArquivo(url: string, nomeArquivo: string): void {
-  const href = url.startsWith('data:') ? URL.createObjectURL(dataUrlParaBlob(url)) : url;
+/** Baixa um arquivo a partir de um data URL, de uma referência "storage:" (ver
+ *  arquivosStorage.ts) ou de uma URL comum. */
+export async function baixarArquivo(valor: string, nomeArquivo: string): Promise<void> {
+  const url = valor;
+  if (ehRefStorage(valor)) {
+    // Link assinado é de outro domínio (Supabase) — o atributo `download` é ignorado nesse caso
+    // e o navegador só abriria o arquivo; buscando como Blob o nome do arquivo é respeitado.
+    const resposta = await fetch(await obterUrlArquivo(valor));
+    if (!resposta.ok) throw new Error(`Falha ao baixar "${nomeArquivo}" (${resposta.status})`);
+    baixarBlob(await resposta.blob(), nomeArquivo);
+    return;
+  }
+  if (url.startsWith('data:')) {
+    baixarBlob(dataUrlParaBlob(url), nomeArquivo);
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function baixarBlob(blob: Blob, nomeArquivo: string): void {
+  const href = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = href;
   a.download = nomeArquivo;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  if (href !== url) setTimeout(() => URL.revokeObjectURL(href), 60_000);
+  setTimeout(() => URL.revokeObjectURL(href), 60_000);
 }

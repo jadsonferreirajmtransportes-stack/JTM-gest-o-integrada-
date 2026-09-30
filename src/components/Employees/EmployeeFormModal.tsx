@@ -54,6 +54,7 @@ import {
 import { AsoImageUploader } from '../Common/AsoImageUploader';
 import { EmployeeDossierSection } from './EmployeeDossierSection';
 import { vincularColaboradorAoSetor } from '../../utils/sectorUtils';
+import { enviarArquivo } from '../../utils/arquivosStorage';
 
 interface EmployeeFormModalProps {
   isOpen: boolean;
@@ -100,6 +101,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   const [tentouSalvarComErro, setTentouSalvarComErro] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erroUploadDocumento, setErroUploadDocumento] = useState<string | null>(null);
+  // Id do documento do checklist cujo arquivo está sendo enviado pro Storage agora.
+  const [enviandoDocId, setEnviandoDocId] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<Partial<Colaborador>>({
@@ -289,25 +292,15 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   };
 
   // Antes chamada "Simulated" com razão: só gravava o nome do arquivo e marcava
-  // "Recebido", sem nunca ler o conteúdo — o documento aparecia como recebido em
-  // todo lugar, mas não existia arquivo nenhum pra baixar depois (nem aqui, nem na
-  // Ficha Cadastral compartilhada). Agora lê de verdade, com o mesmo limite de
-  // tamanho dos outros uploads (ver EmployeeDossierSection.tsx/AsoImageUploader.tsx —
-  // anexos grandes na mesma gravação estouram o tempo limite do banco).
+  // "Recebido", sem nunca ler o conteúdo. Agora o arquivo vai pro Supabase Storage na hora e o
+  // documento guarda só a referência "storage:..." (ver arquivosStorage.ts) — sem o antigo
+  // limite combinado de 20MB por colaborador, que só existia porque tudo ia em base64 no mesmo
+  // registro do banco.
   const LIMITE_DOCUMENTO_MB = 8;
-  // Limite COMBINADO entre documentos + dossiê de anexos + ASO — os 3 campos gravam no mesmo
-  // registro do colaborador, então o que importa pro banco não estourar o tempo limite é a
-  // SOMA de tudo, não cada campo isolado (caso real: colaborador com vários documentos de
-  // ~7-8MB cada passava longe disso mesmo com o dossiê de anexos vazio).
-  const LIMITE_TOTAL_GERAL_MB = 20;
-  const tamanhoDocumentosMB =
-    (formData.documentos || []).reduce((soma, d) => soma + (d.arquivoUrl?.length || 0), 0) / (1024 * 1024);
-  const tamanhoAnexosMB =
-    (formData.anexos || []).reduce((soma, a) => soma + (a.arquivoUrl?.length || 0), 0) / (1024 * 1024);
-  const tamanhoAsoMB = (formData.asoImagemUrl?.length || 0) / (1024 * 1024);
 
-  const handleDocUploadSimulated = (docId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocUploadSimulated = async (docId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
     setErroUploadDocumento(null);
 
@@ -316,25 +309,12 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       setErroUploadDocumento(
         `"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite é ${LIMITE_DOCUMENTO_MB}MB. Comprima o arquivo ou tire uma foto em resolução menor.`
       );
-      e.target.value = '';
       return;
     }
 
-    const tamanhoOutrosDocumentosMB =
-      (formData.documentos || [])
-        .filter((d) => d.id !== docId)
-        .reduce((soma, d) => soma + (d.arquivoUrl?.length || 0), 0) / (1024 * 1024);
-    const totalComEsteMB = tamanhoOutrosDocumentosMB + tamanhoAnexosMB + tamanhoAsoMB + tamanhoMB;
-    if (totalComEsteMB > LIMITE_TOTAL_GERAL_MB) {
-      setErroUploadDocumento(
-        `Esse arquivo deixaria o total de anexos deste colaborador em ~${totalComEsteMB.toFixed(1)}MB (limite combinado: ${LIMITE_TOTAL_GERAL_MB}MB, somando documentos + dossiê + ASO) — pode falhar ao salvar. Remova algum anexo antigo ou comprima este arquivo antes.`
-      );
-      e.target.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
+    setEnviandoDocId(docId);
+    try {
+      const ref = await enviarArquivo(file, 'dp/documentos');
       setFormData((prev) => ({
         ...prev,
         documentos: prev.documentos?.map((d) =>
@@ -343,14 +323,18 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                 ...d,
                 status: 'Recebido',
                 nomeArquivo: file.name,
-                arquivoUrl: reader.result as string,
+                arquivoUrl: ref,
                 dataUpload: new Date().toISOString().slice(0, 10),
               }
             : d
         ),
       }));
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      setErroUploadDocumento(`Não foi possível enviar "${file.name}". Verifique sua conexão e tente novamente.`);
+    } finally {
+      setEnviandoDocId(null);
+    }
   };
 
   // Fardamento history helper
@@ -1275,7 +1259,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               <AsoImageUploader
                 asoImagemUrl={formData.asoImagemUrl}
                 asoNomeArquivo={formData.asoNomeArquivo}
-                tamanhoOutrosCamposMB={tamanhoDocumentosMB + tamanhoAnexosMB}
                 onImageChange={(dataUrl, fileName) => {
                   handleChange('asoImagemUrl', dataUrl);
                   handleChange('asoNomeArquivo', fileName);
@@ -1492,7 +1475,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
 
                       <label className="cursor-pointer px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium flex items-center gap-1 text-xs">
                         <Upload className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{doc.nomeArquivo ? 'Alterar' : 'Anexar'}</span>
+                        <span>{enviandoDocId === doc.id ? 'Enviando...' : doc.nomeArquivo ? 'Alterar' : 'Anexar'}</span>
                         <input
                           type="file"
                           className="hidden"
@@ -1621,7 +1604,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                 onUpdateAnotacoes={(newNotes) => handleChange('anotacoes', newNotes)}
                 onUpdateAnexos={(newAnexos) => handleChange('anexos', newAnexos)}
                 onUpdateObservacoesGerais={(text) => handleChange('observacoesGerais', text)}
-                tamanhoOutrosCamposMB={tamanhoDocumentosMB + tamanhoAsoMB}
               />
             </div>
           )}

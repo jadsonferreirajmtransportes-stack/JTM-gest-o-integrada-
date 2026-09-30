@@ -20,6 +20,8 @@ import {
 import { AnotacaoColaborador, AnexoColaborador } from '../../types';
 import { formatDate } from '../../utils/formatters';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
+import { ImagemArquivo } from '../Common/ImagemArquivo';
+import { enviarArquivo } from '../../utils/arquivosStorage';
 
 interface EmployeeDossierSectionProps {
   anotacoes?: AnotacaoColaborador[];
@@ -29,9 +31,6 @@ interface EmployeeDossierSectionProps {
   onUpdateAnexos: (anexos: AnexoColaborador[]) => void;
   onUpdateObservacoesGerais?: (text: string) => void;
   readOnly?: boolean;
-  /** Tamanho (em MB) já ocupado por OUTROS anexos do mesmo colaborador (documentos + ASO) —
-   *  soma na checagem do limite combinado abaixo. Ver LIMITE_TOTAL_GERAL_MB. */
-  tamanhoOutrosCamposMB?: number;
 }
 
 const CATEGORIAS_ANOTACOES: AnotacaoColaborador['categoria'][] = [
@@ -62,7 +61,6 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
   onUpdateAnexos,
   onUpdateObservacoesGerais,
   readOnly = false,
-  tamanhoOutrosCamposMB = 0,
 }) => {
   // New Note state
   const [isAddingNote, setIsAddingNote] = useState(false);
@@ -74,6 +72,7 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
   const [anexoCategoria, setAnexoCategoria] = useState<AnexoColaborador['categoria']>('Documento Pessoal');
   const [anexoDescricao, setAnexoDescricao] = useState('');
   const [erroAnexo, setErroAnexo] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Lightbox state
@@ -102,19 +101,15 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
 
   // Attachment Handlers
   //
-  // Limites de tamanho: os anexos são gravados como base64 dentro de uma coluna JSONB no
-  // Postgres (não em um storage de arquivos separado) — um payload grande demais na mesma
-  // gravação estoura o tempo limite da instrução SQL no banco (testado: 25MB já falha com
-  // "canceling statement due to statement timeout"; 15MB passa mas demora ~20s mesmo numa
-  // boa conexão). O limite abaixo é COMBINADO com os outros campos do mesmo colaborador que
-  // também guardam anexo (documentos e ASO, ver tamanhoOutrosCamposMB) — checar só os anexos
-  // deste dossiê, sozinhos, não bastava: um colaborador com vários documentos grandes já
-  // estourava o total mesmo com o dossiê de anexos vazio.
+  // O arquivo vai pro Supabase Storage na hora em que é escolhido e o anexo guarda só a
+  // referência "storage:..." (ver arquivosStorage.ts) — antes ia em base64 dentro de uma
+  // coluna JSONB do colaborador, com limite combinado de 20MB (documentos + dossiê + ASO) pra
+  // gravação não estourar o statement_timeout. No Storage só existe o limite por arquivo.
   const LIMITE_ANEXO_MB = 8;
-  const LIMITE_TOTAL_GERAL_MB = 20;
 
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if (fileInputRef.current) fileInputRef.current.value = '';
     if (!file) return;
     setErroAnexo(null);
 
@@ -123,22 +118,12 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
       setErroAnexo(
         `"${file.name}" tem ${tamanhoMB.toFixed(1)}MB — o limite por arquivo é ${LIMITE_ANEXO_MB}MB. Comprima a imagem/PDF ou tire uma foto em resolução menor antes de anexar.`
       );
-      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    const tamanhoAtualAnexosMB = anexos.reduce((soma, a) => soma + (a.arquivoUrl?.length || 0), 0) / (1024 * 1024);
-    const totalComEsteMB = tamanhoAtualAnexosMB + tamanhoOutrosCamposMB + tamanhoMB;
-    if (totalComEsteMB > LIMITE_TOTAL_GERAL_MB) {
-      setErroAnexo(
-        `Esse arquivo deixaria o total de anexos deste colaborador em ~${totalComEsteMB.toFixed(1)}MB (limite combinado: ${LIMITE_TOTAL_GERAL_MB}MB, somando documentos + dossiê + ASO) — pode falhar ao salvar. Remova algum anexo antigo antes de adicionar este.`
-      );
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
+    setEnviando(true);
+    try {
+      const ref = await enviarArquivo(file, 'dp/dossie');
       const sizeFormatted =
         file.size > 1024 * 1024
           ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
@@ -151,15 +136,18 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
         dataUpload: new Date().toISOString().slice(0, 10),
         tamanho: sizeFormatted,
         tipo: file.type || 'application/octet-stream',
-        arquivoUrl: reader.result as string,
+        arquivoUrl: ref,
         descricao: anexoDescricao.trim() || undefined,
       };
 
       onUpdateAnexos([novoAnexo, ...anexos]);
       setAnexoDescricao('');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      setErroAnexo(`Não foi possível enviar "${file.name}". Verifique sua conexão e tente novamente.`);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const handleRemoveAnexo = (id: string) => {
@@ -395,10 +383,15 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-2 px-3 border-2 border-dashed border-slate-300 hover:border-amber-500 hover:bg-amber-50/30 rounded-lg flex items-center justify-center gap-2 text-slate-700 font-bold transition-all bg-white"
+                disabled={enviando}
+                className="w-full py-2 px-3 border-2 border-dashed border-slate-300 hover:border-amber-500 hover:bg-amber-50/30 rounded-lg flex items-center justify-center gap-2 text-slate-700 font-bold transition-all bg-white disabled:opacity-60"
               >
                 <Upload className="w-4 h-4 text-amber-600" />
-                <span>Clique para selecionar e anexar foto, laudo ou documento (PDF/PNG/JPG — até {LIMITE_ANEXO_MB}MB)</span>
+                <span>
+                  {enviando
+                    ? 'Enviando arquivo...'
+                    : `Clique para selecionar e anexar foto, laudo ou documento (PDF/PNG/JPG — até ${LIMITE_ANEXO_MB}MB)`}
+                </span>
               </button>
               <input
                 ref={fileInputRef}
@@ -447,8 +440,8 @@ export const EmployeeDossierSection: React.FC<EmployeeDossierSectionProps> = ({
                     className="w-14 h-14 shrink-0 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden cursor-pointer group relative"
                   >
                     {isImg && anexo.arquivoUrl ? (
-                      <img
-                        src={anexo.arquivoUrl}
+                      <ImagemArquivo
+                        valor={anexo.arquivoUrl}
                         alt={anexo.nome}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       />

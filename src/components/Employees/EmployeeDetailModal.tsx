@@ -44,6 +44,8 @@ import {
   formatDaysCountdown,
 } from '../../utils/formatters';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
+import { ImagemArquivo } from '../Common/ImagemArquivo';
+import { baixarArquivo } from '../../utils/downloadUtils';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
 import { EmployeeDossierSection } from './EmployeeDossierSection';
 import { CompartilharFichaModal } from './CompartilharFichaModal';
@@ -517,14 +519,19 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {arquivoUrl && (
-                      <a
-                        href={arquivoUrl}
-                        download={nomeArquivo || doc.tipo}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          baixarArquivo(arquivoUrl, nomeArquivo || doc.tipo).catch((err) => {
+                            console.error(err);
+                            alert('Não foi possível baixar o documento. Tente novamente.');
+                          })
+                        }
                         className="p-1 bg-white border border-slate-200 hover:bg-slate-100 rounded-md text-slate-600"
                         title="Baixar documento"
                       >
                         <Download className="w-3.5 h-3.5" />
-                      </a>
+                      </button>
                     )}
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -609,8 +616,8 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
                     onClick={() => setIsAsoViewerOpen(true)}
                     className="w-14 h-14 rounded-lg bg-white border border-amber-300 overflow-hidden flex items-center justify-center cursor-pointer group relative"
                   >
-                    <img
-                      src={colaborador.asoImagemUrl}
+                    <ImagemArquivo
+                      valor={colaborador.asoImagemUrl}
                       alt="ASO Digitalizado"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
