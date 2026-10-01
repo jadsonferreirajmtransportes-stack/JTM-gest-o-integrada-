@@ -243,6 +243,8 @@ import { EpiPublicView } from './components/Epi/EpiPublicView';
 import { ContrachequePublicView } from './components/Contracheques/ContrachequePublicView';
 import { DocumentosAssinaturaView } from './components/Contracheques/DocumentosAssinaturaView';
 import { DisciplinarView } from './components/Disciplinar/DisciplinarView';
+import { EducacaoView } from './components/Educacao/EducacaoView';
+import { PortalEducacaoView } from './components/Educacao/PortalEducacaoView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
 import { EpiFormularioLinkModal } from './components/Epi/EpiFormularioLinkModal';
 import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
@@ -634,6 +636,8 @@ export default function App() {
   // ?form=contracheque (contracheque) ou ?form=documento (Férias e demais) — só muda o título
   // da tela antes do CPF; o documento em si vem do token.
   const [contrachequePublicoEhContracheque, setContrachequePublicoEhContracheque] = useState(true);
+  // Portal de Educação do colaborador (?form=portal&token=...) — entra com CPF + nascimento.
+  const [portalEducacaoToken, setPortalEducacaoToken] = useState<string | null>(null);
   const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
   const [isEpiLinkModalOpen, setIsEpiLinkModalOpen] = useState<boolean>(false);
 
@@ -1016,6 +1020,8 @@ export default function App() {
         setIsContrachequePublicoView(true);
         setContrachequePublicoToken(searchParams.get('token') || undefined);
         setContrachequePublicoEhContracheque(formParam === 'contracheque');
+      } else if (formParam === 'portal') {
+        setPortalEducacaoToken(searchParams.get('token') || '');
       }
     }
   }, []);
@@ -2833,6 +2839,10 @@ export default function App() {
     );
   }
 
+  if (portalEducacaoToken !== null) {
+    return <PortalEducacaoView token={portalEducacaoToken || undefined} />;
+  }
+
   // IF Public Entrega de EPI filling form is active (link genérico, ?form=epi_entrega)
   if (isEpiFormularioPublicoView) {
     return <PublicEpiEntregaView colaboradores={colaboradoresPublico} onSuccessSubmit={handleSalvarEntregaEpiPublica} />;
@@ -3436,6 +3446,10 @@ export default function App() {
               onSalvarOcorrencia={handleSaveOcorrencia}
               onExcluirOcorrencia={handleDeleteOcorrencia}
             />
+          )}
+
+          {activeGlobalModule === 'dp' && activeSection === 'educacao' && podeVerSecaoDp(currentUser, 'educacao') && (
+            <EducacaoView colaboradores={colaboradores} instrucoes={instrucoesTrabalho} currentUser={currentUser} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'saude' && podeVerSecaoDp(currentUser, 'saude') && (

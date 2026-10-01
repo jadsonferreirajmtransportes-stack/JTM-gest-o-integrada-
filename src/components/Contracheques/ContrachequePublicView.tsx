@@ -21,6 +21,9 @@ function montarDeclaracao(doc: DocumentoPublico): string {
   if (doc.categoria === 'disciplinar') {
     return `Declaro que recebi e tomei ciência do documento "${doc.titulo}". Estou ciente de que a minha assinatura indica apenas o recebimento e a ciência desta comunicação, e não a concordância com o seu conteúdo.`;
   }
+  if (doc.categoria === 'regulamento') {
+    return `Declaro que recebi, li e tomei conhecimento do ${doc.titulo} e que me comprometo a cumpri-lo.`;
+  }
   if (doc.categoria === 'ferias' && doc.tipo === 'Aviso de Férias') {
     return `Declaro que recebi o ${doc.titulo} e que estou ciente do período de férias nele informado.`;
   }
@@ -48,7 +51,7 @@ function mascararCpf(valor: string): string {
 
 /** Desenha as páginas do PDF em <canvas> — no celular um PDF dentro de <iframe> muitas vezes
  *  não aparece (só oferece baixar), e o colaborador precisa conseguir LER antes de assinar. */
-const PdfEmTela: React.FC<{ url: string }> = ({ url }) => {
+export const PdfEmTela: React.FC<{ url: string }> = ({ url }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [estado, setEstado] = useState<'carregando' | 'ok' | 'erro'>('carregando');
 

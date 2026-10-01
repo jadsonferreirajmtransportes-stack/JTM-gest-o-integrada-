@@ -46,7 +46,7 @@ export async function baixarArquivo(valor: string, nomeArquivo: string): Promise
   document.body.removeChild(a);
 }
 
-function baixarBlob(blob: Blob, nomeArquivo: string): void {
+export function baixarBlob(blob: Blob, nomeArquivo: string): void {
   const href = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = href;

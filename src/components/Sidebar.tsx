@@ -23,6 +23,7 @@ import {
   HardHat,
   FileSignature,
   Gavel,
+  GraduationCap,
   Thermometer,
   Layers,
   FileText,
@@ -68,6 +69,7 @@ export type NavSection =
   | 'contracheques'
   | 'ocorrencias'
   | 'disciplinar'
+  | 'educacao'
   | 'onboarding'
   | 'arquivo'
   | 'aniversariantes'
@@ -418,6 +420,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Gavel,
       // Supervisor propõe a medida; administrador aprova (ver DisciplinarView).
       roles: ['admin', 'supervisor'],
+      group: 'operacional',
+    },
+    {
+      id: 'educacao',
+      label: 'Portal de Educação',
+      icon: GraduationCap,
+      // Treinamentos, Instruções de Trabalho no portal do colaborador e Regulamento Interno.
+      roles: ['admin'],
       group: 'operacional',
     },
 

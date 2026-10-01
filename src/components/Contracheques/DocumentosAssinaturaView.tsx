@@ -33,6 +33,7 @@ import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { ImportarContrachequesModal } from './ImportarContrachequesModal';
 import { ImportarDocumentosFeriasModal } from './ImportarDocumentosFeriasModal';
+import { EnviarRegulamentoModal } from '../Regulamento/EnviarRegulamentoModal';
 import { formatarCompetencia, formatarDataBr } from './contrachequePdfUtils';
 
 interface DocumentosAssinaturaViewProps {
@@ -66,6 +67,12 @@ const TEXTOS: Record<CategoriaDocumentoAssinatura, { titulo: string; descricao: 
     descricao: 'Documentos de advertência/suspensão enviados para ciência do colaborador.',
     importar: 'Importar',
     vazio: 'Nenhum documento disciplinar.',
+  },
+  regulamento: {
+    titulo: 'Regulamento Interno — Ciência e Assinatura',
+    descricao: 'Todos os colaboradores precisam ler e assinar a versão vigente. Novos admitidos aparecem em "Enviar para assinatura".',
+    importar: 'Enviar para assinatura',
+    vazio: 'Nenhum colaborador recebeu o regulamento ainda. Clique em Enviar para assinatura.',
   },
 };
 
@@ -559,7 +566,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
 
       {isEnvioEmMassaAberto && (
         <EnvioWhatsAppEmMassaModal
-          titulo={`Enviar ${ehContracheque ? 'contracheques' : 'documentos de férias'} pendentes`}
+          titulo={`Enviar ${ehContracheque ? 'contracheques' : categoria === 'regulamento' ? 'regulamento interno' : 'documentos de férias'} pendentes`}
           itens={pendentesParaEnviar.map((d) => ({
             id: d.id,
             nome: `${d.colaboradorNome} — ${d.titulo}`,
@@ -583,7 +590,16 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
           }}
         />
       )}
-      {showImportar && !ehContracheque && (
+      {showImportar && categoria === 'regulamento' && (
+        <EnviarRegulamentoModal
+          colaboradores={colaboradores}
+          existentes={documentos}
+          criadoPor={currentUser?.nome}
+          onClose={() => setShowImportar(false)}
+          onCriados={(novos) => setDocumentos((prev) => [...novos, ...prev])}
+        />
+      )}
+      {showImportar && categoria === 'ferias' && (
         <ImportarDocumentosFeriasModal
           colaboradores={colaboradores.filter((c) => c.status !== 'Inativo')}
           existentes={documentos}

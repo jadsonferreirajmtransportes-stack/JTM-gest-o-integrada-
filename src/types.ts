@@ -37,6 +37,7 @@ export type SecaoDp =
   | 'contracheques'
   | 'ocorrencias'
   | 'disciplinar'
+  | 'educacao'
   | 'onboarding'
   | 'arquivo'
   | 'aniversariantes'

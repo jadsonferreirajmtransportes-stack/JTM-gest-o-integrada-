@@ -497,7 +497,7 @@ export async function obterNotaCompartilhadaPublica(token: string): Promise<Reco
 // ============================================================================
 // INSTRUÇÕES DE TRABALHO
 // ============================================================================
-function rowToInstrucao(r: any): InstrucaoTrabalho {
+export function rowToInstrucao(r: any): InstrucaoTrabalho {
   return {
     id: r.id,
     codigo: r.codigo,
