@@ -191,13 +191,13 @@ export const SECOES_REGULAMENTO: SecaoRegulamento[] = [
       {
         tipo: 'p',
         texto:
-          'O descumprimento das normas deste Regulamento pode levar às seguintes medidas disciplinares: advertência (verbal ou escrita), suspensão (de até 3 dias) ou dispensa por justa causa, nas hipóteses do art. 482 da CLT.',
+          'O descumprimento das normas deste Regulamento pode levar às seguintes medidas disciplinares: advertência (verbal ou escrita), suspensão (de 1, 3 ou 5 dias) ou dispensa por justa causa, nas hipóteses do art. 482 da CLT.',
       },
       { tipo: 'sub', texto: 'Na aplicação das medidas, a empresa observa:' },
       {
         tipo: 'lista',
         itens: [
-          'Gradação: em regra, advertência verbal, advertência escrita, nova advertência escrita, suspensão e, por último, justa causa. Faltas graves podem justificar medida mais severa desde o início.',
+          'Gradação: em regra, advertência verbal, advertência escrita, nova advertência escrita, suspensão de 1 dia, suspensão de 3 dias, suspensão de 5 dias e, por último, justa causa. Faltas graves podem justificar medida mais severa desde o início.',
           'Proporcionalidade: a medida deve ser compatível com a gravidade da falta.',
           'Imediatidade: a medida é aplicada logo após a empresa tomar conhecimento da falta.',
           'Uma única punição por fato: a mesma falta não é punida duas vezes.',
