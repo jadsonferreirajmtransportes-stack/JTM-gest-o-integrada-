@@ -159,6 +159,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     iconeNome: 'ShoppingCart',
     categoria: 'Corporativo',
   },
+  {
+    id: 'comunicados',
+    nome: 'Comunicados',
+    sigla: 'COM',
+    descricao: 'Comunicados padronizados para colaboradores e clientes: texto (WhatsApp/e-mail), imagem e PDF, com ciência por link.',
+    corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
+    corBorda: 'border-[#C48229]',
+    iconeNome: 'Megaphone',
+    categoria: 'Corporativo',
+  },
 ];
 
 export const INITIAL_USERS_DATA: UsuarioLogin[] = [

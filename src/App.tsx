@@ -247,6 +247,8 @@ import { EducacaoView } from './components/Educacao/EducacaoView';
 import { PortalEducacaoView } from './components/Educacao/PortalEducacaoView';
 import { FrequenciaView } from './components/Frequencia/FrequenciaView';
 import { PontoPublicView } from './components/Frequencia/PontoPublicView';
+import { ComunicadosView } from './components/Comunicados/ComunicadosView';
+import { ComunicadoPublicView } from './components/Comunicados/ComunicadoPublicView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
 import { EpiFormularioLinkModal } from './components/Epi/EpiFormularioLinkModal';
 import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
@@ -642,6 +644,8 @@ export default function App() {
   const [portalEducacaoToken, setPortalEducacaoToken] = useState<string | null>(null);
   // Ponto pelo celular (?form=ponto&token=...) — mesmo token do portal.
   const [pontoToken, setPontoToken] = useState<string | null>(null);
+  // Link de comunicado (?form=comunicado&token=...) — leitura e ciência.
+  const [comunicadoToken, setComunicadoToken] = useState<string | null>(null);
   const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
   const [isEpiLinkModalOpen, setIsEpiLinkModalOpen] = useState<boolean>(false);
 
@@ -714,11 +718,13 @@ export default function App() {
       setActiveSection('instrucoes');
     } else if (modId === 'usuarios') {
       setActiveSection('usuarios');
+    } else if (modId === 'comunicados') {
+      setActiveSection('comunicados');
     } else if (modId === 'compras') {
       setActiveSection('compras');
     } else if (modId === 'dp') {
       if (
-        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios'].includes(
+        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados'].includes(
           activeSection
         )
       ) {
@@ -1028,6 +1034,8 @@ export default function App() {
         setPortalEducacaoToken(searchParams.get('token') || '');
       } else if (formParam === 'ponto') {
         setPontoToken(searchParams.get('token') || '');
+      } else if (formParam === 'comunicado') {
+        setComunicadoToken(searchParams.get('token') || '');
       }
     }
   }, []);
@@ -2845,6 +2853,10 @@ export default function App() {
     );
   }
 
+  if (comunicadoToken !== null) {
+    return <ComunicadoPublicView token={comunicadoToken || undefined} />;
+  }
+
   if (pontoToken !== null) {
     return <PontoPublicView token={pontoToken || undefined} />;
   }
@@ -2879,6 +2891,7 @@ export default function App() {
           else if (sec === 'instrucoes') setActiveGlobalModule('instrucoes');
           else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
           else if (sec === 'compras') setActiveGlobalModule('compras');
+          else if (sec === 'comunicados') setActiveGlobalModule('comunicados');
           else setActiveGlobalModule('dp');
           setIsMobileMenuOpen(false);
         }}
@@ -2929,6 +2942,7 @@ export default function App() {
             else if (sec === 'notas') setActiveGlobalModule('notas');
             else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
             else if (sec === 'compras') setActiveGlobalModule('compras');
+            else if (sec === 'comunicados') setActiveGlobalModule('comunicados');
             else setActiveGlobalModule('dp');
           }}
           searchQuery={searchQuery}
@@ -3267,6 +3281,13 @@ export default function App() {
               onMarcarComprado={handleMarcarCompradoSolicitacaoCompra}
               onOpenLinkModal={() => setIsComprasLinkModalOpen(true)}
             />
+          )}
+
+          {/* ========================================================================= */}
+          {/* MODULE: COMUNICADOS */}
+          {/* ========================================================================= */}
+          {(activeGlobalModule === 'comunicados' || activeSection === 'comunicados') && (
+            <ComunicadosView colaboradores={colaboradores} clientes={clientes} currentUser={currentUser} />
           )}
 
           {/* ========================================================================= */}

@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Boxes,
   ShoppingCart,
+  Megaphone,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -29,6 +30,7 @@ export const ICON_OPTIONS: Record<string, LucideIcon> = {
   ShieldCheck,
   Boxes,
   ShoppingCart,
+  Megaphone,
 };
 
 export function resolveOperacaoIcon(nomeIcone: string | undefined): LucideIcon {

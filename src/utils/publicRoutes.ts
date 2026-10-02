@@ -36,6 +36,7 @@ export function isRotaPublica(): boolean {
     formParam === 'contracheque' ||
     formParam === 'documento' ||
     formParam === 'portal' ||
-    formParam === 'ponto'
+    formParam === 'ponto' ||
+    formParam === 'comunicado'
   );
 }

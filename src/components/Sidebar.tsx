@@ -36,6 +36,7 @@ import {
   NotebookPen,
   FileCheck2,
   ShoppingCart,
+  Megaphone,
   Calculator,
   MessageSquare,
   Download,
@@ -292,6 +293,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: counts.comprasPendentesCount,
       color: 'from-orange-600 to-orange-800',
       activeBorder: 'border-orange-500',
+    },
+    {
+      id: 'comunicados' as GlobalModuleId,
+      title: 'Comunicados',
+      short: 'Texto, Imagem & PDF',
+      badge: undefined as number | undefined,
+      icon: Megaphone,
+      color: 'from-[#C48229] to-[#7A4F17]',
+      activeBorder: 'border-[#C48229]',
     },
     {
       id: 'usuarios' as GlobalModuleId,

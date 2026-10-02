@@ -16,6 +16,8 @@ interface EnvioWhatsAppEmMassaModalProps {
   onClose: () => void;
   /** Botão "Voltar" (ex.: voltar pra edição do comunicado). */
   onVoltar?: () => void;
+  /** Avisa quando a conversa de alguém foi aberta (ex.: Comunicados registra o envio). */
+  onAberto?: (id: string) => void;
 }
 
 type StatusEnvio = 'pendente' | 'aberto' | 'pulado';
@@ -26,7 +28,7 @@ type StatusEnvio = 'pendente' | 'aberto' | 'pulado';
  *  usa só aperta "enviar" no WhatsApp. Todas as conversas abrem na MESMA aba/janela
  *  ('jmt-whatsapp'), pra não encher o navegador de abas. Quem não tem WhatsApp no cadastro já
  *  aparece separado, pra enviar por outro meio. */
-export const EnvioWhatsAppEmMassaModal: React.FC<EnvioWhatsAppEmMassaModalProps> = ({ titulo, itens, onClose, onVoltar }) => {
+export const EnvioWhatsAppEmMassaModal: React.FC<EnvioWhatsAppEmMassaModalProps> = ({ titulo, itens, onClose, onVoltar, onAberto }) => {
   const comTelefone = useMemo(() => itens.filter((i) => buildWhatsAppLink(i.telefone || '', 'x')), [itens]);
   const semTelefone = useMemo(() => itens.filter((i) => !buildWhatsAppLink(i.telefone || '', 'x')), [itens]);
   const [status, setStatus] = useState<Record<string, StatusEnvio>>({});
@@ -55,6 +57,7 @@ export const EnvioWhatsAppEmMassaModal: React.FC<EnvioWhatsAppEmMassaModalProps>
     if (!item) return;
     const link = buildWhatsAppLink(item.telefone || '', item.mensagem);
     window.open(link, 'jmt-whatsapp');
+    onAberto?.(item.id);
     marcar(atual, 'aberto');
   };
 
