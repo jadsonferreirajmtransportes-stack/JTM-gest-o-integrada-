@@ -169,6 +169,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     iconeNome: 'Megaphone',
     categoria: 'Corporativo',
   },
+  {
+    id: 'documentos',
+    nome: 'Padronização de Documentos',
+    sigla: 'DOC',
+    descricao: 'Importa PDF, Word ou Excel, revisa com o crivo do padrão JMT e gera o documento na identidade da empresa, com código e versão.',
+    corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
+    corBorda: 'border-[#C48229]',
+    iconeNome: 'FileStack',
+    categoria: 'Corporativo',
+  },
 ];
 
 export const INITIAL_USERS_DATA: UsuarioLogin[] = [

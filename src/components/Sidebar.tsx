@@ -37,6 +37,7 @@ import {
   FileCheck2,
   ShoppingCart,
   Megaphone,
+  FileStack,
   Calculator,
   MessageSquare,
   Download,
@@ -301,6 +302,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: undefined as number | undefined,
       icon: Megaphone,
       color: 'from-[#C48229] to-[#7A4F17]',
+      activeBorder: 'border-[#C48229]',
+    },
+    {
+      id: 'documentos' as GlobalModuleId,
+      title: 'Padronização de Documentos',
+      short: 'PDF, Word & Excel no padrão JMT',
+      badge: undefined as number | undefined,
+      icon: FileStack,
+      color: 'from-[#5c4526] to-[#2b2014]',
       activeBorder: 'border-[#C48229]',
     },
     {

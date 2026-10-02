@@ -16,6 +16,7 @@ import {
   Boxes,
   ShoppingCart,
   Megaphone,
+  FileStack,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -31,6 +32,7 @@ export const ICON_OPTIONS: Record<string, LucideIcon> = {
   Boxes,
   ShoppingCart,
   Megaphone,
+  FileStack,
 };
 
 export function resolveOperacaoIcon(nomeIcone: string | undefined): LucideIcon {

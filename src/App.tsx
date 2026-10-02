@@ -248,6 +248,7 @@ import { PortalEducacaoView } from './components/Educacao/PortalEducacaoView';
 import { FrequenciaView } from './components/Frequencia/FrequenciaView';
 import { PontoPublicView } from './components/Frequencia/PontoPublicView';
 import { ComunicadosView } from './components/Comunicados/ComunicadosView';
+import { DocumentosView } from './components/Documentos/DocumentosView';
 import { ComunicadoPublicView } from './components/Comunicados/ComunicadoPublicView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
 import { EpiFormularioLinkModal } from './components/Epi/EpiFormularioLinkModal';
@@ -718,13 +719,15 @@ export default function App() {
       setActiveSection('instrucoes');
     } else if (modId === 'usuarios') {
       setActiveSection('usuarios');
+    } else if (modId === 'documentos') {
+      setActiveSection('documentos');
     } else if (modId === 'comunicados') {
       setActiveSection('comunicados');
     } else if (modId === 'compras') {
       setActiveSection('compras');
     } else if (modId === 'dp') {
       if (
-        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados'].includes(
+        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados', 'documentos'].includes(
           activeSection
         )
       ) {
@@ -2892,6 +2895,7 @@ export default function App() {
           else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
           else if (sec === 'compras') setActiveGlobalModule('compras');
           else if (sec === 'comunicados') setActiveGlobalModule('comunicados');
+          else if (sec === 'documentos') setActiveGlobalModule('documentos');
           else setActiveGlobalModule('dp');
           setIsMobileMenuOpen(false);
         }}
@@ -2943,6 +2947,7 @@ export default function App() {
             else if (sec === 'usuarios') setActiveGlobalModule('usuarios');
             else if (sec === 'compras') setActiveGlobalModule('compras');
             else if (sec === 'comunicados') setActiveGlobalModule('comunicados');
+            else if (sec === 'documentos') setActiveGlobalModule('documentos');
             else setActiveGlobalModule('dp');
           }}
           searchQuery={searchQuery}
@@ -3286,6 +3291,8 @@ export default function App() {
           {/* ========================================================================= */}
           {/* MODULE: COMUNICADOS */}
           {/* ========================================================================= */}
+          {(activeGlobalModule === 'documentos' || activeSection === 'documentos') && <DocumentosView currentUser={currentUser} />}
+
           {(activeGlobalModule === 'comunicados' || activeSection === 'comunicados') && (
             <ComunicadosView colaboradores={colaboradores} clientes={clientes} currentUser={currentUser} />
           )}
