@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   GraduationCap,
+  MonitorSmartphone,
   Plus,
   Pencil,
   Trash2,
@@ -38,6 +39,7 @@ import {
   sincronizarAtribuicoes,
 } from '../../utils/educacaoApi';
 import { TreinamentoEditorModal } from './TreinamentoEditorModal';
+import { MODULOS_CORPORATIVOS, PREFIXO_TREINAMENTO_SISTEMA, montarTreinamentoSistema } from './treinamentosSistema';
 import { gerarCertificadoPdf, formatarCargaHoraria } from './certificadoPdf';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
@@ -93,6 +95,7 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
   const [busca, setBusca] = useState('');
   const [acaoId, setAcaoId] = useState<string | null>(null);
   const [envioMassa, setEnvioMassa] = useState<ItemEnvioWhatsApp[] | null>(null);
+  const [pacoteSistema, setPacoteSistema] = useState(false);
   const [preparandoEnvio, setPreparandoEnvio] = useState(false);
 
   const ativos: Colaborador[] = useMemo(() => colaboradores.filter((c) => c.status !== 'Inativo'), [colaboradores]);
@@ -289,6 +292,17 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
     if (novas.length > 0) setAtribuicoes((prev) => [...novas, ...prev]);
   };
 
+  /** Vários treinamentos de uma vez (pacote do sistema): salva todos e atribui uma vez só. */
+  const handleCriarVarios = async (novos: Treinamento[]) => {
+    const salvos: Treinamento[] = [];
+    for (const t of novos) salvos.push(await saveTreinamento(t));
+    const lista = [...treinamentos.filter((x) => !salvos.some((s) => s.id === x.id)), ...salvos].sort((a, b) => a.titulo.localeCompare(b.titulo));
+    setTreinamentos(lista);
+    const novas = await sincronizarAtribuicoes(lista, ativos, atribuicoes);
+    if (novas.length > 0) setAtribuicoes((prev) => [...novas, ...prev]);
+    return novas.length;
+  };
+
   const handleExcluirTreinamento = async (t: Treinamento) => {
     const r = resumoPorTreinamento.get(t.id);
     const aviso = r && r.total > 0 ? `\n\n${r.total} colaborador(es) têm este treinamento (${r.concluidos} concluído[s]) — o histórico e os certificados deles também serão apagados. Para só parar de atribuir, desmarque "Ativo".` : '';
@@ -329,6 +343,14 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
           >
             {preparandoEnvio ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
             Enviar link do portal ({comPendencia.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setPacoteSistema(true)}
+            className="px-3 py-2.5 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5"
+            title="Treinamentos prontos de uso dos módulos do sistema, para os supervisores"
+          >
+            <MonitorSmartphone className="w-4 h-4 text-[#92611F]" /> Treinamentos do sistema
           </button>
           <button
             type="button"
@@ -586,6 +608,16 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
         />
       )}
 
+      {pacoteSistema && (
+        <PacoteSistemaModal
+          colaboradores={ativos}
+          existentes={treinamentos}
+          criadoPor={currentUser?.nome}
+          onClose={() => setPacoteSistema(false)}
+          onCriar={handleCriarVarios}
+        />
+      )}
+
       {atribuindo && (
         <AtribuirModal
           treinamento={atribuindo}
@@ -599,6 +631,143 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
       {envioMassa && (
         <EnvioWhatsAppEmMassaModal titulo="Enviar link do Portal de Educação" itens={envioMassa} onClose={() => setEnvioMassa(null)} />
       )}
+    </div>
+  );
+};
+
+/** Pacote "Treinamentos do sistema": cria os treinamentos de uso dos módulos corporativos
+ *  para os cargos escolhidos (os que parecem de supervisor já vêm marcados). */
+export const PacoteSistemaModal: React.FC<{
+  colaboradores: Colaborador[];
+  existentes: Treinamento[];
+  criadoPor?: string;
+  onClose: () => void;
+  onCriar: (lista: Treinamento[]) => Promise<number>;
+}> = ({ colaboradores, existentes, criadoPor, onClose, onCriar }) => {
+  const cargos: string[] = useMemo(
+    () => Array.from(new Set<string>(colaboradores.map((c) => (c.funcaoCargo || '').trim()).filter(Boolean))).sort((a: string, b: string) => a.localeCompare(b)),
+    [colaboradores]
+  );
+  const ehSupervisor = (c: string) => /supervis|coordenad|l[ií]der|encarregad|gerente/i.test(c);
+  const [cargosSel, setCargosSel] = useState<Set<string>>(() => new Set(cargos.filter(ehSupervisor)));
+  const jaExiste = (titulo: string) => existentes.some((t) => t.titulo.trim().toLowerCase() === titulo.toLowerCase());
+  const [modulosSel, setModulosSel] = useState<Set<string>>(
+    () => new Set(MODULOS_CORPORATIVOS.filter((m) => !jaExiste(`${PREFIXO_TREINAMENTO_SISTEMA}${m.titulo}`)).map((m) => m.secao))
+  );
+  const [prazoDias, setPrazoDias] = useState(15);
+  const [salvando, setSalvando] = useState(false);
+  const [resultado, setResultado] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const pessoas = colaboradores.filter((c) => cargosSel.has((c.funcaoCargo || '').trim())).length;
+
+  const alternar = (conjunto: Set<string>, valor: string) => {
+    const novo = new Set(conjunto);
+    if (novo.has(valor)) novo.delete(valor);
+    else novo.add(valor);
+    return novo;
+  };
+
+  const handleCriar = async () => {
+    setSalvando(true);
+    setErro(null);
+    try {
+      const lista = MODULOS_CORPORATIVOS.filter((m) => modulosSel.has(m.secao)).map((m) =>
+        montarTreinamentoSistema(m, { cargos: Array.from(cargosSel), prazoDias: prazoDias || undefined, criadoPor })
+      );
+      const atribuicoes = await onCriar(lista);
+      setResultado(`${lista.length} treinamento(s) criado(s) e ${atribuicoes} atribuição(ões) feitas. Agora use "Enviar link do portal" para mandar o link aos supervisores.`);
+    } catch (err) {
+      console.error(err);
+      setErro(err instanceof Error ? err.message : 'Não foi possível criar os treinamentos.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col text-xs">
+        <div className="p-4 border-b border-slate-200 flex items-start justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-black text-slate-900">Treinamentos do sistema — supervisores</h2>
+            <p className="text-slate-500 mt-0.5">Um treinamento por módulo, com conteúdo do manual do sistema e um exercício prático. Sem prova: leitura + assinatura de ciência.</p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-4 space-y-4 overflow-y-auto">
+          {resultado ? (
+            <p className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 font-semibold">{resultado}</p>
+          ) : (
+            <>
+              <section className="space-y-1.5">
+                <p className="font-black text-slate-700 uppercase tracking-wide text-[11px]">Módulos</p>
+                {MODULOS_CORPORATIVOS.map((m) => {
+                  const existe = jaExiste(`${PREFIXO_TREINAMENTO_SISTEMA}${m.titulo}`);
+                  return (
+                    <label key={m.secao} className={`flex items-center gap-2.5 p-2 rounded-lg border border-slate-200 ${existe ? 'opacity-50' : 'cursor-pointer hover:bg-slate-50'}`}>
+                      <input
+                        type="checkbox"
+                        disabled={existe}
+                        checked={modulosSel.has(m.secao)}
+                        onChange={() => setModulosSel((s) => alternar(s, m.secao))}
+                        className="w-4 h-4 accent-[#C48229]"
+                      />
+                      <span className="flex-1 font-semibold text-slate-800">{m.titulo}</span>
+                      <span className="text-slate-400">{existe ? 'já criado' : formatarCargaHoraria(m.cargaHorariaMin)}</span>
+                    </label>
+                  );
+                })}
+              </section>
+              <section className="space-y-1.5">
+                <p className="font-black text-slate-700 uppercase tracking-wide text-[11px]">Cargos que devem fazer</p>
+                {cargos.length === 0 ? (
+                  <p className="text-slate-500">Nenhum cargo no cadastro de colaboradores.</p>
+                ) : (
+                  <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                    {cargos.map((c) => (
+                      <label key={c} className="flex items-center gap-2.5 px-3 py-1.5 cursor-pointer hover:bg-slate-50">
+                        <input type="checkbox" checked={cargosSel.has(c)} onChange={() => setCargosSel((s) => alternar(s, c))} className="w-4 h-4 accent-[#C48229]" />
+                        <span className="flex-1">{c}</span>
+                        {ehSupervisor(c) && <span className="text-[10px] text-[#92611F] font-bold">supervisão</span>}
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <p className="text-slate-500">
+                  {pessoas} colaborador(es) com esses cargos. Quem não tiver um desses cargos pode receber depois pelo botão "Atribuir" do treinamento.
+                </p>
+              </section>
+              <label className="flex items-center gap-2 font-semibold text-slate-700">
+                Prazo para concluir
+                <input type="number" min={0} value={prazoDias} onChange={(e) => setPrazoDias(Math.max(0, Number(e.target.value) || 0))} className="w-16 p-1.5 border border-slate-300 rounded-lg" />
+                dias
+              </label>
+              <p className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-[#7A4F17]">
+                Para fazer a parte prática, o supervisor precisa ter os módulos liberados no login dele (Logins & Acessos).
+              </p>
+              {erro && <p className="text-rose-700 font-semibold">{erro}</p>}
+            </>
+          )}
+        </div>
+        <div className="p-4 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">
+            {resultado ? 'Fechar' : 'Cancelar'}
+          </button>
+          {!resultado && (
+            <button
+              type="button"
+              onClick={handleCriar}
+              disabled={salvando || modulosSel.size === 0 || cargosSel.size === 0}
+              className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl font-bold flex items-center gap-2 disabled:opacity-50"
+            >
+              {salvando && <Loader2 className="w-4 h-4 animate-spin" />}
+              Criar {modulosSel.size} treinamento(s)
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
