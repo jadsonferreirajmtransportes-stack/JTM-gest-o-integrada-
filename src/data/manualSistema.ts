@@ -427,7 +427,7 @@ export const MANUAL: TopicoManual[] = [
     titulo: 'Controle de Frequência',
     resumo: 'Ponto pelo celular (controle interno — não substitui o ponto oficial), espelho mensal, justificativas e assinatura do espelho.',
     passos: [
-      { titulo: 'Configurar', texto: 'Em "Jornadas, bases e links": cadastre a base (galpão), defina a jornada de cada colaborador e envie o link do ponto.' },
+      { titulo: 'Configurar', texto: 'Em "Jornadas, bases e links": cadastre a base (galpão) colando o link do Google Maps ou usando a localização do celular no local, defina a jornada de cada colaborador e envie o link do ponto.' },
       { titulo: 'Colaborador', texto: 'No 1º acesso ele confirma CPF e data de nascimento; depois é só abrir o link e tocar em "Bater ponto" com a localização ligada.' },
       { titulo: 'Hoje', texto: 'Quem já bateu, quem não bateu depois do horário e quem chegou atrasado.' },
       { titulo: 'Espelho', texto: 'Mês do colaborador: inclua batida esquecida (+), anule batida errada (clique nela) e justifique o dia (atestado, folga...). Tudo fica registrado com motivo e autor.' },

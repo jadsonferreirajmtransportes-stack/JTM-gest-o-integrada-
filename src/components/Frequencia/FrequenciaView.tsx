@@ -1108,9 +1108,55 @@ const JornadaModal: React.FC<{
   );
 };
 
+/** Coordenadas a partir de um link do Google Maps (ou de "lat, lng" colado direto).
+ *  Formatos: ...!3d-5.91!4d-35.26 (pino do lugar — o mais preciso), .../@-5.91,-35.26,17z,
+ *  ?q=-5.91,-35.26, ?ll=..., &query=..., e o texto "-5.91, -35.26". Link curto
+ *  (maps.app.goo.gl) não traz as coordenadas — devolve 'curto'. */
+export function coordenadasDoLink(texto: string): { latitude: number; longitude: number } | 'curto' | null {
+  const t = decodeURIComponent(texto.trim());
+  if (/goo\.gl\/|maps\.app\.goo/i.test(t)) return 'curto';
+  const num = '(-?\\d{1,3}\\.\\d+)';
+  const padroes = [
+    new RegExp(`!3d${num}!4d${num}`),
+    new RegExp(`@${num},${num}`),
+    new RegExp(`[?&](?:q|ll|query|center|destination)=${num},\\s*${num}`),
+    new RegExp(`^${num}\\s*,\\s*${num}$`),
+  ];
+  for (const p of padroes) {
+    const m = t.match(p);
+    if (m) {
+      const latitude = Number(m[1]);
+      const longitude = Number(m[2]);
+      if (Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) return { latitude, longitude };
+    }
+  }
+  return null;
+}
+
 const LocalModal: React.FC<{ local: LocalPonto | null; onClose: () => void; onSalvar: (l: LocalPonto) => Promise<void>; onExcluir: (id: string) => Promise<void> }> = ({ local, onClose, onSalvar, onExcluir }) => {
   const [l, setL] = useState<LocalPonto>(local ?? { id: '', nome: 'Base Parnamirim', latitude: 0, longitude: 0, raioM: 300, ativo: true });
   const [localizando, setLocalizando] = useState(false);
+  const [link, setLink] = useState('');
+  const [avisoLink, setAvisoLink] = useState<{ ok: boolean; texto: string } | null>(null);
+  const lerLink = (valor: string) => {
+    setLink(valor);
+    if (!valor.trim()) {
+      setAvisoLink(null);
+      return;
+    }
+    const r = coordenadasDoLink(valor);
+    if (r === 'curto') {
+      setAvisoLink({
+        ok: false,
+        texto: 'Esse é um link curto (maps.app.goo.gl), que não traz a localização. Abra o link no navegador, espere o mapa carregar e copie o endereço completo da barra do navegador.',
+      });
+    } else if (!r) {
+      setAvisoLink({ ok: false, texto: 'Não encontrei a localização nesse link. Use o link completo do Google Maps (da barra de endereço) ou cole as coordenadas no formato -5.91, -35.26.' });
+    } else {
+      setL((prev) => ({ ...prev, latitude: r.latitude, longitude: r.longitude }));
+      setAvisoLink({ ok: true, texto: `Localização encontrada: ${r.latitude.toFixed(6)}, ${r.longitude.toFixed(6)}. Confira em "ver no mapa" depois de salvar.` });
+    }
+  };
   const { salvando, erro, executar } = useAcao();
   const valido = l.nome.trim() && Math.abs(l.latitude) > 0.0001 && Math.abs(l.longitude) > 0.0001;
   return (
@@ -1135,6 +1181,19 @@ const LocalModal: React.FC<{ local: LocalPonto | null; onClose: () => void; onSa
         <label className="font-bold text-slate-600 block mb-1">Nome</label>
         <input value={l.nome} onChange={(e) => setL({ ...l, nome: e.target.value })} className={campo} />
       </div>
+      <div>
+        <label className="font-bold text-slate-600 block mb-1">Link do Google Maps</label>
+        <input
+          type="url"
+          data-no-uppercase="true"
+          value={link}
+          onChange={(e) => lerLink(e.target.value)}
+          className={campo}
+          placeholder="Cole aqui o link do galpão no Google Maps"
+        />
+        {avisoLink && <p className={`mt-1 ${avisoLink.ok ? 'text-emerald-700' : 'text-[#92611F]'}`}>{avisoLink.texto}</p>}
+      </div>
+      <p className="text-center text-slate-400">ou</p>
       <button
         type="button"
         disabled={localizando}
