@@ -204,8 +204,9 @@ export const MANUAL: TopicoManual[] = [
     titulo: 'Comunicados',
     resumo: 'Um comunicado, três formatos no padrão JMT (texto para WhatsApp/e-mail, imagem e PDF), com histórico e confirmação de ciência.',
     passos: [
-      { titulo: 'Novo comunicado', texto: 'Clique em "Novo comunicado", escolha Colaboradores ou Clientes, categoria, título e texto. {nome} vira o primeiro nome de cada pessoa.' },
-      { titulo: 'Imagem', texto: 'Escolha um dos 6 modelos; a prévia atualiza enquanto você digita. Se o texto não couber, encurte — no WhatsApp e no PDF ele vai completo.' },
+      { titulo: 'Novo comunicado', texto: 'Clique em "Novo comunicado", escolha Colaboradores ou Clientes e a categoria (Aviso, Informativo, Urgente, Segurança, Parabéns, Evento, Comercial).' },
+      { titulo: 'Pontos-chave', texto: 'Não se escreve texto livre: preencha os campos da categoria (ex.: Evento pede nome, data, horário, local, programação). O sistema redige o texto final no padrão JMT, com saudação, datas por extenso e encerramento. Para mudar o texto, ajuste os campos.' },
+      { titulo: 'Imagem', texto: 'A imagem usa só os pontos-chave. Escolha um dos 6 modelos (o da categoria já vem marcado); a prévia atualiza enquanto você preenche.' },
       { titulo: 'Destinatários', texto: 'Filtre por setor (colaboradores) ou cliente e marque quem recebe.' },
       { titulo: 'Enviar', texto: 'No comunicado criado: WhatsApp (fila), E-mail (abre no seu e-mail), Baixar imagem, Baixar PDF timbrado.' },
       { titulo: 'Ciência', texto: 'Com "Pedir confirmação de ciência", cada pessoa recebe um link próprio. A tabela mostra quem abriu e quem confirmou; o botão de WhatsApp reenvia só para quem falta.' },

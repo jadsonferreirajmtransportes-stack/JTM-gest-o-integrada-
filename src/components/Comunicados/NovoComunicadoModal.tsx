@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { X, Loader2, Image as ImageIcon, Users, Building2, AlertTriangle, Upload, Trash2, ChevronLeft } from 'lucide-react';
 import { Cliente, Colaborador } from '../../types';
 import {
-  CATEGORIAS_COMUNICADO,
+
   Comunicado,
   DestinatarioComunicado,
   ModeloImagem,
@@ -13,7 +13,8 @@ import {
   atualizarImagemComunicado,
   numeroFormatado,
 } from '../../utils/comunicadosApi';
-import { MODELOS_IMAGEM, gerarImagemComunicado, textoParaImagem } from './comunicadoImagem';
+import { MODELOS_IMAGEM, gerarImagemComunicado } from './comunicadoImagem';
+import { CampoModelo, MODELOS_REDACAO, ValoresModelo, camposDe, categoriasPara, montarComunicado, valoresIniciais } from './comunicadoModelos';
 
 interface NovoComunicadoModalProps {
   colaboradores: Colaborador[];
@@ -41,16 +42,104 @@ interface Candidato extends NovoDestinatario {
   detalhe?: string; // cargo / função do contato
 }
 
+/** Um campo do modelo de redação (texto curto, data, hora, lista, opções ou sim/não). */
+const CampoDoModelo: React.FC<{ campo: CampoModelo; valor: ValoresModelo[string]; onChange: (v: ValoresModelo[string]) => void }> = ({ campo: c, valor, onChange }) => {
+  const estilo = 'w-full p-2 border border-slate-300 rounded-lg text-xs bg-white';
+  const rotulo = (
+    <span className="text-[11px] font-bold text-slate-600 block mb-1">
+      {c.rotulo}
+      {c.obrigatorio && <span className="text-rose-600"> *</span>}
+    </span>
+  );
+  if (c.tipo === 'sim_nao') {
+    return (
+      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+        <input type="checkbox" checked={valor === true} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 accent-[#C48229]" />
+        {c.rotulo}
+      </label>
+    );
+  }
+  if (c.tipo === 'lista') {
+    const itens = Array.isArray(valor) && valor.length ? valor : [''];
+    return (
+      <div>
+        {rotulo}
+        <div className="space-y-1.5">
+          {itens.map((item, i) => (
+            <div key={i} className="flex gap-1.5">
+              <input
+                value={item}
+                maxLength={140}
+                onChange={(e) => onChange(itens.map((x, k) => (k === i ? e.target.value : x)))}
+                placeholder={i === 0 ? c.placeholder : 'Mais um item'}
+                className={estilo}
+              />
+              {itens.length > 1 && (
+                <button type="button" onClick={() => onChange(itens.filter((_, k) => k !== i))} className="px-2 text-slate-400 hover:text-rose-600">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
+          {itens.length < (c.max || 5) && (
+            <button type="button" onClick={() => onChange([...itens, ''])} className="text-[11px] font-bold text-[#92611F]">
+              + item
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+  if (c.tipo === 'opcoes') {
+    return (
+      <div>
+        {rotulo}
+        <select value={typeof valor === 'string' ? valor : ''} onChange={(e) => onChange(e.target.value)} className={estilo}>
+          {(c.opcoes || []).map((o) => (
+            <option key={o} value={o}>
+              {o || '— nenhuma —'}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+  return (
+    <div>
+      {rotulo}
+      <input
+        type={c.tipo === 'data' ? 'date' : c.tipo === 'hora' ? 'time' : 'text'}
+        value={typeof valor === 'string' ? valor : ''}
+        maxLength={c.tipo === 'texto' ? 160 : undefined}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={c.placeholder}
+        className={estilo}
+      />
+    </div>
+  );
+};
+
 /** Novo comunicado: conteúdo (com prévia da imagem) → destinatários → cria e gera os links. */
 export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colaboradores, clientes, criadoPor, onClose, onCriado }) => {
   const [etapa, setEtapa] = useState<1 | 2>(1);
   const [publico, setPublico] = useState<PublicoComunicado>('colaboradores');
   const [categoria, setCategoria] = useState<string>('Aviso');
-  const [titulo, setTitulo] = useState('');
-  const [corpo, setCorpo] = useState('Olá, {nome}!\n\n');
+  // Sem texto livre: os pontos-chave de cada categoria viram o texto final pelo modelo de
+  // redação (ver comunicadoModelos.ts). Para mudar o texto, muda-se os campos.
+  const [valores, setValores] = useState<ValoresModelo>(() => valoresIniciais('Aviso', 'colaboradores'));
   const [assinatura, setAssinatura] = useState(ASSINATURAS[0]);
   const [modelo, setModelo] = useState<ModeloImagem>('aviso');
-  const [destaque, setDestaque] = useState('');
+  const montado = useMemo(() => montarComunicado(categoria, publico, valores), [categoria, publico, valores]);
+  const titulo = montado.titulo;
+  const corpo = montado.corpo;
+  const destaque = montado.destaque || '';
+  const camposAtuais: CampoModelo[] = camposDe(categoria, publico);
+  const definirValor = (chave: string, valor: ValoresModelo[string]) => setValores((prev) => ({ ...prev, [chave]: valor }));
+  const trocarCategoria = (c: string, p: PublicoComunicado = publico) => {
+    setCategoria(c);
+    setModelo(MODELO_POR_CATEGORIA[c] || 'aviso');
+    setValores(valoresIniciais(c, p));
+  };
   const [exigeCiencia, setExigeCiencia] = useState(true);
   const [foto, setFoto] = useState<{ arquivo: File; url: string } | null>(null);
   const [previa, setPrevia] = useState<{ url: string; cortado: boolean } | null>(null);
@@ -74,7 +163,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
         const { blob, textoCortado } = await gerarImagemComunicado({
           modelo,
           titulo,
-          texto: textoParaImagem(corpo),
+          texto: montado.textoImagem,
           destaque,
           assinatura,
           fotoUrl: foto?.url,
@@ -91,7 +180,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
       }
     }, 450);
     return () => clearTimeout(id);
-  }, [modelo, titulo, corpo, destaque, assinatura, foto]);
+  }, [modelo, titulo, montado.textoImagem, destaque, assinatura, foto]);
 
   const candidatos: Candidato[] = useMemo(() => {
     if (publico === 'colaboradores') {
@@ -156,13 +245,11 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
     setSelecionados(new Set());
     setFiltroGrupo('');
     if (p === 'clientes') {
-      setCategoria('Comercial');
-      setModelo('comercial');
+      trocarCategoria('Comercial', p);
       setAssinatura('Comercial');
-      setCorpo((c) => c.replace(/^Olá, \{nome\}!/, 'Prezado(a) {nome},'));
     } else {
+      trocarCategoria('Aviso', p);
       setAssinatura('Departamento Pessoal');
-      setCorpo((c) => c.replace(/^Prezado\(a\) \{nome\},/, 'Olá, {nome}!'));
     }
   };
 
@@ -197,7 +284,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
         const { blob } = await gerarImagemComunicado({
           modelo,
           titulo: comunicado.titulo,
-          texto: textoParaImagem(comunicado.corpo),
+          texto: montado.textoImagem,
           destaque: comunicado.destaque,
           assinatura,
           numero: numeroFormatado(comunicado),
@@ -218,7 +305,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
 
   const campo = 'w-full p-2 border border-slate-300 rounded-lg text-xs';
   const rotulo = 'text-[11px] font-bold text-slate-600 block mb-1';
-  const conteudoOk = titulo.trim().length > 2 && corpo.replace(/\{nome\}/gi, '').replace(/[\s!,.]|Olá|Prezado\(a\)/gi, '').length > 5;
+  const conteudoOk = montado.faltando.length === 0 && titulo.trim().length > 2;
 
   return (
     <div data-texto-livre="true" className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
@@ -256,18 +343,12 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={rotulo}>Categoria</label>
-                  <select
-                    value={categoria}
-                    onChange={(e) => {
-                      setCategoria(e.target.value);
-                      setModelo(MODELO_POR_CATEGORIA[e.target.value] || 'aviso');
-                    }}
-                    className={campo}
-                  >
-                    {CATEGORIAS_COMUNICADO.map((c) => (
+                  <select value={categoria} onChange={(e) => trocarCategoria(e.target.value)} className={campo}>
+                    {categoriasPara(publico).map((c) => (
                       <option key={c}>{c}</option>
                     ))}
                   </select>
+                  <p className="text-[10px] text-slate-500 mt-1">{MODELOS_REDACAO[categoria]?.descricao}</p>
                 </div>
                 <div>
                   <label className={rotulo}>Assinado por</label>
@@ -279,20 +360,31 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
                   </datalist>
                 </div>
               </div>
-              <div>
-                <label className={rotulo}>Título</label>
-                <input value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={90} className={campo} placeholder="Ex.: Novo horário de expedição a partir de segunda" />
+              <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2.5">
+                <p className="text-[11px] font-black text-slate-500 uppercase tracking-wide">Pontos-chave do comunicado</p>
+                {camposAtuais.map((c) => (
+                  <CampoDoModelo key={`${categoria}-${c.chave}`} campo={c} valor={valores[c.chave]} onChange={(v) => definirValor(c.chave, v)} />
+                ))}
+                <p className="text-[10px] text-slate-500">O texto final é redigido pelo sistema no padrão JMT. Para mudar o texto, ajuste os campos.</p>
               </div>
               <div>
-                <label className={rotulo}>Texto</label>
-                <textarea value={corpo} onChange={(e) => setCorpo(e.target.value)} rows={9} className={campo} />
-                <p className="text-[11px] text-slate-500 mt-1">
-                  <strong>{'{nome}'}</strong> vira o primeiro nome de cada pessoa no WhatsApp e no e-mail. Para negrito no WhatsApp, use *asteriscos*.
-                </p>
-              </div>
-              <div>
-                <label className={rotulo}>Destaque na imagem (opcional)</label>
-                <input value={destaque} onChange={(e) => setDestaque(e.target.value)} maxLength={90} className={campo} placeholder="Ex.: Sexta, 10/10 às 8h — Sala de reunião" />
+                <span className={rotulo}>Texto que será enviado</span>
+                {montado.faltando.length > 0 ? (
+                  <p className="p-3 rounded-xl border border-dashed border-slate-300 text-slate-500">Preencha: {montado.faltando.join(', ')}.</p>
+                ) : (
+                  <div className="p-3 rounded-xl border border-slate-200 bg-white text-slate-700 leading-relaxed space-y-2 max-h-72 overflow-y-auto">
+                    <p className="font-black text-slate-900">{titulo}</p>
+                    {corpo.split(/\n\n/).map((paragrafo, i) => (
+                      <p key={i} className="whitespace-pre-line">
+                        {paragrafo
+                          .replace(/\{nome\}/g, publico === 'clientes' ? 'Maria' : 'João')
+                          .split(/(\*[^*\n]+\*)/g)
+                          .map((parte, k) => (/^\*[^*\n]+\*$/.test(parte) ? <strong key={k}>{parte.slice(1, -1)}</strong> : <React.Fragment key={k}>{parte}</React.Fragment>))}
+                      </p>
+                    ))}
+                    <p className="text-[10px] text-slate-400">Exemplo com o nome "{publico === 'clientes' ? 'Maria' : 'João'}" — cada pessoa recebe com o próprio nome.</p>
+                  </div>
+                )}
               </div>
               <div>
                 <span className={rotulo}>Modelo da imagem</span>
