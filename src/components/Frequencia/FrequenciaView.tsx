@@ -17,6 +17,7 @@ import {
   Ban,
   CalendarCheck,
   Info,
+  Sheet,
 } from 'lucide-react';
 import { Colaborador, UsuarioLogin } from '../../types';
 import {
@@ -66,6 +67,7 @@ import {
   resumir,
 } from './frequenciaCalc';
 import { gerarEspelhoPdf, nomeMes } from './espelhoPdf';
+import { gerarEspelhoXlsx, gerarResumoPdf, gerarResumoXlsx } from './relatorioFrequencia';
 
 interface FrequenciaViewProps {
   colaboradores: Colaborador[];
@@ -299,6 +301,20 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
     setAba('assinaturas');
   };
 
+  const exportar = async (chave: string, gerar: () => Promise<File>) => {
+    setOcupado(chave);
+    try {
+      const arquivo = await gerar();
+      baixarBlob(arquivo, arquivo.name);
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível gerar o arquivo.');
+    } finally {
+      setOcupado(null);
+    }
+  };
+  const linhasResumo = () => resumos.map(({ c, resumo, jornada }) => ({ colaborador: c, resumo, jornada }));
+
   const colaboradorSel = colaboradorPorId.get(colaboradorId);
   const espelhoSel: DiaEspelho[] = useMemo(
     () => (colaboradorSel ? espelhoDe(colaboradorSel, diasDoMes(mes)) : []),
@@ -507,6 +523,26 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                 </button>
                 <button
                   type="button"
+                  onClick={() =>
+                    exportar('xlsx-col', async () => {
+                      const espelho = espelhoDe(colaboradorSel, diasDoMes(mes));
+                      return gerarEspelhoXlsx({
+                        colaborador: colaboradorSel,
+                        mes,
+                        jornada: jornadaPorId.get(jornadaDe.get(colaboradorSel.id) || ''),
+                        espelho,
+                        resumo: resumir(espelho),
+                        todasBatidas: espelho.flatMap((d) => [...d.batidas, ...d.anuladas]),
+                      });
+                    })
+                  }
+                  disabled={!!ocupado}
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {ocupado === 'xlsx-col' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sheet className="w-3.5 h-3.5 text-emerald-700" />} Baixar Excel
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleEnviarAssinaturaUm(colaboradorSel)}
                   disabled={!!ocupado}
                   className="px-3 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
@@ -586,7 +622,23 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
 
       {aba === 'resumo' && (
         <>
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => exportar('pdf-resumo', async () => gerarResumoPdf(mes, linhasResumo()))}
+              disabled={!!ocupado}
+              className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-50 disabled:opacity-50"
+            >
+              {ocupado === 'pdf-resumo' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-[#92611F]" />} Resumo em PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => exportar('xlsx-resumo', () => gerarResumoXlsx(mes, linhasResumo()))}
+              disabled={!!ocupado}
+              className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-50 disabled:opacity-50"
+            >
+              {ocupado === 'xlsx-resumo' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sheet className="w-3.5 h-3.5 text-emerald-700" />} Resumo em Excel
+            </button>
             <button
               type="button"
               onClick={handleEnviarAssinaturaTodos}
