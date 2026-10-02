@@ -36,6 +36,9 @@ const PLACEHOLDER_BUSCA_REGEX = /buscar|pesquisar|filtrar|search/i;
 
 const deveIgnorar = (el: HTMLInputElement | HTMLTextAreaElement): boolean => {
   if (el.dataset.noUppercase === 'true') return true;
+  // Áreas de texto livre (corpo de comunicado, editor de documentos, conteúdo de treinamento):
+  // texto corrido em caixa alta é difícil de ler e foge do padrão de documentos da empresa.
+  if (el.closest('[data-texto-livre="true"]')) return true;
   if (PLACEHOLDER_BUSCA_REGEX.test(el.placeholder || '')) return true;
   if (el instanceof HTMLInputElement && TIPOS_EXCLUIDOS.has(el.type)) return true;
   return false;

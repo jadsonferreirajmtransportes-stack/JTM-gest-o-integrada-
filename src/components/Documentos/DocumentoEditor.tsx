@@ -160,7 +160,7 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, avi
   const rotulo = 'text-[11px] font-bold text-slate-600 block mb-1';
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#F8FAFC] flex flex-col">
+    <div data-texto-livre="true" className="fixed inset-0 z-50 bg-[#F8FAFC] flex flex-col">
       {/* Barra superior */}
       <div className="bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center gap-2">
         <button type="button" onClick={() => (!alterado || window.confirm('Sair sem salvar as alterações?')) && onVoltar()} className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg">

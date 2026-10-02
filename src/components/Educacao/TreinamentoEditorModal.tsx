@@ -161,7 +161,7 @@ export const TreinamentoEditorModal: React.FC<TreinamentoEditorModalProps> = ({ 
   const rotulo = 'text-[11px] font-bold text-slate-600 block mb-1';
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+    <div data-texto-livre="true" className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[92vh] flex flex-col">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <h2 className="text-sm font-black text-slate-900">{treinamento ? 'Editar treinamento' : 'Novo treinamento'}</h2>

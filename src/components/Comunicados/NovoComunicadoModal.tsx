@@ -221,7 +221,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
   const conteudoOk = titulo.trim().length > 2 && corpo.replace(/\{nome\}/gi, '').replace(/[\s!,.]|Olá|Prezado\(a\)/gi, '').length > 5;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+    <div data-texto-livre="true" className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[94vh] flex flex-col">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <div>

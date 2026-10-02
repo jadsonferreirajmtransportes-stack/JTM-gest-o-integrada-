@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { AlertaItem, UserRole, UsuarioLogin } from '../types';
 import { NavSection } from './Sidebar';
+import { CentralAjuda } from './Ajuda/CentralAjuda';
 import { JmtLogo } from './Brand/JmtLogo';
 
 interface HeaderProps {
@@ -315,6 +316,9 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
         </div>
+
+        {/* Ajuda / manual do sistema (F1) + tour guiado */}
+        <CentralAjuda secaoAtual={currentSection} usuarioId={currentUser?.id} />
 
         {/* Notifications / Alerts Tray */}
         <div className="relative" ref={alertsRef}>
