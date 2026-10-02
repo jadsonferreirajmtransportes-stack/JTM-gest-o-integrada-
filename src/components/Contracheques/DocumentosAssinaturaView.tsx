@@ -68,6 +68,13 @@ const TEXTOS: Record<CategoriaDocumentoAssinatura, { titulo: string; descricao: 
     importar: 'Importar',
     vazio: 'Nenhum documento disciplinar.',
   },
+  // Espelhos gerados em Controle de Frequência (Espelho do colaborador / Resumo do mês).
+  ponto: {
+    titulo: 'Espelhos de Frequência para Assinatura',
+    descricao: 'Espelhos mensais enviados para o colaborador conferir e assinar.',
+    importar: '',
+    vazio: 'Nenhum espelho enviado ainda. Gere pelo Espelho do colaborador ou pelo Resumo do mês.',
+  },
   regulamento: {
     titulo: 'Regulamento Interno — Ciência e Assinatura',
     descricao: 'Todos os colaboradores precisam ler e assinar a versão vigente. Novos admitidos aparecem em "Enviar para assinatura".',
@@ -339,14 +346,14 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
             <p className="text-xs text-slate-500 mt-0.5">{textos.descricao}</p>
           </div>
         </div>
-        <button
+        {textos.importar && (<button
           type="button"
           onClick={() => setShowImportar(true)}
           className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0"
         >
           <Upload className="w-4 h-4" />
           {textos.importar}
-        </button>
+        </button>)}
       </div>
 
       {erro && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}
@@ -566,7 +573,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
 
       {isEnvioEmMassaAberto && (
         <EnvioWhatsAppEmMassaModal
-          titulo={`Enviar ${ehContracheque ? 'contracheques' : categoria === 'regulamento' ? 'regulamento interno' : 'documentos de férias'} pendentes`}
+          titulo={`Enviar ${ehContracheque ? 'contracheques' : categoria === 'regulamento' ? 'regulamento interno' : categoria === 'ponto' ? 'espelhos de frequência' : 'documentos de férias'} pendentes`}
           itens={pendentesParaEnviar.map((d) => ({
             id: d.id,
             nome: `${d.colaboradorNome} — ${d.titulo}`,

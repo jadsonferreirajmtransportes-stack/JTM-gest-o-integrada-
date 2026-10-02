@@ -21,6 +21,9 @@ function montarDeclaracao(doc: DocumentoPublico): string {
   if (doc.categoria === 'disciplinar') {
     return `Declaro que recebi e tomei ciência do documento "${doc.titulo}". Estou ciente de que a minha assinatura indica apenas o recebimento e a ciência desta comunicação, e não a concordância com o seu conteúdo.`;
   }
+  if (doc.categoria === 'ponto') {
+    return `Declaro que conferi o ${doc.titulo} e que os registros correspondem à minha frequência no período.`;
+  }
   if (doc.categoria === 'regulamento') {
     return `Declaro que recebi, li e tomei conhecimento do ${doc.titulo} e que me comprometo a cumpri-lo.`;
   }

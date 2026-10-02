@@ -24,6 +24,7 @@ import {
   FileSignature,
   Gavel,
   GraduationCap,
+  Fingerprint,
   Thermometer,
   Layers,
   FileText,
@@ -70,6 +71,7 @@ export type NavSection =
   | 'ocorrencias'
   | 'disciplinar'
   | 'educacao'
+  | 'frequencia'
   | 'onboarding'
   | 'arquivo'
   | 'aniversariantes'
@@ -419,6 +421,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Disciplinar (Advertências)',
       icon: Gavel,
       // Supervisor propõe a medida; administrador aprova (ver DisciplinarView).
+      roles: ['admin', 'supervisor'],
+      group: 'operacional',
+    },
+    {
+      id: 'frequencia',
+      label: 'Controle de Frequência',
+      icon: Fingerprint,
+      // Ponto pelo celular (controle interno); supervisor vê a própria equipe.
       roles: ['admin', 'supervisor'],
       group: 'operacional',
     },

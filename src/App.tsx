@@ -245,6 +245,8 @@ import { DocumentosAssinaturaView } from './components/Contracheques/DocumentosA
 import { DisciplinarView } from './components/Disciplinar/DisciplinarView';
 import { EducacaoView } from './components/Educacao/EducacaoView';
 import { PortalEducacaoView } from './components/Educacao/PortalEducacaoView';
+import { FrequenciaView } from './components/Frequencia/FrequenciaView';
+import { PontoPublicView } from './components/Frequencia/PontoPublicView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
 import { EpiFormularioLinkModal } from './components/Epi/EpiFormularioLinkModal';
 import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
@@ -638,6 +640,8 @@ export default function App() {
   const [contrachequePublicoEhContracheque, setContrachequePublicoEhContracheque] = useState(true);
   // Portal de Educação do colaborador (?form=portal&token=...) — entra com CPF + nascimento.
   const [portalEducacaoToken, setPortalEducacaoToken] = useState<string | null>(null);
+  // Ponto pelo celular (?form=ponto&token=...) — mesmo token do portal.
+  const [pontoToken, setPontoToken] = useState<string | null>(null);
   const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
   const [isEpiLinkModalOpen, setIsEpiLinkModalOpen] = useState<boolean>(false);
 
@@ -1022,6 +1026,8 @@ export default function App() {
         setContrachequePublicoEhContracheque(formParam === 'contracheque');
       } else if (formParam === 'portal') {
         setPortalEducacaoToken(searchParams.get('token') || '');
+      } else if (formParam === 'ponto') {
+        setPontoToken(searchParams.get('token') || '');
       }
     }
   }, []);
@@ -2839,6 +2845,10 @@ export default function App() {
     );
   }
 
+  if (pontoToken !== null) {
+    return <PontoPublicView token={pontoToken || undefined} />;
+  }
+
   if (portalEducacaoToken !== null) {
     return <PortalEducacaoView token={portalEducacaoToken || undefined} />;
   }
@@ -3446,6 +3456,10 @@ export default function App() {
               onSalvarOcorrencia={handleSaveOcorrencia}
               onExcluirOcorrencia={handleDeleteOcorrencia}
             />
+          )}
+
+          {activeGlobalModule === 'dp' && activeSection === 'frequencia' && podeVerSecaoDp(currentUser, 'frequencia') && (
+            <FrequenciaView colaboradores={colaboradoresEquipeVisiveis} currentUser={currentUser} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'educacao' && podeVerSecaoDp(currentUser, 'educacao') && (
