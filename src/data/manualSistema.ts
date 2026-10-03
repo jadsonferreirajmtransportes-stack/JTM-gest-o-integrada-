@@ -447,7 +447,7 @@ export const MANUAL: TopicoManual[] = [
     resumo: 'Treinamentos com vídeo, material, Instrução de Trabalho e prova; certificado; Regulamento Interno para ciência e assinatura.',
     passos: [
       { titulo: 'Criar treinamento', texto: '"Novo treinamento": conteúdos (vídeo por link, PDF, Instrução de Trabalho, texto), prova com nota mínima, quem precisa fazer (todos, cargos, setores), prazo e validade.' },
-      { titulo: 'A partir de um documento', texto: '"Importar documento" monta o treinamento a partir de um PDF, Word ou texto colado: cada título vira uma parte, as imagens do Word entram junto e o PDF original pode ir como material. Revise no editor, defina quem faz e salve.' },
+      { titulo: 'A partir de um documento', texto: '"Importar documento" monta o treinamento a partir de um PDF, Word ou texto colado: cada título vira uma parte, as figuras (do Word ou do PDF) entram junto e o PDF original pode ir como material. Revise no editor, defina quem faz e salve.' },
       { titulo: 'Atribuição', texto: 'Pela regra de cargo/setor é automática; também dá para "Atribuir" a pessoas específicas. Com validade, o treinamento volta sozinho quando vence (reciclagem).' },
       { titulo: 'Enviar o link', texto: '"Enviar link do portal" manda o link pessoal para quem tem treinamento em aberto. O colaborador entra com CPF e data de nascimento.' },
       { titulo: 'Acompanhar', texto: 'Na aba Acompanhamento: situação, nota, validade e certificado de cada um.' },

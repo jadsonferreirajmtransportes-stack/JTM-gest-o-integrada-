@@ -764,7 +764,7 @@ export const ImportarDocumentoModal: React.FC<{ criadoPor?: string; onClose: () 
                       </span>
                     </label>
                   )}
-                  <p className="text-slate-500">No Word, as imagens do documento entram no treinamento. Word antigo (.doc): salve como .docx antes.</p>
+                  <p className="text-slate-500">As figuras do documento (Word ou PDF) entram no treinamento, na parte em que aparecem. Logos e cabeçalhos repetidos ficam de fora. Word antigo (.doc): salve como .docx antes.</p>
                 </>
               ) : (
                 <div>

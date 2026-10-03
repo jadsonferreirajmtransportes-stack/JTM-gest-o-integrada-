@@ -143,6 +143,135 @@ async function lerDocxComImagens(arquivo: File): Promise<{ blocos: BlocoDocument
   return { blocos: base.blocos, imagens };
 }
 
+/** Figuras de um PDF: acha cada imagem desenhada nas páginas (pelo operador de desenho do
+ *  pdf.js e a matriz de transformação em vigor), recorta da página renderizada e diz depois de
+ *  qual bloco de texto ela aparece (pela posição na página). Logos/cabeçalhos repetidos na
+ *  maioria das páginas e imagens pequenas (ícones) ficam de fora. */
+async function extrairImagensPdf(
+  arquivo: File,
+  blocos: BlocoDocumento[],
+  aoProgredir?: (msg: string) => void
+): Promise<{ imagens: Map<number, { dataUrl: string; legenda: string }[]>; total: number }> {
+  const { carregarPdfJs } = await import('../Contracheques/contrachequePdfUtils');
+  const pdfjs: any = await carregarPdfJs();
+  const pdf = await pdfjs.getDocument({ data: new Uint8Array(await arquivo.arrayBuffer()) }).promise;
+  const { OPS } = pdfjs;
+  // Matrizes 2D do PDF [a, b, c, d, e, f] (contas próprias — o Util do pdf.js mudou entre versões).
+  const multiplicar = (m1: number[], m2: number[]) => [
+    m1[0] * m2[0] + m1[2] * m2[1],
+    m1[1] * m2[0] + m1[3] * m2[1],
+    m1[0] * m2[2] + m1[2] * m2[3],
+    m1[1] * m2[2] + m1[3] * m2[3],
+    m1[0] * m2[4] + m1[2] * m2[5] + m1[4],
+    m1[1] * m2[4] + m1[3] * m2[5] + m1[5],
+  ];
+  const aplicar = (p: number[], m: number[]) => [p[0] * m[0] + p[1] * m[2] + m[4], p[0] * m[1] + p[1] * m[3] + m[5]];
+  const normalizar = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+
+  // 1) Caixas das imagens em cada página (coordenadas do PDF).
+  type Caixa = { pagina: number; x1: number; y1: number; x2: number; y2: number };
+  const caixas: Caixa[] = [];
+  const linhasPorPagina: { pagina: number; y: number; texto: string }[] = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const pagina = await pdf.getPage(p);
+    const [, , largura, altura] = pagina.view;
+    const ops = await pagina.getOperatorList();
+    let ctm = [1, 0, 0, 1, 0, 0];
+    const pilha: number[][] = [];
+    for (let i = 0; i < ops.fnArray.length; i++) {
+      const fn = ops.fnArray[i];
+      const args = ops.argsArray[i];
+      if (fn === OPS.save) pilha.push(ctm);
+      else if (fn === OPS.restore) ctm = pilha.pop() || [1, 0, 0, 1, 0, 0];
+      else if (fn === OPS.transform) ctm = multiplicar(ctm, args);
+      else if (fn === OPS.paintFormXObjectBegin) {
+        pilha.push(ctm);
+        if (args?.[0] && args[0].length === 6) ctm = multiplicar(ctm, Array.from(args[0]));
+      } else if (fn === OPS.paintFormXObjectEnd) ctm = pilha.pop() || [1, 0, 0, 1, 0, 0];
+      else if (fn === OPS.paintImageXObject || fn === OPS.paintInlineImageXObject || fn === OPS.paintImageXObjectRepeat) {
+        const cantos = [
+          [0, 0],
+          [1, 0],
+          [0, 1],
+          [1, 1],
+        ].map((c) => aplicar(c, ctm));
+        const xs = cantos.map((c: number[]) => c[0]);
+        const ys = cantos.map((c: number[]) => c[1]);
+        const caixa = { pagina: p, x1: Math.max(0, Math.min(...xs)), y1: Math.max(0, Math.min(...ys)), x2: Math.min(largura, Math.max(...xs)), y2: Math.min(altura, Math.max(...ys)) };
+        const w = caixa.x2 - caixa.x1;
+        const h = caixa.y2 - caixa.y1;
+        // Ícones e enfeites pequenos ficam de fora (menos de ~4% da página ou 60pt de lado).
+        if (w >= 60 && h >= 40 && w * h >= largura * altura * 0.04) caixas.push(caixa);
+      }
+    }
+    const conteudo = await pagina.getTextContent();
+    (conteudo.items as any[]).forEach((it) => {
+      if (typeof it.str === 'string' && it.str.trim()) linhasPorPagina.push({ pagina: p, y: it.transform[5], texto: it.str });
+    });
+  }
+
+  // 2) Tira as que se repetem na maioria das páginas (logo do cabeçalho, marca d'água).
+  const chave = (c: Caixa) => `${Math.round(c.x1 / 10)}-${Math.round(c.y1 / 10)}-${Math.round((c.x2 - c.x1) / 10)}-${Math.round((c.y2 - c.y1) / 10)}`;
+  const contagem = new Map<string, Set<number>>();
+  caixas.forEach((c) => contagem.set(chave(c), (contagem.get(chave(c)) || new Set()).add(c.pagina)));
+  const figuras = caixas.filter((c) => pdf.numPages < 3 || (contagem.get(chave(c))?.size || 0) <= pdf.numPages / 2);
+
+  // 3) Onde cada bloco de texto começa (página e altura), pra encaixar a figura depois dele.
+  const posicoes = blocos.map(() => ({ pagina: 0, y: 0 }));
+  let cursor = 0;
+  blocos.forEach((b, i) => {
+    const inicio = normalizar(b.tipo === 'lista' ? b.itens[0] || '' : b.tipo === 'tabela' ? b.cabecalho.join('') : b.texto).slice(0, 18);
+    if (!inicio) return;
+    for (let k = cursor; k < linhasPorPagina.length; k++) {
+      const linha = normalizar(linhasPorPagina[k].texto);
+      if (linha && (linha.includes(inicio.slice(0, Math.min(12, inicio.length))) || inicio.startsWith(linha.slice(0, 12)))) {
+        posicoes[i] = { pagina: linhasPorPagina[k].pagina, y: linhasPorPagina[k].y };
+        cursor = k;
+        break;
+      }
+    }
+  });
+
+  // 4) Recorta cada figura da página renderizada.
+  const imagens = new Map<number, { dataUrl: string; legenda: string }[]>();
+  let feitas = 0;
+  for (const p of Array.from(new Set(figuras.map((f) => f.pagina)))) {
+    const pagina = await pdf.getPage(p);
+    const viewport = pagina.getViewport({ scale: 2 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // intent 'print': desenha de uma vez, sem depender de requestAnimationFrame.
+    await pagina.render({ canvas, canvasContext: ctx, viewport, intent: 'print' }).promise;
+    for (const f of figuras.filter((x) => x.pagina === p)) {
+      feitas += 1;
+      aoProgredir?.(`Recortando figura ${feitas} de ${figuras.length}...`);
+      const [vx1, vy1, vx2, vy2] = viewport.convertToViewportRectangle([f.x1, f.y1, f.x2, f.y2]);
+      const x = Math.max(0, Math.floor(Math.min(vx1, vx2)));
+      const y = Math.max(0, Math.floor(Math.min(vy1, vy2)));
+      const w = Math.min(canvas.width - x, Math.ceil(Math.abs(vx2 - vx1)));
+      const h = Math.min(canvas.height - y, Math.ceil(Math.abs(vy2 - vy1)));
+      if (w < 20 || h < 20) continue;
+      const recorte = document.createElement('canvas');
+      recorte.width = w;
+      recorte.height = h;
+      recorte.getContext('2d')!.drawImage(canvas, x, y, w, h, 0, 0, w, h);
+      // Depois do último bloco que começa antes da figura (página anterior, ou mais acima na mesma página).
+      let indice = 0;
+      posicoes.forEach((pos, i) => {
+        if (pos.pagina && (pos.pagina < p || (pos.pagina === p && pos.y >= f.y2 - 2))) indice = i;
+      });
+      const lista = imagens.get(indice) || [];
+      lista.push({ dataUrl: recorte.toDataURL('image/jpeg', 0.88), legenda: `Figura da página ${p}` });
+      imagens.set(indice, lista);
+    }
+  }
+  return { imagens, total: feitas };
+}
+
 function estimarMinutos(partes: Parte[]): number {
   const palavras = partes.reduce((s, p) => s + p.linhas.join(' ').split(/\s+/).length, 0);
   const imagens = partes.reduce((s, p) => s + p.imagens.length, 0);
@@ -172,6 +301,15 @@ export async function documentoParaTreinamento(
       const r = await importarArquivo(origem.arquivo);
       blocos = r.blocos;
       avisos.push(...r.avisos.filter((a) => !/padrão JMT coloca|transforme em tabela/.test(a)));
+      opcoes.aoProgredir?.('Procurando as figuras do PDF...');
+      try {
+        const figuras = await extrairImagensPdf(origem.arquivo, blocos, opcoes.aoProgredir);
+        imagens = figuras.imagens;
+        if (figuras.total === 0) avisos.push('Não encontrei figuras no PDF (só texto, ou imagens muito pequenas / repetidas em todas as páginas, como o logo).');
+      } catch (err) {
+        console.error(err);
+        avisos.push('Não foi possível tirar as figuras deste PDF — elas continuam visíveis no PDF original, se ele for incluído como material.');
+      }
       avisos.push(origem.anexarPdf ? 'Em PDF, tabelas e colunas podem vir como texto corrido — confira no editor. O PDF original vai junto como material, com o visual original.' : 'Em PDF, tabelas e colunas podem vir como texto corrido — confira no editor.');
       if (origem.anexarPdf) {
         opcoes.aoProgredir?.('Enviando o PDF original...');
