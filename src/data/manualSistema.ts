@@ -214,6 +214,26 @@ export const MANUAL: TopicoManual[] = [
     tour: [{ alvo: 'Novo comunicado', titulo: 'Novo comunicado', texto: 'Escreva uma vez e envie em texto, imagem e PDF.' }],
   },
   {
+    id: 'jornal',
+    grupo: 'Corporativo',
+    titulo: 'Jornal JMT',
+    resumo: 'Notícias da empresa no estilo blog, lidas pelos colaboradores no link pessoal do portal (aba "Jornal JMT"), com fotos, reações e comentários.',
+    passos: [
+      { titulo: 'Escrever', texto: 'Clique em "Nova notícia" (ou "Sugerir notícia"). Preencha título, linha fina e editoria. Escreva o texto — uma linha em branco começa um novo parágrafo — e use "Adicionar fotos" para colocar imagens no meio do texto.' },
+      { titulo: 'Capa', texto: 'Sem foto, a notícia ganha uma capa automática na cor da editoria. Para usar uma foto, clique em "Enviar foto".' },
+      { titulo: 'Ver como fica', texto: 'O botão "Ver como fica" mostra a notícia como o colaborador vai ver no celular.' },
+      { titulo: 'Aprovação', texto: 'Supervisores enviam para aprovação. O administrador revisa em "Para aprovar": publica ou devolve para ajuste com um comentário.' },
+      { titulo: 'Divulgar', texto: 'Na notícia publicada, "Divulgar" abre a fila do WhatsApp com o link pessoal de cada colaborador, que já abre direto na notícia.' },
+      { titulo: 'Comentários', texto: 'Os colaboradores reagem e comentam. Comentário só aparece para os outros depois que o administrador aprova, em "Comentários para aprovar".' },
+      { titulo: 'Tirar do ar', texto: 'Arquivar tira a notícia do portal sem apagar. O alfinete fixa uma notícia no topo.' },
+    ],
+    dicas: [
+      'Só publique foto de pessoa com autorização de uso de imagem, e sem documentos, crachás, placas ou dados de clientes à mostra (LGPD).',
+      'Títulos curtos e diretos funcionam melhor no celular.',
+    ],
+    tour: [{ alvo: 'Nova notícia', titulo: 'Nova notícia', texto: 'Escreva, coloque fotos e publique no portal dos colaboradores.' }],
+  },
+  {
     id: 'documentos',
     grupo: 'Corporativo',
     titulo: 'Padronização de Documentos',

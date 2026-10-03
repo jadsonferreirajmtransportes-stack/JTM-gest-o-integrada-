@@ -39,6 +39,7 @@ import { gerarCertificadoPdf, formatarCargaHoraria } from './certificadoPdf';
 import { gerarPdfRegulamento } from '../Regulamento/regulamentoPdf';
 import { ROTULO_VERSAO_REGULAMENTO } from '../../data/regulamentoInterno';
 import { baixarBlob } from '../../utils/downloadUtils';
+import { JornalPortal } from '../Jornal/JornalPortal';
 
 function mascararCpf(valor: string): string {
   const d = valor.replace(/\D/g, '').slice(0, 11);
@@ -94,20 +95,22 @@ const MENSAGENS_ERRO = {
   dados: 'CPF ou data de nascimento não conferem com o cadastro. Confira e tente de novo — se continuar, fale com o Departamento Pessoal.',
 };
 
-type Aba = 'treinamentos' | 'instrucoes' | 'regulamento';
+type Aba = 'treinamentos' | 'instrucoes' | 'regulamento' | 'jornal';
 
 /** Portal do colaborador (sem login): ?form=portal&token=... — entra com CPF + data de
  *  nascimento, faz os treinamentos (conteúdos → prova → assinatura → certificado), consulta
  *  as Instruções de Trabalho vigentes e lê o Regulamento Interno. Tudo passa pelas funções
  *  portal_* do banco (migração 061), que conferem token + CPF + nascimento a cada chamada. */
-export const PortalEducacaoView: React.FC<{ token?: string }> = ({ token }) => {
+export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string; noticiaInicial?: string }> = ({ token, abaInicial, noticiaInicial }) => {
   const [cpf, setCpf] = useState('');
   const [nascimento, setNascimento] = useState('');
   const [entrando, setEntrando] = useState(false);
   const [erro, setErro] = useState<string | null>(token ? null : MENSAGENS_ERRO.link);
   const [credenciais, setCredenciais] = useState<CredenciaisPortal | null>(null);
   const [dados, setDados] = useState<DadosPortal | null>(null);
-  const [aba, setAba] = useState<Aba>('treinamentos');
+  const [aba, setAba] = useState<Aba>(abaInicial === 'jornal' ? 'jornal' : 'treinamentos');
+  // Link da divulgação (&noticia=) abre a notícia direto — só na primeira vez.
+  const [noticiaDoLink, setNoticiaDoLink] = useState<string | undefined>(abaInicial === 'jornal' ? noticiaInicial : undefined);
   const [abertoId, setAbertoId] = useState<string | null>(null);
   const [instrucaoAberta, setInstrucaoAberta] = useState<InstrucaoTrabalho | null>(null);
 
@@ -165,7 +168,7 @@ export const PortalEducacaoView: React.FC<{ token?: string }> = ({ token }) => {
               </div>
               <div>
                 <h1 className="text-base font-bold text-slate-900">Portal de Educação JMT</h1>
-                <p className="text-xs text-slate-500">Treinamentos, Instruções de Trabalho e Regulamento Interno.</p>
+                <p className="text-xs text-slate-500">Treinamentos, Instruções de Trabalho, Regulamento Interno e o Jornal JMT.</p>
               </div>
             </div>
             <div>
@@ -239,6 +242,7 @@ export const PortalEducacaoView: React.FC<{ token?: string }> = ({ token }) => {
                   ['treinamentos', 'Treinamentos'],
                   ['instrucoes', 'Instruções de Trabalho'],
                   ['regulamento', 'Regulamento'],
+                  ['jornal', 'Jornal JMT'],
                 ] as [Aba, string][]
               ).map(([id, rotulo]) => (
                 <button
@@ -307,6 +311,8 @@ export const PortalEducacaoView: React.FC<{ token?: string }> = ({ token }) => {
             {aba === 'instrucoes' && <ListaInstrucoes instrucoes={instrucoes} onAbrir={setInstrucaoAberta} />}
 
             {aba === 'regulamento' && <RegulamentoLeitura />}
+
+            {aba === 'jornal' && <JornalPortal credenciais={credenciais} noticiaInicial={noticiaDoLink} onNoticiaInicialUsada={() => setNoticiaDoLink(undefined)} />}
           </>
         )}
       </main>

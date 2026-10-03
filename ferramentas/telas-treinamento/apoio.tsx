@@ -4,11 +4,15 @@
 import React from 'react';
 
 export const tabelas: Record<string, any[]> = {};
+/** Funções do banco simuladas (supabase.rpc): nome -> resposta a partir do corpo enviado. */
+export const rpcs: Record<string, (corpo: any) => unknown> = {};
 const fetchOriginal = window.fetch.bind(window);
 window.fetch = async (entrada: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof entrada === 'string' ? entrada : entrada instanceof URL ? entrada.href : entrada.url;
   if (!/supabase\.co/.test(url)) return fetchOriginal(entrada as any, init);
   const resposta = (corpo: unknown) => new Response(JSON.stringify(corpo), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  const rpc = url.match(/\/rest\/v1\/rpc\/([a-z_]+)/);
+  if (rpc) return resposta(rpcs[rpc[1]] ? rpcs[rpc[1]](JSON.parse(String(init?.body || '{}'))) : {});
   const m = url.match(/\/rest\/v1\/([a-z_]+)(\?.*)?$/);
   if (!m || m[1] === 'rpc') return resposta({});
   if (init?.method && init.method !== 'GET' && init.method !== 'HEAD') return resposta([]);

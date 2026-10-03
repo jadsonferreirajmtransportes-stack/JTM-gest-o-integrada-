@@ -19,6 +19,7 @@ export type GlobalModuleId =
   | 'compras'
   | 'comunicados'
   | 'documentos'
+  | 'jornal'
   | string;
 
 // Seções de dentro do módulo DP (Departamento Pessoal) que podem ser restringidas

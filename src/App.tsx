@@ -248,6 +248,7 @@ import { PortalEducacaoView } from './components/Educacao/PortalEducacaoView';
 import { FrequenciaView } from './components/Frequencia/FrequenciaView';
 import { PontoPublicView } from './components/Frequencia/PontoPublicView';
 import { ComunicadosView } from './components/Comunicados/ComunicadosView';
+import { JornalView } from './components/Jornal/JornalView';
 import { DocumentosView } from './components/Documentos/DocumentosView';
 import { ComunicadoPublicView } from './components/Comunicados/ComunicadoPublicView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
@@ -723,11 +724,13 @@ export default function App() {
       setActiveSection('documentos');
     } else if (modId === 'comunicados') {
       setActiveSection('comunicados');
+    } else if (modId === 'jornal') {
+      setActiveSection('jornal');
     } else if (modId === 'compras') {
       setActiveSection('compras');
     } else if (modId === 'dp') {
       if (
-        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados', 'documentos'].includes(
+        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados', 'documentos', 'jornal'].includes(
           activeSection
         )
       ) {
@@ -2865,7 +2868,8 @@ export default function App() {
   }
 
   if (portalEducacaoToken !== null) {
-    return <PortalEducacaoView token={portalEducacaoToken || undefined} />;
+    const paramsPortal = new URLSearchParams(window.location.search);
+    return <PortalEducacaoView token={portalEducacaoToken || undefined} abaInicial={paramsPortal.get('aba') || undefined} noticiaInicial={paramsPortal.get('noticia') || undefined} />;
   }
 
   // IF Public Entrega de EPI filling form is active (link genérico, ?form=epi_entrega)
@@ -2896,6 +2900,7 @@ export default function App() {
           else if (sec === 'compras') setActiveGlobalModule('compras');
           else if (sec === 'comunicados') setActiveGlobalModule('comunicados');
           else if (sec === 'documentos') setActiveGlobalModule('documentos');
+          else if (sec === 'jornal') setActiveGlobalModule('jornal');
           else setActiveGlobalModule('dp');
           setIsMobileMenuOpen(false);
         }}
@@ -2948,6 +2953,7 @@ export default function App() {
             else if (sec === 'compras') setActiveGlobalModule('compras');
             else if (sec === 'comunicados') setActiveGlobalModule('comunicados');
             else if (sec === 'documentos') setActiveGlobalModule('documentos');
+          else if (sec === 'jornal') setActiveGlobalModule('jornal');
             else setActiveGlobalModule('dp');
           }}
           searchQuery={searchQuery}
@@ -3296,6 +3302,8 @@ export default function App() {
           {(activeGlobalModule === 'comunicados' || activeSection === 'comunicados') && (
             <ComunicadosView colaboradores={colaboradores} clientes={clientes} currentUser={currentUser} />
           )}
+
+          {(activeGlobalModule === 'jornal' || activeSection === 'jornal') && <JornalView colaboradores={colaboradores} currentUser={currentUser} />}
 
           {/* ========================================================================= */}
           {/* MODULE 6: LOGINS & ACESSOS (USUÁRIOS) */}

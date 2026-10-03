@@ -355,6 +355,39 @@ TELAS_TREINAMENTO.push(
   ] },
 );
 
+// ---------------------------------------------------------------------------
+// Jornal JMT
+// ---------------------------------------------------------------------------
+TELAS_TREINAMENTO.push(
+  { id: 'jor-1', secao: 'jornal', titulo: 'O painel do Jornal JMT', marcas: [
+    m('Nova notícia', 'Escreva uma notícia (supervisores veem "Sugerir notícia").'),
+    m('Para aprovar', 'Sugestões dos supervisores esperando a revisão do administrador.'),
+    m('Comentários para aprovar', 'Comentários dos colaboradores: só aparecem para todos depois de aprovados.'),
+    m('Divulgar', 'Envia o link pessoal de cada colaborador pelo WhatsApp, já abrindo na notícia.'),
+    m('Fixar no topo', 'Fixa a notícia no topo; ao lado, arquivar tira do ar sem apagar.'),
+  ] },
+  { id: 'jor-2', secao: 'jornal', titulo: 'Escrevendo uma notícia', marcas: [
+    m('Título *', 'Título curto e direto.'),
+    m('Linha fina (resumo)', 'Uma frase com o essencial — aparece na lista.'),
+    m('Enviar foto', 'Capa: sem foto, o sistema usa a capa automática da editoria.'),
+    m('Adicionar fotos', 'Coloque texto e fotos na ordem que quiser.'),
+    m('Ver como fica', 'Veja como o colaborador vai ler no celular.'),
+    m('Publicar', 'Publica no portal (supervisores: "Enviar para aprovação").'),
+  ] },
+  { id: 'jor-3', secao: 'jornal', titulo: 'O jornal no celular do colaborador', marcas: [
+    m('Farma Aéreo bate recorde', 'A notícia em destaque aparece primeiro e grande; "Nova" marca o que a pessoa ainda não leu.'),
+    m('Nova câmara fria', 'Toque em qualquer notícia para ler, reagir e comentar.'),
+  ] },
+  { id: 'jor-4', secao: 'jornal', titulo: 'Reações e comentários', marcas: [
+    m('Parabéns12', 'O colaborador reage com um toque (toque de novo para desfazer).'),
+    m('Comentários', 'Logo abaixo ficam os comentários dos colegas.'),
+  ] },
+  { id: 'jor-5', secao: 'jornal', titulo: 'Comentando uma notícia', marcas: [
+    m('aguardando aprovação', 'O comentário novo fica visível só para quem escreveu até o administrador aprovar.'),
+    m('Escreva um comentário', 'Escreva com respeito (até 1000 caracteres) e toque em Comentar.'),
+  ] },
+);
+
 export const telasDaSecao =(secao: string) => TELAS_TREINAMENTO.filter((t) => t.secao === secao);
 
 /** Endereço público da imagem (servida pelo próprio site). */

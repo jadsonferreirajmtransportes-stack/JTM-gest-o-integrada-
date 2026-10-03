@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6C982"/><stop offset="1" stop-color="#E9A04A"/></linearGradient>
+    <linearGradient id="chao" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5C4526"/><stop offset="1" stop-color="#2B2014"/></linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#ceu)"/>
+  <circle cx="980" cy="230" r="110" fill="#FFE7C2" opacity=".9"/>
+  <path d="M0 470 L220 330 L420 450 L640 300 L900 460 L1100 360 L1280 450 L1280 720 L0 720Z" fill="#C48229" opacity=".55"/>
+  <path d="M0 520 L300 420 L560 510 L820 410 L1280 520 L1280 720 L0 720Z" fill="#92611F" opacity=".7"/>
+  <rect y="560" width="1280" height="160" fill="url(#chao)"/>
+  <g fill="#F6C982" opacity=".8"><rect x="40" y="634" width="120" height="10" rx="5"/><rect x="300" y="634" width="120" height="10" rx="5"/><rect x="560" y="634" width="120" height="10" rx="5"/><rect x="820" y="634" width="120" height="10" rx="5"/><rect x="1080" y="634" width="120" height="10" rx="5"/></g>
+  <g transform="translate(330 330)">
+    <rect x="0" y="40" width="440" height="200" rx="14" fill="#FFFFFF"/>
+    <rect x="0" y="40" width="440" height="42" rx="14" fill="#C48229"/>
+    <text x="220" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="64" fill="#7A4F17">JMT</text>
+    <text x="220" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="20" fill="#92611F" letter-spacing="4">CARGA REFRIGERADA</text>
+    <path d="M440 90 H540 L610 160 V240 H440Z" fill="#22252B"/>
+    <path d="M465 108 H530 L585 163 H465Z" fill="#9FC7D9"/>
+    <circle cx="100" cy="250" r="42" fill="#121316"/><circle cx="100" cy="250" r="18" fill="#C9A15A"/>
+    <circle cx="340" cy="250" r="42" fill="#121316"/><circle cx="340" cy="250" r="18" fill="#C9A15A"/>
+    <circle cx="530" cy="250" r="42" fill="#121316"/><circle cx="530" cy="250" r="18" fill="#C9A15A"/>
+  </g>
+</svg>

@@ -179,6 +179,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     iconeNome: 'FileStack',
     categoria: 'Corporativo',
   },
+  {
+    id: 'jornal',
+    nome: 'Jornal JMT',
+    sigla: 'JOR',
+    descricao: 'Notícias da empresa para os colaboradores no link pessoal do portal, com fotos, reações e comentários moderados.',
+    corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
+    corBorda: 'border-[#C48229]',
+    iconeNome: 'Newspaper',
+    categoria: 'Corporativo',
+  },
 ];
 
 export const INITIAL_USERS_DATA: UsuarioLogin[] = [

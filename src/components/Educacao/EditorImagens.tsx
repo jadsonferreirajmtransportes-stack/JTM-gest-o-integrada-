@@ -8,7 +8,7 @@ const LIMITE_MB = 8;
 /** Imagens de um conteúdo do treinamento: enviar (várias de uma vez), legenda, explicação
  *  numerada opcional (uma linha por item — vira 1, 2, 3 embaixo da imagem), ordem e remover.
  *  As imagens vão para o espaço público "treinamentos" (não usar foto com dado pessoal). */
-export const EditorImagens: React.FC<{ telas: TelaIlustrada[]; onChange: (t: TelaIlustrada[]) => void; textoBotao?: string }> = ({ telas, onChange, textoBotao = 'Adicionar imagem' }) => {
+export const EditorImagens: React.FC<{ telas: TelaIlustrada[]; onChange: (t: TelaIlustrada[]) => void; textoBotao?: string; /** Para onde enviar (padrão: espaço "treinamentos"). */ enviarArquivo?: (f: File) => Promise<string> }> = ({ telas, onChange, textoBotao = 'Adicionar imagem', enviarArquivo = enviarMaterialTreinamento }) => {
   const [enviando, setEnviando] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -28,7 +28,7 @@ export const EditorImagens: React.FC<{ telas: TelaIlustrada[]; onChange: (t: Tel
       }
       setEnviando(lista.length > 1 ? `Enviando ${i + 1} de ${lista.length}...` : 'Enviando...');
       try {
-        const url = await enviarMaterialTreinamento(arq);
+        const url = await enviarArquivo(arq);
         novas.push({ titulo: arq.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' '), imagem: url, marcas: [] });
       } catch (err) {
         setErro(err instanceof Error ? err.message : `Não foi possível enviar "${arq.name}".`);

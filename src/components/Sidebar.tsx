@@ -37,6 +37,7 @@ import {
   FileCheck2,
   ShoppingCart,
   Megaphone,
+  Newspaper,
   FileStack,
   Calculator,
   MessageSquare,
@@ -311,6 +312,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: undefined as number | undefined,
       icon: FileStack,
       color: 'from-[#5c4526] to-[#2b2014]',
+      activeBorder: 'border-[#C48229]',
+    },
+    {
+      id: 'jornal' as GlobalModuleId,
+      title: 'Jornal JMT',
+      short: 'Notícias da empresa',
+      badge: undefined as number | undefined,
+      icon: Newspaper,
+      color: 'from-[#C48229] to-[#5c4526]',
       activeBorder: 'border-[#C48229]',
     },
     {

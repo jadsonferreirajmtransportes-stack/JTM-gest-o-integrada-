@@ -126,6 +126,10 @@ export const MODULOS_DEMAIS: ModuloTreinamento[] = [
     'Antes de qualquer módulo: como entrar, navegar pelo menu, encontrar a ajuda e cuidar do seu acesso. Seu login é pessoal — tudo o que é feito nele fica registrado no seu nome.',
     ['Entre no sistema com o seu login.', 'Abra o menu e veja quais módulos estão liberados para você.', 'Em qualquer tela, aperte F1 (ou o "?") e abra a ajuda daquela tela.', 'Faça o tour guiado de uma tela que você usa todo dia.']),
 
+  mod('Corporativo', 'jornal', 'Jornal JMT', 15,
+    'O Jornal JMT conta para todos os colaboradores o que acontece na empresa: conquistas, equipe, segurança, eventos. O supervisor é quem mais vê essas histórias no dia a dia — e pode sugerir notícias, que o administrador revisa e publica.',
+    ['Abra o módulo Jornal JMT e leia uma notícia publicada.', 'Clique em "Sugerir notícia", escreva um rascunho curto e use "Ver como fica".', 'Salve como rascunho (ou exclua) — quando for de verdade, use "Enviar para aprovação".', 'Lembre: foto de pessoa só com autorização, e sem documentos ou dados de clientes à mostra.']),
+
   // ------------------------------------------------- Rotina do supervisor
   mod('Rotina do supervisor', 'frequencia', 'Controle de Frequência (ponto pelo celular)', 25,
     'A frequência da equipe é acompanhada todo dia: quem bateu, quem faltou, quem atrasou. Ajustes e justificativas ficam registrados com motivo e autor — nada é apagado — e o espelho do mês vai para o colaborador assinar.',
