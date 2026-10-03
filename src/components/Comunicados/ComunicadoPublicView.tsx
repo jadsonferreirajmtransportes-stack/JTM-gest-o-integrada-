@@ -5,7 +5,7 @@ import { ComunicadoPublico, abrirComunicadoPublico, confirmarCienciaComunicado, 
 
 /** Link do comunicado (?form=comunicado&token=...) — mostra a imagem e o texto e, se o
  *  comunicado pedir, registra a confirmação de ciência. Sem login. */
-export const ComunicadoPublicView: React.FC<{ token?: string }> = ({ token }) => {
+export const ComunicadoPublicView: React.FC<{ token?: string; /** Dentro do portal do colaborador: sem cabeçalho. */ embutido?: boolean; onCiente?: () => void }> = ({ token, embutido, onCiente }) => {
   const [comunicado, setComunicado] = useState<ComunicadoPublico | null>(null);
   const [carregando, setCarregando] = useState(!!token);
   const [erro, setErro] = useState<string | null>(token ? null : 'Este link não é válido.');
@@ -30,7 +30,10 @@ export const ComunicadoPublicView: React.FC<{ token?: string }> = ({ token }) =>
     setConfirmando(true);
     try {
       const r = await confirmarCienciaComunicado(token);
-      if (r.cienteEm) setComunicado({ ...comunicado, cienteEm: r.cienteEm });
+      if (r.cienteEm) {
+        setComunicado({ ...comunicado, cienteEm: r.cienteEm });
+        onCiente?.();
+      }
     } catch (err) {
       console.error(err);
       setErro('Não foi possível confirmar. Tente de novo.');
@@ -43,14 +46,16 @@ export const ComunicadoPublicView: React.FC<{ token?: string }> = ({ token }) =>
   const paragrafos = comunicado ? personalizar(comunicado.corpo, comunicado.primeiroNome).split(/\n/) : [];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans">
-      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <JmtLogo variant="compact" theme="light" iconSize={28} />
-        <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
-          <Megaphone className="w-4 h-4 text-[#C48229]" /> Comunicado
-        </span>
-      </header>
-      <main className="max-w-xl mx-auto p-4 space-y-4">
+    <div className={embutido ? 'text-slate-800' : 'min-h-screen bg-[#F8FAFC] text-slate-800 font-sans'}>
+      {!embutido && (
+        <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+          <JmtLogo variant="compact" theme="light" iconSize={28} />
+          <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            <Megaphone className="w-4 h-4 text-[#C48229]" /> Comunicado
+          </span>
+        </header>
+      )}
+      <main className={embutido ? 'space-y-4' : 'max-w-xl mx-auto p-4 space-y-4'}>
         {carregando ? (
           <div className="flex items-center justify-center gap-2 py-16 text-slate-500 text-xs">
             <Loader2 className="w-5 h-5 animate-spin text-[#C48229]" /> Carregando...

@@ -25,6 +25,7 @@ import {
 import { obterUrlArquivo } from '../../utils/arquivosStorage';
 import { baixarArquivo } from '../../utils/downloadUtils';
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
+import { linkUnicoDe } from '../../utils/linkUnico';
 import { AssinaturaDigitalPad } from '../Epi/AssinaturaDigitalPad';
 import { gerarPdfAssinado } from '../Contracheques/pdfAssinadoUtils';
 import { ESCADA_DISCIPLINAR, avaliarMedida, contaParaReincidencia, descreverEnquadramento, situacaoDisciplinar } from './disciplinarRegras';
@@ -225,13 +226,16 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
       await salvar({ ...m, documentoId: doc.id });
     });
 
-  const mensagemWhatsApp = (d: DocumentoAssinatura) =>
-    `Olá, ${m.colaboradorNome.split(' ')[0]}. O Departamento Pessoal da JM Transportes enviou para sua ciência o documento "${d.titulo}".\n\n` +
-    `Acesse o link abaixo, leia e assine (para abrir, informe seu CPF):\n${montarLinkDocumento(d.token, d.categoria)}`;
+  // Link único do colaborador abrindo direto no documento (o link antigo é a reserva).
+  const linkDo = (d: DocumentoAssinatura) => linkUnicoDe(m.colaboradorId, `documento:${d.id}`).catch(() => montarLinkDocumento(d.token, d.categoria));
 
-  const handleWhatsApp = () => {
+  const mensagemWhatsApp = async (d: DocumentoAssinatura) =>
+    `Olá, ${m.colaboradorNome.split(' ')[0]}. O Departamento Pessoal da JM Transportes enviou para sua ciência o documento "${d.titulo}".\n\n` +
+    `Leia e assine pelo seu link pessoal:\n${await linkDo(d)}`;
+
+  const handleWhatsApp = async () => {
     if (!documento) return;
-    const link = buildWhatsAppLink(colaborador?.telefoneWhatsapp || '', mensagemWhatsApp(documento));
+    const link = buildWhatsAppLink(colaborador?.telefoneWhatsapp || '', await mensagemWhatsApp(documento));
     if (!link) {
       alert('Colaborador sem WhatsApp cadastrado. Use "Copiar link" ou entregue impresso.');
       return;
@@ -241,7 +245,7 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
 
   const handleCopiarLink = async () => {
     if (!documento) return;
-    const link = montarLinkDocumento(documento.token, documento.categoria);
+    const link = await linkDo(documento);
     try {
       await navigator.clipboard.writeText(link);
       alert('Link copiado.');

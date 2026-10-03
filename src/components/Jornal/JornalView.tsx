@@ -13,7 +13,8 @@ import {
   getNoticias,
   moderarComentario,
 } from '../../utils/jornalApi';
-import { getTokensPortal, montarLinkPortal, obterOuCriarTokenPortal } from '../../utils/educacaoApi';
+import { getTokensPortal, obterOuCriarTokenPortal } from '../../utils/educacaoApi';
+import { montarLinkUnico } from '../../utils/linkUnico';
 import { EnvioWhatsAppEmMassaModal, ItemEnvioWhatsApp } from '../Common/EnvioWhatsAppEmMassaModal';
 import { CapaNoticia, ResumoReacoes, dataNoticia } from './jornalVisual';
 import { NoticiaEditorModal, noticiaEmBranco } from './NoticiaEditorModal';
@@ -117,7 +118,7 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
       const itens: ItemEnvioWhatsApp[] = [];
       for (const c of ativos) {
         const token = await obterOuCriarTokenPortal(c.id, tokens);
-        const link = `${montarLinkPortal(token)}&aba=jornal&noticia=${encodeURIComponent(n.id)}`;
+        const link = montarLinkUnico(token, `jornal:${n.id}`);
         itens.push({
           id: c.id,
           nome: c.nomeCompleto,

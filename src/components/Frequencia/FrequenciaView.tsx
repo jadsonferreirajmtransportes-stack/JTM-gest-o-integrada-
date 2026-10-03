@@ -39,13 +39,13 @@ import {
   getJustificativas,
   getLocais,
   incluirBatidaAjuste,
-  montarLinkPonto,
   salvarJustificativa,
   saveJornada,
   saveLocal,
 } from '../../utils/frequenciaApi';
 import { getTokensPortal, obterOuCriarTokenPortal } from '../../utils/educacaoApi';
-import { criarDocumentoAssinatura, montarLinkDocumento } from '../../utils/documentosAssinaturaApi';
+import { criarDocumentoAssinatura } from '../../utils/documentosAssinaturaApi';
+import { linkUnicoDe, montarLinkUnico } from '../../utils/linkUnico';
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { EnvioWhatsAppEmMassaModal, ItemEnvioWhatsApp } from '../Common/EnvioWhatsAppEmMassaModal';
@@ -180,8 +180,8 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
 
   // ---- Links do ponto ----
   const mensagemPonto = (c: Colaborador, token: string) =>
-    `Olá, ${c.nomeCompleto.split(' ')[0]}! Este é o seu link para bater o ponto pelo celular:\n${montarLinkPonto(token)}\n\n` +
-    `No primeiro acesso, informe seu CPF e sua data de nascimento. Depois é só abrir o link e tocar em "Bater ponto" (deixe a localização do celular ligada).\n\nJM Transportes — Departamento Pessoal`;
+    `Olá, ${c.nomeCompleto.split(' ')[0]}! Este é o seu link pessoal da JMT — nele você bate o ponto e também recebe seus documentos, comunicados e treinamentos:\n${montarLinkUnico(token, 'ponto')}\n\n` +
+    `No primeiro acesso, informe seu CPF e sua data de nascimento e deixe marcado "Lembrar neste celular". Depois é só abrir o link e tocar em "Bater ponto" (deixe a localização do celular ligada). Guarde este link — é o único que você vai precisar.\n\nJM Transportes — Departamento Pessoal`;
 
   const tokenDe = async (c: Colaborador) => {
     const mapa = new Map<string, string>(tokens);
@@ -203,7 +203,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
 
   const handleCopiarPonto = async (c: Colaborador) => {
     try {
-      const link = montarLinkPonto(await tokenDe(c));
+      const link = montarLinkUnico(await tokenDe(c), 'ponto');
       await navigator.clipboard.writeText(link).catch(() => window.prompt('Copie o link:', link));
     } catch (err) {
       console.error(err);
@@ -211,7 +211,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
   };
 
   const handleDesconectar = async (c: Colaborador) => {
-    if (!window.confirm(`Desconectar os celulares de ${c.nomeCompleto}? No próximo acesso, a pessoa precisa confirmar CPF e nascimento de novo.`)) return;
+    if (!window.confirm(`Desconectar os celulares de ${c.nomeCompleto}? O ponto e o portal vão pedir CPF e nascimento de novo nesses aparelhos (use se o celular foi perdido ou trocado).`)) return;
     try {
       await desconectarAparelhos(c.id);
       alert('Aparelhos desconectados.');
@@ -228,7 +228,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
       for (const c of ativos.filter((x) => jornadaDe.has(x.id))) {
         itens.push({ id: c.id, nome: c.nomeCompleto, telefone: c.telefoneWhatsapp, mensagem: mensagemPonto(c, await tokenDe(c)) });
       }
-      setEnvioMassa({ titulo: 'Enviar link do ponto', itens });
+      setEnvioMassa({ titulo: 'Enviar link pessoal (abre no ponto)', itens });
     } catch (err) {
       console.error(err);
       alert('Não foi possível preparar os links.');
@@ -271,7 +271,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
       const d = await enviarParaAssinatura(c);
       const link = buildWhatsAppLink(
         c.telefoneWhatsapp || '',
-        `Olá, ${c.nomeCompleto.split(' ')[0]}! Seu ${d.titulo} está disponível. Confira e assine (informe seu CPF para abrir):\n${montarLinkDocumento(d.token, d.categoria)}\n\nJM Transportes — Departamento Pessoal`
+        `Olá, ${c.nomeCompleto.split(' ')[0]}! Seu ${d.titulo} está disponível. Confira e assine pelo seu link pessoal:\n${await linkUnicoDe(c.id, `documento:${d.id}`)}\n\nJM Transportes — Departamento Pessoal`
       );
       if (link) window.open(link, '_blank', 'noopener');
       else alert('Documento criado. A pessoa não tem WhatsApp — envie o link pela aba Assinaturas.');
@@ -749,7 +749,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
           <section className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h2 className="text-sm font-black text-slate-900">Colaboradores: jornada e link do ponto</h2>
+                <h2 className="text-sm font-black text-slate-900">Colaboradores: jornada e link pessoal</h2>
                 <p className="text-[11px] text-slate-500">O link é o mesmo do Portal de Educação. Gerar link novo lá também desconecta os celulares.</p>
               </div>
               <button
@@ -759,7 +759,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                 className="px-3 py-2 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50"
               >
                 {ocupado === 'links' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
-                Enviar link do ponto (quem tem jornada)
+                Enviar link pessoal (quem tem jornada)
               </button>
             </div>
             <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl">
@@ -799,10 +799,10 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                     ))}
                   </select>
                   <div className="flex gap-1">
-                    <button type="button" onClick={() => handleWhatsAppPonto(c)} className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg" title="Enviar link do ponto pelo WhatsApp">
+                    <button type="button" onClick={() => handleWhatsAppPonto(c)} className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg" title="Enviar o link pessoal (abre no ponto) pelo WhatsApp">
                       <MessageCircle className="w-3.5 h-3.5" />
                     </button>
-                    <button type="button" onClick={() => handleCopiarPonto(c)} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg" title="Copiar link do ponto">
+                    <button type="button" onClick={() => handleCopiarPonto(c)} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg" title="Copiar o link pessoal">
                       <Link2 className="w-3.5 h-3.5" />
                     </button>
                     <button type="button" onClick={() => handleDesconectar(c)} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg" title="Desconectar celulares">

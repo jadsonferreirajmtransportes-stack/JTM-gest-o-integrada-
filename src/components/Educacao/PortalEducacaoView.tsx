@@ -17,6 +17,11 @@ import {
   ScrollText,
   ExternalLink,
   Image as ImageIcon,
+  LogOut,
+  FileSignature,
+  Megaphone,
+  Newspaper,
+  Fingerprint,
 } from 'lucide-react';
 import { JmtLogo } from '../Brand/JmtLogo';
 import { AssinaturaDigitalPad } from '../Epi/AssinaturaDigitalPad';
@@ -40,6 +45,13 @@ import { gerarPdfRegulamento } from '../Regulamento/regulamentoPdf';
 import { ROTULO_VERSAO_REGULAMENTO } from '../../data/regulamentoInterno';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { JornalPortal } from '../Jornal/JornalPortal';
+import { portalJornal } from '../../utils/jornalApi';
+import { PontoPublicView } from '../Frequencia/PontoPublicView';
+import { pontoVincular } from '../../utils/frequenciaApi';
+import { credenciaisDoAparelho, entrouPeloAparelho, gravarAparelho, lerAparelho } from '../../utils/aparelhoColaborador';
+import { portalComunicados, portalDocumentos } from '../../utils/portalColaboradorApi';
+import { PortalDocumentos } from '../Portal/PortalDocumentos';
+import { PortalComunicados } from '../Portal/PortalComunicados';
 
 function mascararCpf(valor: string): string {
   const d = valor.replace(/\D/g, '').slice(0, 11);
@@ -95,27 +107,98 @@ const MENSAGENS_ERRO = {
   dados: 'CPF ou data de nascimento não conferem com o cadastro. Confira e tente de novo — se continuar, fale com o Departamento Pessoal.',
 };
 
-type Aba = 'treinamentos' | 'instrucoes' | 'regulamento' | 'jornal';
+type Aba = 'inicio' | 'ponto' | 'documentos' | 'comunicados' | 'treinamentos' | 'jornal' | 'instrucoes' | 'regulamento';
 
-/** Portal do colaborador (sem login): ?form=portal&token=... — entra com CPF + data de
- *  nascimento, faz os treinamentos (conteúdos → prova → assinatura → certificado), consulta
- *  as Instruções de Trabalho vigentes e lê o Regulamento Interno. Tudo passa pelas funções
- *  portal_* do banco (migração 061), que conferem token + CPF + nascimento a cada chamada. */
-export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string; noticiaInicial?: string }> = ({ token, abaInicial, noticiaInicial }) => {
+const ABAS: [Aba, string][] = [
+  ['inicio', 'Início'],
+  ['ponto', 'Ponto'],
+  ['documentos', 'Documentos'],
+  ['comunicados', 'Comunicados'],
+  ['treinamentos', 'Treinamentos'],
+  ['jornal', 'Jornal'],
+  ['instrucoes', 'Instruções'],
+  ['regulamento', 'Regulamento'],
+];
+
+/** "&ir=" do link: aba e, se houver, o item (ex.: "documento:docass-123"). Aceita também o
+ *  formato antigo do Jornal (&aba=jornal&noticia=). */
+function lerDestino(ir?: string, abaAntiga?: string, noticiaAntiga?: string): { aba: Aba; item?: string } {
+  if (!ir && abaAntiga === 'jornal') return { aba: 'jornal', item: noticiaAntiga };
+  const [tipo, ...resto] = (ir || '').split(':');
+  const item = resto.join(':') || undefined;
+  const mapa: Record<string, Aba> = { ponto: 'ponto', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', treinamentos: 'treinamentos', jornal: 'jornal' };
+  return { aba: mapa[tipo] || 'inicio', item };
+}
+
+/** Portal do colaborador — o LINK ÚNICO (?form=portal&token=...): ponto, documentos para
+ *  assinar, comunicados, treinamentos, jornal, instruções e regulamento. Entra com CPF + data
+ *  de nascimento ou, com "Lembrar neste celular", direto pelo aparelho (migração 067). Tudo
+ *  passa pelas funções portal_* do banco, que conferem a entrada a cada chamada. */
+export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string; noticiaInicial?: string; ir?: string }> = ({ token, abaInicial, noticiaInicial, ir }) => {
+  const destino = useMemo(() => lerDestino(ir, abaInicial, noticiaInicial), [ir, abaInicial, noticiaInicial]);
   const [cpf, setCpf] = useState('');
   const [nascimento, setNascimento] = useState('');
-  const [entrando, setEntrando] = useState(false);
+  const [lembrar, setLembrar] = useState(true);
+  // CPF digitado nesta entrada (só na memória) — vai mascarado no certificado.
+  const [cpfDaSessao, setCpfDaSessao] = useState('');
+  const [entrando, setEntrando] = useState(() => !!token && !!lerAparelho(token));
   const [erro, setErro] = useState<string | null>(token ? null : MENSAGENS_ERRO.link);
   const [credenciais, setCredenciais] = useState<CredenciaisPortal | null>(null);
   const [dados, setDados] = useState<DadosPortal | null>(null);
-  const [aba, setAba] = useState<Aba>(abaInicial === 'jornal' ? 'jornal' : 'treinamentos');
-  // Link da divulgação (&noticia=) abre a notícia direto — só na primeira vez.
-  const [noticiaDoLink, setNoticiaDoLink] = useState<string | undefined>(abaInicial === 'jornal' ? noticiaInicial : undefined);
+  const [aba, setAba] = useState<Aba>(destino.aba);
+  // Item do link (documento, comunicado, notícia) abre direto — só na primeira vez.
+  const [itemDoLink, setItemDoLink] = useState<string | undefined>(destino.item);
   const [abertoId, setAbertoId] = useState<string | null>(null);
   const [instrucaoAberta, setInstrucaoAberta] = useState<InstrucaoTrabalho | null>(null);
+  const [resumo, setResumo] = useState<{ documentos?: number; comunicados?: number; noticias?: number }>({});
 
   const instrucoes: InstrucaoTrabalho[] = useMemo(() => (dados?.instrucoes ?? []).map(rowToInstrucao), [dados]);
   const aberto = dados?.treinamentos.find((t) => t.atribuicaoId === abertoId) || null;
+
+  // Pendências da tela inicial (não trava a entrada se alguma falhar).
+  const carregarResumo = (cred: CredenciaisPortal) => {
+    portalDocumentos(cred)
+      .then((l) => setResumo((p) => ({ ...p, documentos: l.filter((d) => d.status !== 'Assinado' && !d.vencido).length })))
+      .catch(() => undefined);
+    portalComunicados(cred)
+      .then((l) => setResumo((p) => ({ ...p, comunicados: l.filter((c) => !c.visualizadoEm || (c.exigeCiencia && !c.cienteEm)).length })))
+      .catch(() => undefined);
+    portalJornal(cred)
+      .then((l) => setResumo((p) => ({ ...p, noticias: l.filter((n) => !n.lida).length })))
+      .catch(() => undefined);
+  };
+
+  const entrarCom = async (cred: CredenciaisPortal): Promise<boolean> => {
+    const r = await portalEntrar(cred);
+    if (r.erro) {
+      if (entrouPeloAparelho(cred)) {
+        // Aparelho desconectado pelo DP (ou link trocado): volta a pedir CPF.
+        gravarAparelho(cred.token, null);
+        setErro('Este celular foi desconectado. Confirme seus dados para entrar de novo.');
+      } else setErro(MENSAGENS_ERRO[r.erro]);
+      return false;
+    }
+    if (r.dados) {
+      setCredenciais(cred);
+      setDados(r.dados);
+      carregarResumo(cred);
+    }
+    return true;
+  };
+
+  // Celular lembrado: entra sozinho.
+  useEffect(() => {
+    if (!token) return;
+    const segredo = lerAparelho(token);
+    if (!segredo) return;
+    entrarCom(credenciaisDoAparelho(token, segredo))
+      .catch((err) => {
+        console.error(err);
+        setErro('Não foi possível entrar agora. Verifique sua internet e tente de novo.');
+      })
+      .finally(() => setEntrando(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const handleEntrar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,11 +212,19 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
     setEntrando(true);
     try {
       const cred = { token, cpf, nascimento: iso };
-      const r = await portalEntrar(cred);
-      if (r.erro) setErro(MENSAGENS_ERRO[r.erro]);
-      else if (r.dados) {
-        setCredenciais(cred);
-        setDados(r.dados);
+      const ok = await entrarCom(cred);
+      if (ok) setCpfDaSessao(cpf);
+      if (ok && lembrar) {
+        // Mesmo código do ponto: lembra o celular para o portal e para o ponto.
+        const v = await pontoVincular(token, cpf, iso).catch(() => null);
+        if (v?.dispositivo) {
+          gravarAparelho(token, v.dispositivo);
+          setCredenciais(credenciaisDoAparelho(token, v.dispositivo));
+        }
+      }
+      if (ok) {
+        setCpf('');
+        setNascimento('');
       }
     } catch (err) {
       console.error(err);
@@ -143,32 +234,60 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
     }
   };
 
+  const handleSair = () => {
+    if (!token) return;
+    if (!window.confirm('Sair deste celular? Na próxima vez o portal e o ponto vão pedir CPF e data de nascimento.')) return;
+    gravarAparelho(token, null);
+    setCredenciais(null);
+    setDados(null);
+    setAba('inicio');
+  };
+
   const atualizarTreinamento = (atribuicaoId: string, parcial: Partial<TreinamentoPortal>) =>
     setDados((prev) =>
       prev ? { ...prev, treinamentos: prev.treinamentos.map((t) => (t.atribuicaoId === atribuicaoId ? { ...t, ...parcial } : t)) } : prev
     );
 
   const pendentes = dados?.treinamentos.filter((t) => t.status !== 'Concluído').length ?? 0;
+  const irPara = (a: Aba) => {
+    setAba(a);
+    setAbertoId(null);
+    setInstrucaoAberta(null);
+    window.scrollTo({ top: 0 });
+  };
+  const itemPara = (a: Aba) => (aba === a && destino.aba === a ? itemDoLink : undefined);
+  const contagem: Partial<Record<Aba, number>> = { documentos: resumo.documentos, comunicados: resumo.comunicados, treinamentos: pendentes, jornal: resumo.noticias };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans">
       <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
         <JmtLogo variant="compact" theme="light" iconSize={28} />
-        <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
-          <ShieldCheck className="w-4 h-4 text-[#C48229]" /> Portal de Educação
-        </span>
+        {dados && credenciais && entrouPeloAparelho(credenciais) ? (
+          <button type="button" onClick={handleSair} className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-800">
+            <LogOut className="w-4 h-4 text-[#C48229]" /> Sair deste celular
+          </button>
+        ) : (
+          <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            <ShieldCheck className="w-4 h-4 text-[#C48229]" /> Portal do Colaborador
+          </span>
+        )}
       </header>
 
       <main className="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
         {!dados || !credenciais ? (
+          entrando && !cpf ? (
+            <div className="flex items-center justify-center gap-2 py-16 text-slate-500 text-xs">
+              <Loader2 className="w-5 h-5 animate-spin text-[#C48229]" /> Entrando...
+            </div>
+          ) : (
           <form onSubmit={handleEntrar} className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 space-y-4 shadow-xs max-w-md mx-auto">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl bg-amber-50 text-[#C48229] flex items-center justify-center shrink-0">
-                <GraduationCap className="w-5 h-5" />
+                <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-base font-bold text-slate-900">Portal de Educação JMT</h1>
-                <p className="text-xs text-slate-500">Treinamentos, Instruções de Trabalho, Regulamento Interno e o Jornal JMT.</p>
+                <h1 className="text-base font-bold text-slate-900">Portal do Colaborador JMT</h1>
+                <p className="text-xs text-slate-500">Ponto, documentos, comunicados, treinamentos e o Jornal JMT — tudo neste link.</p>
               </div>
             </div>
             <div>
@@ -193,6 +312,12 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
                 className="w-full p-3 border border-slate-300 rounded-xl text-base tracking-wide"
               />
             </div>
+            <label className="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={lembrar} onChange={(e) => setLembrar(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#C48229]" />
+              <span>
+                <strong>Lembrar neste celular</strong> — da próxima vez o link abre direto e o ponto já fica ativado. Desmarque se o celular não for só seu.
+              </span>
+            </label>
             {erro && (
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -208,12 +333,13 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
               Entrar
             </button>
           </form>
+          )
         ) : aberto ? (
           <TreinamentoAberto
             treinamento={aberto}
             credenciais={credenciais}
             colaboradorNome={dados.colaborador.nome}
-            colaboradorCpf={credenciais.cpf}
+            colaboradorCpf={cpfDaSessao}
             instrucoes={instrucoes}
             onVoltar={() => setAbertoId(null)}
             onAtualizar={(parcial) => atualizarTreinamento(aberto.atribuicaoId, parcial)}
@@ -227,34 +353,61 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs">
-              <p className="text-xs text-slate-500">Olá,</p>
-              <h1 className="text-lg font-black text-slate-900">{dados.colaborador.nome}</h1>
-              {dados.colaborador.cargo && <p className="text-xs text-slate-500">{dados.colaborador.cargo}</p>}
-              <p className="text-xs mt-2 font-semibold text-[#92611F]">
-                {pendentes > 0 ? `Você tem ${pendentes} treinamento(s) para concluir.` : 'Você está em dia com os treinamentos.'}
-              </p>
-            </div>
-
-            <div className="flex gap-1 bg-white rounded-xl border border-slate-200 p-1">
-              {(
-                [
-                  ['treinamentos', 'Treinamentos'],
-                  ['instrucoes', 'Instruções de Trabalho'],
-                  ['regulamento', 'Regulamento'],
-                  ['jornal', 'Jornal JMT'],
-                ] as [Aba, string][]
-              ).map(([id, rotulo]) => (
+            <div className="flex gap-1 bg-white rounded-xl border border-slate-200 p-1 overflow-x-auto">
+              {ABAS.map(([id, rotulo]) => (
                 <button
                   key={id}
                   type="button"
-                  onClick={() => setAba(id)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-bold ${aba === id ? 'bg-[#C48229] text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                  onClick={() => irPara(id)}
+                  className={`shrink-0 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 ${aba === id ? 'bg-[#C48229] text-white' : 'text-slate-600 hover:bg-slate-50'}`}
                 >
                   {rotulo}
+                  {contagem[id] ? (
+                    <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] flex items-center justify-center ${aba === id ? 'bg-white text-[#92611F]' : 'bg-[#C48229] text-white'}`}>{contagem[id]}</span>
+                  ) : null}
                 </button>
               ))}
             </div>
+
+            {aba === 'inicio' && (
+              <PortalInicio
+                nome={dados.colaborador.nome}
+                cargo={dados.colaborador.cargo}
+                pendencias={{ documentos: resumo.documentos, comunicados: resumo.comunicados, treinamentos: pendentes, noticias: resumo.noticias }}
+                onIr={irPara}
+              />
+            )}
+
+            {aba === 'ponto' && token && (
+              <PontoPublicView
+                token={token}
+                embutido
+                credenciais={entrouPeloAparelho(credenciais) ? undefined : credenciais}
+                onVinculado={(segredo) => setCredenciais(credenciaisDoAparelho(token, segredo))}
+              />
+            )}
+
+            {aba === 'documentos' && (
+              <PortalDocumentos
+                credenciais={credenciais}
+                documentoInicial={itemPara('documentos')}
+                onMudou={(n) => {
+                  setItemDoLink(undefined);
+                  setResumo((p) => ({ ...p, documentos: n }));
+                }}
+              />
+            )}
+
+            {aba === 'comunicados' && (
+              <PortalComunicados
+                credenciais={credenciais}
+                comunicadoInicial={itemPara('comunicados')}
+                onMudou={(n) => {
+                  setItemDoLink(undefined);
+                  setResumo((p) => ({ ...p, comunicados: n }));
+                }}
+              />
+            )}
 
             {aba === 'treinamentos' && (
               <div className="space-y-3">
@@ -312,10 +465,61 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
 
             {aba === 'regulamento' && <RegulamentoLeitura />}
 
-            {aba === 'jornal' && <JornalPortal credenciais={credenciais} noticiaInicial={noticiaDoLink} onNoticiaInicialUsada={() => setNoticiaDoLink(undefined)} />}
+            {aba === 'jornal' && <JornalPortal credenciais={credenciais} noticiaInicial={itemPara('jornal')} onNoticiaInicialUsada={() => setItemDoLink(undefined)} />}
           </>
         )}
       </main>
+    </div>
+  );
+};
+
+/** Tela inicial: saudação + atalhos com o que está pendente. */
+const PortalInicio: React.FC<{
+  nome: string;
+  cargo?: string;
+  pendencias: { documentos?: number; comunicados?: number; treinamentos?: number; noticias?: number };
+  onIr: (a: Aba) => void;
+}> = ({ nome, cargo, pendencias, onIr }) => {
+  const atalhos: { aba: Aba; titulo: string; texto: string; icone: React.ReactNode; qtd?: number }[] = [
+    { aba: 'documentos', titulo: 'Documentos', texto: 'Contracheques, férias e outros para assinar', icone: <FileSignature className="w-5 h-5" />, qtd: pendencias.documentos },
+    { aba: 'comunicados', titulo: 'Comunicados', texto: 'Avisos da empresa para você', icone: <Megaphone className="w-5 h-5" />, qtd: pendencias.comunicados },
+    { aba: 'treinamentos', titulo: 'Treinamentos', texto: 'Cursos, provas e certificados', icone: <GraduationCap className="w-5 h-5" />, qtd: pendencias.treinamentos },
+    { aba: 'jornal', titulo: 'Jornal JMT', texto: 'Notícias da empresa', icone: <Newspaper className="w-5 h-5" />, qtd: pendencias.noticias },
+    { aba: 'instrucoes', titulo: 'Instruções de Trabalho', texto: 'Como fazer cada processo', icone: <BookOpen className="w-5 h-5" /> },
+    { aba: 'regulamento', titulo: 'Regulamento Interno', texto: 'Regras e direitos', icone: <ScrollText className="w-5 h-5" /> },
+  ];
+  const total = (pendencias.documentos || 0) + (pendencias.comunicados || 0) + (pendencias.treinamentos || 0);
+  return (
+    <div className="space-y-3">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs">
+        <p className="text-xs text-slate-500">Olá,</p>
+        <h1 className="text-lg font-black text-slate-900">{nome}</h1>
+        {cargo && <p className="text-xs text-slate-500">{cargo}</p>}
+        <p className="text-xs mt-2 font-semibold text-[#92611F]">{total > 0 ? `Você tem ${total} pendência(s) — veja abaixo.` : 'Você está em dia. Obrigado!'}</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onIr('ponto')}
+        className="w-full py-5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-2xl shadow-md flex items-center justify-center gap-3"
+      >
+        <Fingerprint className="w-7 h-7" />
+        <span className="text-base font-black">Bater ponto</span>
+      </button>
+      <div className="grid grid-cols-2 gap-3">
+        {atalhos.map((a) => (
+          <button
+            key={a.aba}
+            type="button"
+            onClick={() => onIr(a.aba)}
+            className="relative text-left normal-case bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-[#C48229] transition-colors"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#C48229] flex items-center justify-center">{a.icone}</div>
+            <p className="mt-2 text-sm font-black text-slate-900">{a.titulo}</p>
+            <p className="text-[11px] text-slate-500 leading-snug">{a.texto}</p>
+            {a.qtd ? <span className="absolute top-3 right-3 min-w-[22px] h-[22px] px-1.5 rounded-full bg-[#C48229] text-white text-[11px] font-black flex items-center justify-center">{a.qtd}</span> : null}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };

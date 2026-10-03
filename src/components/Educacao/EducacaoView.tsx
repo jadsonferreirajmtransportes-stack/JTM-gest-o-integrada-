@@ -47,6 +47,7 @@ import { gerarCertificadoPdf, formatarCargaHoraria } from './certificadoPdf';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { EnvioWhatsAppEmMassaModal, ItemEnvioWhatsApp } from '../Common/EnvioWhatsAppEmMassaModal';
+import { montarLinkUnico } from '../../utils/linkUnico';
 import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
 
 interface EducacaoViewProps {
@@ -176,9 +177,9 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
   );
 
   const mensagemPortal = (c: Colaborador, token: string, pendentes: number) =>
-    `Olá, ${c.nomeCompleto.split(' ')[0]}! Você tem ${pendentes} treinamento(s) no Portal de Educação da JM Transportes.\n\n` +
-    `Acesse pelo seu link pessoal (para entrar, informe seu CPF e sua data de nascimento):\n${montarLinkPortal(token)}\n\n` +
-    `Lá também ficam as Instruções de Trabalho e o Regulamento Interno.\n\nJM Transportes — Departamento Pessoal`;
+    `Olá, ${c.nomeCompleto.split(' ')[0]}! Você tem ${pendentes} treinamento(s) para fazer na JM Transportes.\n\n` +
+    `Acesse pelo seu link pessoal (o mesmo do ponto, documentos e comunicados — no primeiro acesso, informe seu CPF e sua data de nascimento):\n${montarLinkUnico(token, 'treinamentos')}\n\n` +
+    `Lá também ficam as Instruções de Trabalho, o Regulamento Interno e o Jornal JMT.\n\nJM Transportes — Departamento Pessoal`;
 
   const pendentesDe = (colaboradorId: string) => atuais.filter((a) => a.colaboradorId === colaboradorId && situacao(a) !== 'Concluído').length;
 
@@ -654,7 +655,7 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
       )}
 
       {envioMassa && (
-        <EnvioWhatsAppEmMassaModal titulo="Enviar link do Portal de Educação" itens={envioMassa} onClose={() => setEnvioMassa(null)} />
+        <EnvioWhatsAppEmMassaModal titulo="Enviar link pessoal (treinamentos)" itens={envioMassa} onClose={() => setEnvioMassa(null)} />
       )}
     </div>
   );

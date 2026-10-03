@@ -2869,7 +2869,7 @@ export default function App() {
 
   if (portalEducacaoToken !== null) {
     const paramsPortal = new URLSearchParams(window.location.search);
-    return <PortalEducacaoView token={portalEducacaoToken || undefined} abaInicial={paramsPortal.get('aba') || undefined} noticiaInicial={paramsPortal.get('noticia') || undefined} />;
+    return <PortalEducacaoView token={portalEducacaoToken || undefined} abaInicial={paramsPortal.get('aba') || undefined} noticiaInicial={paramsPortal.get('noticia') || undefined} ir={paramsPortal.get('ir') || undefined} />;
   }
 
   // IF Public Entrega de EPI filling form is active (link genérico, ?form=epi_entrega)

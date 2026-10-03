@@ -3,24 +3,8 @@ import { ShieldCheck, Loader2, AlertTriangle, Fingerprint, MapPin, CheckCircle2,
 import { JmtLogo } from '../Brand/JmtLogo';
 import { EstadoPonto, pontoEstado, pontoRegistrar, pontoVincular } from '../../utils/frequenciaApi';
 import { horaLocal } from './frequenciaCalc';
-
-// O aparelho guarda só o código secreto dele (nunca CPF/nascimento) — ver migração 062.
-const chaveAparelho = (token: string) => `jmt-ponto-${token.slice(0, 16)}`;
-function lerAparelho(token: string): string | null {
-  try {
-    return localStorage.getItem(chaveAparelho(token));
-  } catch {
-    return null;
-  }
-}
-function gravarAparelho(token: string, valor: string | null) {
-  try {
-    if (valor) localStorage.setItem(chaveAparelho(token), valor);
-    else localStorage.removeItem(chaveAparelho(token));
-  } catch {
-    /* navegador sem armazenamento — vai pedir CPF de novo da próxima vez */
-  }
-}
+import { gravarAparelho, lerAparelho } from '../../utils/aparelhoColaborador';
+import type { CredenciaisPortal } from '../../utils/educacaoApi';
 
 function mascararCpf(valor: string): string {
   const d = valor.replace(/\D/g, '').slice(0, 11);
@@ -57,7 +41,15 @@ function obterPosicao(): Promise<{ latitude: number; longitude: number; precisao
 /** Ponto pelo celular (?form=ponto&token=...) — CONTROLE INTERNO. Primeira vez: CPF +
  *  nascimento vinculam o aparelho; depois é só tocar em "Bater ponto". O horário gravado é
  *  sempre o do servidor. */
-export const PontoPublicView: React.FC<{ token?: string }> = ({ token }) => {
+export const PontoPublicView: React.FC<{
+  token?: string;
+  /** Dentro do portal do colaborador (link único): sem cabeçalho próprio. */
+  embutido?: boolean;
+  /** Quem já entrou no portal com CPF + nascimento ativa o ponto sem digitar de novo. */
+  credenciais?: CredenciaisPortal;
+  /** Avisa o portal quando o celular foi vinculado (passa a lembrar a entrada). */
+  onVinculado?: (segredo: string) => void;
+}> = ({ token, embutido, credenciais, onVinculado }) => {
   const [aparelho, setAparelho] = useState<string | null>(() => (token ? lerAparelho(token) : null));
   const [estado, setEstado] = useState<EstadoPonto | null>(null);
   const [carregando, setCarregando] = useState(!!aparelho);
@@ -119,10 +111,30 @@ export const PontoPublicView: React.FC<{ token?: string }> = ({ token }) => {
         setCpf('');
         setNascimento('');
         setAparelho(r.dispositivo);
+        onVinculado?.(r.dispositivo);
       }
     } catch (err) {
       console.error(err);
       setErro('Não foi possível entrar agora. Verifique sua internet.');
+    } finally {
+      setVinculando(false);
+    }
+  };
+
+  const handleAtivarComPortal = async () => {
+    if (!token || !credenciais) return;
+    setVinculando(true);
+    setErro(null);
+    try {
+      const r = await pontoVincular(token, credenciais.cpf, credenciais.nascimento);
+      if (r.dispositivo) {
+        gravarAparelho(token, r.dispositivo);
+        setAparelho(r.dispositivo);
+        onVinculado?.(r.dispositivo);
+      } else setErro('Não foi possível ativar o ponto neste celular. Saia do portal e entre de novo.');
+    } catch (err) {
+      console.error(err);
+      setErro('Não foi possível ativar agora. Verifique sua internet.');
     } finally {
       setVinculando(false);
     }
@@ -156,16 +168,38 @@ export const PontoPublicView: React.FC<{ token?: string }> = ({ token }) => {
   const proxima = ROTULOS_BATIDA[recentes.length] || 'Batida extra';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans">
-      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <JmtLogo variant="compact" theme="light" iconSize={28} />
-        <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
-          <ShieldCheck className="w-4 h-4 text-[#C48229]" /> Ponto JMT
-        </span>
-      </header>
+    <div className={embutido ? 'text-slate-800' : 'min-h-screen bg-[#F8FAFC] text-slate-800 font-sans'}>
+      {!embutido && (
+        <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+          <JmtLogo variant="compact" theme="light" iconSize={28} />
+          <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            <ShieldCheck className="w-4 h-4 text-[#C48229]" /> Ponto JMT
+          </span>
+        </header>
+      )}
 
-      <main className="max-w-md mx-auto p-4 space-y-4">
-        {!aparelho ? (
+      <main className={embutido ? 'max-w-md mx-auto space-y-4' : 'max-w-md mx-auto p-4 space-y-4'}>
+        {!aparelho && credenciais ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 shadow-xs text-center">
+            <Fingerprint className="w-10 h-10 text-[#C48229] mx-auto" />
+            <div>
+              <h1 className="text-base font-bold text-slate-900">Ativar o ponto neste celular</h1>
+              <p className="text-xs text-slate-500 mt-1">
+                O ponto fica ligado a este aparelho. Depois de ativar, seu link também abre direto, sem pedir CPF. Use só no seu celular.
+              </p>
+            </div>
+            {erro && <p className="text-xs text-rose-700 font-semibold">{erro}</p>}
+            <button
+              type="button"
+              onClick={handleAtivarComPortal}
+              disabled={vinculando}
+              className="w-full py-3 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {vinculando && <Loader2 className="w-4 h-4 animate-spin" />}
+              Ativar neste celular
+            </button>
+          </div>
+        ) : !aparelho ? (
           <form onSubmit={handleVincular} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 shadow-xs">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl bg-amber-50 text-[#C48229] flex items-center justify-center shrink-0">

@@ -470,6 +470,7 @@ export const MANUAL: TopicoManual[] = [
       { titulo: 'A partir de um documento', texto: '"Importar documento" monta o treinamento a partir de um PDF, Word ou texto colado: cada título vira uma parte, as figuras (do Word ou do PDF) entram junto e o PDF original pode ir como material. Revise no editor, defina quem faz e salve.' },
       { titulo: 'Atribuição', texto: 'Pela regra de cargo/setor é automática; também dá para "Atribuir" a pessoas específicas. Com validade, o treinamento volta sozinho quando vence (reciclagem).' },
       { titulo: 'Enviar o link', texto: '"Enviar link do portal" manda o link pessoal para quem tem treinamento em aberto. O colaborador entra com CPF e data de nascimento.' },
+      { titulo: 'Link único do colaborador', texto: 'O link pessoal é o mesmo para tudo: ponto, documentos para assinar (contracheque, férias, espelho, medidas), comunicados, treinamentos e Jornal JMT. Toda mensagem do sistema manda esse link, já abrindo no item. Com "Lembrar neste celular", o link abre direto, sem CPF. Celular perdido ou trocado: em Controle de Frequência, desconecte os aparelhos da pessoa.' },
       { titulo: 'Acompanhar', texto: 'Na aba Acompanhamento: situação, nota, validade e certificado de cada um.' },
       { titulo: 'Regulamento Interno', texto: 'Na aba do regulamento, "Enviar para assinatura" gera uma cópia com nome e CPF de cada colaborador para ciência e assinatura pelo link.' },
     ],

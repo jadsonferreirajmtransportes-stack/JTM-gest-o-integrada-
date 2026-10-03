@@ -9,6 +9,7 @@ import React from 'react';
 import { tabelas, esperar, clicar, digitar, achar, moldura, Cena } from './apoio';
 import { anonimizar } from './dadosFicticios';
 import { CENAS_JORNAL } from './cenasJornal';
+import { CENAS_PORTAL } from './cenasPortal';
 
 const nada = () => {};
 const nadaAsync = async () => {};
@@ -351,6 +352,6 @@ const CENAS_GESTAO: Record<string, Cena> = {
   },
 };
 
-export const CENAS_MODULOS: Record<string, Cena> = { ...CENAS_DP, ...CENAS_GESTAO, ...CENAS_JORNAL };
+export const CENAS_MODULOS: Record<string, Cena> = { ...CENAS_DP, ...CENAS_GESTAO, ...CENAS_JORNAL, ...CENAS_PORTAL };
 // evita aviso de import não usado quando nenhuma cena digita
 void digitar;

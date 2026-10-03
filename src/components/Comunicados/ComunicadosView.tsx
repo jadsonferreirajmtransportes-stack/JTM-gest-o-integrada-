@@ -31,6 +31,7 @@ import {
   personalizar,
 } from '../../utils/comunicadosApi';
 import { EnvioWhatsAppEmMassaModal, ItemEnvioWhatsApp } from '../Common/EnvioWhatsAppEmMassaModal';
+import { useLinksUnicos } from '../../utils/linkUnico';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { NovoComunicadoModal } from './NovoComunicadoModal';
 import { gerarPdfComunicado } from './comunicadoPdf';
@@ -44,9 +45,10 @@ interface ComunicadosViewProps {
 
 const dataHora = (iso?: string) => (iso ? new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—');
 
-/** Mensagem do WhatsApp/e-mail de UMA pessoa: texto com o nome dela + link próprio. */
-function mensagemPara(c: Comunicado, d: DestinatarioComunicado, formato: 'whatsapp' | 'email'): string {
-  const link = montarLinkComunicado(d.token);
+/** Mensagem do WhatsApp/e-mail de UMA pessoa: texto com o nome dela + link próprio. Colaborador
+ *  recebe o link único dele (abre direto no comunicado); cliente, o link do comunicado. */
+function mensagemPara(c: Comunicado, d: DestinatarioComunicado, formato: 'whatsapp' | 'email', linkPessoal?: string | null): string {
+  const link = linkPessoal || montarLinkComunicado(d.token);
   const texto = personalizar(c.corpo, d.nome);
   const chamada = c.exigeCiencia ? 'Confirme que leu pelo link' : 'Veja o comunicado completo';
   if (formato === 'whatsapp') {
@@ -219,6 +221,8 @@ const DetalheComunicado: React.FC<{
   const [copiado, setCopiado] = useState(false);
   const [baixandoImagem, setBaixandoImagem] = useState(false);
   const [atualizando, setAtualizando] = useState(false);
+  const linksUnicos = useLinksUnicos(destinatarios.filter((d) => d.tipo === 'colaborador' && d.refId).map((d) => d.refId!));
+  const linkPessoal = (d: DestinatarioComunicado) => (d.tipo === 'colaborador' && d.refId ? linksUnicos.linkDe(d.refId, `comunicado:${d.id}`) : null);
 
   const ordenados = [...destinatarios].sort((a, b) => (a.empresa || '').localeCompare(b.empresa || '') || a.nome.localeCompare(b.nome));
   const pendentes = ordenados.filter((d) => (c.exigeCiencia ? !d.cienteEm : !d.visualizadoEm));
@@ -226,7 +230,7 @@ const DetalheComunicado: React.FC<{
   const assunto = `Comunicado nº ${numeroFormatado(c)} — ${c.titulo}`;
 
   const abrirWhatsapp = (lista: DestinatarioComunicado[]) =>
-    setWhatsapp(lista.map((d) => ({ id: d.id, nome: d.empresa ? `${d.nome} (${d.empresa})` : d.nome, telefone: d.telefone, mensagem: mensagemPara(c, d, 'whatsapp') })));
+    setWhatsapp(lista.map((d) => ({ id: d.id, nome: d.empresa ? `${d.nome} (${d.empresa})` : d.nome, telefone: d.telefone, mensagem: mensagemPara(c, d, 'whatsapp', linkPessoal(d)) })));
 
   const handleEmailTodos = () => {
     if (c.exigeCiencia) {
@@ -407,7 +411,10 @@ const DetalheComunicado: React.FC<{
                         <button
                           type="button"
                           title="Copiar o link desta pessoa"
-                          onClick={() => navigator.clipboard.writeText(montarLinkComunicado(d.token)).catch(() => window.prompt('Copie o link:', montarLinkComunicado(d.token)))}
+                          onClick={() => {
+                            const link = linkPessoal(d) || montarLinkComunicado(d.token);
+                            navigator.clipboard.writeText(link).catch(() => window.prompt('Copie o link:', link));
+                          }}
                           className="p-1 text-slate-400 hover:text-slate-700"
                         >
                           <Copy className="w-3.5 h-3.5" />
@@ -434,6 +441,7 @@ const DetalheComunicado: React.FC<{
           comunicado={c}
           fila={filaEmail}
           assunto={assunto}
+          linkPessoal={linkPessoal}
           onClose={() => setFilaEmail(null)}
           onEnviado={(id) => {
             onEnviados([id], 'email');
@@ -452,11 +460,12 @@ const FilaEmail: React.FC<{
   assunto: string;
   onClose: () => void;
   onEnviado: (id: string) => void;
-}> = ({ comunicado, fila, assunto, onClose, onEnviado }) => {
+  linkPessoal?: (d: DestinatarioComunicado) => string | null;
+}> = ({ comunicado, fila, assunto, onClose, onEnviado, linkPessoal }) => {
   const [feitos, setFeitos] = useState<Set<string>>(new Set());
   const proximo = fila.find((d) => !feitos.has(d.id));
   const abrir = (d: DestinatarioComunicado) => {
-    window.open(mailto([d.email!.trim()], assunto, mensagemPara(comunicado, d, 'email')), '_blank');
+    window.open(mailto([d.email!.trim()], assunto, mensagemPara(comunicado, d, 'email', linkPessoal?.(d))), '_blank');
     setFeitos((prev) => new Set(prev).add(d.id));
     onEnviado(d.id);
   };

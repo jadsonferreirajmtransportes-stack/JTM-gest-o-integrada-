@@ -30,6 +30,7 @@ import {
   solicitarNovaAssinatura,
 } from '../../utils/documentosAssinaturaApi';
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
+import { useLinksUnicos } from '../../utils/linkUnico';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { ImportarContrachequesModal } from './ImportarContrachequesModal';
 import { ImportarDocumentosFeriasModal } from './ImportarDocumentosFeriasModal';
@@ -164,11 +165,19 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
   // Envio em massa: só quem ainda não assinou e tem link válido (vencido precisa renovar antes).
   const pendentesParaEnviar = visiveis.filter((d) => d.status !== 'Assinado' && !linkExpirado(d));
 
+  // Link único do colaborador (abre direto no documento); o link antigo do documento fica de
+  // reserva enquanto os links pessoais carregam — os dois funcionam.
+  const linksUnicos = useLinksUnicos(documentos.map((d) => d.colaboradorId));
+  const linkDo = (d: DocumentoAssinatura) => linksUnicos.linkDe(d.colaboradorId, `documento:${d.id}`) || montarLinkDocumento(d.token, d.categoria);
+
   const mensagemWhatsApp = (d: DocumentoAssinatura) => {
     const primeiroNome = d.colaboradorNome.split(' ')[0];
+    const unico = linksUnicos.linkDe(d.colaboradorId, `documento:${d.id}`);
     return (
       `Olá, ${primeiroNome}! Seu ${d.titulo} já está disponível.\n\n` +
-      `Acesse o link abaixo, confira e assine (para abrir, informe seu CPF):\n${montarLinkDocumento(d.token, d.categoria)}\n\n` +
+      (unico
+        ? `Confira e assine pelo seu link pessoal (o mesmo do ponto, comunicados e treinamentos):\n${unico}\n\n`
+        : `Acesse o link abaixo, confira e assine (para abrir, informe seu CPF):\n${montarLinkDocumento(d.token, d.categoria)}\n\n`) +
       `JM Transportes — Departamento Pessoal`
     );
   };
@@ -185,11 +194,11 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
 
   const handleCopiarLink = async (d: DocumentoAssinatura) => {
     try {
-      await navigator.clipboard.writeText(montarLinkDocumento(d.token, d.categoria));
+      await navigator.clipboard.writeText(linkDo(d));
       setLinkCopiadoId(d.id);
       setTimeout(() => setLinkCopiadoId((atual) => (atual === d.id ? null : atual)), 2000);
     } catch {
-      window.prompt('Copie o link:', montarLinkDocumento(d.token, d.categoria));
+      window.prompt('Copie o link:', linkDo(d));
     }
   };
 

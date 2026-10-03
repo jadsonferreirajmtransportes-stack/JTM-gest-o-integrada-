@@ -14,6 +14,13 @@ interface ContrachequePublicViewProps {
   token?: string;
   /** Título da tela antes de abrir (ainda não se sabe o tipo do documento sem o CPF). */
   rotulo?: string;
+  /** Portal do colaborador (link único, migração 067): abre e assina pelo portal, sem pedir o
+   *  CPF de novo, e sem cabeçalho próprio. */
+  acesso?: {
+    abrir: () => Promise<{ documento?: DocumentoPublico; erro?: ErroDocumentoPublico }>;
+    assinar: (assinatura: string, declaracao: string) => Promise<{ assinadoEm?: string; erro?: ErroDocumentoPublico }>;
+  };
+  onAssinado?: () => void;
 }
 
 /** Texto que o colaborador declara ao assinar — varia pelo tipo de documento. */
@@ -116,11 +123,28 @@ export const PdfEmTela: React.FC<{ url: string }> = ({ url }) => {
 /** Tela pública (sem login) do link ?form=contracheque&token=... — o colaborador confirma o
  *  CPF, lê o contracheque, marca a declaração e assina com o dedo. Tudo passa pelas funções
  *  abrir/assinar_documento_assinatura do banco (migração 057), que conferem token + CPF. */
-export const ContrachequePublicView: React.FC<ContrachequePublicViewProps> = ({ token, rotulo = 'Seu contracheque' }) => {
+export const ContrachequePublicView: React.FC<ContrachequePublicViewProps> = ({ token, rotulo = 'Seu contracheque', acesso, onAssinado }) => {
   const [cpf, setCpf] = useState('');
-  const [abrindo, setAbrindo] = useState(false);
+  const [abrindo, setAbrindo] = useState(!!acesso);
   const [documento, setDocumento] = useState<DocumentoPublico | null>(null);
-  const [erro, setErro] = useState<string | null>(token ? null : MENSAGENS_ERRO.nao_encontrado);
+  const [erro, setErro] = useState<string | null>(token || acesso ? null : MENSAGENS_ERRO.nao_encontrado);
+
+  // Pelo portal, abre direto (a pessoa já entrou).
+  useEffect(() => {
+    if (!acesso) return;
+    acesso
+      .abrir()
+      .then(({ documento: doc, erro: codigo }) => {
+        if (codigo) setErro(MENSAGENS_ERRO[codigo]);
+        else if (doc) setDocumento(doc);
+      })
+      .catch((err) => {
+        console.error(err);
+        setErro('Não foi possível abrir agora. Verifique sua internet e tente de novo.');
+      })
+      .finally(() => setAbrindo(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [concordo, setConcordo] = useState(false);
   const [assinatura, setAssinatura] = useState<string | null>(null);
   const [assinando, setAssinando] = useState(false);
@@ -146,15 +170,16 @@ export const ContrachequePublicView: React.FC<ContrachequePublicViewProps> = ({ 
   };
 
   const handleAssinar = async () => {
-    if (!token || !documento || !assinatura || !concordo) return;
+    if ((!token && !acesso) || !documento || !assinatura || !concordo) return;
     setErro(null);
     setAssinando(true);
     try {
-      const { assinadoEm, erro: codigo } = await assinarDocumentoPublico(token, cpf, assinatura, declaracao);
+      const { assinadoEm, erro: codigo } = acesso ? await acesso.assinar(assinatura, declaracao) : await assinarDocumentoPublico(token!, cpf, assinatura, declaracao);
       if (codigo && codigo !== 'ja_assinado') {
         setErro(MENSAGENS_ERRO[codigo]);
       } else {
         setDocumento({ ...documento, status: 'Assinado', assinadoEm });
+        onAssinado?.();
       }
     } catch (err) {
       console.error(err);
@@ -187,16 +212,29 @@ export const ContrachequePublicView: React.FC<ContrachequePublicViewProps> = ({ 
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans">
-      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <JmtLogo variant="compact" theme="light" iconSize={28} />
-        <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
-          <ShieldCheck className="w-4 h-4 text-[#C48229]" /> Acesso seguro
-        </span>
-      </header>
+    <div className={acesso ? 'text-slate-800' : 'min-h-screen bg-[#F8FAFC] text-slate-800 font-sans'}>
+      {!acesso && (
+        <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+          <JmtLogo variant="compact" theme="light" iconSize={28} />
+          <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            <ShieldCheck className="w-4 h-4 text-[#C48229]" /> Acesso seguro
+          </span>
+        </header>
+      )}
 
-      <main className="max-w-2xl mx-auto p-4 sm:p-6 space-y-4">
-        {!documento ? (
+      <main className={acesso ? 'space-y-4' : 'max-w-2xl mx-auto p-4 sm:p-6 space-y-4'}>
+        {!documento && acesso ? (
+          abrindo ? (
+            <div className="flex items-center justify-center gap-2 py-10 text-slate-500 text-xs">
+              <Loader2 className="w-4 h-4 animate-spin text-[#C48229]" /> Abrindo o documento...
+            </div>
+          ) : (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{erro || 'Não foi possível abrir o documento.'}</span>
+            </div>
+          )
+        ) : !documento ? (
           <form onSubmit={handleAbrir} className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 space-y-4 shadow-xs">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl bg-amber-50 text-[#C48229] flex items-center justify-center shrink-0">
