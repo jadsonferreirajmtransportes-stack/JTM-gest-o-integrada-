@@ -153,16 +153,20 @@ export const SectorManagerialDashboard: React.FC<SectorManagerialDashboardProps>
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-emerald-600 tracking-tight">
+            <span className={`text-2xl font-black tracking-tight ${metrics.margemContribuicao < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
               {formatCurrency(metrics.margemContribuicao)}
             </span>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${metrics.margemContribuicao < 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`}>
               {metrics.margemPercentual.toFixed(1)}%
             </span>
           </div>
           <div className="mt-2 flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
             <span>Resultado Operacional:</span>
-            <span className="font-semibold text-emerald-700">Lucro Positivo</span>
+            {metrics.margemContribuicao < 0 ? (
+              <span className="font-semibold text-rose-700">Prejuízo</span>
+            ) : (
+              <span className="font-semibold text-emerald-700">Lucro Positivo</span>
+            )}
           </div>
         </div>
 

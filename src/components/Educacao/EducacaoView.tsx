@@ -41,7 +41,7 @@ import {
 } from '../../utils/educacaoApi';
 import { TreinamentoEditorModal } from './TreinamentoEditorModal';
 import { CapaTreinamento } from './CapaTreinamento';
-import { MODULOS_CORPORATIVOS, PREFIXO_TREINAMENTO_SISTEMA, montarTreinamentoSistema } from './treinamentosSistema';
+import { GRUPOS_TREINAMENTO_SISTEMA, PREFIXO_TREINAMENTO_SISTEMA, TODOS_MODULOS_SISTEMA, montarTreinamentoSistema } from './treinamentosSistema';
 import { documentoParaTreinamento } from './importarTreinamento';
 import { gerarCertificadoPdf, formatarCargaHoraria } from './certificadoPdf';
 import { baixarBlob } from '../../utils/downloadUtils';
@@ -691,7 +691,7 @@ export const ImportarDocumentoModal: React.FC<{ criadoPor?: string; onClose: () 
 
   return (
     <div data-texto-livre="true" className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col text-xs">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col text-xs">
         <div className="p-4 border-b border-slate-200 flex items-start justify-between gap-2">
           <div>
             <h2 className="text-sm font-black text-slate-900">Treinamento a partir de um documento</h2>
@@ -821,9 +821,11 @@ export const PacoteSistemaModal: React.FC<{
   const [cargosSel, setCargosSel] = useState<Set<string>>(() => new Set(cargos.filter(ehSupervisor)));
   const existente = (titulo: string) => existentes.find((t) => t.titulo.trim().toLowerCase() === titulo.toLowerCase());
   const jaExiste = (titulo: string) => !!existente(titulo);
+  // Já marcados: os que já existem (para atualizar). Os novos o administrador escolhe por grupo.
   const [modulosSel, setModulosSel] = useState<Set<string>>(
-    () => new Set(MODULOS_CORPORATIVOS.map((m) => m.secao))
+    () => new Set(TODOS_MODULOS_SISTEMA.filter((m) => jaExiste(`${PREFIXO_TREINAMENTO_SISTEMA}${m.titulo}`)).map((m) => m.secao))
   );
+  const novosSel = TODOS_MODULOS_SISTEMA.filter((m) => modulosSel.has(m.secao) && !jaExiste(`${PREFIXO_TREINAMENTO_SISTEMA}${m.titulo}`)).length;
   const [prazoDias, setPrazoDias] = useState(15);
   const [salvando, setSalvando] = useState(false);
   const [resultado, setResultado] = useState<string | null>(null);
@@ -843,7 +845,7 @@ export const PacoteSistemaModal: React.FC<{
     try {
       let criados = 0;
       let atualizados = 0;
-      const lista = MODULOS_CORPORATIVOS.filter((m) => modulosSel.has(m.secao)).map((m) => {
+      const lista = TODOS_MODULOS_SISTEMA.filter((m) => modulosSel.has(m.secao)).map((m) => {
         const novo = montarTreinamentoSistema(m, { cargos: Array.from(cargosSel), prazoDias: prazoDias || undefined, criadoPor });
         const atual = existente(novo.titulo);
         if (!atual) {
@@ -856,9 +858,9 @@ export const PacoteSistemaModal: React.FC<{
       });
       const atribuicoes = await onCriar(lista);
       setResultado(
-        [criados ? `${criados} treinamento(s) criado(s)` : '', atualizados ? `${atualizados} atualizado(s) com as imagens` : '', `${atribuicoes} nova(s) atribuição(ões)`]
+        [criados ? `${criados} treinamento(s) criado(s)` : '', atualizados ? `${atualizados} atualizado(s)` : '', `${atribuicoes} nova(s) atribuição(ões)`]
           .filter(Boolean)
-          .join(', ') + '. Agora use "Enviar link do portal" para avisar os supervisores.'
+          .join(', ') + '. Agora use "Enviar link do portal" para avisar quem vai fazer.'
       );
     } catch (err) {
       console.error(err);
@@ -873,8 +875,8 @@ export const PacoteSistemaModal: React.FC<{
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col text-xs">
         <div className="p-4 border-b border-slate-200 flex items-start justify-between gap-2">
           <div>
-            <h2 className="text-sm font-black text-slate-900">Treinamentos do sistema — supervisores</h2>
-            <p className="text-slate-500 mt-0.5">Um treinamento por módulo, com conteúdo do manual do sistema e um exercício prático. Sem prova: leitura + assinatura de ciência.</p>
+            <h2 className="text-sm font-black text-slate-900">Treinamentos do sistema</h2>
+            <p className="text-slate-500 mt-0.5">Um treinamento por módulo, com as telas do sistema passo a passo e um exercício prático. Sem prova: leitura + assinatura de ciência. Escolha um grupo de cada vez com os cargos certos.</p>
           </div>
           <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
             <X className="w-4 h-4" />
@@ -887,24 +889,51 @@ export const PacoteSistemaModal: React.FC<{
             <>
               <section className="space-y-1.5">
                 <p className="font-black text-slate-700 uppercase tracking-wide text-[11px]">Módulos</p>
-                {MODULOS_CORPORATIVOS.map((m) => {
-                  const existe = jaExiste(`${PREFIXO_TREINAMENTO_SISTEMA}${m.titulo}`);
+                {GRUPOS_TREINAMENTO_SISTEMA.map(({ grupo, publico }) => {
+                  const doGrupo = TODOS_MODULOS_SISTEMA.filter((m) => m.grupo === grupo);
+                  const todos = doGrupo.every((m) => modulosSel.has(m.secao));
                   return (
-                    <label key={m.secao} className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
-                      <input
-                        type="checkbox"
-                        checked={modulosSel.has(m.secao)}
-                        onChange={() => setModulosSel((s) => alternar(s, m.secao))}
-                        className="w-4 h-4 accent-[#C48229]"
-                      />
-                      <span className="flex-1 font-semibold text-slate-800">{m.titulo}</span>
-                      <span className={existe ? 'text-[#92611F] font-semibold' : 'text-slate-400'}>{existe ? 'já existe — atualizar com as imagens' : formatarCargaHoraria(m.cargaHorariaMin)}</span>
-                    </label>
+                    <div key={grupo} className="border border-slate-200 rounded-xl overflow-hidden">
+                      <label className="flex items-center gap-2.5 px-3 py-2 bg-slate-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={todos}
+                          onChange={() =>
+                            setModulosSel((s) => {
+                              const novo = new Set(s);
+                              doGrupo.forEach((m) => (todos ? novo.delete(m.secao) : novo.add(m.secao)));
+                              return novo;
+                            })
+                          }
+                          className="w-4 h-4 accent-[#C48229]"
+                        />
+                        <span className="flex-1 font-black text-slate-800">{grupo}</span>
+                        <span className="text-slate-500">{publico}</span>
+                      </label>
+                      <div className="divide-y divide-slate-100">
+                        {doGrupo.map((m) => {
+                          const existe = jaExiste(`${PREFIXO_TREINAMENTO_SISTEMA}${m.titulo}`);
+                          return (
+                            <label key={m.secao} className="flex items-center gap-2.5 pl-8 pr-3 py-1.5 cursor-pointer hover:bg-slate-50">
+                              <input
+                                type="checkbox"
+                                checked={modulosSel.has(m.secao)}
+                                onChange={() => setModulosSel((s) => alternar(s, m.secao))}
+                                className="w-4 h-4 accent-[#C48229]"
+                              />
+                              <span className="flex-1 font-semibold text-slate-800">{m.titulo}</span>
+                              <span className={existe ? 'text-[#92611F] font-semibold' : 'text-slate-400'}>{existe ? 'já existe — atualizar' : `novo · ${formatarCargaHoraria(m.cargaHorariaMin)}`}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </section>
               <section className="space-y-1.5">
-                <p className="font-black text-slate-700 uppercase tracking-wide text-[11px]">Cargos que devem fazer</p>
+                <p className="font-black text-slate-700 uppercase tracking-wide text-[11px]">Cargos que devem fazer os novos</p>
+                <p className="text-slate-500">Os que já existem são atualizados só no conteúdo — mantêm os cargos, o prazo e o histórico de quem já concluiu.</p>
                 {cargos.length === 0 ? (
                   <p className="text-slate-500">Nenhum cargo no cadastro de colaboradores.</p>
                 ) : (
@@ -942,7 +971,7 @@ export const PacoteSistemaModal: React.FC<{
             <button
               type="button"
               onClick={handleCriar}
-              disabled={salvando || modulosSel.size === 0 || cargosSel.size === 0}
+              disabled={salvando || modulosSel.size === 0 || (novosSel > 0 && cargosSel.size === 0)}
               className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl font-bold flex items-center gap-2 disabled:opacity-50"
             >
               {salvando && <Loader2 className="w-4 h-4 animate-spin" />}
