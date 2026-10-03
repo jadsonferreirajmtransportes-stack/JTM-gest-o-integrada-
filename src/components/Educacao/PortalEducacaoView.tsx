@@ -22,6 +22,7 @@ import { JmtLogo } from '../Brand/JmtLogo';
 import { AssinaturaDigitalPad } from '../Epi/AssinaturaDigitalPad';
 import { PdfEmTela } from '../Contracheques/ContrachequePublicView';
 import { TelasIlustradas } from './TelasIlustradas';
+import { CapaTreinamento } from './CapaTreinamento';
 import { InstrucaoTrabalho } from '../../types';
 import { rowToInstrucao } from '../../utils/gestaoApi';
 import {
@@ -267,15 +268,15 @@ export const PortalEducacaoView: React.FC<{ token?: string }> = ({ token }) => {
                       key={t.atribuicaoId}
                       type="button"
                       onClick={() => setAbertoId(t.atribuicaoId)}
-                      className="w-full text-left bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-[#C48229] transition-colors"
+                      className="w-full text-left bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:border-[#C48229] transition-colors"
                     >
+                      <CapaTreinamento titulo={t.titulo} capa={t.capa} cargaHorariaMin={t.cargaHorariaMin} />
+                      <div className="p-4 pt-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <h2 className="text-sm font-bold text-slate-900">{t.titulo}</h2>
                           <p className="text-[11px] text-slate-500 mt-0.5">
-                            {formatarCargaHoraria(t.cargaHorariaMin)}
-                            {!concluido && t.prazo && ` · concluir até ${dataBr(t.prazo)}`}
-                            {concluido && ` · concluído em ${dataBr(t.concluidoEm)}`}
+                            {!concluido && (t.prazo ? `Concluir até ${dataBr(t.prazo)}` : 'Em aberto')}
+                            {concluido && `Concluído em ${dataBr(t.concluidoEm)}`}
                             {concluido && t.validoAte && ` · válido até ${dataBr(t.validoAte)}`}
                           </p>
                         </div>
@@ -296,6 +297,7 @@ export const PortalEducacaoView: React.FC<{ token?: string }> = ({ token }) => {
                           <div className="h-full bg-[#C48229]" style={{ width: `${t.conteudos.length ? (vistos / t.conteudos.length) * 100 : 0}%` }} />
                         </div>
                       )}
+                      </div>
                     </button>
                   );
                 })}
@@ -484,11 +486,10 @@ const TreinamentoAberto: React.FC<{
       <button type="button" onClick={onVoltar} className="text-xs font-bold text-[#92611F] flex items-center gap-1">
         <ChevronLeft className="w-4 h-4" /> Meus treinamentos
       </button>
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 space-y-3 shadow-xs">
-        <div>
-          <h1 className="text-base font-black text-slate-900">{t.titulo}</h1>
-          <p className="text-[11px] text-slate-500">{formatarCargaHoraria(t.cargaHorariaMin)}{t.prazo && !concluido ? ` · concluir até ${dataBr(t.prazo)}` : ''}</p>
-        </div>
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+        <CapaTreinamento titulo={t.titulo} capa={t.capa} cargaHorariaMin={t.cargaHorariaMin} tamanho="grande" />
+        <div className="p-4 sm:p-5 space-y-3">
+          {t.prazo && !concluido && <p className="text-[11px] text-slate-500">Concluir até {dataBr(t.prazo)}</p>}
         {t.descricao && <p className="text-xs text-slate-600 whitespace-pre-line">{t.descricao}</p>}
         <ol className="space-y-1.5">
           {t.conteudos.map((c, i) => {
@@ -510,6 +511,7 @@ const TreinamentoAberto: React.FC<{
             );
           })}
         </ol>
+        </div>
       </div>
 
       {concluido ? (

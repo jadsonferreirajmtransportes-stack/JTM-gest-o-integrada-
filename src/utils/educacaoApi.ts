@@ -47,6 +47,8 @@ export interface Treinamento {
   id: string;
   titulo: string;
   descricao?: string;
+  /** Imagem de capa (URL no bucket "treinamentos"); sem ela, o sistema mostra a capa automática. */
+  capa?: string;
   cargaHorariaMin: number;
   conteudos: ConteudoTreinamento[];
   prova?: ProvaTreinamento;
@@ -109,6 +111,7 @@ function rowToTreinamento(r: any): Treinamento {
     id: r.id,
     titulo: r.titulo,
     descricao: u(r.descricao),
+    capa: u(r.capa),
     cargaHorariaMin: Number(r.carga_horaria_min ?? 60),
     conteudos: r.conteudos ?? [],
     prova: u(r.prova),
@@ -136,6 +139,8 @@ export async function saveTreinamento(t: Treinamento): Promise<Treinamento> {
     id: registro.id,
     titulo: registro.titulo,
     descricao: n(registro.descricao),
+    // Só manda a coluna quando há capa — assim salvar continua funcionando antes da migração 065.
+    ...(registro.capa !== undefined ? { capa: registro.capa || null } : {}),
     carga_horaria_min: registro.cargaHorariaMin,
     conteudos: registro.conteudos,
     prova: registro.prova && registro.prova.perguntas.length > 0 ? registro.prova : null,
@@ -374,6 +379,7 @@ export interface TreinamentoPortal {
   treinamentoId: string;
   titulo: string;
   descricao?: string;
+  capa?: string | null;
   cargaHorariaMin: number;
   conteudos: ConteudoTreinamento[];
   prova?: ProvaTreinamento | null;

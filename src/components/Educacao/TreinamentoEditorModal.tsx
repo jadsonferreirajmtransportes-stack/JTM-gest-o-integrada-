@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { EditorImagens } from './EditorImagens';
+import { CapaTreinamento } from './CapaTreinamento';
 import {
   X,
   Loader2,
@@ -175,6 +176,51 @@ export const TreinamentoEditorModal: React.FC<TreinamentoEditorModalProps> = ({ 
         </div>
 
         <div className="p-4 space-y-5 overflow-y-auto text-xs">
+          {/* Capa */}
+          <section className="grid sm:grid-cols-[260px_1fr] gap-3 items-start">
+            <CapaTreinamento titulo={t.titulo} capa={t.capa} cargaHorariaMin={t.cargaHorariaMin} className="rounded-xl border border-slate-200" />
+            <div className="space-y-2">
+              <p className={rotulo}>Capa</p>
+              <p className="text-[11px] text-slate-500">
+                {t.capa ? 'Imagem enviada por você.' : 'Capa automática no padrão JMT, com o título. Se quiser, envie uma imagem (foto da operação, da equipe, do galpão).'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <label className="px-3 py-2 bg-white border border-slate-300 rounded-lg font-semibold cursor-pointer flex items-center gap-1.5 hover:bg-slate-50">
+                  {enviandoId === 'capa' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                  {t.capa ? 'Trocar imagem' : 'Enviar imagem de capa'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const arq = e.target.files?.[0];
+                      e.target.value = '';
+                      if (!arq) return;
+                      if (arq.size > 8 * 1024 * 1024) {
+                        setErro('A imagem de capa passa de 8MB.');
+                        return;
+                      }
+                      setEnviandoId('capa');
+                      try {
+                        atualizar({ capa: await enviarMaterialTreinamento(arq) });
+                      } catch (err) {
+                        setErro(err instanceof Error ? err.message : 'Não foi possível enviar a capa.');
+                      } finally {
+                        setEnviandoId(null);
+                      }
+                    }}
+                  />
+                </label>
+                {t.capa && (
+                  <button type="button" onClick={() => atualizar({ capa: '' })} className="px-3 py-2 text-rose-600 font-semibold hover:bg-rose-50 rounded-lg">
+                    Usar a capa automática
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-400">Formato deitado (16:9) fica melhor. A imagem é pública — sem dados pessoais.</p>
+            </div>
+          </section>
+
           {/* Dados gerais */}
           <section className="space-y-3">
             <div>

@@ -40,6 +40,7 @@ import {
   sincronizarAtribuicoes,
 } from '../../utils/educacaoApi';
 import { TreinamentoEditorModal } from './TreinamentoEditorModal';
+import { CapaTreinamento } from './CapaTreinamento';
 import { MODULOS_CORPORATIVOS, PREFIXO_TREINAMENTO_SISTEMA, montarTreinamentoSistema } from './treinamentosSistema';
 import { documentoParaTreinamento } from './importarTreinamento';
 import { gerarCertificadoPdf, formatarCargaHoraria } from './certificadoPdf';
@@ -421,10 +422,11 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
               const r = resumoPorTreinamento.get(t.id) || { total: 0, concluidos: 0 };
               const pct = r.total ? Math.round((r.concluidos / r.total) * 100) : 0;
               return (
-                <div key={t.id} className={`bg-white rounded-2xl border border-slate-200 p-4 space-y-3 ${t.ativo ? '' : 'opacity-60'}`}>
+                <div key={t.id} className={`bg-white rounded-2xl border border-slate-200 overflow-hidden ${t.ativo ? "" : "opacity-60"}`}>
+                  <CapaTreinamento titulo={t.titulo} capa={t.capa} />
+                  <div className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="text-sm font-black text-slate-900">{t.titulo}</h3>
                       <p className="text-[11px] text-slate-500 mt-0.5">
                         {formatarCargaHoraria(t.cargaHorariaMin)} · {t.conteudos.length} conteúdo(s)
                         {t.prova?.perguntas.length ? ` · prova (${t.prova.perguntas.length} perguntas, mín. ${t.prova.notaMinima})` : ''}
@@ -486,6 +488,7 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
+                </div>
                 </div>
               );
             })}
