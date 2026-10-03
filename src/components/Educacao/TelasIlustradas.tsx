@@ -11,7 +11,7 @@ export const TelasIlustradas: React.FC<{ telas: TelaIlustrada[]; compacto?: bool
         <figcaption className="text-xs font-black text-slate-800">
           {telas.length > 1 && (
             <span className="text-[#C48229]">
-              {t.marcas.length ? 'Tela' : 'Imagem'} {i + 1} de {telas.length} ·{' '}
+              {t.marcas.some((m) => m.trim()) ? 'Tela' : 'Imagem'} {i + 1} de {telas.length} ·{' '}
             </span>
           )}
           {t.titulo}
@@ -20,7 +20,7 @@ export const TelasIlustradas: React.FC<{ telas: TelaIlustrada[]; compacto?: bool
           <img src={t.imagem} alt={t.titulo} loading="lazy" className="w-full rounded-xl border border-slate-200 shadow-xs bg-slate-50" />
         </a>
         <ol className="space-y-1.5">
-          {t.marcas.map((m, k) => (
+          {t.marcas.filter((m) => m.trim()).map((m, k) => (
             <li key={k} className="flex gap-2 text-xs text-slate-700 leading-relaxed">
               <span className="w-5 h-5 rounded-full bg-[#C48229] text-white text-[10px] font-black flex items-center justify-center shrink-0 mt-px">{k + 1}</span>
               <span>{m}</span>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { EditorImagens } from './EditorImagens';
 import {
   X,
   Loader2,
@@ -38,7 +39,7 @@ export const TIPOS_CONTEUDO: Record<TipoConteudoTreinamento, { rotulo: string; i
   pdf: { rotulo: 'Material (PDF)', icone: <FileText className="w-4 h-4" /> },
   instrucao: { rotulo: 'Instrução de Trabalho', icone: <BookOpen className="w-4 h-4" /> },
   texto: { rotulo: 'Texto', icone: <AlignLeft className="w-4 h-4" /> },
-  telas: { rotulo: 'Passo a passo com imagens', icone: <ImageIcon className="w-4 h-4" /> },
+  telas: { rotulo: 'Imagens', icone: <ImageIcon className="w-4 h-4" /> },
 };
 
 function vazio(criadoPor?: string): Treinamento {
@@ -125,7 +126,7 @@ export const TreinamentoEditorModal: React.FC<TreinamentoEditorModalProps> = ({ 
       if (!c.titulo.trim()) return 'Todo conteúdo precisa de um título.';
       if ((c.tipo === 'video' || c.tipo === 'pdf') && !c.url) return `Falta o ${c.tipo === 'video' ? 'link do vídeo' : 'arquivo PDF'} em "${c.titulo}".`;
       if (c.tipo === 'instrucao' && !c.instrucaoId) return `Escolha a Instrução de Trabalho em "${c.titulo}".`;
-      if (c.tipo === 'texto' && !c.texto?.trim()) return `Escreva o texto de "${c.titulo}".`;
+      if (c.tipo === 'texto' && !c.texto?.trim() && !c.telas?.length) return `Escreva o texto de "${c.titulo}".`;
       if (c.tipo === 'telas' && !c.telas?.length) return `"${c.titulo}" está sem imagens.`;
     }
     for (const [i, p] of perguntas.entries()) {
@@ -282,20 +283,17 @@ export const TreinamentoEditorModal: React.FC<TreinamentoEditorModalProps> = ({ 
                   </select>
                 )}
                 {c.tipo === 'texto' && (
-                  <textarea value={c.texto || ''} onChange={(e) => atualizarConteudo(c.id, { texto: e.target.value })} rows={4} className={campo} placeholder="Texto que o colaborador vai ler" />
+                  <>
+                    <textarea value={c.texto || ''} onChange={(e) => atualizarConteudo(c.id, { texto: e.target.value })} rows={4} className={campo} placeholder="Texto que o colaborador vai ler" />
+                    {/* Imagens do texto — aparecem logo abaixo dele no portal. */}
+                    <EditorImagens telas={c.telas || []} onChange={(telas) => atualizarConteudo(c.id, { telas })} textoBotao="+ Imagem neste texto" />
+                  </>
                 )}
-                {c.tipo === 'telas' && (
-                  <div className="flex gap-2 overflow-x-auto">
-                    {(c.telas || []).map((t) => (
-                      <img key={t.imagem} src={t.imagem} alt={t.titulo} title={t.titulo} className="h-20 rounded-lg border border-slate-200" />
-                    ))}
-                    <p className="text-[11px] text-slate-500 self-center shrink-0">Gerado pelo sistema (Treinamentos do sistema).</p>
-                  </div>
-                )}
+                {c.tipo === 'telas' && <EditorImagens telas={c.telas || []} onChange={(telas) => atualizarConteudo(c.id, { telas })} textoBotao="+ Imagem" />}
               </div>
             ))}
             <div className="flex flex-wrap gap-2">
-              {(Object.keys(TIPOS_CONTEUDO) as TipoConteudoTreinamento[]).filter((tipo) => tipo !== 'telas').map((tipo) => (
+              {(Object.keys(TIPOS_CONTEUDO) as TipoConteudoTreinamento[]).map((tipo) => (
                 <button
                   key={tipo}
                   type="button"

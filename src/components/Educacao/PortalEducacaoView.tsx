@@ -455,6 +455,7 @@ const TreinamentoAberto: React.FC<{
             </>
           )}
           {conteudo.tipo === 'texto' && <p className="text-sm text-slate-700 whitespace-pre-line leading-relaxed">{conteudo.texto}</p>}
+          {conteudo.tipo === 'texto' && !!conteudo.telas?.length && <TelasIlustradas telas={conteudo.telas} />}
           {conteudo.tipo === 'telas' && <TelasIlustradas telas={conteudo.telas || []} />}
           {conteudo.tipo === 'instrucao' &&
             (instrucao ? (
