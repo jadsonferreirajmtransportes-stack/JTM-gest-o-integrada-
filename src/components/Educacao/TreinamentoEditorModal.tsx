@@ -167,7 +167,7 @@ export const TreinamentoEditorModal: React.FC<TreinamentoEditorModalProps> = ({ 
     <div data-texto-livre="true" className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[92vh] flex flex-col">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-sm font-black text-slate-900">{treinamento ? 'Editar treinamento' : 'Novo treinamento'}</h2>
+          <h2 className="text-sm font-black text-slate-900">{treinamento?.id ? 'Editar treinamento' : 'Novo treinamento'}</h2>
           <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
             <X className="w-4 h-4" />
           </button>

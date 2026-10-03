@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   GraduationCap,
   MonitorSmartphone,
+  FileUp,
   Plus,
   Pencil,
   Trash2,
@@ -40,6 +41,7 @@ import {
 } from '../../utils/educacaoApi';
 import { TreinamentoEditorModal } from './TreinamentoEditorModal';
 import { MODULOS_CORPORATIVOS, PREFIXO_TREINAMENTO_SISTEMA, montarTreinamentoSistema } from './treinamentosSistema';
+import { documentoParaTreinamento } from './importarTreinamento';
 import { gerarCertificadoPdf, formatarCargaHoraria } from './certificadoPdf';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
@@ -96,6 +98,7 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
   const [acaoId, setAcaoId] = useState<string | null>(null);
   const [envioMassa, setEnvioMassa] = useState<ItemEnvioWhatsApp[] | null>(null);
   const [pacoteSistema, setPacoteSistema] = useState(false);
+  const [importandoDoc, setImportandoDoc] = useState(false);
   const [preparandoEnvio, setPreparandoEnvio] = useState(false);
 
   const ativos: Colaborador[] = useMemo(() => colaboradores.filter((c) => c.status !== 'Inativo'), [colaboradores]);
@@ -343,6 +346,14 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
           >
             {preparandoEnvio ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
             Enviar link do portal ({comPendencia.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setImportandoDoc(true)}
+            className="px-3 py-2.5 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5"
+            title="Monta um treinamento a partir de um PDF, Word ou texto colado"
+          >
+            <FileUp className="w-4 h-4 text-[#92611F]" /> Importar documento
           </button>
           <button
             type="button"
@@ -608,6 +619,17 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
         />
       )}
 
+      {importandoDoc && (
+        <ImportarDocumentoModal
+          criadoPor={currentUser?.nome}
+          onClose={() => setImportandoDoc(false)}
+          onPronto={(t) => {
+            setImportandoDoc(false);
+            setEditando(t);
+          }}
+        />
+      )}
+
       {pacoteSistema && (
         <PacoteSistemaModal
           colaboradores={ativos}
@@ -631,6 +653,150 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
       {envioMassa && (
         <EnvioWhatsAppEmMassaModal titulo="Enviar link do Portal de Educação" itens={envioMassa} onClose={() => setEnvioMassa(null)} />
       )}
+    </div>
+  );
+};
+
+/** Monta um rascunho de treinamento a partir de um PDF, Word ou texto colado (ver
+ *  importarTreinamento.ts) e abre no editor para revisar antes de salvar. */
+export const ImportarDocumentoModal: React.FC<{ criadoPor?: string; onClose: () => void; onPronto: (t: Treinamento) => void }> = ({ criadoPor, onClose, onPronto }) => {
+  const [modo, setModo] = useState<'arquivo' | 'texto'>('arquivo');
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const [texto, setTexto] = useState('');
+  const [titulo, setTitulo] = useState('');
+  const [anexarPdf, setAnexarPdf] = useState(true);
+  const [progresso, setProgresso] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [resultado, setResultado] = useState<{ treinamento: Treinamento; avisos: string[] } | null>(null);
+  const ehPdf = !!arquivo && arquivo.name.toLowerCase().endsWith('.pdf');
+  const pronto = titulo.trim().length > 2 && (modo === 'arquivo' ? !!arquivo : texto.trim().length > 20);
+
+  const handleMontar = async () => {
+    setErro(null);
+    setProgresso('Lendo...');
+    try {
+      const r = await documentoParaTreinamento(modo === 'arquivo' ? { arquivo: arquivo!, anexarPdf } : { texto }, { titulo, criadoPor, aoProgredir: setProgresso });
+      if (r.avisos.length === 0) onPronto(r.treinamento);
+      else setResultado(r);
+    } catch (err) {
+      console.error(err);
+      setErro(err instanceof Error ? err.message : 'Não foi possível montar o treinamento.');
+    } finally {
+      setProgresso(null);
+    }
+  };
+
+  return (
+    <div data-texto-livre="true" className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col text-xs">
+        <div className="p-4 border-b border-slate-200 flex items-start justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-black text-slate-900">Treinamento a partir de um documento</h2>
+            <p className="text-slate-500 mt-0.5">O sistema separa o conteúdo pelos títulos do documento. Você revisa no editor, define quem faz e, se quiser, acrescenta a prova.</p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-4 space-y-3 overflow-y-auto">
+          {resultado ? (
+            <div className="space-y-3">
+              <p className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 font-semibold">
+                Treinamento montado com {resultado.treinamento.conteudos.length} conteúdo(s). Confira os avisos abaixo e revise no editor.
+              </p>
+              <ul className="space-y-1.5">
+                {resultado.avisos.map((a) => (
+                  <li key={a} className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-[#7A4F17]">
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                {(
+                  [
+                    ['arquivo', 'Arquivo (PDF ou Word)'],
+                    ['texto', 'Colar texto'],
+                  ] as ['arquivo' | 'texto', string][]
+                ).map(([id, nome]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setModo(id)}
+                    className={`flex-1 py-2 rounded-xl border font-bold ${modo === id ? 'bg-[#C48229] text-white border-[#C48229]' : 'bg-white text-slate-600 border-slate-200'}`}
+                  >
+                    {nome}
+                  </button>
+                ))}
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 block mb-1">Título do treinamento</label>
+                <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg" placeholder="Ex.: Boas Práticas de Transporte de Medicamentos" />
+              </div>
+              {modo === 'arquivo' ? (
+                <>
+                  <label className="block p-4 border-2 border-dashed border-slate-300 rounded-xl text-center cursor-pointer hover:border-[#C48229]">
+                    <FileUp className="w-6 h-6 text-[#92611F] mx-auto mb-1" />
+                    <span className="font-semibold text-slate-700">{arquivo ? arquivo.name : 'Escolher PDF ou Word (.docx)'}</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.docx"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] || null;
+                        if (f && f.size > 20 * 1024 * 1024) {
+                          setErro('O arquivo passa de 20MB.');
+                          return;
+                        }
+                        setArquivo(f);
+                        if (f && !titulo.trim()) setTitulo(f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' '));
+                      }}
+                    />
+                  </label>
+                  {ehPdf && (
+                    <label className="flex items-start gap-2 font-semibold text-slate-700">
+                      <input type="checkbox" checked={anexarPdf} onChange={(e) => setAnexarPdf(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#C48229]" />
+                      <span>
+                        Incluir o PDF original como material
+                        <span className="block font-normal text-slate-500">O colaborador vê também o documento com o visual original (imagens, tabelas).</span>
+                      </span>
+                    </label>
+                  )}
+                  <p className="text-slate-500">No Word, as imagens do documento entram no treinamento. Word antigo (.doc): salve como .docx antes.</p>
+                </>
+              ) : (
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Texto</label>
+                  <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={10} className="w-full p-2 border border-slate-300 rounded-lg" placeholder={'Cole aqui o conteúdo.\n\nDica: linhas curtas em MAIÚSCULAS, terminadas em ":" ou começando com "#" viram títulos; linhas com "-" ou "1." viram listas.'} />
+                </div>
+              )}
+              {erro && <p className="text-rose-700 font-semibold">{erro}</p>}
+            </>
+          )}
+        </div>
+        <div className="p-4 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">
+            Cancelar
+          </button>
+          {resultado ? (
+            <button type="button" onClick={() => onPronto(resultado.treinamento)} className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl font-bold">
+              Revisar no editor
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleMontar}
+              disabled={!pronto || !!progresso}
+              className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl font-bold flex items-center gap-2 disabled:opacity-50"
+            >
+              {progresso && <Loader2 className="w-4 h-4 animate-spin" />}
+              {progresso || 'Montar treinamento'}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

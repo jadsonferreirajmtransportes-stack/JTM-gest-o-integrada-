@@ -9,7 +9,11 @@ export const TelasIlustradas: React.FC<{ telas: TelaIlustrada[]; compacto?: bool
     {telas.map((t, i) => (
       <figure key={t.imagem} className="space-y-2">
         <figcaption className="text-xs font-black text-slate-800">
-          {telas.length > 1 && <span className="text-[#C48229]">Tela {i + 1} de {telas.length} · </span>}
+          {telas.length > 1 && (
+            <span className="text-[#C48229]">
+              {t.marcas.length ? 'Tela' : 'Imagem'} {i + 1} de {telas.length} ·{' '}
+            </span>
+          )}
           {t.titulo}
         </figcaption>
         <a href={t.imagem} target="_blank" rel="noopener noreferrer" title="Abrir a imagem em tamanho real">
