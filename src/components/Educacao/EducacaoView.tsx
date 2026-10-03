@@ -317,7 +317,7 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
     }
   };
 
-  const iconeTipo = { video: PlayCircle, pdf: FileText, instrucao: BookOpen, texto: FileText };
+  const iconeTipo = { video: PlayCircle, pdf: FileText, instrucao: BookOpen, texto: FileText, telas: MonitorSmartphone };
 
   return (
     <div className="space-y-6">
@@ -650,9 +650,10 @@ export const PacoteSistemaModal: React.FC<{
   );
   const ehSupervisor = (c: string) => /supervis|coordenad|l[ií]der|encarregad|gerente/i.test(c);
   const [cargosSel, setCargosSel] = useState<Set<string>>(() => new Set(cargos.filter(ehSupervisor)));
-  const jaExiste = (titulo: string) => existentes.some((t) => t.titulo.trim().toLowerCase() === titulo.toLowerCase());
+  const existente = (titulo: string) => existentes.find((t) => t.titulo.trim().toLowerCase() === titulo.toLowerCase());
+  const jaExiste = (titulo: string) => !!existente(titulo);
   const [modulosSel, setModulosSel] = useState<Set<string>>(
-    () => new Set(MODULOS_CORPORATIVOS.filter((m) => !jaExiste(`${PREFIXO_TREINAMENTO_SISTEMA}${m.titulo}`)).map((m) => m.secao))
+    () => new Set(MODULOS_CORPORATIVOS.map((m) => m.secao))
   );
   const [prazoDias, setPrazoDias] = useState(15);
   const [salvando, setSalvando] = useState(false);
@@ -671,11 +672,25 @@ export const PacoteSistemaModal: React.FC<{
     setSalvando(true);
     setErro(null);
     try {
-      const lista = MODULOS_CORPORATIVOS.filter((m) => modulosSel.has(m.secao)).map((m) =>
-        montarTreinamentoSistema(m, { cargos: Array.from(cargosSel), prazoDias: prazoDias || undefined, criadoPor })
-      );
+      let criados = 0;
+      let atualizados = 0;
+      const lista = MODULOS_CORPORATIVOS.filter((m) => modulosSel.has(m.secao)).map((m) => {
+        const novo = montarTreinamentoSistema(m, { cargos: Array.from(cargosSel), prazoDias: prazoDias || undefined, criadoPor });
+        const atual = existente(novo.titulo);
+        if (!atual) {
+          criados += 1;
+          return novo;
+        }
+        // Já existe: troca só o conteúdo (mantém quem faz, prazo, validade e o histórico de quem concluiu).
+        atualizados += 1;
+        return { ...atual, conteudos: novo.conteudos, descricao: novo.descricao, cargaHorariaMin: novo.cargaHorariaMin };
+      });
       const atribuicoes = await onCriar(lista);
-      setResultado(`${lista.length} treinamento(s) criado(s) e ${atribuicoes} atribuição(ões) feitas. Agora use "Enviar link do portal" para mandar o link aos supervisores.`);
+      setResultado(
+        [criados ? `${criados} treinamento(s) criado(s)` : '', atualizados ? `${atualizados} atualizado(s) com as imagens` : '', `${atribuicoes} nova(s) atribuição(ões)`]
+          .filter(Boolean)
+          .join(', ') + '. Agora use "Enviar link do portal" para avisar os supervisores.'
+      );
     } catch (err) {
       console.error(err);
       setErro(err instanceof Error ? err.message : 'Não foi possível criar os treinamentos.');
@@ -706,16 +721,15 @@ export const PacoteSistemaModal: React.FC<{
                 {MODULOS_CORPORATIVOS.map((m) => {
                   const existe = jaExiste(`${PREFIXO_TREINAMENTO_SISTEMA}${m.titulo}`);
                   return (
-                    <label key={m.secao} className={`flex items-center gap-2.5 p-2 rounded-lg border border-slate-200 ${existe ? 'opacity-50' : 'cursor-pointer hover:bg-slate-50'}`}>
+                    <label key={m.secao} className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
                       <input
                         type="checkbox"
-                        disabled={existe}
                         checked={modulosSel.has(m.secao)}
                         onChange={() => setModulosSel((s) => alternar(s, m.secao))}
                         className="w-4 h-4 accent-[#C48229]"
                       />
                       <span className="flex-1 font-semibold text-slate-800">{m.titulo}</span>
-                      <span className="text-slate-400">{existe ? 'já criado' : formatarCargaHoraria(m.cargaHorariaMin)}</span>
+                      <span className={existe ? 'text-[#92611F] font-semibold' : 'text-slate-400'}>{existe ? 'já existe — atualizar com as imagens' : formatarCargaHoraria(m.cargaHorariaMin)}</span>
                     </label>
                   );
                 })}
@@ -763,7 +777,7 @@ export const PacoteSistemaModal: React.FC<{
               className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl font-bold flex items-center gap-2 disabled:opacity-50"
             >
               {salvando && <Loader2 className="w-4 h-4 animate-spin" />}
-              Criar {modulosSel.size} treinamento(s)
+              Criar / atualizar {modulosSel.size}
             </button>
           )}
         </div>

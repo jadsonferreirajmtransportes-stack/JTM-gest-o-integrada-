@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Search, PlayCircle, ChevronLeft, Lightbulb, BookOpen, HelpCircle } from 'lucide-react';
 import { MANUAL, TopicoManual, buscarNoManual, topicoDaSecao } from '../../data/manualSistema';
+import { telasDaSecao } from '../../data/telasTreinamento';
+import { TelasIlustradas } from '../Educacao/TelasIlustradas';
 
 interface AjudaPainelProps {
   secaoAtual: string;
@@ -138,6 +140,15 @@ export const AjudaPainel: React.FC<AjudaPainelProps> = ({ secaoAtual, onClose, o
                     </li>
                   ))}
                 </ol>
+                {telasDaSecao(aberto.id).length > 0 && (
+                  <section className="space-y-2">
+                    <p className="font-black text-slate-700 uppercase tracking-wide text-[11px]">Veja nas telas</p>
+                    <TelasIlustradas
+                      compacto
+                      telas={telasDaSecao(aberto.id).map((t) => ({ titulo: t.titulo, imagem: `/treinamento-sistema/${t.id}.png`, marcas: t.marcas.map((m) => m.texto) }))}
+                    />
+                  </section>
+                )}
                 {aberto.dicas && aberto.dicas.length > 0 && (
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5">
                     <p className="font-bold text-[#7A4F17] flex items-center gap-1.5">

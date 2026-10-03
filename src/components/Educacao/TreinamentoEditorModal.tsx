@@ -12,6 +12,7 @@ import {
   Plus,
   Upload,
   CheckCircle2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { Colaborador, InstrucaoTrabalho } from '../../types';
 import {
@@ -37,6 +38,7 @@ export const TIPOS_CONTEUDO: Record<TipoConteudoTreinamento, { rotulo: string; i
   pdf: { rotulo: 'Material (PDF)', icone: <FileText className="w-4 h-4" /> },
   instrucao: { rotulo: 'Instrução de Trabalho', icone: <BookOpen className="w-4 h-4" /> },
   texto: { rotulo: 'Texto', icone: <AlignLeft className="w-4 h-4" /> },
+  telas: { rotulo: 'Passo a passo com imagens', icone: <ImageIcon className="w-4 h-4" /> },
 };
 
 function vazio(criadoPor?: string): Treinamento {
@@ -124,6 +126,7 @@ export const TreinamentoEditorModal: React.FC<TreinamentoEditorModalProps> = ({ 
       if ((c.tipo === 'video' || c.tipo === 'pdf') && !c.url) return `Falta o ${c.tipo === 'video' ? 'link do vídeo' : 'arquivo PDF'} em "${c.titulo}".`;
       if (c.tipo === 'instrucao' && !c.instrucaoId) return `Escolha a Instrução de Trabalho em "${c.titulo}".`;
       if (c.tipo === 'texto' && !c.texto?.trim()) return `Escreva o texto de "${c.titulo}".`;
+      if (c.tipo === 'telas' && !c.telas?.length) return `"${c.titulo}" está sem imagens.`;
     }
     for (const [i, p] of perguntas.entries()) {
       if (!p.enunciado.trim()) return `Escreva o enunciado da pergunta ${i + 1}.`;
@@ -281,10 +284,18 @@ export const TreinamentoEditorModal: React.FC<TreinamentoEditorModalProps> = ({ 
                 {c.tipo === 'texto' && (
                   <textarea value={c.texto || ''} onChange={(e) => atualizarConteudo(c.id, { texto: e.target.value })} rows={4} className={campo} placeholder="Texto que o colaborador vai ler" />
                 )}
+                {c.tipo === 'telas' && (
+                  <div className="flex gap-2 overflow-x-auto">
+                    {(c.telas || []).map((t) => (
+                      <img key={t.imagem} src={t.imagem} alt={t.titulo} title={t.titulo} className="h-20 rounded-lg border border-slate-200" />
+                    ))}
+                    <p className="text-[11px] text-slate-500 self-center shrink-0">Gerado pelo sistema (Treinamentos do sistema).</p>
+                  </div>
+                )}
               </div>
             ))}
             <div className="flex flex-wrap gap-2">
-              {(Object.keys(TIPOS_CONTEUDO) as TipoConteudoTreinamento[]).map((tipo) => (
+              {(Object.keys(TIPOS_CONTEUDO) as TipoConteudoTreinamento[]).filter((tipo) => tipo !== 'telas').map((tipo) => (
                 <button
                   key={tipo}
                   type="button"

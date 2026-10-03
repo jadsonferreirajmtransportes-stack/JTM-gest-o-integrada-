@@ -7,6 +7,7 @@
 // ============================================================================
 
 import { topicoDaSecao } from '../../data/manualSistema';
+import { telasDaSecao } from '../../data/telasTreinamento';
 import type { ConteudoTreinamento, Treinamento } from '../../utils/educacaoApi';
 import { gerarIdCurto } from '../../utils/educacaoApi';
 
@@ -104,14 +105,22 @@ const CUIDADOS_GERAIS = [
 /** Monta o treinamento de um módulo (ainda sem id — o banco gera ao salvar). */
 export function montarTreinamentoSistema(m: ModuloTreinamento, opcoes: { cargos: string[]; prazoDias?: number; criadoPor?: string }): Treinamento {
   const topico = topicoDaSecao(m.secao);
+  const telas = telasDaSecao(m.secao);
+  const passoAPassoTexto = (topico?.passos || []).map((p, i) => `${i + 1}. ${p.titulo}\n${p.texto}`).join('\n\n');
   const conteudos: ConteudoTreinamento[] = [
     { id: gerarIdCurto('cont'), tipo: 'texto', titulo: `Para que serve o módulo ${m.titulo}`, texto: `${topico?.resumo || ''}\n\n${m.porQue}`.trim() },
-    {
-      id: gerarIdCurto('cont'),
-      tipo: 'texto',
-      titulo: 'Passo a passo',
-      texto: (topico?.passos || []).map((p, i) => `${i + 1}. ${p.titulo}\n${p.texto}`).join('\n\n'),
-    },
+    // Passo a passo com as telas do sistema (imagens com números) e, depois, o resumo em texto.
+    ...(telas.length > 0
+      ? [
+          {
+            id: gerarIdCurto('cont'),
+            tipo: 'telas' as const,
+            titulo: 'Passo a passo com imagens',
+            telas: telas.map((t) => ({ titulo: t.titulo, imagem: `/treinamento-sistema/${t.id}.png`, marcas: t.marcas.map((x) => x.texto) })),
+          },
+          { id: gerarIdCurto('cont'), tipo: 'texto' as const, titulo: 'Resumo do passo a passo', texto: passoAPassoTexto },
+        ]
+      : [{ id: gerarIdCurto('cont'), tipo: 'texto' as const, titulo: 'Passo a passo', texto: passoAPassoTexto }]),
     {
       id: gerarIdCurto('cont'),
       tipo: 'texto',

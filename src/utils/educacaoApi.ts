@@ -8,7 +8,15 @@
 import { supabase } from './supabaseClient';
 import { Colaborador } from '../types';
 
-export type TipoConteudoTreinamento = 'video' | 'pdf' | 'instrucao' | 'texto';
+export type TipoConteudoTreinamento = 'video' | 'pdf' | 'instrucao' | 'texto' | 'telas';
+
+/** Uma tela ilustrada: imagem com números marcados + a explicação de cada número. */
+export interface TelaIlustrada {
+  titulo: string;
+  /** Caminho da imagem (ex.: /treinamento-sistema/com-1.png, servida pelo próprio site). */
+  imagem: string;
+  marcas: string[];
+}
 
 export interface ConteudoTreinamento {
   id: string;
@@ -18,6 +26,8 @@ export interface ConteudoTreinamento {
   url?: string;
   instrucaoId?: string;
   texto?: string;
+  /** Tipo 'telas': passo a passo com imagens da tela (gerado pelo pacote do sistema). */
+  telas?: TelaIlustrada[];
 }
 
 export interface PerguntaProva {

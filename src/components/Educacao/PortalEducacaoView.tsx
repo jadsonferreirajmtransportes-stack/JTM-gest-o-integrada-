@@ -16,10 +16,12 @@ import {
   Search,
   ScrollText,
   ExternalLink,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { JmtLogo } from '../Brand/JmtLogo';
 import { AssinaturaDigitalPad } from '../Epi/AssinaturaDigitalPad';
 import { PdfEmTela } from '../Contracheques/ContrachequePublicView';
+import { TelasIlustradas } from './TelasIlustradas';
 import { InstrucaoTrabalho } from '../../types';
 import { rowToInstrucao } from '../../utils/gestaoApi';
 import {
@@ -83,6 +85,7 @@ const ICONES: Record<ConteudoTreinamento['tipo'], React.ReactNode> = {
   pdf: <FileText className="w-4 h-4" />,
   instrucao: <BookOpen className="w-4 h-4" />,
   texto: <AlignLeft className="w-4 h-4" />,
+  telas: <ImageIcon className="w-4 h-4" />,
 };
 
 const MENSAGENS_ERRO = {
@@ -452,6 +455,7 @@ const TreinamentoAberto: React.FC<{
             </>
           )}
           {conteudo.tipo === 'texto' && <p className="text-sm text-slate-700 whitespace-pre-line leading-relaxed">{conteudo.texto}</p>}
+          {conteudo.tipo === 'telas' && <TelasIlustradas telas={conteudo.telas || []} />}
           {conteudo.tipo === 'instrucao' &&
             (instrucao ? (
               <InstrucaoLeitura instrucao={instrucao} semMoldura />
