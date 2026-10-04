@@ -31,6 +31,9 @@ function montarDeclaracao(doc: DocumentoPublico): string {
   if (doc.categoria === 'ponto') {
     return `Declaro que conferi o ${doc.titulo} e que os registros correspondem à minha frequência no período.`;
   }
+  if (doc.categoria === 'vale_alimentacao') {
+    return `Declaro que conferi o ${doc.titulo} e que estou ciente do valor de vale-alimentação nele informado.`;
+  }
   if (doc.categoria === 'regulamento') {
     return `Declaro que recebi, li e tomei conhecimento do ${doc.titulo} e que me comprometo a cumpri-lo.`;
   }

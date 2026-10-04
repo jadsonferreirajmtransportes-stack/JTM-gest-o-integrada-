@@ -46,6 +46,8 @@ interface DocumentosAssinaturaViewProps {
   /** Avisa a tela de fora quando a lista muda (importou, excluiu, renovou) — Férias usa pra
    *  atualizar os selos de Aviso/Recibo na lista de programações sem recarregar. */
   onDocumentosChange?: (documentos: DocumentoAssinatura[]) => void;
+  /** Mostra só os documentos desta referência (ex.: Vale-Alimentação mostra a quinzena escolhida). */
+  referenciaFixa?: string;
 }
 
 const TEXTOS: Record<CategoriaDocumentoAssinatura, { titulo: string; descricao: string; importar: string; vazio: string }> = {
@@ -76,6 +78,13 @@ const TEXTOS: Record<CategoriaDocumentoAssinatura, { titulo: string; descricao: 
     importar: '',
     vazio: 'Nenhum espelho enviado ainda. Gere pelo Espelho do colaborador ou pelo Resumo do mês.',
   },
+  // Demonstrativos gerados na Programação do Vale-Alimentação ("Disponibilizar no portal").
+  vale_alimentacao: {
+    titulo: 'Demonstrativos de Vale-Alimentação',
+    descricao: 'Demonstrativo da quinzena no portal do colaborador, para conferir e assinar.',
+    importar: '',
+    vazio: 'Nenhum demonstrativo desta quinzena no portal ainda. Use "Disponibilizar no portal" acima.',
+  },
   regulamento: {
     titulo: 'Regulamento Interno — Ciência e Assinatura',
     descricao: 'Todos os colaboradores precisam ler e assinar a versão vigente. Novos admitidos aparecem em "Enviar para assinatura".',
@@ -104,6 +113,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
   currentUser,
   compacto = false,
   onDocumentosChange,
+  referenciaFixa,
 }) => {
   const textos = TEXTOS[categoria];
   const ehContracheque = categoria === 'contracheque';
@@ -148,9 +158,12 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
   const visiveis = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return documentos.filter(
-      (d) => (!competencia || d.referencia === competencia) && (!termo || d.colaboradorNome.toLowerCase().includes(termo))
+      (d) =>
+        (!referenciaFixa || d.referencia === referenciaFixa) &&
+        (!competencia || d.referencia === competencia) &&
+        (!termo || d.colaboradorNome.toLowerCase().includes(termo))
     );
-  }, [documentos, competencia, busca]);
+  }, [documentos, competencia, busca, referenciaFixa]);
   const totais = useMemo(
     () => ({
       total: visiveis.length,
@@ -264,7 +277,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
         const href = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
         const a = document.createElement('a');
         a.href = href;
-        a.download = `${ehContracheque ? 'Contracheques' : 'Ferias'}_assinados_${sufixo}.zip`;
+        a.download = `${ehContracheque ? 'Contracheques' : categoria === 'vale_alimentacao' ? 'Vale_Alimentacao' : 'Ferias'}_assinados_${sufixo}.zip`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -582,7 +595,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
 
       {isEnvioEmMassaAberto && (
         <EnvioWhatsAppEmMassaModal
-          titulo={`Enviar ${ehContracheque ? 'contracheques' : categoria === 'regulamento' ? 'regulamento interno' : categoria === 'ponto' ? 'espelhos de frequência' : 'documentos de férias'} pendentes`}
+          titulo={`Enviar ${ehContracheque ? 'contracheques' : categoria === 'regulamento' ? 'regulamento interno' : categoria === 'ponto' ? 'espelhos de frequência' : categoria === 'vale_alimentacao' ? 'demonstrativos de vale-alimentação' : 'documentos de férias'} pendentes`}
           itens={pendentesParaEnviar.map((d) => ({
             id: d.id,
             nome: `${d.colaboradorNome} — ${d.titulo}`,

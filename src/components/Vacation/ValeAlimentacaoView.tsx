@@ -16,6 +16,8 @@ import {
   Copy,
   Printer,
   Search,
+  Send,
+  Loader2,
 } from 'lucide-react';
 import {
   Colaborador,
@@ -23,7 +25,12 @@ import {
   ProgramacaoFerias,
   QuinzenaValeAlimentacao,
   LancamentoValeAlimentacao,
+  UsuarioLogin,
 } from '../../types';
+import { criarDocumentoAssinatura, getDocumentosAssinatura } from '../../utils/documentosAssinaturaApi';
+import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
+import { gerarDemonstrativoVaPdf, quinzenaPorExtenso } from './demonstrativoVaPdf';
+import { useLinksUnicos } from '../../utils/linkUnico';
 import {
   formatDate,
   formatMoney,
@@ -53,6 +60,7 @@ interface ValeAlimentacaoViewProps {
   onSincronizarFaltas: (quinzenaId: string) => void;
   onSaveLancamento: (lancamento: LancamentoValeAlimentacao) => void;
   onDeleteLancamento: (id: string) => void;
+  currentUser?: UsuarioLogin;
 }
 
 const inputCls =
@@ -70,6 +78,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
   onSincronizarFaltas,
   onSaveLancamento,
   onDeleteLancamento,
+  currentUser,
 }) => {
   const quinzenasOrdenadas = useMemo(
     () => [...quinzenas].sort((a, b) => a.dataInicio.localeCompare(b.dataInicio)),
@@ -201,19 +210,22 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
   };
 
   const [copiadoId, setCopiadoId] = useState<string | null>(null);
+  // Link único de cada colaborador (abre em Documentos, onde fica o demonstrativo da quinzena).
+  const linksUnicos = useLinksUnicos(lancamentosDaQuinzena.map((l) => l.colaboradorId));
+  const linkPortal = (l: LancamentoValeAlimentacao) => linksUnicos.linkDe(l.colaboradorId, 'documentos');
 
   // Abre o WhatsApp/e-mail com a mensagem já preenchida — quem efetivamente envia é o usuário,
   // clicando em "Enviar" na própria janela do WhatsApp/cliente de e-mail (mesmo padrão já usado
   // em Aniversariantes).
   const handleEnviarWhatsApp = (l: LancamentoValeAlimentacao, colaborador?: Colaborador) => {
     if (!colaborador?.telefoneWhatsapp) return;
-    const url = buildWhatsAppLink(colaborador.telefoneWhatsapp, buildMensagemLiberacaoVA(l));
+    const url = buildWhatsAppLink(colaborador.telefoneWhatsapp, buildMensagemLiberacaoVA(l, linkPortal(l)));
     if (url) window.open(url, '_blank');
   };
 
   const handleEnviarEmail = (l: LancamentoValeAlimentacao, colaborador?: Colaborador) => {
     if (!colaborador?.email) return;
-    const url = buildMailtoLink(colaborador.email, buildAssuntoEmailVA(l), buildCorpoEmailVA(l));
+    const url = buildMailtoLink(colaborador.email, buildAssuntoEmailVA(l), buildCorpoEmailVA(l, linkPortal(l)));
     // mailto: precisa ir por window.location.href (não window.open) — é assim que o resto do
     // app já abre o cliente de e-mail (ver BirthdayCelebrationModal) sem navegar a SPA para fora.
     if (url) window.location.href = url;
@@ -221,7 +233,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
 
   const handleCopiarMensagem = async (l: LancamentoValeAlimentacao) => {
     try {
-      await navigator.clipboard.writeText(buildMensagemLiberacaoVA(l));
+      await navigator.clipboard.writeText(buildMensagemLiberacaoVA(l, linkPortal(l)));
       setCopiadoId(l.id);
       setTimeout(() => setCopiadoId((atual) => (atual === l.id ? null : atual)), 2000);
     } catch {
@@ -232,6 +244,71 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
 
   const handleImprimirRelatorio = () => {
     window.print();
+  };
+
+  // ---- Portal do colaborador: demonstrativo da quinzena para conferir e assinar ----
+  const [publicando, setPublicando] = useState<{ feito: number; total: number } | null>(null);
+  const [versaoDocumentos, setVersaoDocumentos] = useState(0);
+
+  const handleDisponibilizarPortal = async () => {
+    if (!quinzenaAtual) return;
+    try {
+      const existentes = await getDocumentosAssinatura('vale_alimentacao');
+      const jaNoPortal = new Set(existentes.filter((d) => d.referencia === quinzenaAtual.id).map((d) => d.colaboradorId));
+      const alvo = lancamentosDaQuinzena.filter((l) => !jaNoPortal.has(l.colaboradorId));
+      if (alvo.length === 0) {
+        alert('Todos os lançamentos desta quinzena já estão no portal. Para corrigir um valor, exclua o demonstrativo na lista "No portal do colaborador" e disponibilize de novo.');
+        return;
+      }
+      if (
+        !confirm(
+          `Disponibilizar o demonstrativo de ${alvo.length} colaborador(es) no portal?\n\nConfira faltas, férias e valores antes: depois de disponibilizado, o demonstrativo não muda sozinho (para corrigir, exclua e disponibilize de novo).`
+        )
+      )
+        return;
+      setPublicando({ feito: 0, total: alvo.length });
+      const falhas: string[] = [];
+      for (const l of alvo) {
+        const colaborador = colaboradoresPorId.get(l.colaboradorId);
+        try {
+          const { arquivo, camposAssinatura } = gerarDemonstrativoVaPdf({
+            colaborador: {
+              nomeCompleto: colaborador?.nomeCompleto || l.colaboradorNome || 'Colaborador',
+              cpf: colaborador?.cpf,
+              funcaoCargo: colaborador?.funcaoCargo,
+              codigoMatricula: colaborador?.codigoMatricula,
+            },
+            lancamento: l,
+          });
+          await criarDocumentoAssinatura({
+            categoria: 'vale_alimentacao',
+            colaboradorId: l.colaboradorId,
+            colaboradorNome: colaborador?.nomeCompleto || l.colaboradorNome || 'Colaborador',
+            referencia: quinzenaAtual.id,
+            tipo: 'Quinzena',
+            titulo: `Demonstrativo de Vale-Alimentação — ${quinzenaPorExtenso(quinzenaAtual.identificacao)}`,
+            arquivo,
+            camposAssinatura,
+            criadoPor: currentUser?.nome,
+          });
+        } catch (err) {
+          console.error(err);
+          falhas.push(l.colaboradorNome || l.colaboradorId);
+        }
+        setPublicando((p) => (p ? { ...p, feito: p.feito + 1 } : p));
+      }
+      setVersaoDocumentos((v) => v + 1);
+      alert(
+        falhas.length
+          ? `Disponibilizado para ${alvo.length - falhas.length} colaborador(es). Não foi possível para: ${falhas.join(', ')} — tente de novo.`
+          : `Pronto! ${alvo.length} demonstrativo(s) no portal. Agora use "Enviar pendentes" na lista abaixo para avisar pelo WhatsApp.`
+      );
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível disponibilizar no portal. Verifique a internet e tente de novo.');
+    } finally {
+      setPublicando(null);
+    }
   };
 
   return (
@@ -641,6 +718,38 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
           )}
         </table>
       </div>
+
+      {/* Portal do colaborador: demonstrativo da quinzena para conferir e assinar (igual ao
+          contracheque) — aparece em "Documentos" no link único de cada um. */}
+      {quinzenaAtual && (
+        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 print:hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">No portal do colaborador</h3>
+              <p className="text-[11px] text-slate-500">
+                Cada colaborador vê o demonstrativo desta quinzena em "Documentos", no link pessoal, e assina — como no contracheque.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleDisponibilizarPortal}
+              disabled={!!publicando || lancamentosDaQuinzena.length === 0}
+              className="px-3 py-2 bg-[#C48229] hover:bg-[#92611F] disabled:bg-slate-300 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"
+            >
+              {publicando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              {publicando ? `Gerando ${publicando.feito} de ${publicando.total}...` : 'Disponibilizar no portal'}
+            </button>
+          </div>
+          <DocumentosAssinaturaView
+            key={`${quinzenaAtual.id}-${versaoDocumentos}`}
+            categoria="vale_alimentacao"
+            colaboradores={colaboradores}
+            currentUser={currentUser}
+            referenciaFixa={quinzenaAtual.id}
+            compacto
+          />
+        </div>
+      )}
 
       {/* Relatório imprimível (PDF via window.print()) — só a quinzena selecionada, seguindo a
           Diretriz de Elaboração de Documentos em PDF (cabeçalho/rodapé institucional, cores

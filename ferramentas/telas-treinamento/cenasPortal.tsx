@@ -79,3 +79,22 @@ export const CENAS_PORTAL: Record<string, Cena> = {
     },
   },
 };
+
+// Prévia do demonstrativo de VA (só para conferência visual, não vira tela de treinamento).
+CENAS_PORTAL['va-pdf'] = {
+  montar: async () => {
+    const { gerarDemonstrativoVaPdf } = await import('../../src/components/Vacation/demonstrativoVaPdf');
+    const { PdfEmTela } = await import('../../src/components/Contracheques/ContrachequePublicView');
+    const { arquivo } = gerarDemonstrativoVaPdf({
+      colaborador: { nomeCompleto: 'Paula Ribeiro', cpf: '000.000.000-00', funcaoCargo: 'Ajudante Operacional', codigoMatricula: 'JMT-0101' },
+      lancamento: {
+        id: 'l1', colaboradorId: 'c1', colaboradorNome: 'Paula Ribeiro', quinzenaId: 'q1', identificacaoQuinzena: '1ª QUINZENA - OUTUBRO/2026',
+        dataInicio: '2026-10-01', dataTermino: '2026-10-15', valorDiaria: 25, faltas: 1, diasFerias: 0, diariasExtras: 1, quantidadeDiarias: 11, valorDisponibilizado: 275, criadoEm: '2026-10-01',
+      } as any,
+    });
+    return <div style={{ width: 800, margin: '0 auto', padding: 20 }}><PdfEmTela url={URL.createObjectURL(arquivo)} /></div>;
+  },
+  acoes: async () => {
+    await esperar(3000);
+  },
+};

@@ -17,7 +17,7 @@ function detalheAusencias(l: LancamentoValeAlimentacao): string {
 }
 
 /** Mensagem no formato WhatsApp (com *negrito* e emojis), igual ao padrão já usado em Aniversariantes. */
-export function buildMensagemLiberacaoVA(l: LancamentoValeAlimentacao): string {
+export function buildMensagemLiberacaoVA(l: LancamentoValeAlimentacao, linkPortal?: string | null): string {
   const primeiroNome = primeiroNomeDe(l.colaboradorNome);
   return `🍽️ *Vale Alimentação Liberado* — ${l.identificacaoQuinzena}
 
@@ -26,7 +26,7 @@ Olá, ${primeiroNome}! Seu Vale Alimentação já foi disponibilizado:
 📅 Período: ${formatDate(l.dataInicio)} a ${formatDate(l.dataTermino)}
 📆 Diárias: ${l.quantidadeDiarias} dia(s)${detalheAusencias(l)}
 💰 Valor disponibilizado: *${formatMoney(l.valorDisponibilizado)}*
-
+${linkPortal ? `\n📄 Confira o demonstrativo e assine pelo seu link pessoal:\n${linkPortal}\n` : ''}
 Qualquer dúvida, fale com o Departamento Pessoal.
 
 *Jobson de Moraes Transportes (JMT)*`;
@@ -37,7 +37,7 @@ export function buildAssuntoEmailVA(l: LancamentoValeAlimentacao): string {
 }
 
 /** Corpo do e-mail em texto puro (sem marcação de WhatsApp). */
-export function buildCorpoEmailVA(l: LancamentoValeAlimentacao): string {
+export function buildCorpoEmailVA(l: LancamentoValeAlimentacao, linkPortal?: string | null): string {
   const primeiroNome = primeiroNomeDe(l.colaboradorNome);
   return `Olá, ${primeiroNome}!
 
@@ -46,7 +46,7 @@ Seu Vale Alimentação da quinzena ${l.identificacaoQuinzena} já foi disponibil
 Período: ${formatDate(l.dataInicio)} a ${formatDate(l.dataTermino)}
 Diárias: ${l.quantidadeDiarias} dia(s)${detalheAusencias(l)}
 Valor disponibilizado: ${formatMoney(l.valorDisponibilizado)}
-
+${linkPortal ? `\nConfira o demonstrativo e assine pelo seu link pessoal: ${linkPortal}\n` : ''}
 Qualquer dúvida, fale com o Departamento Pessoal.
 
 Jobson de Moraes Transportes (JMT)`;

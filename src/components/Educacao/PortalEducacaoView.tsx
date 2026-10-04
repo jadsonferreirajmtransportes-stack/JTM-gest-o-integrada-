@@ -481,7 +481,7 @@ const PortalInicio: React.FC<{
   onIr: (a: Aba) => void;
 }> = ({ nome, cargo, pendencias, onIr }) => {
   const atalhos: { aba: Aba; titulo: string; texto: string; icone: React.ReactNode; qtd?: number }[] = [
-    { aba: 'documentos', titulo: 'Documentos', texto: 'Contracheques, férias e outros para assinar', icone: <FileSignature className="w-5 h-5" />, qtd: pendencias.documentos },
+    { aba: 'documentos', titulo: 'Documentos', texto: 'Contracheques, vale-alimentação, férias e outros', icone: <FileSignature className="w-5 h-5" />, qtd: pendencias.documentos },
     { aba: 'comunicados', titulo: 'Comunicados', texto: 'Avisos da empresa para você', icone: <Megaphone className="w-5 h-5" />, qtd: pendencias.comunicados },
     { aba: 'treinamentos', titulo: 'Treinamentos', texto: 'Cursos, provas e certificados', icone: <GraduationCap className="w-5 h-5" />, qtd: pendencias.treinamentos },
     { aba: 'jornal', titulo: 'Jornal JMT', texto: 'Notícias da empresa', icone: <Newspaper className="w-5 h-5" />, qtd: pendencias.noticias },

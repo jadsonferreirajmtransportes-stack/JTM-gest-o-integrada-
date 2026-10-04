@@ -7,6 +7,7 @@ import { ContrachequePublicView } from '../Contracheques/ContrachequePublicView'
 const ROTULO_CATEGORIA: Record<string, string> = {
   contracheque: 'Contracheque',
   ferias: 'Férias',
+  vale_alimentacao: 'Vale-alimentação',
   ponto: 'Espelho de ponto',
   disciplinar: 'Medida disciplinar',
   regulamento: 'Regulamento',

@@ -3453,6 +3453,7 @@ export default function App() {
               onSincronizarFaltas={handleSincronizarFaltasVA}
               onSaveLancamento={handleSaveLancamentoVA}
               onDeleteLancamento={handleDeleteLancamentoVA}
+              currentUser={currentUser}
             />
           )}
 

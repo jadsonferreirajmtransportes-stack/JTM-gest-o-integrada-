@@ -344,7 +344,9 @@ export const MANUAL: TopicoManual[] = [
     passos: [
       { titulo: 'Quinzena', texto: 'Cadastre a quinzena (ex.: "1ª QUINZENA - SETEMBRO/2026") com início e fim.' },
       { titulo: 'Lançamentos', texto: 'O sistema calcula as diárias; ajuste faltas e extras quando precisar.' },
-      { titulo: 'Comunicar', texto: '"Comunicar" copia ou envia a mensagem com o valor para o colaborador.' },
+      { titulo: 'Comunicar', texto: '"Comunicar" copia ou envia a mensagem com o valor para o colaborador, já com o link pessoal dele.' },
+      { titulo: 'Disponibilizar no portal', texto: 'Com os valores conferidos, clique em "Disponibilizar no portal": cada colaborador recebe o demonstrativo da quinzena em "Documentos", no link pessoal, para conferir e assinar — igual ao contracheque. Logo abaixo, a lista mostra quem já viu e quem assinou; "Enviar pendentes" avisa pelo WhatsApp.' },
+      { titulo: 'Corrigir um valor', texto: 'O demonstrativo disponibilizado não muda sozinho. Para corrigir: ajuste o lançamento, exclua o demonstrativo daquela pessoa na lista e clique de novo em "Disponibilizar no portal" (só gera para quem está faltando).' },
     ],
   },
   {
