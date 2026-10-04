@@ -104,7 +104,7 @@ const ICONES: Record<ConteudoTreinamento['tipo'], React.ReactNode> = {
 
 const MENSAGENS_ERRO = {
   link: 'Este link não é válido ou foi substituído. Peça o link atualizado ao Departamento Pessoal.',
-  dados: 'CPF ou data de nascimento não conferem com o cadastro. Confira e tente de novo — se continuar, fale com o Departamento Pessoal.',
+  dados: 'CPF ou data de nascimento não conferem com o cadastro. Atenção: cada link é pessoal — confira se este link foi enviado para você (o link de um colega não abre com o seu CPF). Se for o seu, fale com o Departamento Pessoal.',
 };
 
 type Aba = 'inicio' | 'ponto' | 'documentos' | 'comunicados' | 'treinamentos' | 'jornal' | 'instrucoes' | 'regulamento';

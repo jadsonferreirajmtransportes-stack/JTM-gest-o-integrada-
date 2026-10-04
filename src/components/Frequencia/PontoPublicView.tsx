@@ -105,7 +105,7 @@ export const PontoPublicView: React.FC<{
     try {
       const r = await pontoVincular(token, cpf, iso);
       if (r.erro === 'link') setErro('Este link não é válido ou foi substituído. Peça o link atualizado ao Departamento Pessoal.');
-      else if (r.erro === 'dados') setErro('CPF ou data de nascimento não conferem com o cadastro.');
+      else if (r.erro === 'dados') setErro('CPF ou data de nascimento não conferem com o cadastro. Cada link é pessoal — confira se este link foi enviado para você.');
       else if (r.dispositivo) {
         gravarAparelho(token, r.dispositivo);
         setCpf('');
