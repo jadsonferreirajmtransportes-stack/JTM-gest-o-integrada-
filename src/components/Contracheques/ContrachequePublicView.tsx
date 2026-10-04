@@ -37,6 +37,9 @@ function montarDeclaracao(doc: DocumentoPublico): string {
   if (doc.categoria === 'regulamento') {
     return `Declaro que recebi, li e tomei conhecimento do ${doc.titulo} e que me comprometo a cumpri-lo.`;
   }
+  if (doc.categoria === 'ferias' && doc.tipo === 'Programação de Férias') {
+    return `Declaro que tomei ciência da ${doc.titulo.replace(' — ', ' (')}${doc.titulo.includes(' — ') ? ')' : ''}.`;
+  }
   if (doc.categoria === 'ferias' && doc.tipo === 'Aviso de Férias') {
     return `Declaro que recebi o ${doc.titulo} e que estou ciente do período de férias nele informado.`;
   }

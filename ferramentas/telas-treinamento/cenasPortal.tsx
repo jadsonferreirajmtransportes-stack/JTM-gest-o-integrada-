@@ -98,3 +98,21 @@ CENAS_PORTAL['va-pdf'] = {
     await esperar(3000);
   },
 };
+
+CENAS_PORTAL['fer-pdf'] = {
+  montar: async () => {
+    const { gerarProgramacaoFeriasPdf } = await import('../../src/components/Vacation/programacaoFeriasPdf');
+    const { PdfEmTela } = await import('../../src/components/Contracheques/ContrachequePublicView');
+    const { arquivo } = gerarProgramacaoFeriasPdf({
+      colaborador: { nomeCompleto: 'Paula Ribeiro', cpf: '000.000.000-00', funcaoCargo: 'Ajudante Operacional', codigoMatricula: 'JMT-0101' },
+      programacao: {
+        id: 'f1', colaboradorId: 'c1', periodoAquisitivoInicio: '2025-03-10', periodoAquisitivoFim: '2026-03-09', prazoLimiteGozo: '2027-02-09',
+        diasGozados: 20, abonoPecuniario: true, diasAbono: 10, dataInicio: '2026-11-03', dataFim: '2026-11-22', status: 'Programada',
+      } as any,
+    });
+    return <div style={{ width: 800, margin: '0 auto', padding: 20 }}><PdfEmTela url={URL.createObjectURL(arquivo)} /></div>;
+  },
+  acoes: async () => {
+    await esperar(3000);
+  },
+};

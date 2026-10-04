@@ -22,6 +22,7 @@ import {
   Paperclip,
   FileSignature,
   Loader2,
+  Send,
 } from 'lucide-react';
 import {
   Colaborador,
@@ -32,7 +33,15 @@ import {
 } from '../../types';
 import { FeriasComprovanteUploader } from './FeriasComprovanteUploader';
 import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
-import { DocumentoAssinatura, getDocumentosAssinatura, getDocumentoAssinatura } from '../../utils/documentosAssinaturaApi';
+import {
+  DocumentoAssinatura,
+  criarDocumentoAssinatura,
+  excluirDocumentoAssinatura,
+  getDocumentosAssinatura,
+  getDocumentoAssinatura,
+} from '../../utils/documentosAssinaturaApi';
+import { TIPO_PROGRAMACAO_FERIAS, etapasDaProgramacao, gerarProgramacaoFeriasPdf, tituloProgramacaoFerias } from './programacaoFeriasPdf';
+import { linkUnicoDe } from '../../utils/linkUnico';
 import { gerarPdfAssinado } from '../Contracheques/pdfAssinadoUtils';
 
 /** Aviso/Recibo importados pra assinatura que pertencem a esta programação — mesmo colaborador
@@ -276,6 +285,58 @@ export const VacationView: React.FC<VacationViewProps> = ({
   };
 
   const [copiadoId, setCopiadoId] = useState<string | null>(null);
+
+  // Programação de Férias gerada pelo sistema → portal do colaborador (Documentos), para
+  // ciência e assinatura — ao lado do Aviso/Recibo que vêm da contabilidade.
+  const [enviandoProgramacaoId, setEnviandoProgramacaoId] = useState<string | null>(null);
+  const handleEnviarProgramacaoPortal = async (f: ProgramacaoFerias, colaborador?: Colaborador) => {
+    const etapas = etapasDaProgramacao(f);
+    if (!colaborador || etapas.length === 0) {
+      alert('Marque as datas das férias antes de enviar a programação.');
+      return;
+    }
+    const anteriores = documentosDaProgramacao(f, documentosFerias).filter((d) => d.tipo === TIPO_PROGRAMACAO_FERIAS);
+    if (anteriores.some((d) => d.status === 'Assinado')) {
+      if (!window.confirm('A programação destas férias já foi assinada. Gerar uma nova (as datas mudaram)? A assinada continua guardada; a nova vai para o colaborador assinar de novo.')) return;
+    } else if (anteriores.length > 0) {
+      if (!window.confirm('A programação já está no portal, ainda sem assinatura. Substituir pela versão atual (com as datas de agora)?')) return;
+    } else if (!window.confirm(`Enviar a programação das férias de ${colaborador.nomeCompleto} para o portal, para conferir e assinar?`)) return;
+    setEnviandoProgramacaoId(f.id);
+    try {
+      // Substitui só a que ainda não foi assinada (a assinada fica como histórico).
+      for (const d of anteriores.filter((x) => x.status !== 'Assinado')) await excluirDocumentoAssinatura(d);
+      const { arquivo, camposAssinatura } = gerarProgramacaoFeriasPdf({
+        colaborador: { nomeCompleto: colaborador.nomeCompleto, cpf: colaborador.cpf, funcaoCargo: colaborador.funcaoCargo, codigoMatricula: colaborador.codigoMatricula },
+        programacao: f,
+      });
+      const novo = await criarDocumentoAssinatura({
+        categoria: 'ferias',
+        colaboradorId: colaborador.id,
+        colaboradorNome: colaborador.nomeCompleto,
+        referencia: etapas[0].inicio,
+        tipo: TIPO_PROGRAMACAO_FERIAS,
+        titulo: tituloProgramacaoFerias(f),
+        arquivo,
+        camposAssinatura,
+        criadoPor: currentUser?.nome,
+      });
+      const removidos = new Set(anteriores.filter((x) => x.status !== 'Assinado').map((x) => x.id));
+      setDocumentosFerias((prev) => [novo, ...prev.filter((d) => !removidos.has(d.id))]);
+      if (colaborador.telefoneWhatsapp && window.confirm('Programação enviada para o portal. Avisar o colaborador pelo WhatsApp agora?')) {
+        const link = await linkUnicoDe(colaborador.id, `documento:${novo.id}`);
+        const url = buildWhatsAppLink(
+          colaborador.telefoneWhatsapp,
+          `Olá, ${colaborador.nomeCompleto.split(' ')[0]}! A programação das suas férias (${tituloProgramacaoFerias(f).replace(`${TIPO_PROGRAMACAO_FERIAS} — `, '')}) está disponível. Confira as datas e assine pelo seu link pessoal:\n${link}\n\nJM Transportes — Departamento Pessoal`
+        );
+        if (url) window.open(url, '_blank');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível enviar a programação para o portal. Tente novamente.');
+    } finally {
+      setEnviandoProgramacaoId(null);
+    }
+  };
 
   // Modal dedicado para anexar/visualizar o comprovante de férias assinado pelo colaborador.
   const [comprovanteFerias, setComprovanteFerias] = useState<ProgramacaoFerias | null>(null);
@@ -577,12 +638,12 @@ export const VacationView: React.FC<VacationViewProps> = ({
                             if (docs.length === 0) return null;
                             return (
                               <div className="flex flex-wrap gap-1 mt-1">
-                                {(['Aviso de Férias', 'Recibo de Férias'] as const).map((tipo) => {
+                                {([TIPO_PROGRAMACAO_FERIAS, 'Aviso de Férias', 'Recibo de Férias'] as const).map((tipo) => {
                                   const doDoTipo = docs.filter((d) => d.tipo === tipo);
                                   if (doDoTipo.length === 0) return null;
                                   const assinado = doDoTipo.some((d) => d.status === 'Assinado');
                                   const visto = doDoTipo.some((d) => d.status === 'Visualizado');
-                                  const rotulo = tipo === 'Aviso de Férias' ? 'Aviso' : 'Recibo';
+                                  const rotulo = tipo === 'Aviso de Férias' ? 'Aviso' : tipo === 'Recibo de Férias' ? 'Recibo' : 'Programação';
                                   return (
                                     <span
                                       key={tipo}
@@ -697,6 +758,18 @@ export const VacationView: React.FC<VacationViewProps> = ({
 
                       {/* Actions */}
                       <td className="py-3 px-4 text-right">
+                        {userRole === 'admin' && etapasDaProgramacao(item).length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleEnviarProgramacaoPortal(item, colab)}
+                            disabled={enviandoProgramacaoId === item.id}
+                            title="Enviar a programação destas férias para o portal do colaborador, para conferir e assinar"
+                            className="px-2 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 mr-1 text-[#92611F] hover:bg-amber-50 disabled:opacity-60"
+                          >
+                            {enviandoProgramacaoId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                            <span className="hidden lg:inline">Programação p/ assinar</span>
+                          </button>
+                        )}
                         {(() => {
                           const assinadosDigitais =
                             userRole === 'admin'

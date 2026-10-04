@@ -357,6 +357,8 @@ export const MANUAL: TopicoManual[] = [
     passos: [
       { titulo: 'Programar', texto: '"Programar Férias": colaborador, período e abono. O prazo limite (CLT) aparece na lista.' },
       { titulo: 'Aviso e recibo', texto: 'Na área "Aviso & Recibo p/ Assinatura", importe os PDFs da contabilidade e envie o link para o colaborador assinar.' },
+      { titulo: 'Programação para assinar', texto: 'Com as datas marcadas, "Programação p/ assinar" (na linha das férias) gera a Programação de Férias pelo próprio sistema — período aquisitivo, gozo, abono e retorno — e coloca em Documentos, no link pessoal do colaborador, para conferir e assinar. Mudou a data? Clique de novo: a versão sem assinatura é substituída.' },
+      { titulo: 'No portal do colaborador', texto: 'Programação, Aviso e Recibo aparecem juntos em Documentos (rótulo Férias). Os selos na linha mostram o que já foi visto e assinado.' },
       { titulo: 'Assinados', texto: '"Baixar assinados" na linha traz o PDF com a assinatura e a página de comprovação.' },
       { titulo: 'Relatório', texto: '"Relatório PDF por Período" lista as férias de um intervalo.' },
     ],
