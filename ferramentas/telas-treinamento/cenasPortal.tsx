@@ -200,3 +200,28 @@ CENAS_PORTAL['folha-imp'] = {
     await esperar(800);
   },
 };
+
+CENAS_PORTAL['esp-pdf'] = {
+  montar: async () => {
+    const { gerarEspelhoPdf } = await import('../../src/components/Frequencia/espelhoPdf');
+    const { montarEspelho, diasDoMes, resumir } = await import('../../src/components/Frequencia/frequenciaCalc');
+    const { PdfEmTela } = await import('../../src/components/Contracheques/ContrachequePublicView');
+    const iso = (l: string) => new Date(`${l}:00-03:00`).toISOString();
+    let n = 0;
+    const b = (l: string): any => ({ id: `b${n++}`, colaboradorId: 'c', registradoEm: iso(l), origem: n % 7 ? 'celular' : 'ajuste', anulado: false });
+    const jornada: any = { id: 'j', nome: 'Conferente noturno', entrada: '20:00', saidaIntervalo: '00:00', voltaIntervalo: '01:00', saida: '08:00', diasSemana: [1, 2, 3, 4, 5], toleranciaMin: 10, ativo: true };
+    const batidas: any[] = [];
+    diasDoMes('2026-09').forEach((d) => {
+      const dow = new Date(`${d}T12:00:00Z`).getUTCDay();
+      if (dow === 0 || dow === 6 || d === '2026-09-15') return;
+      const amanha = new Date(Date.parse(`${d}T12:00:00Z`) + 86400000).toISOString().slice(0, 10);
+      batidas.push(b(`${d}T20:00`), b(`${amanha}T00:00`), b(`${amanha}T01:00`), b(`${amanha}T${d.endsWith('10') ? '09:10' : '07:50'}`));
+    });
+    const espelho = montarEspelho(diasDoMes('2026-09'), batidas, [{ id: 'x', colaboradorId: 'c', data: '2026-09-15', tipo: 'Atestado médico', abona: true }], { jornada, inicioContagem: '2026-09-01' });
+    const { arquivo } = gerarEspelhoPdf({ colaborador: { nomeCompleto: 'Paula Ribeiro', cpf: '000.000.000-00', funcaoCargo: 'Conferente' }, mes: '2026-09', jornada, espelho, resumo: resumir(espelho) });
+    return <div style={{ width: 1100, margin: '0 auto', padding: 10 }}><PdfEmTela url={URL.createObjectURL(arquivo)} /></div>;
+  },
+  acoes: async () => {
+    await esperar(3500);
+  },
+};

@@ -576,8 +576,12 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                     <tr>
                       <th className="text-left p-2.5">Dia</th>
                       <th className="text-left p-2.5">Batidas</th>
-                      <th className="text-left p-2.5">Trabalhado</th>
-                      <th className="text-left p-2.5">Saldo</th>
+                      <th className="text-right p-2.5" title="Horas dentro da jornada, no horário diurno">Normais</th>
+                      <th className="text-right p-2.5" title="Horas dentro da jornada entre 22h e 5h (e prorrogação), com a hora reduzida de 52min30s">Noturnas</th>
+                      <th className="text-right p-2.5">Extra diurna</th>
+                      <th className="text-right p-2.5">Extra noturna</th>
+                      <th className="text-right p-2.5">Falta / atraso</th>
+                      <th className="text-right p-2.5" title="Horas que faltaram, abonadas por justificativa (atestado, falta legal...)">Abono</th>
                       <th className="text-left p-2.5">Situação</th>
                       <th className="text-right p-2.5">Ações</th>
                     </tr>
@@ -598,8 +602,12 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                             ))}
                           </div>
                         </td>
-                        <td className="p-2.5 tabular-nums">{d.trabalhadoMin ? formatarMinutos(d.trabalhadoMin) : ''}</td>
-                        <td className={`p-2.5 tabular-nums ${d.saldoMin < 0 ? 'text-rose-600' : d.saldoMin > 0 ? 'text-emerald-700' : ''}`}>{d.saldoMin ? formatarMinutos(d.saldoMin, true) : ''}</td>
+                        <td className="p-2.5 tabular-nums text-right ">{d.apuracao.normaisDiurnasMin ? formatarMinutos(d.apuracao.normaisDiurnasMin) : ''}</td>
+                        <td className="p-2.5 tabular-nums text-right text-indigo-700">{d.apuracao.normaisNoturnasMin ? formatarMinutos(d.apuracao.normaisNoturnasMin) : ''}</td>
+                        <td className="p-2.5 tabular-nums text-right text-emerald-700">{d.apuracao.extraDiurnaMin ? formatarMinutos(d.apuracao.extraDiurnaMin) : ''}</td>
+                        <td className="p-2.5 tabular-nums text-right text-emerald-700">{d.apuracao.extraNoturnaMin ? formatarMinutos(d.apuracao.extraNoturnaMin) : ''}</td>
+                        <td className="p-2.5 tabular-nums text-right text-rose-600">{d.apuracao.faltaAtrasoMin ? formatarMinutos(d.apuracao.faltaAtrasoMin) : ''}</td>
+                        <td className="p-2.5 tabular-nums text-right text-sky-700">{d.apuracao.abonoMin ? formatarMinutos(d.apuracao.abonoMin) : ''}</td>
                         <td className="p-2.5">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${ESTILO_SITUACAO[d.situacao]}`}>
                             {d.situacao === 'Atraso' ? `Atraso ${d.atrasoMin} min` : d.situacao}
@@ -622,10 +630,30 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                       </tr>
                     ))}
                   </tbody>
+                  {(() => {
+                    const t = resumir(espelhoSel);
+                    const tot = (v: number, cls = '') => <td className={`p-2.5 tabular-nums text-right ${cls}`}>{formatarMinutos(v)}</td>;
+                    return (
+                      <tfoot className="bg-slate-50 font-black text-slate-800 border-t-2 border-slate-200">
+                        <tr>
+                          <td className="p-2.5" colSpan={2}>
+                            Total do mês
+                          </td>
+                          {tot(t.normaisDiurnasMin)}
+                          {tot(t.normaisNoturnasMin, 'text-indigo-700')}
+                          {tot(t.extraDiurnaMin, 'text-emerald-700')}
+                          {tot(t.extraNoturnaMin, 'text-emerald-700')}
+                          {tot(t.faltaAtrasoMin, 'text-rose-600')}
+                          {tot(t.abonoMin, 'text-sky-700')}
+                          <td colSpan={2} />
+                        </tr>
+                      </tfoot>
+                    );
+                  })()}
                 </table>
               </div>
               <p className="text-[11px] text-slate-500">
-                Clique numa batida para anular. <span className="text-sky-700 font-semibold">Azul*</span> = ajuste do DP ·{' '}
+                Horas noturnas (22h–5h e prorrogação após uma noite cumprida) com a hora reduzida da CLT: 52min30s = 1h. Sem banco de horas: o que passa da jornada é extra; o que falta é falta/atraso (ou abono, com justificativa). Clique numa batida para anular. <span className="text-sky-700 font-semibold">Azul*</span> = ajuste do DP ·{' '}
                 <span className="text-rose-700 font-semibold">vermelho</span> = longe da base · <span className="text-[#92611F] font-semibold">amarelo</span> = sem localização.
               </p>
             </>
@@ -672,8 +700,12 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                   <th className="text-right p-3">Faltas</th>
                   <th className="text-right p-3">Atrasos</th>
                   <th className="text-right p-3">Incompletos</th>
-                  <th className="text-right p-3">Trabalhado</th>
-                  <th className="text-right p-3">Saldo</th>
+                  <th className="text-right p-3">Normais</th>
+                  <th className="text-right p-3">Noturnas</th>
+                  <th className="text-right p-3">Extra diurna</th>
+                  <th className="text-right p-3">Extra noturna</th>
+                  <th className="text-right p-3">Falta / atraso</th>
+                  <th className="text-right p-3">Abono</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -693,8 +725,12 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                     <td className={`p-3 text-right tabular-nums ${r.faltas ? 'text-rose-600 font-bold' : ''}`}>{r.faltas}</td>
                     <td className={`p-3 text-right tabular-nums ${r.atrasos > LIMITE_ATRASOS_MES ? 'text-rose-600 font-bold' : r.atrasos ? 'text-[#92611F] font-bold' : ''}`}>{r.atrasos}</td>
                     <td className={`p-3 text-right tabular-nums ${r.incompletos ? 'text-orange-600 font-bold' : ''}`}>{r.incompletos}</td>
-                    <td className="p-3 text-right tabular-nums">{formatarMinutos(r.trabalhadoMin)}</td>
-                    <td className={`p-3 text-right tabular-nums ${r.saldoMin < 0 ? 'text-rose-600' : r.saldoMin > 0 ? 'text-emerald-700' : ''}`}>{formatarMinutos(r.saldoMin, true)}</td>
+                    <td className="p-3 text-right tabular-nums">{formatarMinutos(r.normaisDiurnasMin)}</td>
+                    <td className="p-3 text-right tabular-nums text-indigo-700">{formatarMinutos(r.normaisNoturnasMin)}</td>
+                    <td className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(r.extraDiurnaMin)}</td>
+                    <td className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(r.extraNoturnaMin)}</td>
+                    <td className={`p-3 text-right tabular-nums ${r.faltaAtrasoMin ? 'text-rose-600 font-bold' : ''}`}>{formatarMinutos(r.faltaAtrasoMin)}</td>
+                    <td className="p-3 text-right tabular-nums text-sky-700">{formatarMinutos(r.abonoMin)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -929,14 +965,15 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
 };
 
 const ResumoCartoes: React.FC<{ resumo: ResumoFrequencia }> = ({ resumo: r }) => (
-  <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
+  <div className="grid grid-cols-2 sm:grid-cols-7 gap-2">
     {[
       { rotulo: 'Previstos', valor: String(r.diasPrevistos) },
       { rotulo: 'Faltas', valor: String(r.faltas), alerta: r.faltas > 0 },
       { rotulo: 'Atrasos', valor: String(r.atrasos), alerta: r.atrasos > LIMITE_ATRASOS_MES },
       { rotulo: 'Incompletos', valor: String(r.incompletos), alerta: r.incompletos > 0 },
-      { rotulo: 'Trabalhado', valor: formatarMinutos(r.trabalhadoMin) },
-      { rotulo: 'Saldo', valor: formatarMinutos(r.saldoMin, true), alerta: r.saldoMin < 0 },
+      { rotulo: 'Horas normais', valor: formatarMinutos(r.normaisDiurnasMin + r.normaisNoturnasMin) },
+      { rotulo: 'Horas extras', valor: formatarMinutos(r.extraDiurnaMin + r.extraNoturnaMin) },
+      { rotulo: 'Falta / atraso', valor: formatarMinutos(r.faltaAtrasoMin), alerta: r.faltaAtrasoMin > 0 },
     ].map((t) => (
       <div key={t.rotulo} className="bg-white p-3 rounded-xl border border-slate-200">
         <p className="text-[10px] text-slate-500 font-semibold">{t.rotulo}</p>

@@ -92,6 +92,20 @@ export function diaDeTrabalho(iso: string, j?: JornadaPonto): string {
 
 export type SituacaoDia = 'OK' | 'Atraso' | 'Falta' | 'Incompleto' | 'Justificado' | 'Folga' | 'Extra' | 'Futuro' | 'Em andamento' | 'Fora do período';
 
+/** Apuração do dia, em horas COMPUTADAS (hora noturna reduzida: 52min30s = 1h, CLT art. 73).
+ *  Sem banco de horas (decisão de 2026-10-05): o que passa da jornada é extra; o que falta é
+ *  falta/atraso — abonado quando o dia tem justificativa que abona. */
+export interface ApuracaoDia {
+  normaisDiurnasMin: number;
+  normaisNoturnasMin: number;
+  extraDiurnaMin: number;
+  extraNoturnaMin: number;
+  faltaAtrasoMin: number;
+  abonoMin: number;
+  /** Minutos de relógio no horário noturno (22h–5h e prorrogação), antes da redução. */
+  noturnoRelogioMin: number;
+}
+
 export interface DiaEspelho {
   data: string;
   previsto: boolean;
@@ -105,6 +119,7 @@ export interface DiaEspelho {
   situacao: SituacaoDia;
   /** Alguma batida longe da base (fora do raio). */
   foraDoLocal: boolean;
+  apuracao: ApuracaoDia;
 }
 
 export interface OpcoesEspelho {
@@ -115,6 +130,76 @@ export interface OpcoesEspelho {
   fimContagem?: string;
   raioPadraoM?: number;
 }
+
+// ---- Hora noturna (CLT art. 73 e Súmula 60 do TST) ----
+const NOITE_INICIO = 22 * 60;
+const NOITE_FIM = 5 * 60;
+/** Fator da hora noturna reduzida: 60 / 52,5. */
+const FATOR_NOTURNO = 60 / 52.5;
+
+/** Divide trechos [início, fim] (minutos locais absolutos) em minutos diurnos e noturnos de
+ *  relógio. Prorrogação (Súmula 60): se o trecho noturno da jornada foi cumprido (6h ou mais
+ *  entre 22h e 5h), o que for trabalhado depois das 5h, na mesma jornada, também é noturno. */
+export function dividirDiurnoNoturno(trechos: [number, number][]): { diurno: number; noturno: number } {
+  let total = 0;
+  let noturno = 0;
+  let fimDaNoite: number | null = null;
+  let maiorNoite = 0;
+  const noites = new Map<number, number>();
+  for (const [a, b] of trechos) {
+    if (b <= a) continue;
+    total += b - a;
+    const diaA = Math.floor(a / MIN_DIA);
+    const diaB = Math.floor(b / MIN_DIA);
+    for (let d = diaA - 1; d <= diaB; d++) {
+      const ini = d * MIN_DIA + NOITE_INICIO;
+      const fim = (d + 1) * MIN_DIA + NOITE_FIM;
+      const sobra = Math.max(0, Math.min(b, fim) - Math.max(a, ini));
+      if (sobra > 0) {
+        noturno += sobra;
+        noites.set(fim, (noites.get(fim) || 0) + sobra);
+      }
+    }
+  }
+  noites.forEach((min, fim) => {
+    if (min > maiorNoite) {
+      maiorNoite = min;
+      fimDaNoite = fim;
+    }
+  });
+  if (fimDaNoite !== null && maiorNoite >= 6 * 60) {
+    const limite = fimDaNoite as number;
+    for (const [a, b] of trechos) if (b > limite) noturno += b - Math.max(a, limite);
+  }
+  noturno = Math.min(noturno, total);
+  return { diurno: total - noturno, noturno };
+}
+
+/** Trechos trabalhados (pares de batidas). */
+function trechosDasBatidas(batidas: BatidaPonto[]): [number, number][] {
+  const t: [number, number][] = [];
+  for (let i = 0; i + 1 < batidas.length; i += 2) t.push([minutosLocais(batidas[i].registradoEm), minutosLocais(batidas[i + 1].registradoEm)]);
+  return t;
+}
+
+/** Trechos previstos pela jornada no dia (vira a noite quando o horário é menor que o anterior). */
+function trechosDaJornada(j: JornadaPonto, data: string): [number, number][] {
+  const horas = [j.entrada, ...(j.saidaIntervalo && j.voltaIntervalo ? [j.saidaIntervalo, j.voltaIntervalo] : []), j.saida];
+  const base = minutosDoDia(data, '00:00');
+  let anterior = -1;
+  let dia = 0;
+  const abs = horas.map((h) => {
+    const m = hm(h);
+    if (anterior >= 0 && m <= anterior) dia += 1;
+    anterior = m;
+    return base + dia * MIN_DIA + m;
+  });
+  const t: [number, number][] = [];
+  for (let i = 0; i + 1 < abs.length; i += 2) t.push([abs[i], abs[i + 1]]);
+  return t;
+}
+
+const computado = (p: { diurno: number; noturno: number }) => ({ diurno: p.diurno, noturno: p.noturno * FATOR_NOTURNO });
 
 export function montarEspelho(
   dias: string[],
@@ -183,7 +268,28 @@ export function montarEspelho(
     else if (jornada && atrasoMin > jornada.toleranciaMin) situacao = 'Atraso';
     else situacao = 'OK';
 
-    return { data, previsto, batidas, anuladas, justificativa, trabalhadoMin, previstoMin, atrasoMin, saldoMin, situacao, foraDoLocal };
+    // Apuração em horas computadas (noturno reduzido), sem banco de horas.
+    const real = dividirDiurnoNoturno(trechosDasBatidas(batidas));
+    const feito = computado(real);
+    const plano = previsto && jornada ? computado(dividirDiurnoNoturno(trechosDaJornada(jornada, data))) : { diurno: 0, noturno: 0 };
+    const totalFeito = feito.diurno + feito.noturno;
+    const totalPlano = plano.diurno + plano.noturno;
+    const apurar = situacao !== 'Futuro' && situacao !== 'Em andamento' && situacao !== 'Fora do período';
+    const extra = apurar ? Math.max(0, totalFeito - totalPlano) : 0;
+    const extraNoturna = Math.min(extra, Math.max(0, feito.noturno - plano.noturno));
+    const extraDiurna = extra - extraNoturna;
+    const faltando = apurar && previsto ? Math.max(0, totalPlano - totalFeito) : 0;
+    const apuracao: ApuracaoDia = {
+      normaisDiurnasMin: Math.round(feito.diurno - extraDiurna),
+      normaisNoturnasMin: Math.round(feito.noturno - extraNoturna),
+      extraDiurnaMin: Math.round(extraDiurna),
+      extraNoturnaMin: Math.round(extraNoturna),
+      faltaAtrasoMin: abonado ? 0 : Math.round(faltando),
+      abonoMin: abonado ? Math.round(faltando) : 0,
+      noturnoRelogioMin: Math.round(real.noturno),
+    };
+
+    return { data, previsto, batidas, anuladas, justificativa, trabalhadoMin, previstoMin, atrasoMin, saldoMin, situacao, foraDoLocal, apuracao };
   });
 }
 
@@ -198,6 +304,12 @@ export interface ResumoFrequencia {
   trabalhadoMin: number;
   saldoMin: number;
   foraDoLocal: number;
+  normaisDiurnasMin: number;
+  normaisNoturnasMin: number;
+  extraDiurnaMin: number;
+  extraNoturnaMin: number;
+  faltaAtrasoMin: number;
+  abonoMin: number;
 }
 
 export function resumir(espelho: DiaEspelho[]): ResumoFrequencia {
@@ -213,8 +325,14 @@ export function resumir(espelho: DiaEspelho[]): ResumoFrequencia {
       trabalhadoMin: r.trabalhadoMin + d.trabalhadoMin,
       saldoMin: r.saldoMin + d.saldoMin,
       foraDoLocal: r.foraDoLocal + (d.foraDoLocal ? 1 : 0),
+      normaisDiurnasMin: r.normaisDiurnasMin + d.apuracao.normaisDiurnasMin,
+      normaisNoturnasMin: r.normaisNoturnasMin + d.apuracao.normaisNoturnasMin,
+      extraDiurnaMin: r.extraDiurnaMin + d.apuracao.extraDiurnaMin,
+      extraNoturnaMin: r.extraNoturnaMin + d.apuracao.extraNoturnaMin,
+      faltaAtrasoMin: r.faltaAtrasoMin + d.apuracao.faltaAtrasoMin,
+      abonoMin: r.abonoMin + d.apuracao.abonoMin,
     }),
-    { diasPrevistos: 0, diasTrabalhados: 0, faltas: 0, justificados: 0, atrasos: 0, minutosAtraso: 0, incompletos: 0, trabalhadoMin: 0, saldoMin: 0, foraDoLocal: 0 }
+    { diasPrevistos: 0, diasTrabalhados: 0, faltas: 0, justificados: 0, atrasos: 0, minutosAtraso: 0, incompletos: 0, trabalhadoMin: 0, saldoMin: 0, foraDoLocal: 0, normaisDiurnasMin: 0, normaisNoturnasMin: 0, extraDiurnaMin: 0, extraNoturnaMin: 0, faltaAtrasoMin: 0, abonoMin: 0 }
   );
 }
 

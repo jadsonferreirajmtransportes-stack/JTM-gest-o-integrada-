@@ -33,7 +33,7 @@ export function gerarEspelhoPdf(params: {
   resumo: ResumoFrequencia;
 }): { arquivo: File; camposAssinatura: CampoAssinaturaPdf[] } {
   const { colaborador: c, mes, jornada, espelho, resumo } = params;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
   const largura = doc.internal.pageSize.getWidth();
   const altura = doc.internal.pageSize.getHeight();
 
@@ -76,7 +76,7 @@ export function gerarEspelhoPdf(params: {
   autoTable(doc, {
     startY: y + 2,
     margin: { left: MARGEM, right: MARGEM },
-    head: [['Dia', '', '1ª', '2ª', '3ª', '4ª', 'Trabalhado', 'Saldo', 'Situação / observação']],
+    head: [['Dia', '', '1ª', '2ª', '3ª', '4ª', 'Normais', 'Noturnas', 'Extra diurna', 'Extra noturna', 'Falta / atraso', 'Abono', 'Situação / observação']],
     body: espelho.map((d) => {
       const horas = d.batidas.map((b) => `${horaLocal(b.registradoEm)}${b.origem === 'ajuste' ? '*' : ''}`);
       const extras = horas.length > 4 ? ` (+${horas.slice(4).join(' ')})` : '';
@@ -89,14 +89,18 @@ export function gerarEspelhoPdf(params: {
         horas[1] || '',
         horas[2] || '',
         horas[3] || '',
-        d.trabalhadoMin ? formatarMinutos(d.trabalhadoMin) : '',
-        d.saldoMin ? formatarMinutos(d.saldoMin, true) : '',
+        d.apuracao.normaisDiurnasMin ? formatarMinutos(d.apuracao.normaisDiurnasMin) : '',
+        d.apuracao.normaisNoturnasMin ? formatarMinutos(d.apuracao.normaisNoturnasMin) : '',
+        d.apuracao.extraDiurnaMin ? formatarMinutos(d.apuracao.extraDiurnaMin) : '',
+        d.apuracao.extraNoturnaMin ? formatarMinutos(d.apuracao.extraNoturnaMin) : '',
+        d.apuracao.faltaAtrasoMin ? formatarMinutos(d.apuracao.faltaAtrasoMin) : '',
+        d.apuracao.abonoMin ? formatarMinutos(d.apuracao.abonoMin) : '',
         `${obs}${extras}`,
       ];
     }),
     styles: { fontSize: 7.5, cellPadding: 1.2, textColor: [40, 40, 40], lineColor: [225, 225, 225], lineWidth: 0.1 },
     headStyles: { fillColor: [248, 240, 228], textColor: TEXTO, fontStyle: 'bold' },
-    columnStyles: { 0: { cellWidth: 11 }, 1: { cellWidth: 9 }, 2: { cellWidth: 11 }, 3: { cellWidth: 11 }, 4: { cellWidth: 11 }, 5: { cellWidth: 11 }, 6: { cellWidth: 17 }, 7: { cellWidth: 15 } },
+    columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 9 }, 2: { cellWidth: 12 }, 3: { cellWidth: 12 }, 4: { cellWidth: 12 }, 5: { cellWidth: 12 }, 6: { cellWidth: 16, halign: 'right' }, 7: { cellWidth: 16, halign: 'right' }, 8: { cellWidth: 17, halign: 'right' }, 9: { cellWidth: 18, halign: 'right' }, 10: { cellWidth: 18, halign: 'right' }, 11: { cellWidth: 14, halign: 'right' } },
     didParseCell: (data) => {
       if (data.section !== 'body') return;
       const d = espelho[data.row.index];
@@ -128,11 +132,15 @@ export function gerarEspelhoPdf(params: {
     y
   );
   y += 4.5;
-  doc.text(`Horas trabalhadas: ${formatarMinutos(resumo.trabalhadoMin)}   ·   Saldo: ${formatarMinutos(resumo.saldoMin, true)}`, MARGEM, y);
+  doc.text(
+    `Normais: ${formatarMinutos(resumo.normaisDiurnasMin)}   ·   Noturnas: ${formatarMinutos(resumo.normaisNoturnasMin)}   ·   Extra diurna: ${formatarMinutos(resumo.extraDiurnaMin)}   ·   Extra noturna: ${formatarMinutos(resumo.extraNoturnaMin)}   ·   Falta/atraso: ${formatarMinutos(resumo.faltaAtrasoMin)}   ·   Abono: ${formatarMinutos(resumo.abonoMin)}`,
+    MARGEM,
+    y
+  );
   y += 4.5;
   doc.setFontSize(7.5);
   doc.setTextColor(...CINZA);
-  doc.text('* batida incluída por ajuste do Departamento Pessoal, com motivo registrado.', MARGEM, y);
+  doc.text('* batida incluída por ajuste do Departamento Pessoal, com motivo registrado. Horas noturnas (22h–5h e prorrogação) com a hora reduzida da CLT (52min30s = 1h). Sem banco de horas.', MARGEM, y);
   y += 12;
 
   doc.setFontSize(8.5);

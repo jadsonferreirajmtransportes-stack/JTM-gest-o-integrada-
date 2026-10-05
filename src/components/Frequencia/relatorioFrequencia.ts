@@ -106,7 +106,7 @@ export async function gerarEspelhoXlsx(params: {
   const { wb, logo } = await novaPlanilha();
   const maxBatidas = Math.max(4, ...espelho.map((d) => d.batidas.length));
   const titulosBatidas = Array.from({ length: maxBatidas }, (_, i) => `${i + 1}ª batida`);
-  const titulos = ['Data', 'Dia', ...titulosBatidas, 'Trabalhado', 'Previsto', 'Atraso (min)', 'Saldo (min)', 'Situação', 'Observação'];
+  const titulos = ['Data', 'Dia', ...titulosBatidas, 'Normais', 'Noturnas', 'Extra diurna', 'Extra noturna', 'Falta / atraso', 'Abono', 'Previsto', 'Situação', 'Observação'];
 
   const ws = wb.addWorksheet('Espelho', { views: [{ state: 'frozen', ySplit: 8 }] });
   let linha = cabecalho(
@@ -136,16 +136,18 @@ export async function gerarEspelhoXlsx(params: {
       dataBr(d.data),
       NOMES_DIA[diaDaSemana(d.data)],
       ...Array.from({ length: maxBatidas }, (_, i) => horas[i] || ''),
-      d.trabalhadoMin ? minutosParaDia(d.trabalhadoMin) : null,
+      d.apuracao.normaisDiurnasMin ? minutosParaDia(d.apuracao.normaisDiurnasMin) || null : null,
+      d.apuracao.normaisNoturnasMin ? minutosParaDia(d.apuracao.normaisNoturnasMin) || null : null,
+      d.apuracao.extraDiurnaMin ? minutosParaDia(d.apuracao.extraDiurnaMin) || null : null,
+      d.apuracao.extraNoturnaMin ? minutosParaDia(d.apuracao.extraNoturnaMin) || null : null,
+      d.apuracao.faltaAtrasoMin ? minutosParaDia(d.apuracao.faltaAtrasoMin) || null : null,
+      d.apuracao.abonoMin ? minutosParaDia(d.apuracao.abonoMin) || null : null,
       d.previstoMin ? minutosParaDia(d.previstoMin) : null,
-      d.atrasoMin || null,
-      d.saldoMin || null,
       d.situacao === 'Atraso' ? `Atraso ${d.atrasoMin} min` : d.situacao,
       obs,
     ];
     const base = 2 + maxBatidas;
-    row.getCell(base + 1).numFmt = '[h]:mm';
-    row.getCell(base + 2).numFmt = '[h]:mm';
+    for (let k = 1; k <= 7; k++) row.getCell(base + k).numFmt = '[h]:mm';
     row.eachCell({ includeEmpty: true }, (cel: any, col: number) => {
       if (col > titulos.length) return;
       cel.border = bordas;
@@ -159,10 +161,10 @@ export async function gerarEspelhoXlsx(params: {
   const base = 2 + maxBatidas;
   const totais = ws.getRow(linha);
   totais.getCell(1).value = 'TOTAL DO MÊS';
-  totais.getCell(base + 1).value = minutosParaDia(r.trabalhadoMin);
-  totais.getCell(base + 1).numFmt = '[h]:mm';
-  totais.getCell(base + 3).value = r.minutosAtraso;
-  totais.getCell(base + 4).value = r.saldoMin;
+  [r.normaisDiurnasMin, r.normaisNoturnasMin, r.extraDiurnaMin, r.extraNoturnaMin, r.faltaAtrasoMin, r.abonoMin].forEach((v, k) => {
+    totais.getCell(base + 1 + k).value = minutosParaDia(v);
+    totais.getCell(base + 1 + k).numFmt = '[h]:mm';
+  });
   totais.eachCell((cel: any) => {
     cel.font = { bold: true };
     cel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FUNDO_CAB } };
@@ -172,7 +174,8 @@ export async function gerarEspelhoXlsx(params: {
   [
     `Dias previstos: ${r.diasPrevistos} · Dias com batida: ${r.diasTrabalhados} · Faltas: ${r.faltas} · Justificados: ${r.justificados} · Incompletos: ${r.incompletos}`,
     `Atrasos acima da tolerância: ${r.atrasos} (${r.minutosAtraso} min)${r.atrasos > LIMITE_ATRASOS_MES ? ' — mais de 3 no mês: o Regulamento Interno prevê advertência' : ''}`,
-    `Horas trabalhadas: ${formatarMinutos(r.trabalhadoMin)} · Saldo: ${formatarMinutos(r.saldoMin, true)}`,
+    `Normais: ${formatarMinutos(r.normaisDiurnasMin)} · Noturnas: ${formatarMinutos(r.normaisNoturnasMin)} · Extra diurna: ${formatarMinutos(r.extraDiurnaMin)} · Extra noturna: ${formatarMinutos(r.extraNoturnaMin)} · Falta/atraso: ${formatarMinutos(r.faltaAtrasoMin)} · Abono: ${formatarMinutos(r.abonoMin)}`,
+    'Horas noturnas (22h–5h e prorrogação) com a hora reduzida da CLT (52min30s = 1h). Sem banco de horas.',
     '* batida incluída por ajuste do Departamento Pessoal (motivo e autor na aba "Batidas").',
   ].forEach((t) => {
     ws.mergeCells(linha, 1, linha, titulos.length);
@@ -226,7 +229,7 @@ export interface LinhaResumo {
   resumo: ResumoFrequencia;
 }
 
-const TITULOS_RESUMO = ['Colaborador', 'Cargo', 'Jornada', 'Previstos', 'Com batida', 'Faltas', 'Justificados', 'Atrasos', 'Atraso (min)', 'Incompletos', 'Trabalhado', 'Saldo (min)', 'Alerta'];
+const TITULOS_RESUMO = ['Colaborador', 'Cargo', 'Jornada', 'Previstos', 'Com batida', 'Faltas', 'Justificados', 'Atrasos', 'Atraso (min)', 'Incompletos', 'Normais', 'Noturnas', 'Extra diurna', 'Extra noturna', 'Falta / atraso', 'Abono', 'Alerta'];
 
 export async function gerarResumoXlsx(mes: string, linhas: LinhaResumo[]): Promise<File> {
   const { wb, logo } = await novaPlanilha();
@@ -248,11 +251,15 @@ export async function gerarResumoXlsx(mes: string, linhas: LinhaResumo[]): Promi
       r.atrasos,
       r.minutosAtraso,
       r.incompletos,
-      minutosParaDia(r.trabalhadoMin),
-      r.saldoMin,
+      minutosParaDia(r.normaisDiurnasMin),
+      minutosParaDia(r.normaisNoturnasMin),
+      minutosParaDia(r.extraDiurnaMin),
+      minutosParaDia(r.extraNoturnaMin),
+      minutosParaDia(r.faltaAtrasoMin),
+      minutosParaDia(r.abonoMin),
       r.atrasos > LIMITE_ATRASOS_MES ? 'Mais de 3 atrasos — advertência prevista' : r.faltas > 0 ? 'Faltas no mês' : '',
     ];
-    row.getCell(11).numFmt = '[h]:mm';
+    for (let k = 11; k <= 16; k++) row.getCell(k).numFmt = '[h]:mm';
     row.eachCell({ includeEmpty: true }, (cel: any, col: number) => {
       if (col > TITULOS_RESUMO.length) return;
       cel.border = bordas;
@@ -262,7 +269,7 @@ export async function gerarResumoXlsx(mes: string, linhas: LinhaResumo[]): Promi
     linha += 1;
   });
   ws.autoFilter = { from: { row: primeira - 1, column: 1 }, to: { row: primeira - 1, column: TITULOS_RESUMO.length } };
-  [34, 22, 30, 10, 11, 8, 12, 9, 12, 12, 12, 11, 34].forEach((w, i) => (ws.getColumn(i + 1).width = w));
+  [34, 22, 30, 10, 11, 8, 12, 9, 12, 12, 11, 11, 12, 13, 13, 10, 34].forEach((w, i) => (ws.getColumn(i + 1).width = w));
   rodape(wb, `Resumo de frequência ${nomeMes(mes)}`);
   return paraArquivo(wb, `Resumo_Frequencia_${mes}.xlsx`);
 }
@@ -286,19 +293,23 @@ export function gerarResumoPdf(mes: string, linhas: LinhaResumo[]): File {
       r.justificados,
       `${r.atrasos}${r.minutosAtraso ? ` (${r.minutosAtraso} min)` : ''}`,
       r.incompletos,
-      formatarMinutos(r.trabalhadoMin),
-      formatarMinutos(r.saldoMin, true),
+      formatarMinutos(r.normaisDiurnasMin),
+      formatarMinutos(r.normaisNoturnasMin),
+      formatarMinutos(r.extraDiurnaMin),
+      formatarMinutos(r.extraNoturnaMin),
+      formatarMinutos(r.faltaAtrasoMin),
+      formatarMinutos(r.abonoMin),
       r.atrasos > LIMITE_ATRASOS_MES ? 'Advertência prevista' : r.faltas > 0 ? 'Faltas' : '',
     ]),
     theme: 'grid',
     styles: { fontSize: 7.5, cellPadding: 1.4, textColor: [40, 40, 40], lineColor: [225, 225, 225], lineWidth: 0.1 },
     headStyles: { fillColor: [248, 240, 228], textColor: [17, 17, 17], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [252, 250, 247] },
-    columnStyles: { 0: { cellWidth: 52 }, 2: { cellWidth: 46 } },
+    columnStyles: { 0: { cellWidth: 44 }, 2: { cellWidth: 34 } },
     didParseCell: (d) => {
       if (d.section !== 'body') return;
       const r = linhas[d.row.index].resumo;
-      if ((d.column.index === 7 && r.atrasos > LIMITE_ATRASOS_MES) || (d.column.index === 5 && r.faltas > 0) || d.column.index === 11) {
+      if ((d.column.index === 7 && r.atrasos > LIMITE_ATRASOS_MES) || (d.column.index === 5 && r.faltas > 0) || (d.column.index === 13 && r.faltaAtrasoMin > 0) || d.column.index === 15) {
         if (d.cell.raw) d.cell.styles.textColor = [190, 30, 45];
       }
     },
