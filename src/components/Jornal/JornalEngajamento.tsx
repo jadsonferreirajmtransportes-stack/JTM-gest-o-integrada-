@@ -1,8 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { X, Loader2, Eye, MessageSquare, EyeOff, Search, Download } from 'lucide-react';
 import { Colaborador } from '../../types';
-import { EngajamentoColaborador, InteracoesNoticia, Noticia, REACOES, getEngajamentoPorColaborador, getInteracoesNoticia } from '../../utils/jornalApi';
-import { dataNoticia } from './jornalVisual';
+import {
+  EngajamentoColaborador,
+  EstatisticasNoticia,
+  InteracoesNoticia,
+  Noticia,
+  REACOES,
+  getContagemComentarios,
+  getEngajamentoPorColaborador,
+  getInteracoesNoticia,
+} from '../../utils/jornalApi';
+import { CapaNoticia, ResumoReacoes, dataNoticia } from './jornalVisual';
 import { baixarBlob } from '../../utils/downloadUtils';
 
 type AbaInteracao = 'leram' | 'reagiram' | 'comentaram' | 'naoLeram';
@@ -145,8 +154,136 @@ export const InteracoesModal: React.FC<{ noticia: Noticia; colaboradores: Colabo
   );
 };
 
+/** Aba Engajamento: comparação por notícia ou por colaborador. */
+export const EngajamentoPainel: React.FC<{ colaboradores: Colaborador[]; noticias: Noticia[]; estatisticas: Map<string, EstatisticasNoticia> }> = ({
+  colaboradores,
+  noticias,
+  estatisticas,
+}) => {
+  const [visao, setVisao] = useState<'noticia' | 'colaborador'>('noticia');
+  return (
+    <div className="space-y-3">
+      <div className="inline-flex bg-white border border-slate-200 rounded-xl p-1">
+        {(
+          [
+            ['noticia', 'Por notícia'],
+            ['colaborador', 'Por colaborador'],
+          ] as const
+        ).map(([id, rotulo]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setVisao(id)}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold ${visao === id ? 'bg-[#C48229] text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </div>
+      {visao === 'noticia' ? (
+        <EngajamentoPorNoticia colaboradores={colaboradores} noticias={noticias} estatisticas={estatisticas} />
+      ) : (
+        <EngajamentoPorColaborador colaboradores={colaboradores} totalPublicadas={noticias.length} />
+      )}
+    </div>
+  );
+};
+
+/** Uma linha por notícia publicada: leitura (em relação aos ativos), reações e comentários. */
+const EngajamentoPorNoticia: React.FC<{ colaboradores: Colaborador[]; noticias: Noticia[]; estatisticas: Map<string, EstatisticasNoticia> }> = ({
+  colaboradores,
+  noticias,
+  estatisticas,
+}) => {
+  const [comentarios, setComentarios] = useState<Map<string, number> | null>(null);
+  const [ordem, setOrdem] = useState<'recentes' | 'mais' | 'menos'>('recentes');
+  const [aberta, setAberta] = useState<Noticia | null>(null);
+  const ativos = colaboradores.filter((c) => c.status !== 'Inativo').length || 1;
+
+  useEffect(() => {
+    getContagemComentarios()
+      .then(setComentarios)
+      .catch((err) => {
+        console.error(err);
+        setComentarios(new Map());
+      });
+  }, []);
+
+  const linhas = useMemo(() => {
+    const lista = noticias.map((n) => {
+      const e = estatisticas.get(n.id) || { leituras: 0, reacoes: {} };
+      const reacoes = (Object.values(e.reacoes) as number[]).reduce((s, v) => s + (v || 0), 0);
+      return { n, e, reacoes, comentarios: comentarios?.get(n.id) || 0, alcance: Math.round((e.leituras / ativos) * 100) };
+    });
+    return lista.sort((a, b) =>
+      ordem === 'recentes' ? (b.n.publicadaEm || '').localeCompare(a.n.publicadaEm || '') : ordem === 'mais' ? b.alcance - a.alcance || b.reacoes - a.reacoes : a.alcance - b.alcance
+    );
+  }, [noticias, estatisticas, comentarios, ativos, ordem]);
+
+  const exportar = () => {
+    const cab = 'Notícia;Editoria;Publicada em;Leram;Ativos;Alcance (%);Reações;Comentários';
+    const corpo = linhas.map(({ n, e, reacoes, comentarios: qc, alcance }) =>
+      [`"${n.titulo.replace(/"/g, '""')}"`, n.categoria, n.publicadaEm ? new Date(n.publicadaEm).toLocaleDateString('pt-BR') : '', e.leituras, ativos, alcance, reacoes, qc].join(';')
+    );
+    baixarBlob(new Blob(['\ufeff' + [cab, ...corpo].join('\n')], { type: 'text/csv;charset=utf-8' }), `Engajamento_por_noticia_${new Date().toISOString().slice(0, 10)}.csv`);
+  };
+
+  if (noticias.length === 0) return <p className="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center text-xs text-slate-500">Nenhuma notícia publicada ainda.</p>;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <select value={ordem} onChange={(e) => setOrdem(e.target.value as typeof ordem)} className="py-2 px-2 border border-slate-200 rounded-lg text-xs bg-white">
+          <option value="recentes">Mais recentes primeiro</option>
+          <option value="mais">Maior alcance primeiro</option>
+          <option value="menos">Menor alcance primeiro</option>
+        </select>
+        <button type="button" onClick={exportar} className="ml-auto px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5">
+          <Download className="w-3.5 h-3.5" /> Excel (CSV)
+        </button>
+      </div>
+      <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+        {linhas.map(({ n, e, comentarios: qc, alcance }) => (
+          <div key={n.id} className="p-3 sm:p-4 flex flex-wrap items-center gap-3 text-xs">
+            <div className="w-28 shrink-0 rounded-lg overflow-hidden">
+              <CapaNoticia titulo="" categoria={n.categoria} capa={n.capa} className="[&_h3]:hidden [&_p]:hidden [&_span]:hidden [&_svg]:hidden" />
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <p className="text-[10px] font-black uppercase tracking-wide text-[#92611F]">{n.categoria}</p>
+              <p className="text-sm font-bold text-slate-900 leading-snug">{n.titulo}</p>
+              <p className="text-[11px] text-slate-500">Publicada em {dataNoticia(n.publicadaEm)}</p>
+            </div>
+            <div className="w-40">
+              <div className="flex items-center justify-between text-[11px] text-slate-600 font-semibold">
+                <span className="flex items-center gap-1">
+                  <Eye className="w-3.5 h-3.5" /> {e.leituras} de {ativos}
+                </span>
+                <span>{alcance}%</span>
+              </div>
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
+                <div className="h-full bg-[#C48229]" style={{ width: `${Math.min(100, alcance)}%` }} />
+              </div>
+            </div>
+            <div className="w-28 text-[11px] text-slate-600 font-semibold space-y-0.5">
+              <div>{Object.values(e.reacoes).some(Boolean) ? <ResumoReacoes reacoes={e.reacoes} /> : <span className="text-slate-400 font-normal">sem reações</span>}</div>
+              <div className="flex items-center gap-1">
+                <MessageSquare className="w-3.5 h-3.5" /> {qc} comentário(s)
+              </div>
+            </div>
+            <button type="button" onClick={() => setAberta(n)} className="px-3 py-1.5 border border-slate-200 rounded-lg font-bold text-slate-700 hover:bg-slate-50">
+              Ver quem
+            </button>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-slate-400">Alcance = colaboradores ativos que abriram a notícia. Visível só para administradores.</p>
+      {aberta && <InteracoesModal noticia={aberta} colaboradores={colaboradores} onClose={() => setAberta(null)} />}
+    </div>
+  );
+};
+
 /** Resumo por colaborador: quantas notícias leu, quantas reações e comentários. */
-export const EngajamentoPainel: React.FC<{ colaboradores: Colaborador[]; totalPublicadas: number }> = ({ colaboradores, totalPublicadas }) => {
+const EngajamentoPorColaborador: React.FC<{ colaboradores: Colaborador[]; totalPublicadas: number }> = ({ colaboradores, totalPublicadas }) => {
   const [mapa, setMapa] = useState<Map<string, EngajamentoColaborador> | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [busca, setBusca] = useState('');

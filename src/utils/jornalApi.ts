@@ -257,6 +257,15 @@ export async function getEngajamentoPorColaborador(): Promise<Map<string, Engaja
   return mapa;
 }
 
+/** Comentários por notícia (todos os status), para o painel de engajamento. */
+export async function getContagemComentarios(): Promise<Map<string, number>> {
+  const { data, error } = await supabase.from('noticia_comentarios').select('noticia_id');
+  assertNoError(error, 'getContagemComentarios');
+  const mapa = new Map<string, number>();
+  (data ?? []).forEach((r: any) => mapa.set(r.noticia_id, (mapa.get(r.noticia_id) || 0) + 1));
+  return mapa;
+}
+
 /** Leituras e reações de todas as notícias (só as colunas pequenas). */
 export async function getEstatisticas(): Promise<Map<string, EstatisticasNoticia>> {
   const [leituras, reacoes] = await Promise.all([

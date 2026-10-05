@@ -230,7 +230,7 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
       ) : aba === 'comentarios' ? (
         <ListaComentariosPendentes comentarios={pendentes} titulos={titulosPorId} onModerar={moderar} />
       ) : aba === 'engajamento' ? (
-        <EngajamentoPainel colaboradores={colaboradores} totalPublicadas={porAba.publicadas.length} />
+        <EngajamentoPainel colaboradores={colaboradores} noticias={porAba.publicadas} estatisticas={stats} />
       ) : lista.length === 0 ? (
         <p className="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center text-xs text-slate-500">
           {aba === 'publicadas' ? 'Nenhuma notícia publicada ainda. Clique em "Nova notícia" para escrever a primeira.' : 'Nada por aqui.'}
