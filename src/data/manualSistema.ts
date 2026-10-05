@@ -226,6 +226,7 @@ export const MANUAL: TopicoManual[] = [
       { titulo: 'Divulgar', texto: 'Na notícia publicada, "Divulgar" abre a fila do WhatsApp com o link pessoal de cada colaborador, que já abre direto na notícia.' },
       { titulo: 'Comentários', texto: 'Os colaboradores reagem e comentam. Comentário só aparece para os outros depois que o administrador aprova, em "Comentários para aprovar".' },
       { titulo: 'Tirar do ar', texto: 'Arquivar tira a notícia do portal sem apagar. O alfinete fixa uma notícia no topo.' },
+      { titulo: 'Aniversariantes (automático)', texto: 'Todo dia às 7h, se houver aniversariante, o sistema publica sozinho a notícia "Hoje é aniversário de..." com nome, cargo e setor (nunca a idade). Os colegas comentam os parabéns (com a sua moderação). Quem não quiser aparecer: desmarque "Aparecer no Jornal JMT no dia do aniversário" no cadastro do colaborador.' },
     ],
     dicas: [
       'Só publique foto de pessoa com autorização de uso de imagem, e sem documentos, crachás, placas ou dados de clientes à mostra (LGPD).',

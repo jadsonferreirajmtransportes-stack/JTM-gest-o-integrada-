@@ -249,6 +249,7 @@ function rowToColaborador(r: any): Colaborador {
     nomePai: u(r.nome_pai),
     nomeMae: u(r.nome_mae),
     dataNascimento: u(r.data_nascimento),
+    aparecerAniversario: r.aparecer_aniversario === false ? false : undefined,
     naturalidade: u(r.naturalidade),
     nacionalidade: u(r.nacionalidade),
     estadoCivil: r.estado_civil,
@@ -358,6 +359,8 @@ export function colaboradorToRow(c: Colaborador) {
     nome_pai: n(c.nomePai),
     nome_mae: n(c.nomeMae),
     data_nascimento: n(c.dataNascimento),
+    // Só manda a coluna quando foi escolhido — salvar continua funcionando antes da migração 068.
+    ...(c.aparecerAniversario !== undefined ? { aparecer_aniversario: c.aparecerAniversario } : {}),
     naturalidade: n(c.naturalidade),
     nacionalidade: n(c.nacionalidade),
     estado_civil: c.estadoCivil,

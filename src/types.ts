@@ -487,6 +487,8 @@ export interface Colaborador {
   nomePai?: string;
   nomeMae?: string;
   dataNascimento?: string; // YYYY-MM-DD
+  /** Sai na notícia automática de aniversariantes do Jornal JMT (migração 068). Ausente = sim. */
+  aparecerAniversario?: boolean;
   naturalidade?: string;
   nacionalidade?: string;
   estadoCivil: EstadoCivil;

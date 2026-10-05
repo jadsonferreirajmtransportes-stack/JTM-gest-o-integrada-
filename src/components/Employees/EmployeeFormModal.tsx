@@ -504,6 +504,15 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                     onChange={(e) => handleChange('dataNascimento', e.target.value)}
                     className="w-full p-2 border border-slate-200 rounded-lg"
                   />
+                  <label className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.aparecerAniversario !== false}
+                      onChange={(e) => handleChange('aparecerAniversario', e.target.checked)}
+                      className="w-3.5 h-3.5 accent-[#C48229]"
+                    />
+                    Aparecer no Jornal JMT no dia do aniversário (sem a idade)
+                  </label>
                 </div>
 
                 {/* RG & Órgão Emissor */}

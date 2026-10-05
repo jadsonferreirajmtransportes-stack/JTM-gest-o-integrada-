@@ -120,3 +120,13 @@ CENAS_PORTAL['fer-pdf'] = {
     await esperar(3000);
   },
 };
+
+CENAS_PORTAL['aniv-capa'] = {
+  montar: async () => {
+    const { CapaNoticia } = await import('../../src/components/Jornal/jornalVisual');
+    return <div style={{ width: 640, margin: '20px auto' }}><CapaNoticia titulo="Hoje é aniversário de Paula Ribeiro! 🎉" categoria="Aniversários" capa="/jornal/aniversario.svg" tamanho="grande" /></div>;
+  },
+  acoes: async () => {
+    await esperar(800);
+  },
+};
