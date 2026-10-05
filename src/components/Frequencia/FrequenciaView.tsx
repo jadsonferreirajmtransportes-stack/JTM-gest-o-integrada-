@@ -65,7 +65,7 @@ import {
   dataLocal,
   horaLocal,
   montarEspelho,
-  resumir,
+  resumir, somarResumos,
 } from './frequenciaCalc';
 import { gerarEspelhoPdf, nomeMes } from './espelhoPdf';
 import { ImportarFolhaManualModal } from './ImportarFolhaManualModal';
@@ -734,6 +734,28 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                   </tr>
                 ))}
               </tbody>
+              {resumos.length > 0 &&
+                (() => {
+                  const t = somarResumos(resumos.map((x) => x.resumo));
+                  return (
+                    <tfoot className="bg-slate-50 font-black text-slate-800 border-t-2 border-slate-200">
+                      <tr>
+                        <td className="p-3">Total ({resumos.length} colaborador{resumos.length === 1 ? '' : 'es'})</td>
+                        <td className="p-3 text-right tabular-nums">{t.diasPrevistos}</td>
+                        <td className="p-3 text-right tabular-nums">{t.diasTrabalhados}</td>
+                        <td className={`p-3 text-right tabular-nums ${t.faltas ? 'text-rose-600' : ''}`}>{t.faltas}</td>
+                        <td className="p-3 text-right tabular-nums">{t.atrasos}</td>
+                        <td className="p-3 text-right tabular-nums">{t.incompletos}</td>
+                        <td className="p-3 text-right tabular-nums">{formatarMinutos(t.normaisDiurnasMin)}</td>
+                        <td className="p-3 text-right tabular-nums text-indigo-700">{formatarMinutos(t.normaisNoturnasMin)}</td>
+                        <td className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(t.extraDiurnaMin)}</td>
+                        <td className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(t.extraNoturnaMin)}</td>
+                        <td className={`p-3 text-right tabular-nums ${t.faltaAtrasoMin ? 'text-rose-600' : ''}`}>{formatarMinutos(t.faltaAtrasoMin)}</td>
+                        <td className="p-3 text-right tabular-nums text-sky-700">{formatarMinutos(t.abonoMin)}</td>
+                      </tr>
+                    </tfoot>
+                  );
+                })()}
             </table>
           </div>
         </>

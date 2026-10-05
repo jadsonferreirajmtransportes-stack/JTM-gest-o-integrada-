@@ -14,7 +14,7 @@ import autoTable from 'jspdf-autotable';
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 import type { BatidaPonto, JornadaPonto } from '../../utils/frequenciaApi';
-import { DiaEspelho, LIMITE_ATRASOS_MES, NOMES_DIA, ResumoFrequencia, dataLocal, diaDaSemana, formatarMinutos, horaLocal } from './frequenciaCalc';
+import { somarResumos, DiaEspelho, LIMITE_ATRASOS_MES, NOMES_DIA, ResumoFrequencia, dataLocal, diaDaSemana, formatarMinutos, horaLocal } from './frequenciaCalc';
 import { nomeMes } from './espelhoPdf';
 
 const BRONZE = 'FFC48229';
@@ -268,6 +268,35 @@ export async function gerarResumoXlsx(mes: string, linhas: LinhaResumo[]): Promi
     if (r.faltas) row.getCell(6).font = { bold: true, color: { argb: 'FFBE1E2D' } };
     linha += 1;
   });
+  // Linha de total
+  const t = somarResumos(linhas.map((x) => x.resumo));
+  const tot = ws.getRow(linha);
+  tot.values = [
+    `TOTAL (${linhas.length} colaborador${linhas.length === 1 ? '' : 'es'})`,
+    '',
+    '',
+    t.diasPrevistos,
+    t.diasTrabalhados,
+    t.faltas,
+    t.justificados,
+    t.atrasos,
+    t.minutosAtraso,
+    t.incompletos,
+    minutosParaDia(t.normaisDiurnasMin),
+    minutosParaDia(t.normaisNoturnasMin),
+    minutosParaDia(t.extraDiurnaMin),
+    minutosParaDia(t.extraNoturnaMin),
+    minutosParaDia(t.faltaAtrasoMin),
+    minutosParaDia(t.abonoMin),
+    '',
+  ];
+  for (let k = 11; k <= 16; k++) tot.getCell(k).numFmt = '[h]:mm';
+  tot.eachCell({ includeEmpty: true }, (cel: any, col: number) => {
+    if (col > TITULOS_RESUMO.length) return;
+    cel.font = { bold: true };
+    cel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FUNDO_CAB } };
+    cel.border = bordas;
+  });
   ws.autoFilter = { from: { row: primeira - 1, column: 1 }, to: { row: primeira - 1, column: TITULOS_RESUMO.length } };
   [34, 22, 30, 10, 11, 8, 12, 9, 12, 12, 11, 11, 12, 13, 13, 10, 34].forEach((w, i) => (ws.getColumn(i + 1).width = w));
   rodape(wb, `Resumo de frequência ${nomeMes(mes)}`);
@@ -301,9 +330,32 @@ export function gerarResumoPdf(mes: string, linhas: LinhaResumo[]): File {
       formatarMinutos(r.abonoMin),
       r.atrasos > LIMITE_ATRASOS_MES ? 'Advertência prevista' : r.faltas > 0 ? 'Faltas' : '',
     ]),
+    foot: (() => {
+      const t = somarResumos(linhas.map((x) => x.resumo));
+      return [[
+        `Total (${linhas.length})`,
+        '',
+        '',
+        t.diasPrevistos,
+        t.diasTrabalhados,
+        t.faltas,
+        t.justificados,
+        `${t.atrasos}${t.minutosAtraso ? ` (${t.minutosAtraso} min)` : ''}`,
+        t.incompletos,
+        formatarMinutos(t.normaisDiurnasMin),
+        formatarMinutos(t.normaisNoturnasMin),
+        formatarMinutos(t.extraDiurnaMin),
+        formatarMinutos(t.extraNoturnaMin),
+        formatarMinutos(t.faltaAtrasoMin),
+        formatarMinutos(t.abonoMin),
+        '',
+      ]];
+    })(),
+    showFoot: 'lastPage',
     theme: 'grid',
     styles: { fontSize: 7.5, cellPadding: 1.4, textColor: [40, 40, 40], lineColor: [225, 225, 225], lineWidth: 0.1 },
     headStyles: { fillColor: [248, 240, 228], textColor: [17, 17, 17], fontStyle: 'bold' },
+    footStyles: { fillColor: [248, 240, 228], textColor: [17, 17, 17], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [252, 250, 247] },
     columnStyles: { 0: { cellWidth: 44 }, 2: { cellWidth: 34 } },
     didParseCell: (d) => {

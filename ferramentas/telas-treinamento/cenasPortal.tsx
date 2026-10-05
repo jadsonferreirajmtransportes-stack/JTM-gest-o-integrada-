@@ -225,3 +225,20 @@ CENAS_PORTAL['esp-pdf'] = {
     await esperar(3500);
   },
 };
+
+CENAS_PORTAL['res-pdf'] = {
+  montar: async () => {
+    const { gerarResumoPdf } = await import('../../src/components/Frequencia/relatorioFrequencia');
+    const { resumir } = await import('../../src/components/Frequencia/frequenciaCalc');
+    const { PdfEmTela } = await import('../../src/components/Contracheques/ContrachequePublicView');
+    const base = resumir([]);
+    const linhas: any[] = ['Paula Ribeiro', 'Renato Campos', 'Sílvia Moura'].map((n, i) => ({
+      colaborador: { nomeCompleto: n, funcaoCargo: 'Motorista' },
+      jornada: { nome: 'Farma Aéreo diurno' },
+      resumo: { ...base, diasPrevistos: 22, diasTrabalhados: 21 - i, faltas: i, justificados: 1, atrasos: i * 2, minutosAtraso: i * 25, normaisDiurnasMin: 9000 - i * 300, normaisNoturnasMin: i * 120, extraDiurnaMin: 600 + i * 45, extraNoturnaMin: i * 30, faltaAtrasoMin: i * 528, abonoMin: 528 },
+    }));
+    const arquivo = gerarResumoPdf('2026-09', linhas);
+    return <div style={{ width: 1100, margin: '0 auto', padding: 10 }}><PdfEmTela url={URL.createObjectURL(arquivo)} /></div>;
+  },
+  acoes: async () => { await esperar(3000); },
+};

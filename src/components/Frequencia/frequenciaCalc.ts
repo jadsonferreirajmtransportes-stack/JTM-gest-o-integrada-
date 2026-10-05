@@ -339,6 +339,18 @@ export function resumir(espelho: DiaEspelho[]): ResumoFrequencia {
   );
 }
 
+/** Soma os resumos de vários colaboradores (linha "Total" do Resumo do mês). */
+export function somarResumos(lista: ResumoFrequencia[]): ResumoFrequencia {
+  const zero = resumir([]);
+  return lista.reduce((t, r) => {
+    const soma = { ...t };
+    (Object.keys(zero) as (keyof ResumoFrequencia)[]).forEach((k) => {
+      soma[k] = (t[k] as number) + (r[k] as number);
+    });
+    return soma;
+  }, zero);
+}
+
 export function formatarMinutos(min: number, comSinal = false): string {
   const sinal = min < 0 ? '−' : comSinal && min > 0 ? '+' : '';
   const a = Math.abs(Math.round(min));
