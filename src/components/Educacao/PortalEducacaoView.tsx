@@ -45,7 +45,8 @@ import { gerarPdfRegulamento } from '../Regulamento/regulamentoPdf';
 import { ROTULO_VERSAO_REGULAMENTO } from '../../data/regulamentoInterno';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { JornalPortal } from '../Jornal/JornalPortal';
-import { portalJornal } from '../../utils/jornalApi';
+import { NoticiaPortalResumo, portalJornal } from '../../utils/jornalApi';
+import { CapaNoticia, dataNoticia } from '../Jornal/jornalVisual';
 import { PontoPublicView } from '../Frequencia/PontoPublicView';
 import { pontoVincular } from '../../utils/frequenciaApi';
 import { credenciaisDoAparelho, entrouPeloAparelho, gravarAparelho, lerAparelho } from '../../utils/aparelhoColaborador';
@@ -147,7 +148,8 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
   const [dados, setDados] = useState<DadosPortal | null>(null);
   const [aba, setAba] = useState<Aba>(destino.aba);
   // Item do link (documento, comunicado, notícia) abre direto — só na primeira vez.
-  const [itemDoLink, setItemDoLink] = useState<string | undefined>(destino.item);
+  const [itemDoLink, setItemDoLink] = useState<{ aba: Aba; item: string } | undefined>(destino.item ? { aba: destino.aba, item: destino.item } : undefined);
+  const [noticiasRecentes, setNoticiasRecentes] = useState<NoticiaPortalResumo[]>([]);
   const [abertoId, setAbertoId] = useState<string | null>(null);
   const [instrucaoAberta, setInstrucaoAberta] = useState<InstrucaoTrabalho | null>(null);
   const [resumo, setResumo] = useState<{ documentos?: number; comunicados?: number; noticias?: number }>({});
@@ -164,7 +166,10 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
       .then((l) => setResumo((p) => ({ ...p, comunicados: l.filter((c) => !c.visualizadoEm || (c.exigeCiencia && !c.cienteEm)).length })))
       .catch(() => undefined);
     portalJornal(cred)
-      .then((l) => setResumo((p) => ({ ...p, noticias: l.filter((n) => !n.lida).length })))
+      .then((l) => {
+        setResumo((p) => ({ ...p, noticias: l.filter((n) => !n.lida).length }));
+        setNoticiasRecentes(l.slice(0, 3));
+      })
       .catch(() => undefined);
   };
 
@@ -255,7 +260,7 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
     setInstrucaoAberta(null);
     window.scrollTo({ top: 0 });
   };
-  const itemPara = (a: Aba) => (aba === a && destino.aba === a ? itemDoLink : undefined);
+  const itemPara = (a: Aba) => (aba === a && itemDoLink?.aba === a ? itemDoLink.item : undefined);
   const contagem: Partial<Record<Aba, number>> = { documentos: resumo.documentos, comunicados: resumo.comunicados, treinamentos: pendentes, jornal: resumo.noticias };
 
   return (
@@ -375,6 +380,11 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
                 cargo={dados.colaborador.cargo}
                 pendencias={{ documentos: resumo.documentos, comunicados: resumo.comunicados, treinamentos: pendentes, noticias: resumo.noticias }}
                 onIr={irPara}
+                noticias={noticiasRecentes}
+                onAbrirNoticia={(id) => {
+                  setItemDoLink({ aba: 'jornal', item: id });
+                  irPara('jornal');
+                }}
               />
             )}
 
@@ -479,7 +489,9 @@ const PortalInicio: React.FC<{
   cargo?: string;
   pendencias: { documentos?: number; comunicados?: number; treinamentos?: number; noticias?: number };
   onIr: (a: Aba) => void;
-}> = ({ nome, cargo, pendencias, onIr }) => {
+  noticias: NoticiaPortalResumo[];
+  onAbrirNoticia: (id: string) => void;
+}> = ({ nome, cargo, pendencias, onIr, noticias, onAbrirNoticia }) => {
   const atalhos: { aba: Aba; titulo: string; texto: string; icone: React.ReactNode; qtd?: number }[] = [
     { aba: 'documentos', titulo: 'Documentos', texto: 'Contracheques, vale-alimentação, férias e outros', icone: <FileSignature className="w-5 h-5" />, qtd: pendencias.documentos },
     { aba: 'comunicados', titulo: 'Comunicados', texto: 'Avisos da empresa para você', icone: <Megaphone className="w-5 h-5" />, qtd: pendencias.comunicados },
@@ -505,6 +517,38 @@ const PortalInicio: React.FC<{
         <Fingerprint className="w-7 h-7" />
         <span className="text-base font-black">Bater ponto</span>
       </button>
+      {noticias.length > 0 && (
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+            <h2 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+              <Newspaper className="w-4 h-4 text-[#C48229]" /> Últimas do Jornal JMT
+            </h2>
+            <button type="button" onClick={() => onIr('jornal')} className="text-[11px] font-bold text-[#92611F] normal-case">
+              Ver todas
+            </button>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {noticias.map((n) => (
+              <button
+                key={n.id}
+                type="button"
+                onClick={() => onAbrirNoticia(n.id)}
+                className="w-full text-left normal-case px-4 py-3 flex items-center gap-3 hover:bg-slate-50"
+              >
+                <div className="w-24 shrink-0 rounded-lg overflow-hidden">
+                  <CapaNoticia titulo="" categoria={n.categoria} capa={n.capa} className="[&_h3]:hidden [&_p]:hidden [&_span]:hidden [&_svg]:hidden" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-wide text-[#92611F]">{n.categoria}</p>
+                  <p className={`text-sm text-slate-900 leading-snug line-clamp-2 ${n.lida ? 'font-semibold' : 'font-black'}`}>{n.titulo}</p>
+                  <p className="text-[11px] text-slate-500">{dataNoticia(n.publicadaEm)}</p>
+                </div>
+                {!n.lida && <span className="text-[10px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded-full shrink-0">Nova</span>}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       <div className="grid grid-cols-2 gap-3">
         {atalhos.map((a) => (
           <button

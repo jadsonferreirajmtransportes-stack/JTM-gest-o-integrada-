@@ -35,7 +35,11 @@ function preparar(lembrado: boolean) {
       { id: 'k2', token: 'k2', titulo: 'Semana de Segurança no Trânsito', categoria: 'Evento', numero: 11, ano: 2026, criadoEm: iso(-6), exigeCiencia: false, visualizadoEm: iso(-5), cienteEm: null },
     ],
   });
-  rpcs.portal_jornal = () => ({ noticias: [{ id: 'n1', titulo: 'Farma Aéreo bate recorde', categoria: 'Conquistas', destaque: true, publicadaEm: iso(-1), reacoes: {}, comentarios: 0, lida: false }] });
+  rpcs.portal_jornal = () => ({ noticias: [
+    { id: 'n1', titulo: 'Farma Aéreo bate recorde: 99,4% das entregas no prazo', categoria: 'Conquistas', capa: '/ferramentas/telas-treinamento/ilustracoes/trofeu.svg', destaque: true, publicadaEm: iso(-1), reacoes: {}, comentarios: 0, lida: false },
+    { id: 'n2', titulo: 'Vale-alimentação da 1ª quinzena de outubro será creditado no dia 07/10', categoria: 'Notícias', destaque: false, publicadaEm: iso(-2), reacoes: {}, comentarios: 0, lida: false },
+    { id: 'n3', titulo: 'Nova câmara fria amplia a capacidade da base', categoria: 'Qualidade', capa: '/ferramentas/telas-treinamento/ilustracoes/camara.svg', destaque: false, publicadaEm: iso(-6), reacoes: {}, comentarios: 0, lida: true },
+  ] });
 }
 
 export const CENAS_PORTAL: Record<string, Cena> = {
