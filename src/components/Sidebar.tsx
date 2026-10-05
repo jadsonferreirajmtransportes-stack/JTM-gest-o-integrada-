@@ -25,6 +25,7 @@ import {
   Gavel,
   GraduationCap,
   Fingerprint,
+  MessageSquareText,
   Thermometer,
   Layers,
   FileText,
@@ -75,6 +76,7 @@ export type NavSection =
   | 'disciplinar'
   | 'educacao'
   | 'frequencia'
+  | 'solicitacoes'
   | 'onboarding'
   | 'arquivo'
   | 'aniversariantes'
@@ -460,6 +462,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Fingerprint,
       // Ponto pelo celular (controle interno); supervisor vê a própria equipe.
       roles: ['admin', 'supervisor'],
+      group: 'operacional',
+    },
+    {
+      id: 'solicitacoes',
+      label: 'Fale com o DP',
+      icon: MessageSquareText,
+      // Solicitações dos colaboradores pelo portal — só o DP (contestações não vão ao supervisor).
+      roles: ['admin'],
       group: 'operacional',
     },
     {

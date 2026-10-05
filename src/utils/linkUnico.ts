@@ -15,6 +15,8 @@ export type DestinoPortal =
   | `documento:${string}`
   | 'comunicados'
   | `comunicado:${string}`
+  | 'solicitacoes'
+  | `solicitacao:${string}`
   | 'treinamentos'
   | 'jornal'
   | `jornal:${string}`;

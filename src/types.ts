@@ -42,6 +42,7 @@ export type SecaoDp =
   | 'disciplinar'
   | 'educacao'
   | 'frequencia'
+  | 'solicitacoes'
   | 'onboarding'
   | 'arquivo'
   | 'aniversariantes'

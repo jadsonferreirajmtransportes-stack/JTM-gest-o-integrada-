@@ -122,6 +122,10 @@ const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = 
     title: 'Disciplinar',
     subtitle: 'Advertências e suspensões com gradação, aprovação e ciência do colaborador (CLT art. 482 e 474)',
   },
+  solicitacoes: {
+    title: 'Fale com o DP',
+    subtitle: 'Contestações, pedidos de férias, documentos e atualização de dados enviados pelos colaboradores no link pessoal',
+  },
   frequencia: {
     title: 'Controle de Frequência',
     subtitle: 'Ponto pelo celular com localização, espelho mensal, justificativas e assinatura (controle interno)',

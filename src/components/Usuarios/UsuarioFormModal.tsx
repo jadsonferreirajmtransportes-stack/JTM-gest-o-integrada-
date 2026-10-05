@@ -43,6 +43,7 @@ const SECOES_DP: { id: SecaoDp; label: string }[] = [
   { id: 'ocorrencias', label: 'Ocorrências & Advertências' },
   { id: 'disciplinar', label: 'Disciplinar (Advertências)' },
   { id: 'frequencia', label: 'Controle de Frequência' },
+  { id: 'solicitacoes', label: 'Fale com o DP (solicitações)' },
   { id: 'educacao', label: 'Portal de Educação' },
   { id: 'aniversariantes', label: 'Aniversariantes do Mês' },
   { id: 'arquivo', label: 'Arquivo / Demitidos' },

@@ -249,6 +249,7 @@ import { FrequenciaView } from './components/Frequencia/FrequenciaView';
 import { PontoPublicView } from './components/Frequencia/PontoPublicView';
 import { ComunicadosView } from './components/Comunicados/ComunicadosView';
 import { JornalView } from './components/Jornal/JornalView';
+import { SolicitacoesDpView } from './components/Solicitacoes/SolicitacoesDpView';
 import { DocumentosView } from './components/Documentos/DocumentosView';
 import { ComunicadoPublicView } from './components/Comunicados/ComunicadoPublicView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
@@ -3493,6 +3494,10 @@ export default function App() {
               onSalvarOcorrencia={handleSaveOcorrencia}
               onExcluirOcorrencia={handleDeleteOcorrencia}
             />
+          )}
+
+          {activeGlobalModule === 'dp' && activeSection === 'solicitacoes' && podeVerSecaoDp(currentUser, 'solicitacoes') && (
+            <SolicitacoesDpView colaboradores={colaboradores} currentUser={currentUser} onSaveFerias={handleSaveFerias} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'frequencia' && podeVerSecaoDp(currentUser, 'frequencia') && (

@@ -130,3 +130,50 @@ CENAS_PORTAL['aniv-capa'] = {
     await esperar(800);
   },
 };
+
+// ---- Fale com o DP ----
+function prepararSolicitacoes() {
+  preparar(true);
+  rpcs.portal_solicitacoes = () => ({
+    solicitacoes: [
+      { id: 's1', protocolo: '2026-0007', tipo: 'contestacao', assunto: 'Vale-alimentação', status: 'respondida', novaResposta: true, criadoEm: iso(-2), atualizadoEm: iso(0) },
+      { id: 's2', protocolo: '2026-0004', tipo: 'ferias', assunto: 'Pedido de férias', status: 'em_analise', novaResposta: false, criadoEm: iso(-6), atualizadoEm: iso(-4) },
+      { id: 's3', protocolo: '2026-0002', tipo: 'documento', assunto: 'Declaração de vínculo', status: 'concluida', novaResposta: false, criadoEm: iso(-15), atualizadoEm: iso(-14) },
+    ],
+  });
+  rpcs.portal_solicitacao = () => ({
+    id: 's1', protocolo: '2026-0007', tipo: 'contestacao', assunto: 'Vale-alimentação', status: 'respondida', criadoEm: iso(-2),
+    dados: { documentoTitulo: 'Demonstrativo de Vale-Alimentação — 1ª quinzena de outubro/2026' },
+    mensagens: [
+      { id: 'm1', autor: 'colaborador', autorNome: 'Paula Ribeiro', texto: 'No VA da 1ª quinzena aparece 1 falta no dia 03/10, mas eu trabalhei nesse dia (estava na rota do aeroporto).', anexos: [{ nome: 'foto_ponto_03-10.jpg' }], criadoEm: iso(-2) },
+      { id: 'm2', autor: 'dp', autorNome: 'Departamento Pessoal', texto: 'Oi, Paula! Conferimos com a supervisão e você tem razão: a falta foi lançada por engano. Corrigimos e a diferença de R$ 25,00 entra na próxima quinzena.', anexos: [], criadoEm: iso(0) },
+    ],
+  });
+  rpcs.portal_documentos = () => ({ documentos: [{ id: 'd1', categoria: 'vale_alimentacao', referencia: 'q1', tipo: 'Quinzena', titulo: 'Demonstrativo de Vale-Alimentação — 1ª quinzena de outubro/2026', status: 'Visualizado', criadoEm: iso(-3), vencido: false }] });
+}
+const montarPortalSol = async (ir?: string) => {
+  prepararSolicitacoes();
+  const { PortalEducacaoView } = await import('../../src/components/Educacao/PortalEducacaoView');
+  return <PortalEducacaoView token={TOKEN} ir={ir} />;
+};
+CENAS_PORTAL['sol-1'] = { montar: () => montarPortalSol('solicitacoes'), acoes: async () => { await esperar(1200); } };
+CENAS_PORTAL['sol-2'] = { montar: () => montarPortalSol('solicitacoes'), acoes: async () => { await esperar(1200); await clicar('Nova solicitação'); await clicar('Pedir férias'); await esperar(500); } };
+CENAS_PORTAL['sol-3'] = { montar: () => montarPortalSol('solicitacao:s1'), acoes: async () => { await esperar(1500); } };
+CENAS_PORTAL['sol-dp'] = {
+  montar: async () => {
+    const { tabelas } = await import('./apoio');
+    tabelas.solicitacoes_dp = [
+      { id: 's1', numero: 7, ano: 2026, colaborador_id: 'c1', colaborador_nome: 'PAULA RIBEIRO', tipo: 'contestacao', assunto: 'Vale-alimentação', dados: { documentoTitulo: 'Demonstrativo de VA — 1ª quinzena de outubro/2026' }, status: 'aberta', lida_pelo_dp: false, lida_pelo_colaborador: true, criado_em: iso(-1), atualizado_em: iso(-1) },
+      { id: 's2', numero: 6, ano: 2026, colaborador_id: 'c2', colaborador_nome: 'RENATO CAMPOS', tipo: 'ferias', assunto: 'Pedido de férias', dados: { mes: '2027-01', dias: 30, venderDias: true }, status: 'aberta', lida_pelo_dp: false, lida_pelo_colaborador: true, criado_em: iso(-2), atualizado_em: iso(-2) },
+      { id: 's3', numero: 5, ano: 2026, colaborador_id: 'c3', colaborador_nome: 'SÍLVIA MOURA', tipo: 'cadastro', assunto: 'Endereço', dados: {}, status: 'em_analise', lida_pelo_dp: true, lida_pelo_colaborador: true, criado_em: iso(-3), atualizado_em: iso(-2) },
+      { id: 's4', numero: 4, ano: 2026, colaborador_id: 'c4', colaborador_nome: 'TIAGO NOGUEIRA', tipo: 'documento', assunto: 'Declaração de vínculo', dados: {}, status: 'respondida', lida_pelo_dp: true, lida_pelo_colaborador: false, criado_em: iso(-5), atualizado_em: iso(-4) },
+    ];
+    tabelas.solicitacao_mensagens = [
+      { id: 'm1', solicitacao_id: 's2', autor: 'colaborador', autor_nome: 'RENATO CAMPOS', texto: 'Gostaria de tirar férias em janeiro, para viajar com a família.', anexos: [], criado_em: iso(-2) },
+    ];
+    const { SolicitacoesDpView } = await import('../../src/components/Solicitacoes/SolicitacoesDpView');
+    const colabs: any[] = ['Paula Ribeiro', 'Renato Campos', 'Sílvia Moura', 'Tiago Nogueira'].map((n, i) => ({ id: `c${i + 1}`, nomeCompleto: n.toUpperCase(), status: 'Ativo', setor: ['Farma Aéreo', 'Expedição', 'Armazenagem', 'Farma Rodoviário'][i], funcaoCargo: 'Ajudante Operacional', dataAdmissao: '2024-03-10', telefoneWhatsapp: '(84) 90000-0000' }));
+    return <div style={{ padding: 24, background: '#F8FAFC' }}><SolicitacoesDpView colaboradores={colabs} currentUser={{ nome: 'Marcos Andrade', role: 'admin' } as any} onSaveFerias={async () => {}} /></div>;
+  },
+  acoes: async () => { await esperar(1000); await clicar('Pedido de férias'); await esperar(800); },
+};

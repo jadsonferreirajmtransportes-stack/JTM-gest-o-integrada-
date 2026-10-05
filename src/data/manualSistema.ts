@@ -466,6 +466,24 @@ export const MANUAL: TopicoManual[] = [
     ],
   },
   {
+    id: 'solicitacoes',
+    grupo: 'Departamento Pessoal',
+    titulo: 'Fale com o DP (solicitações)',
+    resumo: 'Os colaboradores abrem solicitações pelo link pessoal: contestação (VA, contracheque, ponto, faltas), pedido de férias, documentos/declarações e atualização de dados. Só o DP vê e responde.',
+    passos: [
+      { titulo: 'Fila', texto: '"Pendentes" mostra o que aguarda o DP. O ponto laranja marca mensagem nova do colaborador. Filtre por tipo ou busque por nome, assunto ou número.' },
+      { titulo: 'Responder', texto: 'Abra a solicitação, leia a conversa e os anexos (clique no nome do arquivo para abrir), escreva a resposta e escolha: responder e aguardar o colaborador, manter em análise, concluir ou não atendida.' },
+      { titulo: 'Enviar documento', texto: 'Para declarações e segundas vias, anexe o PDF na resposta — o colaborador baixa pelo portal (por 30 dias).' },
+      { titulo: 'Pedido de férias', texto: '"Aprovar e criar a programação de férias" já cria a programação em Férias com a data e os dias pedidos (ou "a programar", quando o colaborador escolheu só o mês) e deixa a resposta pronta.' },
+      { titulo: 'Avisar', texto: 'Depois de responder, o sistema oferece avisar pelo WhatsApp com o link pessoal já abrindo na solicitação. O colaborador também vê "Nova resposta" no portal.' },
+    ],
+    dicas: [
+      'Contestações não aparecem para os supervisores — só para quem tem a seção "Fale com o DP" liberada.',
+      'Atualização de dados (endereço, conta, dependentes): confira o documento anexado antes de alterar o cadastro do colaborador.',
+    ],
+    tour: [{ alvo: 'Pendentes', titulo: 'Fila do DP', texto: 'Solicitações que aguardam resposta.' }],
+  },
+  {
     id: 'educacao',
     grupo: 'Departamento Pessoal',
     titulo: 'Portal de Educação',

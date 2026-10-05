@@ -22,6 +22,7 @@ import {
   Megaphone,
   Newspaper,
   Fingerprint,
+  MessageSquareText,
 } from 'lucide-react';
 import { JmtLogo } from '../Brand/JmtLogo';
 import { AssinaturaDigitalPad } from '../Epi/AssinaturaDigitalPad';
@@ -53,6 +54,8 @@ import { credenciaisDoAparelho, entrouPeloAparelho, gravarAparelho, lerAparelho 
 import { portalComunicados, portalDocumentos } from '../../utils/portalColaboradorApi';
 import { PortalDocumentos } from '../Portal/PortalDocumentos';
 import { PortalComunicados } from '../Portal/PortalComunicados';
+import { PortalSolicitacoes } from '../Portal/PortalSolicitacoes';
+import { portalSolicitacoes } from '../../utils/solicitacoesApi';
 
 function mascararCpf(valor: string): string {
   const d = valor.replace(/\D/g, '').slice(0, 11);
@@ -108,13 +111,14 @@ const MENSAGENS_ERRO = {
   dados: 'CPF ou data de nascimento não conferem com o cadastro. Atenção: cada link é pessoal — confira se este link foi enviado para você (o link de um colega não abre com o seu CPF). Se for o seu, fale com o Departamento Pessoal.',
 };
 
-type Aba = 'inicio' | 'ponto' | 'documentos' | 'comunicados' | 'treinamentos' | 'jornal' | 'instrucoes' | 'regulamento';
+type Aba = 'inicio' | 'ponto' | 'documentos' | 'comunicados' | 'solicitacoes' | 'treinamentos' | 'jornal' | 'instrucoes' | 'regulamento';
 
 const ABAS: [Aba, string][] = [
   ['inicio', 'Início'],
   ['ponto', 'Ponto'],
   ['documentos', 'Documentos'],
   ['comunicados', 'Comunicados'],
+  ['solicitacoes', 'Fale com o DP'],
   ['treinamentos', 'Treinamentos'],
   ['jornal', 'Jornal'],
   ['instrucoes', 'Instruções'],
@@ -127,7 +131,7 @@ function lerDestino(ir?: string, abaAntiga?: string, noticiaAntiga?: string): { 
   if (!ir && abaAntiga === 'jornal') return { aba: 'jornal', item: noticiaAntiga };
   const [tipo, ...resto] = (ir || '').split(':');
   const item = resto.join(':') || undefined;
-  const mapa: Record<string, Aba> = { ponto: 'ponto', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', treinamentos: 'treinamentos', jornal: 'jornal' };
+  const mapa: Record<string, Aba> = { ponto: 'ponto', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', solicitacoes: 'solicitacoes', solicitacao: 'solicitacoes', treinamentos: 'treinamentos', jornal: 'jornal' };
   return { aba: mapa[tipo] || 'inicio', item };
 }
 
@@ -152,7 +156,7 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
   const [noticiasRecentes, setNoticiasRecentes] = useState<NoticiaPortalResumo[]>([]);
   const [abertoId, setAbertoId] = useState<string | null>(null);
   const [instrucaoAberta, setInstrucaoAberta] = useState<InstrucaoTrabalho | null>(null);
-  const [resumo, setResumo] = useState<{ documentos?: number; comunicados?: number; noticias?: number }>({});
+  const [resumo, setResumo] = useState<{ documentos?: number; comunicados?: number; noticias?: number; respostas?: number }>({});
 
   const instrucoes: InstrucaoTrabalho[] = useMemo(() => (dados?.instrucoes ?? []).map(rowToInstrucao), [dados]);
   const aberto = dados?.treinamentos.find((t) => t.atribuicaoId === abertoId) || null;
@@ -164,6 +168,9 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
       .catch(() => undefined);
     portalComunicados(cred)
       .then((l) => setResumo((p) => ({ ...p, comunicados: l.filter((c) => !c.visualizadoEm || (c.exigeCiencia && !c.cienteEm)).length })))
+      .catch(() => undefined);
+    portalSolicitacoes(cred)
+      .then((l) => setResumo((p) => ({ ...p, respostas: l.filter((x) => x.novaResposta).length })))
       .catch(() => undefined);
     portalJornal(cred)
       .then((l) => {
@@ -261,7 +268,7 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
     window.scrollTo({ top: 0 });
   };
   const itemPara = (a: Aba) => (aba === a && itemDoLink?.aba === a ? itemDoLink.item : undefined);
-  const contagem: Partial<Record<Aba, number>> = { documentos: resumo.documentos, comunicados: resumo.comunicados, treinamentos: pendentes, jornal: resumo.noticias };
+  const contagem: Partial<Record<Aba, number>> = { documentos: resumo.documentos, comunicados: resumo.comunicados, solicitacoes: resumo.respostas, treinamentos: pendentes, jornal: resumo.noticias };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans">
@@ -378,7 +385,7 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
               <PortalInicio
                 nome={dados.colaborador.nome}
                 cargo={dados.colaborador.cargo}
-                pendencias={{ documentos: resumo.documentos, comunicados: resumo.comunicados, treinamentos: pendentes, noticias: resumo.noticias }}
+                pendencias={{ documentos: resumo.documentos, comunicados: resumo.comunicados, treinamentos: pendentes, noticias: resumo.noticias, respostas: resumo.respostas }}
                 onIr={irPara}
                 noticias={noticiasRecentes}
                 onAbrirNoticia={(id) => {
@@ -404,6 +411,17 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
                 onMudou={(n) => {
                   setItemDoLink(undefined);
                   setResumo((p) => ({ ...p, documentos: n }));
+                }}
+              />
+            )}
+
+            {aba === 'solicitacoes' && (
+              <PortalSolicitacoes
+                credenciais={credenciais}
+                solicitacaoInicial={itemPara('solicitacoes')}
+                onMudou={(n) => {
+                  setItemDoLink(undefined);
+                  setResumo((p) => ({ ...p, respostas: n }));
                 }}
               />
             )}
@@ -487,7 +505,7 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
 const PortalInicio: React.FC<{
   nome: string;
   cargo?: string;
-  pendencias: { documentos?: number; comunicados?: number; treinamentos?: number; noticias?: number };
+  pendencias: { documentos?: number; comunicados?: number; treinamentos?: number; noticias?: number; respostas?: number };
   onIr: (a: Aba) => void;
   noticias: NoticiaPortalResumo[];
   onAbrirNoticia: (id: string) => void;
@@ -495,6 +513,7 @@ const PortalInicio: React.FC<{
   const atalhos: { aba: Aba; titulo: string; texto: string; icone: React.ReactNode; qtd?: number }[] = [
     { aba: 'documentos', titulo: 'Documentos', texto: 'Contracheques, vale-alimentação, férias e outros', icone: <FileSignature className="w-5 h-5" />, qtd: pendencias.documentos },
     { aba: 'comunicados', titulo: 'Comunicados', texto: 'Avisos da empresa para você', icone: <Megaphone className="w-5 h-5" />, qtd: pendencias.comunicados },
+    { aba: 'solicitacoes', titulo: 'Fale com o DP', texto: 'Contestar, pedir férias, documentos ou atualizar dados', icone: <MessageSquareText className="w-5 h-5" />, qtd: pendencias.respostas },
     { aba: 'treinamentos', titulo: 'Treinamentos', texto: 'Cursos, provas e certificados', icone: <GraduationCap className="w-5 h-5" />, qtd: pendencias.treinamentos },
     { aba: 'jornal', titulo: 'Jornal JMT', texto: 'Notícias da empresa', icone: <Newspaper className="w-5 h-5" />, qtd: pendencias.noticias },
     { aba: 'instrucoes', titulo: 'Instruções de Trabalho', texto: 'Como fazer cada processo', icone: <BookOpen className="w-5 h-5" /> },
