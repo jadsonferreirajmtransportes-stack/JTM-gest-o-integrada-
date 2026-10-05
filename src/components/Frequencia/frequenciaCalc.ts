@@ -242,7 +242,10 @@ export function montarEspelho(
     const anuladas = todas.filter((b) => b.anulado);
     const justificativa = justPorDia.get(data);
     const foraDoPeriodo = (!!inicioContagem && data < inicioContagem) || (!!fimContagem && data > fimContagem);
-    const previsto = !!jornada && jornada.diasSemana.includes(diaDaSemana(data)) && !foraDoPeriodo;
+    // Antes do início do controle (ou da admissão) um dia SEM registro não conta — mas um dia
+    // com batida (ex.: folha manual lançada) ou justificativa segue a jornada normalmente.
+    const temRegistro = batidas.length > 0 || !!justificativa;
+    const previsto = !!jornada && jornada.diasSemana.includes(diaDaSemana(data)) && (!foraDoPeriodo || temRegistro);
     const previstoMin = previsto && jornada ? minutosPrevistos(jornada) : 0;
 
     let trabalhadoMin = 0;
