@@ -77,7 +77,17 @@ export function diaDeTrabalho(iso: string, j?: JornadaPonto): string {
     const { inicio, fim } = janelaPrevista(j, d);
     return t >= inicio - 4 * 60 && t <= fim + 6 * 60;
   });
-  return dentro.find((d) => j.diasSemana.includes(diaDaSemana(d))) || dentro[0] || data;
+  // Mais de uma jornada possível (ex.: viagem 20:00→16:00 do dia seguinte: a saída das 16:20
+  // está logo depois do fim da jornada de ontem E 4h antes do início da de hoje): fica com a
+  // jornada mais próxima do horário; empate → dia previsto na escala.
+  const distancia = (d: string) => {
+    const { inicio, fim } = janelaPrevista(j, d);
+    return t < inicio ? inicio - t : t > fim ? t - fim : 0;
+  };
+  const ordenados = [...dentro].sort(
+    (a, b) => distancia(a) - distancia(b) || Number(j.diasSemana.includes(diaDaSemana(b))) - Number(j.diasSemana.includes(diaDaSemana(a)))
+  );
+  return ordenados[0] || data;
 }
 
 export type SituacaoDia = 'OK' | 'Atraso' | 'Falta' | 'Incompleto' | 'Justificado' | 'Folga' | 'Extra' | 'Futuro' | 'Em andamento' | 'Fora do período';
@@ -115,10 +125,30 @@ export function montarEspelho(
   const { jornada, inicioContagem, fimContagem, raioPadraoM = 300 } = opcoes;
   const hoje = hojeLocal();
   const porDia = new Map<string, BatidaPonto[]>();
-  batidasDoColaborador.forEach((b) => {
-    const d = b.diaTrabalho || diaDeTrabalho(b.registradoEm, jornada);
-    porDia.set(d, [...(porDia.get(d) || []), b]);
-  });
+  const adicionar = (d: string, b: BatidaPonto) => porDia.set(d, [...(porDia.get(d) || []), b]);
+  // Batidas válidas em ordem: a SAÍDA de um par (2ª, 4ª, 6ª… do dia) fica no mesmo dia da
+  // entrada, se vier até 16h depois — assim a viagem/plantão que passa do horário previsto
+  // (ex.: entra 22:00, sai 18:56 do dia seguinte) não se divide em dois dias. Entradas usam a
+  // jornada (diaDeTrabalho) ou, na folha manual, o dia gravado.
+  const LIMITE_PAR_MS = 16 * 3600 * 1000;
+  let diaAtual: string | null = null;
+  let ultimaMs = 0;
+  [...batidasDoColaborador]
+    .filter((b) => !b.anulado)
+    .sort((a, b) => a.registradoEm.localeCompare(b.registradoEm))
+    .forEach((b) => {
+      const ms = Date.parse(b.registradoEm);
+      const qtdDia = diaAtual !== null ? porDia.get(diaAtual)?.length || 0 : 0;
+      const esperandoSaida = diaAtual !== null && qtdDia % 2 === 1 && ms - ultimaMs <= LIMITE_PAR_MS;
+      // Sem jornada (não há horário para comparar): a volta de um intervalo de até 3h, num dia
+      // que ainda não fechou as 4 batidas, continua no mesmo dia (ex.: noturno 00:00 → 01:00).
+      const voltaDoIntervalo = !jornada && diaAtual !== null && qtdDia % 2 === 0 && qtdDia < 4 && ms - ultimaMs <= 3 * 3600 * 1000;
+      const d = b.diaTrabalho || (esperandoSaida || voltaDoIntervalo ? (diaAtual as string) : diaDeTrabalho(b.registradoEm, jornada));
+      adicionar(d, b);
+      diaAtual = d;
+      ultimaMs = ms;
+    });
+  batidasDoColaborador.filter((b) => b.anulado).forEach((b) => adicionar(b.diaTrabalho || diaDeTrabalho(b.registradoEm, jornada), b));
   const justPorDia = new Map(justificativas.map((j) => [j.data, j]));
 
   return dias.map((data) => {
