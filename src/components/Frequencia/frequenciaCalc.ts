@@ -116,7 +116,7 @@ export function montarEspelho(
   const hoje = hojeLocal();
   const porDia = new Map<string, BatidaPonto[]>();
   batidasDoColaborador.forEach((b) => {
-    const d = diaDeTrabalho(b.registradoEm, jornada);
+    const d = b.diaTrabalho || diaDeTrabalho(b.registradoEm, jornada);
     porDia.set(d, [...(porDia.get(d) || []), b]);
   });
   const justPorDia = new Map(justificativas.map((j) => [j.data, j]));

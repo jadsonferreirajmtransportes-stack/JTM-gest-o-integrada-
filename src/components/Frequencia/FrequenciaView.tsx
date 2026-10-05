@@ -14,6 +14,7 @@ import {
   Link2,
   Smartphone,
   RefreshCw,
+  FileUp,
   Ban,
   CalendarCheck,
   Info,
@@ -67,6 +68,7 @@ import {
   resumir,
 } from './frequenciaCalc';
 import { gerarEspelhoPdf, nomeMes } from './espelhoPdf';
+import { ImportarFolhaManualModal } from './ImportarFolhaManualModal';
 import { gerarEspelhoXlsx, gerarResumoPdf, gerarResumoXlsx } from './relatorioFrequencia';
 
 interface FrequenciaViewProps {
@@ -98,6 +100,7 @@ const dataBr = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4
 export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, currentUser }) => {
   const [aba, setAba] = useState<Aba>('hoje');
   const [mes, setMes] = useState(mesAtual());
+  const [importandoFolha, setImportandoFolha] = useState(false);
   const [jornadas, setJornadas] = useState<JornadaPonto[]>([]);
   const [jornadaDe, setJornadaDe] = useState<Map<string, string>>(new Map());
   const [locais, setLocais] = useState<LocalPonto[]>([]);
@@ -389,6 +392,16 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
           <button type="button" onClick={carregarMes} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-50">
             <RefreshCw className={`w-3.5 h-3.5 ${carregandoMes ? 'animate-spin' : ''}`} /> Atualizar
           </button>
+          {currentUser?.role === 'admin' && (
+            <button
+              type="button"
+              onClick={() => setImportandoFolha(true)}
+              className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-50"
+              title="Lançar folhas de frequência preenchidas à mão (papel), com conferência"
+            >
+              <FileUp className="w-3.5 h-3.5 text-[#92611F]" /> Importar folha manual
+            </button>
+          )}
         </div>
       </div>
 
@@ -888,6 +901,24 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
           onExcluir={async (id) => {
             await deleteLocal(id);
             setLocais((prev) => prev.filter((x) => x.id !== id));
+          }}
+        />
+      )}
+
+      {importandoFolha && (
+        <ImportarFolhaManualModal
+          colaboradores={colaboradores.filter((c) => c.status !== 'Inativo')}
+          mesInicial={mes}
+          batidasExistentes={batidas}
+          justificativasExistentes={justificativas}
+          criadoPor={currentUser?.nome}
+          onTrocarMes={setMes}
+          onClose={() => setImportandoFolha(false)}
+          onLancado={(novas, justs) => {
+            setBatidas((prev) => [...prev, ...novas]);
+            setJustificativas((prev) => [...prev.filter((x) => !justs.some((j) => j.colaboradorId === x.colaboradorId && j.data === x.data)), ...justs]);
+            setImportandoFolha(false);
+            alert(`Pronto! ${novas.length} batida(s) e ${justs.length} justificativa(s) lançadas. Confira no Espelho do colaborador.`);
           }}
         />
       )}

@@ -45,6 +45,8 @@ export interface BatidaPonto {
   anuladoMotivo?: string;
   anuladoPor?: string;
   anuladoEm?: string;
+  /** Dia de trabalho em que a batida conta (folha manual de viagem que vira o dia — 070). */
+  diaTrabalho?: string;
 }
 
 export interface JustificativaDia {
@@ -181,6 +183,7 @@ function rowToBatida(r: any): BatidaPonto {
     anuladoMotivo: u(r.anulado_motivo),
     anuladoPor: u(r.anulado_por),
     anuladoEm: u(r.anulado_em),
+    diaTrabalho: u(r.dia_trabalho),
   };
 }
 
@@ -198,7 +201,7 @@ export async function getBatidas(deData: string, ateData: string, colaboradorIds
   for (let de = 0; ; de += PAGINA) {
     let q = supabase
       .from('ponto_registros')
-      .select('id, colaborador_id, registrado_em, origem, latitude, longitude, precisao_m, local_nome, distancia_m, motivo, criado_por, anulado, anulado_motivo, anulado_por, anulado_em')
+      .select('id, colaborador_id, registrado_em, origem, latitude, longitude, precisao_m, local_nome, distancia_m, motivo, criado_por, anulado, anulado_motivo, anulado_por, anulado_em, dia_trabalho')
       .gte('registrado_em', inicio.toISOString())
       .lte('registrado_em', fim.toISOString())
       .order('registrado_em')
@@ -240,6 +243,29 @@ export async function incluirBatidaAjuste(colaboradorId: string, dataHoraLocal: 
   const { error } = await supabase.from('ponto_registros').insert(registro);
   assertNoError(error, 'incluirBatidaAjuste');
   return rowToBatida({ ...registro, anulado: false });
+}
+
+/** Folha manual: inclui várias batidas de uma vez (ajuste do DP), cada uma com o dia de
+ *  trabalho em que conta. */
+export async function incluirBatidasLote(
+  itens: { colaboradorId: string; dataHoraLocal: string; diaTrabalho: string }[],
+  motivo: string,
+  criadoPor?: string
+): Promise<BatidaPonto[]> {
+  const registros = itens.map((i) => ({
+    id: novoId('bat-fm'),
+    colaborador_id: i.colaboradorId,
+    registrado_em: new Date(`${i.dataHoraLocal}:00-03:00`).toISOString(),
+    origem: 'ajuste',
+    motivo,
+    criado_por: criadoPor ?? null,
+    dia_trabalho: i.diaTrabalho,
+  }));
+  for (let k = 0; k < registros.length; k += 200) {
+    const { error } = await supabase.from('ponto_registros').insert(registros.slice(k, k + 200));
+    assertNoError(error, 'incluirBatidasLote');
+  }
+  return registros.map((r) => rowToBatida({ ...r, anulado: false }));
 }
 
 export async function anularBatida(id: string, motivo: string, anuladoPor?: string): Promise<void> {

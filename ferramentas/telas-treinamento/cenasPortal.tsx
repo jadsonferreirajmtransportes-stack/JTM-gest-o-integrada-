@@ -177,3 +177,26 @@ CENAS_PORTAL['sol-dp'] = {
   },
   acoes: async () => { await esperar(1000); await clicar('Pedido de férias'); await esperar(800); },
 };
+
+// Importar folha manual (dados fictícios).
+CENAS_PORTAL['folha-imp'] = {
+  montar: async () => {
+    const { ImportarFolhaManualModal } = await import('../../src/components/Frequencia/ImportarFolhaManualModal');
+    const colabs: any[] = [{ id: 'c1', nomeCompleto: 'PAULA RIBEIRO', status: 'Ativo', funcaoCargo: 'Motorista de Truck', setor: 'Operacional Noturno' }];
+    return <ImportarFolhaManualModal colaboradores={colabs} mesInicial="2026-09" batidasExistentes={[]} justificativasExistentes={[]} onClose={() => {}} onLancado={() => {}} />;
+  },
+  acoes: async () => {
+    await esperar(600);
+    const json = { tipo: 'jmt-folha-manual', mes: '2026-09', folhas: [{ nome: 'Paula Ribeiro', linhas: [
+      { dia: 1, e1: '20:15', s1: '04:00', e2: '05:01', s2: '16:20', duvida: 'Escrito entre as linhas 01 e 02' },
+      { dia: 3, e1: '20:10', s1: '04:01', e2: '05:00', s2: '16:44' },
+      { dia: 4, e1: '07:00', s1: '12:00', e2: '13:10', s2: '' },
+    ], justificativas: [{ dia: 8, tipo: 'Férias' }] }] };
+    const input = document.querySelector('input[type=file][accept*="json"]') as HTMLInputElement;
+    const dt = new DataTransfer();
+    dt.items.add(new File([JSON.stringify(json)], 'teste.json', { type: 'application/json' }));
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await esperar(800);
+  },
+};
