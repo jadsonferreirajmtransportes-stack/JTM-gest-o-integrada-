@@ -7,7 +7,8 @@ const AGORA = new Date('2026-10-02T10:00:00-03:00');
 const iso = (dias = 0, horas = 0) => new Date(AGORA.getTime() + dias * 86400000 + horas * 3600000).toISOString();
 const ILU = (n: string) => `/ferramentas/telas-treinamento/ilustracoes/${n}.svg`;
 const ADMIN: any = { id: 'u-admin', nome: 'Marcos Andrade', login: 'marcos', role: 'admin', status: 'Ativo', modulosPermitidos: [] };
-const COLABS: any[] = ['Paula Ribeiro', 'Renato Campos', 'Sílvia Moura', 'Tiago Nogueira'].map((nome, i) => ({ id: `c${i}`, nomeCompleto: nome, status: 'Ativo', telefoneWhatsapp: '(84) 90000-0000' }));
+const SETORES = ['Farma Aéreo', 'Farma Rodoviário', 'Armazenagem', 'Expedição', 'Departamento Pessoal', 'Qualidade'];
+const COLABS: any[] = ['Paula Ribeiro', 'Renato Campos', 'Sílvia Moura', 'Tiago Nogueira', 'Vanessa Rocha', 'Wagner Pires', 'Bianca Teles', 'César Duarte'].map((nome, i) => ({ id: `c${i}`, nomeCompleto: nome.toUpperCase(), status: 'Ativo', setor: SETORES[i % SETORES.length], telefoneWhatsapp: '(84) 90000-0000' }));
 
 const TEXTO_RECORDE = `Em setembro, a equipe do Farma Aéreo fechou o mês com 99,4% das entregas dentro do prazo combinado com os clientes — o melhor resultado desde que a operação começou.
 
@@ -24,13 +25,13 @@ const NOTICIAS = [
 
 function prepararGestao() {
   tabelas.noticias = NOTICIAS;
-  tabelas.noticia_leituras = [...Array(23)].map((_, i) => ({ noticia_id: 'n1', colaborador_id: `x${i}` })).concat([...Array(14)].map((_, i) => ({ noticia_id: 'n2', colaborador_id: `y${i}` })), [...Array(9)].map((_, i) => ({ noticia_id: 'n3', colaborador_id: `z${i}` })));
+  tabelas.noticia_leituras = [0, 1, 2, 3, 4, 6].map((i) => ({ noticia_id: 'n1', colaborador_id: `c${i}`, lido_em: iso(-1, i) })).concat([0, 1, 3].map((i) => ({ noticia_id: 'n2', colaborador_id: `c${i}`, lido_em: iso(-5, i) })), [0, 2].map((i) => ({ noticia_id: 'n3', colaborador_id: `c${i}`, lido_em: iso(-8, i) })));
   tabelas.noticia_reacoes = [
-    ...[...Array(11)].map(() => ({ noticia_id: 'n1', tipo: 'parabens' })),
-    ...[...Array(6)].map(() => ({ noticia_id: 'n1', tipo: 'curtir' })),
-    ...[...Array(3)].map(() => ({ noticia_id: 'n1', tipo: 'amei' })),
-    ...[...Array(5)].map(() => ({ noticia_id: 'n2', tipo: 'curtir' })),
-    ...[...Array(2)].map(() => ({ noticia_id: 'n3', tipo: 'apoio' })),
+    { noticia_id: 'n1', colaborador_id: 'c0', tipo: 'parabens', criado_em: iso(-1, 2) },
+    { noticia_id: 'n1', colaborador_id: 'c1', tipo: 'amei', criado_em: iso(-1, 3) },
+    { noticia_id: 'n1', colaborador_id: 'c3', tipo: 'curtir', criado_em: iso(-1, 4) },
+    { noticia_id: 'n2', colaborador_id: 'c0', tipo: 'curtir', criado_em: iso(-5, 2) },
+    { noticia_id: 'n3', colaborador_id: 'c2', tipo: 'apoio', criado_em: iso(-8, 2) },
   ];
   tabelas.noticia_comentarios = [
     { id: 'k1', noticia_id: 'n1', colaborador_id: 'c0', autor_nome: 'Paula R.', texto: 'Orgulho de fazer parte dessa equipe! 👏', status: 'pendente', criado_em: iso(0, -2) },
@@ -79,6 +80,32 @@ const celular = (filho: React.ReactNode) => (
 );
 
 export const CENAS_JORNAL: Record<string, Cena> = {
+  'jor-eng': {
+    montar: async () => {
+      prepararGestao();
+      const { JornalView } = await import('../../src/components/Jornal/JornalView');
+      return moldura(<JornalView colaboradores={COLABS} currentUser={ADMIN} />);
+    },
+    acoes: async () => {
+      await esperar(1000);
+      await clicar('Engajamento');
+      await esperar(800);
+    },
+  },
+  'jor-int': {
+    montar: async () => {
+      prepararGestao();
+      const { JornalView } = await import('../../src/components/Jornal/JornalView');
+      return moldura(<JornalView colaboradores={COLABS} currentUser={ADMIN} />);
+    },
+    acoes: async () => {
+      await esperar(1000);
+      await clicar('Quem interagiu');
+      await esperar(800);
+      await clicar('Reagiram');
+      await esperar(300);
+    },
+  },
   'jor-1': {
     montar: async () => {
       prepararGestao();

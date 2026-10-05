@@ -185,6 +185,7 @@ const NoticiaAberta: React.FC<{
                   );
                 })}
               </div>
+              <p className="text-[10px] text-slate-400">Sua reação e seus comentários ficam registrados com o seu nome para a equipe de Comunicação da JMT.</p>
             </div>
           </article>
 

@@ -197,6 +197,66 @@ export async function moderarComentario(id: string, status: 'aprovado' | 'oculto
   assertNoError(error, 'moderarComentario');
 }
 
+// ---------------------------------------------------------------------------
+// Quem interagiu (só a gestão/administrador vê — tabelas fechadas para o portal)
+// ---------------------------------------------------------------------------
+
+export interface InteracoesNoticia {
+  leituras: { colaboradorId: string; lidoEm: string }[];
+  reacoes: { colaboradorId: string; tipo: TipoReacao; criadoEm: string }[];
+  comentarios: ComentarioNoticia[];
+}
+
+/** Quem leu, reagiu e comentou uma notícia. */
+export async function getInteracoesNoticia(noticiaId: string): Promise<InteracoesNoticia> {
+  const [leituras, reacoes, comentarios] = await Promise.all([
+    supabase.from('noticia_leituras').select('colaborador_id, lido_em').eq('noticia_id', noticiaId),
+    supabase.from('noticia_reacoes').select('colaborador_id, tipo, criado_em').eq('noticia_id', noticiaId),
+    getComentarios(noticiaId),
+  ]);
+  assertNoError(leituras.error, 'getInteracoesNoticia/leituras');
+  assertNoError(reacoes.error, 'getInteracoesNoticia/reacoes');
+  return {
+    leituras: (leituras.data ?? []).map((r: any) => ({ colaboradorId: r.colaborador_id, lidoEm: r.lido_em })),
+    reacoes: (reacoes.data ?? []).map((r: any) => ({ colaboradorId: r.colaborador_id, tipo: r.tipo, criadoEm: r.criado_em })),
+    comentarios,
+  };
+}
+
+export interface EngajamentoColaborador {
+  colaboradorId: string;
+  leituras: number;
+  reacoes: number;
+  comentarios: number;
+  ultimaInteracao?: string;
+}
+
+/** Resumo por colaborador de todas as notícias (leituras, reações e comentários). */
+export async function getEngajamentoPorColaborador(): Promise<Map<string, EngajamentoColaborador>> {
+  const [leituras, reacoes, comentarios] = await Promise.all([
+    supabase.from('noticia_leituras').select('colaborador_id, lido_em'),
+    supabase.from('noticia_reacoes').select('colaborador_id, criado_em'),
+    supabase.from('noticia_comentarios').select('colaborador_id, criado_em'),
+  ]);
+  assertNoError(leituras.error, 'getEngajamento/leituras');
+  assertNoError(reacoes.error, 'getEngajamento/reacoes');
+  assertNoError(comentarios.error, 'getEngajamento/comentarios');
+  const mapa = new Map<string, EngajamentoColaborador>();
+  const somar = (lista: any[] | null, campo: 'leituras' | 'reacoes' | 'comentarios', data: string) =>
+    (lista ?? []).forEach((r: any) => {
+      if (!r.colaborador_id) return;
+      const e: EngajamentoColaborador = mapa.get(r.colaborador_id) || { colaboradorId: r.colaborador_id, leituras: 0, reacoes: 0, comentarios: 0 };
+      e[campo] += 1;
+      const quando = r[data];
+      if (quando && (!e.ultimaInteracao || quando > e.ultimaInteracao)) e.ultimaInteracao = quando;
+      mapa.set(r.colaborador_id, e);
+    });
+  somar(leituras.data, 'leituras', 'lido_em');
+  somar(reacoes.data, 'reacoes', 'criado_em');
+  somar(comentarios.data, 'comentarios', 'criado_em');
+  return mapa;
+}
+
 /** Leituras e reações de todas as notícias (só as colunas pequenas). */
 export async function getEstatisticas(): Promise<Map<string, EstatisticasNoticia>> {
   const [leituras, reacoes] = await Promise.all([

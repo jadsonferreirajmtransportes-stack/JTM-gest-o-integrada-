@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Newspaper, Plus, Loader2, Pencil, Trash2, Eye, MessageSquare, MessageCircle, Archive, RotateCcw, Pin, Check, EyeOff, X, Search } from 'lucide-react';
+import { Newspaper, Plus, Loader2, Pencil, Trash2, Eye, MessageSquare, MessageCircle, Archive, RotateCcw, Pin, Check, EyeOff, X, Search, Users } from 'lucide-react';
 import { Colaborador, UsuarioLogin } from '../../types';
 import {
   ComentarioNoticia,
@@ -18,8 +18,9 @@ import { montarLinkUnico } from '../../utils/linkUnico';
 import { EnvioWhatsAppEmMassaModal, ItemEnvioWhatsApp } from '../Common/EnvioWhatsAppEmMassaModal';
 import { CapaNoticia, ResumoReacoes, dataNoticia } from './jornalVisual';
 import { NoticiaEditorModal, noticiaEmBranco } from './NoticiaEditorModal';
+import { EngajamentoPainel, InteracoesModal } from './JornalEngajamento';
 
-type Aba = 'publicadas' | 'aprovar' | 'rascunhos' | 'arquivadas' | 'comentarios';
+type Aba = 'publicadas' | 'aprovar' | 'rascunhos' | 'arquivadas' | 'comentarios' | 'engajamento';
 
 const primeiroNome = (nome: string) => {
   const p = (nome || '').trim().split(/\s+/)[0] || '';
@@ -39,6 +40,7 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
   const [editando, setEditando] = useState<Noticia | null>(null);
   const [abrindoId, setAbrindoId] = useState<string | null>(null);
   const [comentariosDe, setComentariosDe] = useState<Noticia | null>(null);
+  const [interacoesDe, setInteracoesDe] = useState<Noticia | null>(null);
   const [envio, setEnvio] = useState<{ titulo: string; itens: ItemEnvioWhatsApp[] } | null>(null);
   const [preparandoEnvio, setPreparandoEnvio] = useState<string | null>(null);
 
@@ -73,7 +75,7 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
     [visiveis]
   );
   const titulosPorId = useMemo(() => new Map(noticias.map((n) => [n.id, n.titulo])), [noticias]);
-  const lista = aba === 'comentarios' ? [] : porAba[aba].filter((n) => !busca.trim() || `${n.titulo} ${n.resumo || ''} ${n.categoria}`.toLowerCase().includes(busca.trim().toLowerCase()));
+  const lista = aba === 'comentarios' || aba === 'engajamento' ? [] : porAba[aba].filter((n) => !busca.trim() || `${n.titulo} ${n.resumo || ''} ${n.categoria}`.toLowerCase().includes(busca.trim().toLowerCase()));
 
   const abrirEditor = async (n: Noticia) => {
     setAbrindoId(n.id);
@@ -150,7 +152,12 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
     ['aprovar', ehAdmin ? 'Para aprovar' : 'Enviadas para aprovação', porAba.aprovar.length],
     ['rascunhos', 'Rascunhos', porAba.rascunhos.length],
     ['arquivadas', 'Arquivadas', porAba.arquivadas.length],
-    ...(ehAdmin ? ([['comentarios', 'Comentários para aprovar', pendentes.length]] as [Aba, string, number][]) : []),
+    ...(ehAdmin
+      ? ([
+          ['comentarios', 'Comentários para aprovar', pendentes.length],
+          ['engajamento', 'Engajamento', undefined],
+        ] as [Aba, string, number | undefined][])
+      : []),
   ];
 
   return (
@@ -206,7 +213,7 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
             </button>
           ))}
         </div>
-        {aba !== 'comentarios' && (
+        {aba !== 'comentarios' && aba !== 'engajamento' && (
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar notícia..." className="pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-xs w-56" />
@@ -222,6 +229,8 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
         </p>
       ) : aba === 'comentarios' ? (
         <ListaComentariosPendentes comentarios={pendentes} titulos={titulosPorId} onModerar={moderar} />
+      ) : aba === 'engajamento' ? (
+        <EngajamentoPainel colaboradores={colaboradores} totalPublicadas={porAba.publicadas.length} />
       ) : lista.length === 0 ? (
         <p className="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center text-xs text-slate-500">
           {aba === 'publicadas' ? 'Nenhuma notícia publicada ainda. Clique em "Nova notícia" para escrever a primeira.' : 'Nada por aqui.'}
@@ -271,6 +280,11 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
                         <button type="button" onClick={() => setComentariosDe(n)} className="px-2.5 py-1.5 border border-slate-200 rounded-lg font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1">
                           <MessageSquare className="w-3.5 h-3.5" /> Comentários
                         </button>
+                        {ehAdmin && (
+                          <button type="button" onClick={() => setInteracoesDe(n)} className="px-2.5 py-1.5 border border-slate-200 rounded-lg font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5" /> Quem interagiu
+                          </button>
+                        )}
                         {ehAdmin && (
                           <button
                             type="button"
@@ -324,6 +338,8 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
           }}
         />
       )}
+
+      {interacoesDe && <InteracoesModal noticia={interacoesDe} colaboradores={colaboradores} onClose={() => setInteracoesDe(null)} />}
 
       {comentariosDe && <ComentariosModal noticia={comentariosDe} ehAdmin={ehAdmin} moderador={eu} onClose={() => setComentariosDe(null)} onMudou={carregar} />}
 
