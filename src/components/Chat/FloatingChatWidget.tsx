@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MessageSquare, X, Send, ArrowLeft, Maximize2, Users, User } from 'lucide-react';
 import { ConversaChat, MensagemChat, UsuarioLogin } from '../../types';
-import { getMensagens, assinarMensagensNovas, AnexoMensagemChat } from '../../utils/chatApi';
+import { getMensagens, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem } from '../../utils/chatApi';
+import { AcoesMensagemChat, EditorMensagemChat, MensagemApagada } from './MensagemChatAcoes';
 
 interface FloatingChatWidgetProps {
   usuarios: UsuarioLogin[];
@@ -82,10 +83,19 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
         if (!cancelado) setCarregando(false);
       });
 
-    const cancelarInscricao = assinarMensagensNovas((msg) => {
-      if (msg.conversaId !== conversaAbertaId) return;
-      setMensagens((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
-    });
+    const cancelarInscricao = assinarMensagensNovas(
+      (msg) => {
+        if (msg.conversaId !== conversaAbertaId) return;
+        setMensagens((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+      },
+      (msg) => {
+        if (msg.conversaId !== conversaAbertaId) return;
+        // Edição/remoção feita por quem enviou — mantém o anexo que já estava na tela (se não foi apagada).
+        setMensagens((prev) =>
+          prev.map((m) => (m.id === msg.id ? { ...m, ...msg, anexoUrl: msg.apagada ? undefined : msg.anexoUrl ?? m.anexoUrl } : m))
+        );
+      }
+    );
 
     return () => {
       cancelado = true;
@@ -93,9 +103,45 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
     };
   }, [conversaAbertaId]);
 
+  // Só desce pro fim quando chega mensagem nova — editar/apagar não mexe na rolagem.
   useEffect(() => {
     fimDaListaRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [mensagens]);
+  }, [mensagens.length]);
+
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+
+  const salvarEdicao = async (m: MensagemChat, novoTexto: string) => {
+    const t = novoTexto.trim();
+    if (!t || t === m.texto) {
+      setEditandoId(null);
+      return;
+    }
+    try {
+      const editadoEm = await editarMensagem(m.id, t);
+      setMensagens((prev) => prev.map((x) => (x.id === m.id ? { ...x, texto: t, editadoEm } : x)));
+      setEditandoId(null);
+    } catch (err) {
+      console.error('Erro ao editar mensagem:', err);
+      alert('Não foi possível editar a mensagem. Tente de novo.');
+    }
+  };
+
+  const handleApagarMensagem = async (m: MensagemChat) => {
+    if (!window.confirm('Apagar esta mensagem? Ela some para todos da conversa.')) return;
+    try {
+      await apagarMensagem(m.id);
+      setMensagens((prev) =>
+        prev.map((x) =>
+          x.id === m.id
+            ? { ...x, apagada: true, texto: '', anexoUrl: undefined, anexoNome: undefined, anexoTipo: undefined, temAnexo: false }
+            : x
+        )
+      );
+    } catch (err) {
+      console.error('Erro ao apagar mensagem:', err);
+      alert('Não foi possível apagar a mensagem. Tente de novo.');
+    }
+  };
 
   const handleAbrir = (id: string) => {
     setConversaAbertaId(id);
@@ -211,21 +257,40 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
             {mensagens.map((m) => {
               const propria = m.autorId === currentUserId;
               const autor = usuarios.find((u) => u.id === m.autorId);
+              const editando = editandoId === m.id;
               return (
-                <div key={m.id} className={`flex ${propria ? 'justify-end' : 'justify-start'}`}>
+                <div key={m.id} className={`group flex items-center gap-0.5 ${propria ? 'justify-end' : 'justify-start'}`}>
+                  {propria && !m.apagada && !editando && (
+                    <AcoesMensagemChat
+                      compacto
+                      podeEditar={!!m.texto}
+                      onEditar={() => setEditandoId(m.id)}
+                      onApagar={() => handleApagarMensagem(m)}
+                    />
+                  )}
                   <div
-                    className={`max-w-[80%] rounded-xl px-2.5 py-1.5 text-[11px] ${
+                    className={`${editando ? 'w-[85%]' : 'max-w-[80%]'} rounded-xl px-2.5 py-1.5 text-[11px] ${
                       propria ? 'bg-[#C48229] text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'
                     }`}
                   >
                     {!propria && conversaAberta.tipo === 'grupo' && (
                       <p className="text-[9px] font-bold text-[#92611F] mb-0.5">{autor?.nome || 'Alguém'}</p>
                     )}
-                    {m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>}
-                    {(m.anexoUrl || m.temAnexo) && !m.texto && (
+                    {m.apagada && <MensagemApagada />}
+                    {editando ? (
+                      <EditorMensagemChat
+                        textoInicial={m.texto}
+                        onSalvar={(t) => salvarEdicao(m, t)}
+                        onCancelar={() => setEditandoId(null)}
+                      />
+                    ) : (
+                      m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>
+                    )}
+                    {!m.apagada && (m.anexoUrl || m.temAnexo) && !m.texto && (
                       <p className="italic opacity-80">📎 {m.anexoNome || 'Anexo'}</p>
                     )}
                     <p className={`text-[8px] mt-0.5 text-right ${propria ? 'text-white/70' : 'text-slate-400'}`}>
+                      {m.editadoEm && !m.apagada && <span className="italic mr-1">editada ·</span>}
                       {formatHora(m.criadoEm)}
                     </p>
                   </div>

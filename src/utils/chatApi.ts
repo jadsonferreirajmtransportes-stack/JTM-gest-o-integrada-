@@ -15,6 +15,7 @@ function assertNoError(error: { message: string } | null, contexto: string) {
 
 function rowToMensagem(r: any): MensagemChat {
   if (r.anexo_url) cacheAnexos.set(r.id, r.anexo_url);
+  if (r.apagada) cacheAnexos.delete(r.id);
   return {
     id: r.id,
     conversaId: r.conversa_id,
@@ -25,6 +26,8 @@ function rowToMensagem(r: any): MensagemChat {
     anexoNome: r.anexo_nome ?? undefined,
     anexoTipo: r.anexo_tipo ?? undefined,
     temAnexo: !!(r.anexo_url || r.anexo_nome || r.anexo_tipo),
+    editadoEm: r.editado_em ?? undefined,
+    apagada: !!r.apagada,
   };
 }
 
@@ -197,7 +200,7 @@ export async function criarConversaGrupo(
 export async function getMensagens(conversaId: string): Promise<MensagemChat[]> {
   const { data, error } = await supabase
     .from('chat_mensagens')
-    .select('id, conversa_id, autor_id, texto, criado_em, anexo_nome, anexo_tipo')
+    .select('id, conversa_id, autor_id, texto, criado_em, anexo_nome, anexo_tipo, editado_em, apagada')
     .eq('conversa_id', conversaId)
     .order('criado_em', { ascending: true });
   assertNoError(error, 'getMensagens');
@@ -257,19 +260,52 @@ export async function enviarMensagem(
   await supabase.from('chat_conversas').update({ atualizado_em: agora }).eq('id', conversaId);
 }
 
+/** O autor corrige o texto da própria mensagem (fica marcada como "editada"). */
+export async function editarMensagem(mensagemId: string, texto: string): Promise<string> {
+  const editadoEm = new Date().toISOString();
+  const { error } = await supabase
+    .from('chat_mensagens')
+    .update({ texto: texto.trim(), editado_em: editadoEm })
+    .eq('id', mensagemId);
+  assertNoError(error, 'editarMensagem');
+  return editadoEm;
+}
+
+/** O autor apaga a própria mensagem — texto e anexo são limpos de verdade no banco; a linha fica
+ *  só pra mostrar "Mensagem apagada" no lugar (como no WhatsApp). */
+export async function apagarMensagem(mensagemId: string): Promise<void> {
+  const { error } = await supabase
+    .from('chat_mensagens')
+    .update({ apagada: true, texto: '', anexo_url: null, anexo_nome: null, anexo_tipo: null })
+    .eq('id', mensagemId);
+  assertNoError(error, 'apagarMensagem');
+  cacheAnexos.delete(mensagemId);
+}
+
 /** Assina mensagens novas em TEMPO REAL (Supabase Realtime) — chama `onNovaMensagem` pra toda
  *  mensagem inserida em qualquer conversa (o filtro de "é uma conversa minha?" é feito por quem
  *  chama, já que uma inscrição por conversa ficaria complexa demais pra um chat desse tamanho).
+ *  `onAtualizada` (opcional) recebe as mensagens editadas/apagadas.
  *  Retorna uma função pra cancelar a inscrição — sempre chamar ao desmontar/trocar de tela. */
-export function assinarMensagensNovas(onNovaMensagem: (msg: MensagemChat) => void): () => void {
-  const canal = supabase
+export function assinarMensagensNovas(
+  onNovaMensagem: (msg: MensagemChat) => void,
+  onAtualizada?: (msg: MensagemChat) => void
+): () => void {
+  let canal = supabase
     .channel(`chat_mensagens_realtime_${Date.now()}`)
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'chat_mensagens' },
       (payload) => onNovaMensagem(rowToMensagem(payload.new))
-    )
-    .subscribe();
+    );
+  if (onAtualizada) {
+    canal = canal.on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'chat_mensagens' },
+      (payload) => onAtualizada(rowToMensagem(payload.new))
+    );
+  }
+  canal.subscribe();
 
   return () => {
     supabase.removeChannel(canal);

@@ -24,7 +24,8 @@ import {
   ProjetoGerencial,
   InstrucaoTrabalho,
 } from '../../types';
-import { getMensagens, getAnexoMensagem, assinarMensagensNovas, AnexoMensagemChat } from '../../utils/chatApi';
+import { getMensagens, getAnexoMensagem, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem } from '../../utils/chatApi';
+import { AcoesMensagemChat, EditorMensagemChat, MensagemApagada } from './MensagemChatAcoes';
 import { podeVerRegistroCompartilhado } from '../../utils/visibilidadeUtils';
 import { podeVerAtividade } from '../Agenda/agendaUtils';
 import { NovaConversaModal } from './NovaConversaModal';
@@ -276,10 +277,19 @@ export const ChatView: React.FC<ChatViewProps> = ({
         if (!cancelado) setCarregandoMensagens(false);
       });
 
-    const cancelarInscricao = assinarMensagensNovas((msg) => {
-      if (msg.conversaId !== conversaAbertaId) return;
-      setMensagens((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
-    });
+    const cancelarInscricao = assinarMensagensNovas(
+      (msg) => {
+        if (msg.conversaId !== conversaAbertaId) return;
+        setMensagens((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+      },
+      (msg) => {
+        if (msg.conversaId !== conversaAbertaId) return;
+        // Edição/remoção feita por quem enviou — mantém o anexo que já estava na tela (se não foi apagada).
+        setMensagens((prev) =>
+          prev.map((m) => (m.id === msg.id ? { ...m, ...msg, anexoUrl: msg.apagada ? undefined : msg.anexoUrl ?? m.anexoUrl } : m))
+        );
+      }
+    );
 
     return () => {
       cancelado = true;
@@ -287,9 +297,45 @@ export const ChatView: React.FC<ChatViewProps> = ({
     };
   }, [conversaAbertaId]);
 
+  // Só desce pro fim quando chega mensagem nova — editar/apagar não mexe na rolagem.
   useEffect(() => {
     fimDaListaRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [mensagens]);
+  }, [mensagens.length]);
+
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+
+  const salvarEdicao = async (m: MensagemChat, novoTexto: string) => {
+    const t = novoTexto.trim();
+    if (!t || t === m.texto) {
+      setEditandoId(null);
+      return;
+    }
+    try {
+      const editadoEm = await editarMensagem(m.id, t);
+      setMensagens((prev) => prev.map((x) => (x.id === m.id ? { ...x, texto: t, editadoEm } : x)));
+      setEditandoId(null);
+    } catch (err) {
+      console.error('Erro ao editar mensagem:', err);
+      alert('Não foi possível editar a mensagem. Tente de novo.');
+    }
+  };
+
+  const handleApagarMensagem = async (m: MensagemChat) => {
+    if (!window.confirm('Apagar esta mensagem? Ela some para todos da conversa.')) return;
+    try {
+      await apagarMensagem(m.id);
+      setMensagens((prev) =>
+        prev.map((x) =>
+          x.id === m.id
+            ? { ...x, apagada: true, texto: '', anexoUrl: undefined, anexoNome: undefined, anexoTipo: undefined, temAnexo: false }
+            : x
+        )
+      );
+    } catch (err) {
+      console.error('Erro ao apagar mensagem:', err);
+      alert('Não foi possível apagar a mensagem. Tente de novo.');
+    }
+  };
 
   const handleAbrirConversa = (id: string) => {
     setConversaAbertaId(id);
@@ -586,16 +632,26 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 const propria = m.autorId === currentUserId;
                 const autor = usuarios.find((u) => u.id === m.autorId);
                 const ehImagem = m.anexoTipo?.startsWith('image/');
+                const editando = editandoId === m.id;
                 return (
-                  <div key={m.id} className={`flex ${propria ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] rounded-2xl px-3.5 py-2 text-xs ${
+                  <div key={m.id} className={`group flex items-center gap-1 ${propria ? 'justify-end' : 'justify-start'}`}>
+                    {propria && !m.apagada && !editando && (
+                      <AcoesMensagemChat
+                        podeEditar={!!m.texto}
+                        onEditar={() => setEditandoId(m.id)}
+                        onApagar={() => handleApagarMensagem(m)}
+                      />
+                    )}
+                    <div className={`${editando ? 'w-[70%]' : 'max-w-[70%]'} rounded-2xl px-3.5 py-2 text-xs ${
                       propria ? 'bg-[#C48229] text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'
                     }`}>
                       {!propria && conversaAberta.tipo === 'grupo' && (
                         <p className="text-[10px] font-bold text-[#C48229] mb-0.5">{autor?.nome || 'Alguém'}</p>
                       )}
 
-                      {(m.anexoUrl || m.temAnexo) && (
+                      {m.apagada && <MensagemApagada />}
+
+                      {!m.apagada && (m.anexoUrl || m.temAnexo) && (
                         <AnexoDaMensagem
                           mensagem={m}
                           ehImagem={!!ehImagem}
@@ -606,12 +662,23 @@ export const ChatView: React.FC<ChatViewProps> = ({
                         />
                       )}
 
-                      {m.texto && (
-                        <p className="whitespace-pre-wrap break-words">
-                          {renderTextoComMencoes(m.texto, propria, onAbrirMencao)}
-                        </p>
+                      {editando ? (
+                        <EditorMensagemChat
+                          textoInicial={m.texto}
+                          onSalvar={(t) => salvarEdicao(m, t)}
+                          onCancelar={() => setEditandoId(null)}
+                        />
+                      ) : (
+                        m.texto && (
+                          <p className="whitespace-pre-wrap break-words">
+                            {renderTextoComMencoes(m.texto, propria, onAbrirMencao)}
+                          </p>
+                        )
                       )}
-                      <p className={`text-[9px] mt-1 text-right ${propria ? 'text-white/70' : 'text-slate-400'}`}>{formatHora(m.criadoEm)}</p>
+                      <p className={`text-[9px] mt-1 text-right ${propria ? 'text-white/70' : 'text-slate-400'}`}>
+                        {m.editadoEm && !m.apagada && <span className="italic mr-1">editada ·</span>}
+                        {formatHora(m.criadoEm)}
+                      </p>
                     </div>
                   </div>
                 );

@@ -1790,6 +1790,10 @@ export interface MensagemChat {
   anexoUrl?: string;
   anexoNome?: string;
   anexoTipo?: string;
+  /** Quando o autor corrigiu o texto (migração 071). */
+  editadoEm?: string;
+  /** O autor apagou — texto e anexo já vêm vazios. */
+  apagada?: boolean;
   /** true quando a mensagem tem anexo — o histórico (getMensagens) vem sem o conteúdo do
    *  arquivo (anexoUrl vazio); buscar sob demanda com getAnexoMensagem(id). */
   temAnexo?: boolean;
