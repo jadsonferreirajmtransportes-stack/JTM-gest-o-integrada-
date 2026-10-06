@@ -33,6 +33,8 @@ export interface LinhaFolhaExtraLida {
   valores: ValorFolhaExtra[];
   total: number;
   colaboradorId?: string;
+  /** A folha não trouxe o total ("-"): total calculado aqui — conferir na prévia. */
+  totalCalculado?: boolean;
 }
 
 export interface FolhaExtraLida {
@@ -141,7 +143,11 @@ export function lerFolhaExtra(paginas: PaginaComPosicao[], colaboradores: Colabo
       const valores: ValorFolhaExtra[] = [];
       linha.itens.forEach((it) => {
         if (it.x + it.w < xNome - 2 && /^\d+$/.test(it.str.trim())) return; // nº da linha
-        const col = colunaDe(it.x);
+        // Texto (nome, cargo) vai pra coluna de título mais próximo — o cargo às vezes começa bem
+        // antes do título "Cargo". Valores seguem a regra de colunaDe.
+        const col = ehValor(it.str)
+          ? colunaDe(it.x)
+          : colunas.filter((c) => c.tipo !== 'ignorar').sort((a, b) => Math.abs(a.x - it.x) - Math.abs(b.x - it.x))[0];
         if (!col) return;
         if (col.tipo === 'nome') nome.push(it.str.trim());
         else if (col.tipo === 'cargo') cargo.push(it.str.trim());
@@ -150,7 +156,10 @@ export function lerFolhaExtra(paginas: PaginaComPosicao[], colaboradores: Colabo
         else if (col.tipo === 'valor' && ehValor(it.str)) valores.push({ rotulo: rotuloDaColuna(col.titulo), valor: paraNumero(it.str) });
       });
       const nomeNoPdf = nome.join(' ').replace(/\s+/g, ' ').trim();
-      if (!nomeNoPdf || (total === undefined && valores.length === 0)) continue;
+      if (!nomeNoPdf || (total === undefined && valores.length === 0 && salarioBase === undefined)) continue;
+      const totalCalculado = total === undefined;
+      // Sem total e só com o salário preenchido: o pagamento é o próprio salário.
+      if (totalCalculado && valores.length === 0 && salarioBase !== undefined) total = salarioBase;
       // Quando o total soma o salário junto (salário também pago nesta folha), o salário vira uma
       // linha do recibo; senão é só informativo (salário base do cálculo).
       const somaValores = valores.reduce((t, v) => t + v.valor, 0);
@@ -164,7 +173,8 @@ export function lerFolhaExtra(paginas: PaginaComPosicao[], colaboradores: Colabo
         cargo: cargo.join(' ').trim(),
         salarioBase,
         valores,
-        total: total ?? valores.reduce((t, v) => t + v.valor, 0),
+        total: total ?? somaValores,
+        ...(totalCalculado ? { totalCalculado: true } : {}),
         colaboradorId: acharColaborador(nomeNoPdf, colaboradores),
       });
     }

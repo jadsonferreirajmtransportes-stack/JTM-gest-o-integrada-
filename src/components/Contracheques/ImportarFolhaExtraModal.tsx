@@ -231,7 +231,14 @@ export const ImportarFolhaExtraModal: React.FC<ImportarFolhaExtraModalProps> = (
                           )}
                         </td>
                         <td className="px-3 py-2 text-slate-600">{l.valores.map((v) => `${v.rotulo.split(' (')[0]} ${formatarReais(v.valor)}`).join(' · ')}</td>
-                        <td className="px-3 py-2 text-right font-bold text-slate-900 tabular-nums">{formatarReais(l.total)}</td>
+                        <td className="px-3 py-2 text-right font-bold text-slate-900 tabular-nums">
+                          {formatarReais(l.total)}
+                          {l.totalCalculado && (
+                            <p className="text-[10px] font-semibold text-amber-700" title="A folha veio com o Total em branco (-); o sistema somou os valores da linha.">
+                              Total em branco na folha — confira
+                            </p>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
