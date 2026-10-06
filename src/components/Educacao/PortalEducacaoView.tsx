@@ -55,6 +55,7 @@ import { portalComunicados, portalDocumentos } from '../../utils/portalColaborad
 import { PortalDocumentos } from '../Portal/PortalDocumentos';
 import { PortalComunicados } from '../Portal/PortalComunicados';
 import { PortalSolicitacoes } from '../Portal/PortalSolicitacoes';
+import { MeuHistoricoPonto } from '../Frequencia/MeuHistoricoPonto';
 import { portalSolicitacoes } from '../../utils/solicitacoesApi';
 
 function mascararCpf(valor: string): string {
@@ -111,11 +112,12 @@ const MENSAGENS_ERRO = {
   dados: 'CPF ou data de nascimento não conferem com o cadastro. Atenção: cada link é pessoal — confira se este link foi enviado para você (o link de um colega não abre com o seu CPF). Se for o seu, fale com o Departamento Pessoal.',
 };
 
-type Aba = 'inicio' | 'ponto' | 'documentos' | 'comunicados' | 'solicitacoes' | 'treinamentos' | 'jornal' | 'instrucoes' | 'regulamento';
+type Aba = 'inicio' | 'ponto' | 'historico' | 'documentos' | 'comunicados' | 'solicitacoes' | 'treinamentos' | 'jornal' | 'instrucoes' | 'regulamento';
 
 const ABAS: [Aba, string][] = [
   ['inicio', 'Início'],
   ['ponto', 'Ponto'],
+  ['historico', 'Meu histórico'],
   ['documentos', 'Documentos'],
   ['comunicados', 'Comunicados'],
   ['solicitacoes', 'Fale com o DP'],
@@ -131,7 +133,7 @@ function lerDestino(ir?: string, abaAntiga?: string, noticiaAntiga?: string): { 
   if (!ir && abaAntiga === 'jornal') return { aba: 'jornal', item: noticiaAntiga };
   const [tipo, ...resto] = (ir || '').split(':');
   const item = resto.join(':') || undefined;
-  const mapa: Record<string, Aba> = { ponto: 'ponto', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', solicitacoes: 'solicitacoes', solicitacao: 'solicitacoes', treinamentos: 'treinamentos', jornal: 'jornal' };
+  const mapa: Record<string, Aba> = { ponto: 'ponto', historico: 'historico', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', solicitacoes: 'solicitacoes', solicitacao: 'solicitacoes', treinamentos: 'treinamentos', jornal: 'jornal' };
   return { aba: mapa[tipo] || 'inicio', item };
 }
 
@@ -401,8 +403,11 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
                 embutido
                 credenciais={entrouPeloAparelho(credenciais) ? undefined : credenciais}
                 onVinculado={(segredo) => setCredenciais(credenciaisDoAparelho(token, segredo))}
+                onVerHistorico={() => irPara('historico')}
               />
             )}
+
+            {aba === 'historico' && <MeuHistoricoPonto credenciais={credenciais} />}
 
             {aba === 'documentos' && (
               <PortalDocumentos

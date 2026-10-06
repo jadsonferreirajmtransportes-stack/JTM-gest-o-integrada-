@@ -6,6 +6,7 @@
 // ============================================================================
 
 import { supabase } from './supabaseClient';
+import type { CredenciaisPortal } from './educacaoApi';
 
 export interface JornadaPonto {
   id: string;
@@ -361,4 +362,34 @@ export async function pontoRegistrar(
   });
   assertNoError(error, 'pontoRegistrar');
   return (data ?? {}) as any;
+}
+
+/** Histórico do mês do próprio colaborador (migração 072) — já no formato que o cálculo do
+ *  espelho usa, pra mostrar o mesmo resultado que o DP vê. */
+export interface HistoricoPonto {
+  batidas: BatidaPonto[];
+  justificativas: JustificativaDia[];
+  jornada?: JornadaPonto;
+  admissao?: string;
+  demissao?: string;
+  inicioControle?: string;
+  raioPadraoM: number;
+}
+
+export async function pontoHistorico(c: CredenciaisPortal, mes: string): Promise<{ historico?: HistoricoPonto; erro?: string }> {
+  const { data, error } = await supabase.rpc('portal_ponto_historico', { p_token: c.token, p_cpf: c.cpf, p_nascimento: c.nascimento, p_mes: mes });
+  assertNoError(error, 'pontoHistorico');
+  const r = (data ?? {}) as any;
+  if (r.erro) return { erro: r.erro };
+  return {
+    historico: {
+      batidas: (r.batidas ?? []).map((b: any) => rowToBatida({ ...b, colaborador_id: 'eu', anulado: false })),
+      justificativas: (r.justificativas ?? []).map((j: any) => rowToJustificativa({ ...j, colaborador_id: 'eu' })),
+      jornada: r.jornada ? rowToJornada(r.jornada) : undefined,
+      admissao: u(r.colaborador?.admissao),
+      demissao: u(r.colaborador?.demissao),
+      inicioControle: u(r.inicio_controle),
+      raioPadraoM: Number(r.raio_padrao ?? 300),
+    },
+  };
 }

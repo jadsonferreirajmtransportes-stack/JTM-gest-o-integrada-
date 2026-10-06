@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ShieldCheck, Loader2, AlertTriangle, Fingerprint, MapPin, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
+import { ShieldCheck, Loader2, AlertTriangle, Fingerprint, MapPin, CheckCircle2, Clock, RefreshCw, CalendarDays } from 'lucide-react';
+import { MeuHistoricoPonto } from './MeuHistoricoPonto';
 import { JmtLogo } from '../Brand/JmtLogo';
 import { EstadoPonto, pontoEstado, pontoRegistrar, pontoVincular } from '../../utils/frequenciaApi';
 import { horaLocal } from './frequenciaCalc';
-import { gravarAparelho, lerAparelho } from '../../utils/aparelhoColaborador';
+import { credenciaisDoAparelho, gravarAparelho, lerAparelho } from '../../utils/aparelhoColaborador';
 import type { CredenciaisPortal } from '../../utils/educacaoApi';
 
 function mascararCpf(valor: string): string {
@@ -49,7 +50,9 @@ export const PontoPublicView: React.FC<{
   credenciais?: CredenciaisPortal;
   /** Avisa o portal quando o celular foi vinculado (passa a lembrar a entrada). */
   onVinculado?: (segredo: string) => void;
-}> = ({ token, embutido, credenciais, onVinculado }) => {
+  /** No portal: abre a aba "Meu histórico" em vez de mostrar aqui. */
+  onVerHistorico?: () => void;
+}> = ({ token, embutido, credenciais, onVinculado, onVerHistorico }) => {
   const [aparelho, setAparelho] = useState<string | null>(() => (token ? lerAparelho(token) : null));
   const [estado, setEstado] = useState<EstadoPonto | null>(null);
   const [carregando, setCarregando] = useState(!!aparelho);
@@ -60,6 +63,7 @@ export const PontoPublicView: React.FC<{
   const [erro, setErro] = useState<string | null>(token ? null : 'Este link não é válido. Peça o link do ponto ao Departamento Pessoal.');
   const [comprovante, setComprovante] = useState<{ em: string; local?: string | null; distancia?: number | null; semGps: boolean } | null>(null);
   const [relogio, setRelogio] = useState(() => new Date());
+  const [verHistorico, setVerHistorico] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setRelogio(new Date()), 1000);
@@ -311,6 +315,17 @@ export const PontoPublicView: React.FC<{
                 </ul>
               )}
             </div>
+            {token && aparelho && (verHistorico ? (
+              <MeuHistoricoPonto credenciais={credenciaisDoAparelho(token, aparelho)} />
+            ) : (
+              <button
+                type="button"
+                onClick={() => (onVerHistorico ? onVerHistorico() : setVerHistorico(true))}
+                className="w-full py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-[#92611F] flex items-center justify-center gap-2 hover:bg-amber-50/50 shadow-xs"
+              >
+                <CalendarDays className="w-4 h-4" /> Ver meu histórico e horas do mês
+              </button>
+            ))}
             <p className="text-[10px] text-slate-400 text-center px-4">
               O horário registrado é o do sistema, não o do celular. A localização serve só para conferência da batida.
             </p>

@@ -11,6 +11,7 @@ import { getTokensPortal, obterOuCriarTokenPortal, montarLinkPortal } from './ed
 export type DestinoPortal =
   | 'inicio'
   | 'ponto'
+  | 'historico'
   | 'documentos'
   | `documento:${string}`
   | 'comunicados'
