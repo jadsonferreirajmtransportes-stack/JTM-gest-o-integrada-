@@ -13,6 +13,8 @@ const ROTULO_CATEGORIA: Record<string, string> = {
   regulamento: 'Regulamento',
 };
 
+const rotuloDe = (d: { categoria: string; tipo: string }) => (d.tipo === 'Folha extra' ? 'Folha extra' : ROTULO_CATEGORIA[d.categoria] || 'Documento');
+
 const dataCurta = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '');
 
 /** Documentos do colaborador para ver e assinar (contracheques, férias, espelho, medidas). */
@@ -51,7 +53,7 @@ export const PortalDocumentos: React.FC<{ credenciais: CredenciaisPortal; docume
         </button>
         <ContrachequePublicView
           key={abertoId}
-          rotulo={doc ? ROTULO_CATEGORIA[doc.categoria] || 'Documento' : 'Documento'}
+          rotulo={doc ? rotuloDe(doc) : 'Documento'}
           acesso={{
             abrir: () => portalAbrirDocumento(credenciais, abertoId),
             assinar: (assinatura, declaracao) => portalAssinarDocumento(credenciais, abertoId, assinatura, declaracao),
@@ -89,7 +91,7 @@ export const PortalDocumentos: React.FC<{ credenciais: CredenciaisPortal; docume
               {assinado ? <CheckCircle2 className="w-5 h-5" /> : <FileSignature className="w-5 h-5" />}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-wide text-[#92611F]">{ROTULO_CATEGORIA[d.categoria] || 'Documento'}</p>
+              <p className="text-[10px] font-black uppercase tracking-wide text-[#92611F]">{rotuloDe(d)}</p>
               <p className="text-sm font-semibold text-slate-900 truncate">{d.titulo}</p>
               <p className="text-[11px] text-slate-500">
                 {assinado ? `Assinado em ${dataCurta(d.assinadoEm)}` : d.vencido ? 'Prazo vencido — peça ao Departamento Pessoal para renovar' : `Enviado em ${dataCurta(d.criadoEm)}`}

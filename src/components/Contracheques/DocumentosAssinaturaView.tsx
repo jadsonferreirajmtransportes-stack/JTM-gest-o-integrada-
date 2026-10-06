@@ -33,6 +33,7 @@ import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { useLinksUnicos } from '../../utils/linkUnico';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { ImportarContrachequesModal } from './ImportarContrachequesModal';
+import { ImportarFolhaExtraModal } from './ImportarFolhaExtraModal';
 import { ImportarDocumentosFeriasModal } from './ImportarDocumentosFeriasModal';
 import { EnviarRegulamentoModal } from '../Regulamento/EnviarRegulamentoModal';
 import { formatarCompetencia, formatarDataBr } from './contrachequePdfUtils';
@@ -123,6 +124,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
   const [competencia, setCompetencia] = useState<string>('');
   const [busca, setBusca] = useState('');
   const [showImportar, setShowImportar] = useState(false);
+  const [showImportarExtra, setShowImportarExtra] = useState(false);
   const [visualizando, setVisualizando] = useState<DocumentoAssinatura | null>(null);
   const [comprovante, setComprovante] = useState<DocumentoAssinatura | null>(null);
   const [acaoEmAndamento, setAcaoEmAndamento] = useState<string | null>(null);
@@ -368,14 +370,26 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
             <p className="text-xs text-slate-500 mt-0.5">{textos.descricao}</p>
           </div>
         </div>
-        {textos.importar && (<button
-          type="button"
-          onClick={() => setShowImportar(true)}
-          className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0"
-        >
-          <Upload className="w-4 h-4" />
-          {textos.importar}
-        </button>)}
+        <div className="flex flex-wrap gap-2 shrink-0">
+          {ehContracheque && (
+            <button
+              type="button"
+              onClick={() => setShowImportarExtra(true)}
+              className="px-4 py-2.5 bg-white border border-[#C48229] text-[#92611F] hover:bg-amber-50 font-bold text-xs rounded-xl flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Importar folha extra
+            </button>
+          )}
+          {textos.importar && (<button
+            type="button"
+            onClick={() => setShowImportar(true)}
+            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0"
+          >
+            <Upload className="w-4 h-4" />
+            {textos.importar}
+          </button>)}
+        </div>
       </div>
 
       {erro && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}
@@ -612,6 +626,19 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
           existentes={documentos}
           criadoPor={currentUser?.nome}
           onClose={() => setShowImportar(false)}
+          onImportado={(novos) => {
+            if (novos.length === 0) return;
+            setDocumentos((prev) => [...novos, ...prev]);
+            setCompetencia(novos[0].referencia);
+          }}
+        />
+      )}
+      {showImportarExtra && ehContracheque && (
+        <ImportarFolhaExtraModal
+          colaboradores={colaboradores.filter((c) => c.status !== 'Inativo')}
+          existentes={documentos}
+          criadoPor={currentUser?.nome}
+          onClose={() => setShowImportarExtra(false)}
           onImportado={(novos) => {
             if (novos.length === 0) return;
             setDocumentos((prev) => [...novos, ...prev]);
