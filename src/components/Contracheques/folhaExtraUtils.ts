@@ -64,7 +64,8 @@ function rotuloDaColuna(titulo: string): string {
   if (t === 'EXTRA' || t === 'HORA EXTRA' || t === 'HE') return 'Horas extras';
   if (t === 'AD' || t === 'ADICIONAL') return 'Adicional';
   if (t === 'AD NOT' || t === 'ADICIONAL NOTURNO') return 'Adicional noturno';
-  if (t === 'DSR') return 'DSR (descanso semanal remunerado)';
+  if (t === 'DSR' || t === 'DRS') return 'DSR (descanso semanal remunerado)';
+  if (/^DIF/.test(t) && /SAL/.test(t)) return 'Diferença salarial';
   return titulo.trim();
 }
 
@@ -126,7 +127,9 @@ export function lerFolhaExtra(paginas: PaginaComPosicao[], colaboradores: Colabo
     const xNome = colunas.find((c) => c.tipo === 'nome')?.x ?? 0;
     // Trecho pertence à coluna cujo título começa até 12pt à direita dele (títulos e valores não
     // ficam exatamente alinhados na planilha).
-    const colunaDe = (x: number) => [...colunas].reverse().find((c) => c.x <= x + 12);
+    // O nome costuma começar à esquerda do título "Nome do empregado" — tudo que vem antes da
+    // 2ª coluna (e não é o nº da linha) é nome.
+    const colunaDe = (x: number) => [...colunas].reverse().find((c) => c.x <= x + 12) ?? (colunas[0]?.tipo === 'nome' ? colunas[0] : undefined);
 
     for (const linha of linhas.slice(iCab + 1)) {
       const textoLinha = normalizar(linha.itens.map((i) => i.str).join(' '));
@@ -148,6 +151,13 @@ export function lerFolhaExtra(paginas: PaginaComPosicao[], colaboradores: Colabo
       });
       const nomeNoPdf = nome.join(' ').replace(/\s+/g, ' ').trim();
       if (!nomeNoPdf || (total === undefined && valores.length === 0)) continue;
+      // Quando o total soma o salário junto (salário também pago nesta folha), o salário vira uma
+      // linha do recibo; senão é só informativo (salário base do cálculo).
+      const somaValores = valores.reduce((t, v) => t + v.valor, 0);
+      if (salarioBase !== undefined && total !== undefined && Math.abs(salarioBase + somaValores - total) < 0.05) {
+        valores.unshift({ rotulo: 'Salário', valor: salarioBase });
+        salarioBase = undefined;
+      }
       linhasLidas.push({
         ordem: linhasLidas.length,
         nomeNoPdf,
@@ -174,7 +184,30 @@ function acharColaborador(nome: string, colaboradores: Colaborador[]): string | 
     const n = ` ${normalizar(c.nomeCompleto)} `;
     return palavras.every((p) => n.includes(` ${p} `));
   });
-  return candidatos.length === 1 ? candidatos[0].id : undefined;
+  if (candidatos.length === 1) return candidatos[0].id;
+  if (candidatos.length > 1) return undefined;
+  // Erro de digitação na planilha ("Fernadnes"): cada palavra pode diferir até 2 letras de uma
+  // palavra do cadastro, e o primeiro nome tem que bater — só se houver um único candidato.
+  const parecidos = colaboradores.filter((c) => {
+    const doCadastro = normalizar(c.nomeCompleto).split(' ');
+    if (distancia(doCadastro[0], palavras[0]) > 1) return false;
+    return palavras.every((p) => doCadastro.some((w) => distancia(w, p) <= (p.length >= 6 ? 2 : 1)));
+  });
+  return parecidos.length === 1 ? parecidos[0].id : undefined;
+}
+
+/** Distância de edição (Damerau, com troca de letras vizinhas = 1). */
+function distancia(a: string, b: string): number {
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const custo = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + custo);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+  }
+  return d[a.length][b.length];
 }
 
 // ---------------------------------------------------------------------------
