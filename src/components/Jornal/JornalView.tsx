@@ -137,6 +137,18 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
     }
   };
 
+  // Grupo do WhatsApp: o WhatsApp não deixa o sistema escolher o grupo — abre com o texto pronto
+  // e quem envia escolhe a conversa. Sem link pessoal (cada um tem o seu): a mensagem orienta a
+  // abrir o próprio link na aba Jornal.
+  const enviarParaGrupo = (n: Noticia) => {
+    const mensagem =
+      `📰 *Jornal JMT* — notícia nova!\n\n*${n.titulo}*${n.resumo ? `\n${n.resumo}` : ''}\n\n` +
+      `Para ler, reagir e comentar, abra o seu link pessoal da JMT (o mesmo do ponto e dos contracheques) e toque na aba *Jornal*.\n` +
+      `Ainda não tem o seu link? Fale com o Departamento Pessoal.`;
+    navigator.clipboard?.writeText(mensagem).catch(() => {});
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`, '_blank', 'noopener');
+  };
+
   const moderar = async (c: ComentarioNoticia, status: 'aprovado' | 'oculto') => {
     try {
       await moderarComentario(c.id, status, eu);
@@ -293,6 +305,16 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
                             className="px-2.5 py-1.5 border border-emerald-200 text-emerald-700 rounded-lg font-bold hover:bg-emerald-50 flex items-center gap-1 disabled:opacity-50"
                           >
                             {preparandoEnvio === n.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />} Divulgar
+                          </button>
+                        )}
+                        {ehAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => enviarParaGrupo(n)}
+                            title="Abre o WhatsApp com a mensagem pronta para você escolher o grupo (a mensagem também fica copiada)"
+                            className="px-2.5 py-1.5 border border-emerald-200 text-emerald-700 rounded-lg font-bold hover:bg-emerald-50 flex items-center gap-1"
+                          >
+                            <Users className="w-3.5 h-3.5" /> Enviar para grupo
                           </button>
                         )}
                       </>
