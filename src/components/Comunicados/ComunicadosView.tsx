@@ -257,6 +257,7 @@ const DetalheComunicado: React.FC<{
       } else {
         const { blob } = await gerarImagemComunicado({
           modelo: c.modeloImagem,
+          estilo: c.estiloImagem,
           titulo: c.titulo,
           texto: textoParaImagem(c.corpo),
           destaque: c.destaque,

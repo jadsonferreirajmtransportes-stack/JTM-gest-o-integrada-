@@ -13,7 +13,7 @@ import {
   atualizarImagemComunicado,
   numeroFormatado,
 } from '../../utils/comunicadosApi';
-import { MODELOS_IMAGEM, gerarImagemComunicado } from './comunicadoImagem';
+import { ESTILOS_IMAGEM, MODELOS_IMAGEM, gerarImagemComunicado } from './comunicadoImagem';
 import { CampoModelo, MODELOS_REDACAO, ValoresModelo, camposDe, categoriasPara, montarComunicado, valoresIniciais } from './comunicadoModelos';
 
 interface NovoComunicadoModalProps {
@@ -129,6 +129,36 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
   const [valores, setValores] = useState<ValoresModelo>(() => valoresIniciais('Aviso', 'colaboradores'));
   const [assinatura, setAssinatura] = useState(ASSINATURAS[0]);
   const [modelo, setModelo] = useState<ModeloImagem>('aviso');
+  const [estilo, setEstilo] = useState(1);
+  // Miniaturas dos 5 estilos do tipo escolhido (texto de exemplo, geradas uma vez por tipo).
+  const [miniaturas, setMiniaturas] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      for (const e of ESTILOS_IMAGEM) {
+        const chave = `${modelo}:${e.id}`;
+        if (cancelado || miniaturas[chave]) continue;
+        try {
+          const { blob } = await gerarImagemComunicado({
+            modelo,
+            estilo: e.id,
+            titulo: 'Título do comunicado',
+            texto: 'Aqui vai o texto do comunicado, com as informações principais para a equipe.',
+            destaque: modelo === 'evento' ? '15/10 · 14h · Sala de reuniões' : undefined,
+            assinatura: 'Departamento Pessoal',
+          });
+          const url = URL.createObjectURL(blob);
+          if (!cancelado) setMiniaturas((m) => ({ ...m, [chave]: url }));
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelo]);
   const montado = useMemo(() => montarComunicado(categoria, publico, valores), [categoria, publico, valores]);
   const titulo = montado.titulo;
   const corpo = montado.corpo;
@@ -162,6 +192,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
       try {
         const { blob, textoCortado } = await gerarImagemComunicado({
           modelo,
+          estilo,
           titulo,
           texto: montado.textoImagem,
           destaque,
@@ -180,7 +211,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
       }
     }, 450);
     return () => clearTimeout(id);
-  }, [modelo, titulo, montado.textoImagem, destaque, assinatura, foto]);
+  }, [modelo, estilo, titulo, montado.textoImagem, destaque, assinatura, foto]);
 
   const candidatos: Candidato[] = useMemo(() => {
     if (publico === 'colaboradores') {
@@ -272,6 +303,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
           corpo: corpo.trim(),
           assinatura,
           modeloImagem: modelo,
+          estiloImagem: estilo,
           destaque: destaque.trim() || undefined,
           fotoUrl,
           exigeCiencia,
@@ -283,6 +315,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
       try {
         const { blob } = await gerarImagemComunicado({
           modelo,
+          estilo,
           titulo: comunicado.titulo,
           texto: montado.textoImagem,
           destaque: comunicado.destaque,
@@ -409,6 +442,27 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
                       </button>
                     );
                   })}
+                </div>
+              </div>
+              <div>
+                <span className={rotulo}>Estilo do layout</span>
+                <div className="grid grid-cols-5 gap-2">
+                  {ESTILOS_IMAGEM.map((e) => (
+                    <button
+                      key={e.id}
+                      type="button"
+                      onClick={() => setEstilo(e.id)}
+                      title={e.descricao}
+                      className={`rounded-xl border-2 p-1 text-center ${estilo === e.id ? 'border-[#C48229]' : 'border-slate-200 hover:border-slate-300'}`}
+                    >
+                      {miniaturas[`${modelo}:${e.id}`] ? (
+                        <img src={miniaturas[`${modelo}:${e.id}`]} alt={e.nome} className="w-full aspect-[4/5] rounded-md object-cover border border-black/5" />
+                      ) : (
+                        <span className="block w-full aspect-[4/5] rounded-md bg-slate-100 animate-pulse" />
+                      )}
+                      <span className="block text-[10px] font-bold text-slate-700 mt-1 leading-tight">{e.nome}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
               <div className="flex items-center gap-3">

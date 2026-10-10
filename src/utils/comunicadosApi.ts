@@ -7,6 +7,9 @@ import { supabase } from './supabaseClient';
 export type PublicoComunicado = 'colaboradores' | 'clientes';
 export type ModeloImagem = 'aviso' | 'urgente' | 'seguranca' | 'parabens' | 'evento' | 'comercial';
 
+/** "aviso" (estilo 1) ou "aviso:3" — o estilo vai no mesmo campo, sem mudar o banco. */
+export const gravarModeloImagem = (modelo: ModeloImagem, estilo?: number) => (estilo && estilo > 1 ? `${modelo}:${estilo}` : modelo);
+
 export const CATEGORIAS_COMUNICADO = ['Aviso', 'Informativo', 'Urgente', 'Segurança', 'Parabéns', 'Evento', 'Comercial'] as const;
 
 export interface Comunicado {
@@ -19,6 +22,8 @@ export interface Comunicado {
   corpo: string;
   assinatura: string;
   modeloImagem: ModeloImagem;
+  /** Layout da imagem (1 a 5) — guardado junto em modelo_imagem como "aviso:3". */
+  estiloImagem?: number;
   destaque?: string;
   imagemUrl?: string;
   fotoUrl?: string;
@@ -68,7 +73,8 @@ function rowToComunicado(r: any): Comunicado {
     publico: r.publico,
     corpo: r.corpo,
     assinatura: r.assinatura,
-    modeloImagem: r.modelo_imagem,
+    modeloImagem: String(r.modelo_imagem || 'aviso').split(':')[0] as ModeloImagem,
+    estiloImagem: Number(String(r.modelo_imagem || '').split(':')[1]) || 1,
     destaque: u(r.destaque),
     imagemUrl: u(r.imagem_url),
     fotoUrl: u(r.foto_url),
@@ -147,7 +153,7 @@ export async function criarComunicado(
       publico: novo.publico,
       corpo: novo.corpo,
       assinatura: novo.assinatura,
-      modelo_imagem: novo.modeloImagem,
+      modelo_imagem: gravarModeloImagem(novo.modeloImagem, novo.estiloImagem),
       destaque: novo.destaque || null,
       imagem_url: novo.imagemUrl || null,
       foto_url: novo.fotoUrl || null,
@@ -187,7 +193,7 @@ export async function criarComunicado(
         publico: novo.publico,
         corpo: novo.corpo,
         assinatura: novo.assinatura,
-        modelo_imagem: novo.modeloImagem,
+        modelo_imagem: gravarModeloImagem(novo.modeloImagem, novo.estiloImagem),
         destaque: novo.destaque ?? null,
         imagem_url: novo.imagemUrl ?? null,
         foto_url: novo.fotoUrl ?? null,
