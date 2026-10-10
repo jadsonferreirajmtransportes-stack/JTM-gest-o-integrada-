@@ -17,6 +17,7 @@ import {
   Search,
   Users,
   Building2,
+  Pencil,
 } from 'lucide-react';
 import { Cliente, Colaborador, UsuarioLogin } from '../../types';
 import {
@@ -34,6 +35,7 @@ import { EnvioWhatsAppEmMassaModal, ItemEnvioWhatsApp } from '../Common/EnvioWha
 import { useLinksUnicos } from '../../utils/linkUnico';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { NovoComunicadoModal } from './NovoComunicadoModal';
+import { EditarComunicadoModal } from './EditarComunicadoModal';
 import { gerarPdfComunicado } from './comunicadoPdf';
 import { gerarImagemComunicado, textoParaImagem } from './comunicadoImagem';
 
@@ -196,6 +198,10 @@ export const ComunicadosView: React.FC<ComunicadosViewProps> = ({ colaboradores,
             const ds = await getDestinatarios(aberto.id);
             setDestinatarios((prev) => [...prev.filter((d) => d.comunicadoId !== aberto.id), ...ds]);
           }}
+          onEditado={(editado) => {
+            setComunicados((prev) => prev.map((x) => (x.id === editado.id ? editado : x)));
+            setAberto(editado);
+          }}
           onExcluir={async () => {
             await excluirComunicado(aberto.id);
             setComunicados((prev) => prev.filter((c) => c.id !== aberto.id));
@@ -215,7 +221,9 @@ const DetalheComunicado: React.FC<{
   onEnviados: (ids: string[], canal: 'whatsapp' | 'email') => void;
   onAtualizar: () => Promise<void>;
   onExcluir: () => Promise<void>;
-}> = ({ comunicado: c, destinatarios, onClose, onEnviados, onAtualizar, onExcluir }) => {
+  onEditado: (c: Comunicado) => void;
+}> = ({ comunicado: c, destinatarios, onClose, onEnviados, onAtualizar, onExcluir, onEditado }) => {
+  const [editando, setEditando] = useState(false);
   const [whatsapp, setWhatsapp] = useState<ItemEnvioWhatsApp[] | null>(null);
   const [filaEmail, setFilaEmail] = useState<DestinatarioComunicado[] | null>(null);
   const [copiado, setCopiado] = useState(false);
@@ -426,16 +434,33 @@ const DetalheComunicado: React.FC<{
                 </tbody>
               </table>
             </div>
-            <button
-              type="button"
-              onClick={() => window.confirm('Excluir este comunicado e o histórico de envio/ciência? Os links param de funcionar.') && onExcluir().catch(console.error)}
-              className="text-rose-600 font-semibold flex items-center gap-1"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Excluir comunicado
-            </button>
+            <div className="flex flex-wrap items-center gap-4">
+              <button type="button" onClick={() => setEditando(true)} className="text-[#92611F] font-semibold flex items-center gap-1">
+                <Pencil className="w-3.5 h-3.5" /> Editar comunicado
+              </button>
+              <button
+                type="button"
+                onClick={() => window.confirm('Excluir este comunicado e o histórico de envio/ciência? Os links param de funcionar.') && onExcluir().catch(console.error)}
+                className="text-rose-600 font-semibold flex items-center gap-1"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Excluir comunicado
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {editando && (
+        <EditarComunicadoModal
+          comunicado={c}
+          destinatarios={destinatarios}
+          onClose={() => setEditando(false)}
+          onSalvo={(editado) => {
+            setEditando(false);
+            onEditado(editado);
+          }}
+        />
+      )}
 
       {filaEmail && (
         <FilaEmail

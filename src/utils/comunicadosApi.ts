@@ -206,6 +206,27 @@ export async function criarComunicado(
   };
 }
 
+export type EdicaoComunicado = Pick<Comunicado, 'titulo' | 'corpo' | 'assinatura' | 'modeloImagem' | 'estiloImagem' | 'destaque' | 'fotoUrl' | 'imagemUrl' | 'exigeCiencia'>;
+
+/** Edita um comunicado já publicado — os links já enviados passam a mostrar o conteúdo novo
+ *  (a tela pública lê do banco a cada abertura). Número, público e destinatários não mudam. */
+export async function editarComunicado(id: string, e: EdicaoComunicado): Promise<void> {
+  const { error } = await supabase
+    .from('comunicados')
+    .update({
+      titulo: e.titulo,
+      corpo: e.corpo,
+      assinatura: e.assinatura,
+      modelo_imagem: gravarModeloImagem(e.modeloImagem, e.estiloImagem),
+      destaque: e.destaque || null,
+      foto_url: e.fotoUrl || null,
+      imagem_url: e.imagemUrl || null,
+      exige_ciencia: e.exigeCiencia,
+    })
+    .eq('id', id);
+  assertNoError(error, 'editarComunicado');
+}
+
 export async function atualizarImagemComunicado(id: string, imagemUrl: string): Promise<void> {
   const { error } = await supabase.from('comunicados').update({ imagem_url: imagemUrl }).eq('id', id);
   assertNoError(error, 'atualizarImagemComunicado');
