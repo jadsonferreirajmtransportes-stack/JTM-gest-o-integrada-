@@ -44,8 +44,14 @@ export const STATUS_FATURA_CONFIG: Record<
 // Cálculo do "Valor a Cobrar do Cliente" — réplica das fórmulas do Coda
 // ==========================================
 
-export function findClienteById(clientes: Cliente[], clienteId?: string): Cliente | undefined {
-  return clienteId ? clientes.find((c) => c.id === clienteId) : undefined;
+export function findClienteById(clientes: Cliente[], clienteId?: string, clienteNome?: string): Cliente | undefined {
+  const porId = clienteId ? clientes.find((c) => c.id === clienteId) : undefined;
+  if (porId || !clienteNome) return porId;
+  // Lançamento sem cliente vinculado (importação sem match): tenta pelo nome — só se for um
+  // único cliente com esse nome fantasia/razão social, pra nunca cobrar com a tabela errada.
+  const alvo = normalizeKey(clienteNome);
+  const candidatos = clientes.filter((c) => [c.nomeFantasia, c.razaoSocial].some((n) => n && normalizeKey(n) === alvo));
+  return candidatos.length === 1 ? candidatos[0] : undefined;
 }
 
 /**
@@ -59,8 +65,24 @@ export function findClienteById(clientes: Cliente[], clienteId?: string): Client
 export function tabelaFreteParaModal(cliente: Cliente | undefined, modal?: string): TabelaPrecoFrete | undefined {
   if (!cliente) return undefined;
   const ehRodoviario = normalizeKey(modal || '').includes('rodoviari');
-  if (ehRodoviario && cliente.tabelaFreteRodoviario) return cliente.tabelaFreteRodoviario;
+  // Tabela rodoviária só vale se tiver preço de verdade — uma tabela salva vazia (caixa
+  // "tarifário rodoviário diferente" marcada sem preencher) zerava o Valor a Cobrar.
+  if (ehRodoviario && cliente.tabelaFreteRodoviario && tabelaTemPreco(cliente.tabelaFreteRodoviario)) return cliente.tabelaFreteRodoviario;
   return cliente.tabelaFrete;
+}
+
+function tabelaTemPreco(t: TabelaPrecoFrete): boolean {
+  return !!(percentualAdValorem(t) || t.valorBase || (t.tarifasPorCidade && t.tarifasPorCidade.length));
+}
+
+/** Tabela em % Ad Valorem — pelo modelo novo (modeloPrecificacao) ou, em cadastros antigos, só
+ *  pelo tipo de cobrança (o percentual ficava em valorBase). */
+function ehAdValorem(t: TabelaPrecoFrete): boolean {
+  if (t.modeloPrecificacao) return t.modeloPrecificacao === 'ad_valorem';
+  return t.tipoCobranca === '% sobre Nota Fiscal (Ad Valorem)';
+}
+function percentualAdValorem(t: TabelaPrecoFrete): number {
+  return ehAdValorem(t) ? t.percentualAdValoremNF || t.valorBase || 0 : 0;
 }
 
 function buscarTarifaCidade(cliente: Cliente | undefined, cidade?: string, modal?: string) {
@@ -93,16 +115,17 @@ function detalharTarifaPorPeso(
   if (!tabela) return undefined;
   const peso = l.pesoKg ?? 0;
 
-  if (tabela.modeloPrecificacao === 'ad_valorem') {
-    const percentual = tabela.percentualAdValoremNF;
+  if (ehAdValorem(tabela)) {
+    const percentual = percentualAdValorem(tabela);
     if (!percentual) return undefined;
     const base = l.valorPrestacao ?? l.valorNF ?? 0;
     const minimo = tabela.freteMinimo ?? 0;
     const semMinimo = (percentual / 100) * base;
+    const sobre = `${percentual}% sobre ${l.valorPrestacao !== undefined ? 'a prestação' : 'a NF'} de ${formatCurrency(base)}`;
     if (minimo > semMinimo) {
-      return [{ label: `Frete mínimo (Ad Valorem ${percentual}% sobre ${formatCurrency(base)} ficaria menor)`, valor: minimo }];
+      return [{ label: `Mínimo de ${formatCurrency(minimo)} (${sobre} = ${formatCurrency(semMinimo)}, ficaria menor)`, valor: minimo }];
     }
-    return [{ label: `Ad Valorem: ${percentual}% sobre ${formatCurrency(base)}`, valor: semMinimo }];
+    return [{ label: sobre, valor: semMinimo }];
   }
 
   const excedente = Math.max(0, peso - 10);
@@ -341,7 +364,7 @@ export function computeResumoFatura(
 ): ResumoFaturaAereo {
   const doFatura = lancamentos.filter((l) => l.faturaId === faturaId);
   const valorTotalCobrado = doFatura.reduce(
-    (sum, l) => sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId)),
+    (sum, l) => sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome)),
     0
   );
   const pagos = doFatura.filter((l) => l.confirmacaoPagamento);
@@ -385,7 +408,7 @@ export function computeResumoGeral(
   clientes: Cliente[] = []
 ): ResumoGeralFaturamentoAereo {
   const totalFaturado = lancamentos.reduce(
-    (sum, l) => sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId)),
+    (sum, l) => sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome)),
     0
   );
   const pagos = lancamentos.filter((l) => l.confirmacaoPagamento);

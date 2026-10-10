@@ -425,7 +425,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     lancamentos.forEach((l) => {
       const chave = chaveEmpresa(l.clienteId, l.clienteNome);
       if (!chave || porChave.has(chave)) return;
-      const cliente = l.clienteId ? findClienteById(clientes, l.clienteId) : undefined;
+      const cliente = findClienteById(clientes, l.clienteId, l.clienteNome);
       const label = cliente?.nomeFantasia || cliente?.razaoSocial || l.clienteNome || chave;
       porChave.set(chave, label);
     });
@@ -463,7 +463,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   const totalSemFatura = useMemo(
     () =>
       lancamentosSemFatura.reduce(
-        (sum, l) => sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId)),
+        (sum, l) => sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome)),
         0
       ),
     [lancamentosSemFatura, clientes]
@@ -598,14 +598,14 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     return Array.from(selecionados).reduce((sum: number, id) => {
       const l = lancamentos.find((x) => x.id === id);
       if (!l) return sum;
-      return sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId));
+      return sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome));
     }, 0);
   }, [selecionados, lancamentos, clientes]);
 
   const handleFieldChangeFactory =
     (l: LancamentoFaturamentoAereo) => (patch: Partial<LancamentoFaturamentoAereo>) => {
       const atualizado: LancamentoFaturamentoAereo = { ...l, ...patch };
-      const cliente = findClienteById(clientes, atualizado.clienteId);
+      const cliente = findClienteById(clientes, atualizado.clienteId, atualizado.clienteNome);
       // Recalcula e persiste o valor a cobrar sempre que algo que o influencia muda —
       // mesmo quando o campo alterado foi outro (ex: valor recebido), o recálculo é
       // barato e mantém o snapshot salvo sempre coerente com o tarifário atual.
@@ -686,7 +686,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
 
   const handleExportarFatura = (fatura: FaturaAereo) => {
     const lancamentosDaFatura = lancamentos.filter((l) => l.faturaId === fatura.id);
-    void exportarFaturaParaExcel(fatura, lancamentosDaFatura, findClienteById(clientes, fatura.clienteId));
+    void exportarFaturaParaExcel(fatura, lancamentosDaFatura, findClienteById(clientes, fatura.clienteId, fatura.clienteNome));
   };
 
   const handleAbrirEdicaoNF = (fatura: FaturaAereo) => {
@@ -780,7 +780,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     for (const fatura of faturasOrdenadas) {
       const lancamentosDaFatura = lancamentos.filter((l) => l.faturaId === fatura.id);
       if (lancamentosDaFatura.length === 0) continue;
-      await exportarFaturaParaExcel(fatura, lancamentosDaFatura, findClienteById(clientes, fatura.clienteId));
+      await exportarFaturaParaExcel(fatura, lancamentosDaFatura, findClienteById(clientes, fatura.clienteId, fatura.clienteNome));
     }
   };
 
@@ -1019,7 +1019,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                         const faturaDoLancamento = l.faturaId
                           ? faturas.find((f) => f.id === l.faturaId)
                           : undefined;
-                        const clienteDoLancamento = findClienteById(clientes, l.clienteId);
+                        const clienteDoLancamento = findClienteById(clientes, l.clienteId, l.clienteNome);
                         return (
                           <tr key={l.id}>
                             <td className="px-2 py-1.5 max-w-[130px] truncate">{l.clienteNome}</td>
@@ -1085,7 +1085,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
               const statusCfg = STATUS_FATURA_CONFIG[resumo.status];
               const isExpanded = expandedFaturaId === fatura.id;
               const lancamentosDaFatura = lancamentos.filter((l) => l.faturaId === fatura.id);
-              const clienteDaFatura = findClienteById(clientes, fatura.clienteId);
+              const clienteDaFatura = findClienteById(clientes, fatura.clienteId, fatura.clienteNome);
 
               // Filtra os lançamentos desta fatura pelo termo de busca própria dela (vírgula
               // separa vários termos, mesmo padrão da busca de "Sem Fatura Vinculada") E pela
@@ -1511,7 +1511,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                                     <LancamentoRow
                                       key={l.id}
                                       lancamento={l}
-                                      cliente={clienteDaFatura || findClienteById(clientes, l.clienteId)}
+                                      cliente={clienteDaFatura || findClienteById(clientes, l.clienteId, l.clienteNome)}
                                       showRemoverDaFatura
                                       onFieldChange={handleFieldChangeFactory(l)}
                                       onDelete={() => onDeleteLancamento(l.id)}
@@ -1663,7 +1663,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                   <LancamentoRow
                     key={l.id}
                     lancamento={l}
-                    cliente={findClienteById(clientes, l.clienteId)}
+                    cliente={findClienteById(clientes, l.clienteId, l.clienteNome)}
                     showCliente
                     showSelecao
                     selecionado={selecionados.has(l.id)}
