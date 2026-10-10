@@ -189,6 +189,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     iconeNome: 'Newspaper',
     categoria: 'Corporativo',
   },
+  {
+    id: 'pops',
+    nome: 'POPs',
+    sigla: 'POP',
+    descricao: 'Procedimentos Operacionais Padrão no modelo ABNT: formulário por seções, elaboração/revisão/aprovação, versões e ciência dos colaboradores pelo link pessoal.',
+    corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
+    corBorda: 'border-[#C48229]',
+    iconeNome: 'ClipboardList',
+    categoria: 'Corporativo',
+  },
 ];
 
 export const INITIAL_USERS_DATA: UsuarioLogin[] = [

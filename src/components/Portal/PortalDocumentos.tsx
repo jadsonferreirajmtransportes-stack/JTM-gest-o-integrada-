@@ -11,6 +11,7 @@ const ROTULO_CATEGORIA: Record<string, string> = {
   ponto: 'Espelho de ponto',
   disciplinar: 'Medida disciplinar',
   regulamento: 'Regulamento',
+  pop: 'POP — Procedimento',
 };
 
 const rotuloDe = (d: { categoria: string; tipo: string }) => (d.tipo === 'Folha extra' ? 'Folha extra' : ROTULO_CATEGORIA[d.categoria] || 'Documento');

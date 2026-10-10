@@ -14,16 +14,7 @@ export type BlocoDocumento =
 export type StatusDocumento = 'Rascunho' | 'Vigente' | 'Obsoleto';
 
 export const TIPOS_DOCUMENTO = ['Procedimento', 'Política', 'Manual', 'Relatório', 'Formulário', 'Ata', 'Contrato', 'Proposta', 'Comunicado', 'Planilha', 'Outro'];
-export const SETORES_DOCUMENTO: { sigla: string; nome: string }[] = [
-  { sigla: 'ADM', nome: 'Administrativo' },
-  { sigla: 'DP', nome: 'Departamento Pessoal' },
-  { sigla: 'OPE', nome: 'Operações' },
-  { sigla: 'QUA', nome: 'Qualidade' },
-  { sigla: 'COM', nome: 'Comercial' },
-  { sigla: 'FIN', nome: 'Financeiro' },
-  { sigla: 'DIR', nome: 'Diretoria' },
-];
-export const CLASSIFICACOES = ['Uso interno', 'Público', 'Confidencial'];
+export { SETORES_DOCUMENTO, CLASSIFICACOES } from '../data/setoresDocumento';
 
 export interface DocumentoPadronizado {
   id: string;

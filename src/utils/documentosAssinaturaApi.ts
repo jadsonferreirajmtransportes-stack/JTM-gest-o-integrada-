@@ -7,7 +7,7 @@
 import { supabase } from './supabaseClient';
 import { enviarArquivo, obterUrlArquivo } from './arquivosStorage';
 
-export type CategoriaDocumentoAssinatura = 'contracheque' | 'ferias' | 'disciplinar' | 'regulamento' | 'ponto' | 'vale_alimentacao';
+export type CategoriaDocumentoAssinatura = 'contracheque' | 'ferias' | 'disciplinar' | 'regulamento' | 'ponto' | 'vale_alimentacao' | 'pop';
 export type StatusDocumentoAssinatura = 'Pendente' | 'Visualizado' | 'Assinado';
 
 export interface DocumentoAssinatura {

@@ -18,6 +18,7 @@ import {
   Megaphone,
   FileStack,
   Newspaper,
+  ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -35,6 +36,7 @@ export const ICON_OPTIONS: Record<string, LucideIcon> = {
   Megaphone,
   FileStack,
   Newspaper,
+  ClipboardList,
 };
 
 export function resolveOperacaoIcon(nomeIcone: string | undefined): LucideIcon {

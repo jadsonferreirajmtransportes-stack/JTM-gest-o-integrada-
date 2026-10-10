@@ -326,6 +326,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       activeBorder: 'border-[#C48229]',
     },
     {
+      id: 'pops' as GlobalModuleId,
+      title: 'POPs',
+      short: 'Procedimentos no modelo ABNT',
+      badge: undefined as number | undefined,
+      icon: ClipboardList,
+      color: 'from-[#7A4F17] to-[#2b2014]',
+      activeBorder: 'border-[#C48229]',
+    },
+    {
       id: 'usuarios' as GlobalModuleId,
       title: 'Logins & Acessos',
       short: 'Usuários & Permissões',

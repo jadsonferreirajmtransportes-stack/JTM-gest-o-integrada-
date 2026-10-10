@@ -249,6 +249,7 @@ import { FrequenciaView } from './components/Frequencia/FrequenciaView';
 import { PontoPublicView } from './components/Frequencia/PontoPublicView';
 import { ComunicadosView } from './components/Comunicados/ComunicadosView';
 import { JornalView } from './components/Jornal/JornalView';
+import { PopsView } from './components/Pops/PopsView';
 import { SolicitacoesDpView } from './components/Solicitacoes/SolicitacoesDpView';
 import { DocumentosView } from './components/Documentos/DocumentosView';
 import { ComunicadoPublicView } from './components/Comunicados/ComunicadoPublicView';
@@ -727,11 +728,13 @@ export default function App() {
       setActiveSection('comunicados');
     } else if (modId === 'jornal') {
       setActiveSection('jornal');
+    } else if (modId === 'pops') {
+      setActiveSection('pops');
     } else if (modId === 'compras') {
       setActiveSection('compras');
     } else if (modId === 'dp') {
       if (
-        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados', 'documentos', 'jornal'].includes(
+        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados', 'documentos', 'jornal', 'pops'].includes(
           activeSection
         )
       ) {
@@ -2902,6 +2905,7 @@ export default function App() {
           else if (sec === 'comunicados') setActiveGlobalModule('comunicados');
           else if (sec === 'documentos') setActiveGlobalModule('documentos');
           else if (sec === 'jornal') setActiveGlobalModule('jornal');
+          else if (sec === 'pops') setActiveGlobalModule('pops');
           else setActiveGlobalModule('dp');
           setIsMobileMenuOpen(false);
         }}
@@ -2955,6 +2959,7 @@ export default function App() {
             else if (sec === 'comunicados') setActiveGlobalModule('comunicados');
             else if (sec === 'documentos') setActiveGlobalModule('documentos');
           else if (sec === 'jornal') setActiveGlobalModule('jornal');
+            else if (sec === 'pops') setActiveGlobalModule('pops');
             else setActiveGlobalModule('dp');
           }}
           searchQuery={searchQuery}
@@ -3305,6 +3310,8 @@ export default function App() {
           )}
 
           {(activeGlobalModule === 'jornal' || activeSection === 'jornal') && <JornalView colaboradores={colaboradores} currentUser={currentUser} />}
+
+          {(activeGlobalModule === 'pops' || activeSection === 'pops') && <PopsView colaboradores={colaboradores} currentUser={currentUser} />}
 
           {/* ========================================================================= */}
           {/* MODULE 6: LOGINS & ACESSOS (USUÁRIOS) */}
