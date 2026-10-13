@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { DetalheLancamentoModal } from './DetalheLancamentoModal';
 import {
   UploadCloud,
   Plus,
@@ -143,6 +144,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
   onFieldChange,
   onDelete,
 }) => {
+  const [detalheAberto, setDetalheAberto] = useState(false);
   const valorCalculado = computeValorACobrar(l, cliente);
   const tituloValorACobrar = tituloValorACobrarDetalhado(l, cliente);
   // Cidades do tarifário certo pra ESTE lançamento (Aéreo ou Rodoviário) — antes sempre
@@ -167,7 +169,19 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
       {showCliente && (
         <td className="px-2 py-1.5 font-medium text-slate-700 max-w-[130px] truncate">{l.clienteNome}</td>
       )}
-      <td className="px-2 py-1.5 text-slate-700 whitespace-nowrap">{l.notaFiscal || l.numeroCte || '—'}</td>
+      <td className="px-2 py-1.5 whitespace-nowrap">
+        <button
+          type="button"
+          onClick={() => setDetalheAberto(true)}
+          className="font-semibold text-emerald-700 hover:text-emerald-900 hover:underline"
+          title="Ver e editar todos os campos deste CT-e"
+        >
+          {l.notaFiscal || l.numeroCte || '—'}
+        </button>
+        {detalheAberto && (
+          <DetalheLancamentoModal lancamento={l} cliente={cliente} onClose={() => setDetalheAberto(false)} onSalvar={(patch) => onFieldChange(patch)} />
+        )}
+      </td>
       <td className="px-2 py-1.5 text-slate-600 max-w-[120px] truncate">{l.destinatario || '—'}</td>
       <td className="px-2 py-1.5">
         <select
