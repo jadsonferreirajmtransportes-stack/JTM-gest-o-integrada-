@@ -386,6 +386,8 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isNovaFaturaOpen, setIsNovaFaturaOpen] = useState(false);
   const [expandedFaturaId, setExpandedFaturaId] = useState<string | null>(null);
+  // Faturas / Sem fatura / Duplicidades em abas — antes ficavam uma embaixo da outra (tela longa).
+  const [abaLista, setAbaLista] = useState<'faturas' | 'sem_fatura' | 'duplicidades'>('faturas');
   const [faturaParaExcluir, setFaturaParaExcluir] = useState<FaturaAereo | null>(null);
   const [novaFaturaCliente, setNovaFaturaCliente] = useState('');
   const [novaFaturaPeriodo, setNovaFaturaPeriodo] = useState('');
@@ -534,6 +536,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
 
   const handleIrParaResultado = (l: LancamentoFaturamentoAereo) => {
     setBuscaGlobal('');
+    setAbaLista(l.faturaId ? 'faturas' : 'sem_fatura');
     if (l.faturaId) {
       // Limpa o filtro de Período antes de rolar até a fatura — senão, se o resultado
       // pertencer a uma fatura de um período diferente do filtrado, ela nem estaria na
@@ -991,7 +994,37 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       {/* Alerta de CT-Es em duplicidade — mesmo nº de CT-e (ou mesma NF do mesmo cliente)
           aparecendo em mais de um lançamento. Comum após reimportar planilha ou digitação
           repetida; deixa revisar e excluir a entrada redundante direto aqui. */}
-      {duplicados.length > 0 && (
+      <div className="flex flex-wrap gap-1 border-b border-slate-200">
+        {(
+          [
+            ['faturas', `Faturas (${faturasFiltradas.length})`, 'border-[#C48229] text-[#92611F]'],
+            ['sem_fatura', `Sem fatura vinculada (${lancamentosSemFatura.length}) · ${formatCurrency(totalSemFatura)}`, 'border-amber-500 text-amber-800'],
+            ['duplicidades', `Duplicidades (${duplicados.length})`, 'border-rose-500 text-rose-700'],
+          ] as const
+        ).map(([id, rotulo, ativo]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setAbaLista(id)}
+            className={`px-4 py-2 text-xs font-bold border-b-2 -mb-px whitespace-nowrap flex items-center gap-1.5 ${
+              abaLista === id ? ativo : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            {id === 'duplicidades' && duplicados.length > 0 && <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />}
+            {id === 'sem_fatura' && lancamentosSemFatura.length > 0 && <AlertCircle className="w-3.5 h-3.5 text-amber-600" />}
+            {rotulo}
+          </button>
+        ))}
+      </div>
+
+      {abaLista === 'duplicidades' && duplicados.length === 0 && (
+        <p className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-xs text-slate-500">Nenhum CT-e em duplicidade. 👍</p>
+      )}
+      {abaLista === 'sem_fatura' && lancamentosSemFatura.length === 0 && (
+        <p className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-xs text-slate-500">Todos os CT-es estão vinculados a uma fatura.</p>
+      )}
+
+      {abaLista === 'duplicidades' && duplicados.length > 0 && (
         <div className="bg-white rounded-2xl border border-rose-300 overflow-hidden">
           <div className="px-4 py-3 bg-rose-50 border-b border-rose-200">
             <h4 className="text-xs font-bold text-rose-800 uppercase tracking-wide flex items-center gap-1.5">
@@ -1079,6 +1112,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       )}
 
       {/* Tabela de Faturas */}
+      {abaLista === 'faturas' && (
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
           <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
@@ -1545,9 +1579,10 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           </div>
         )}
       </div>
+      )}
 
       {/* Lançamentos sem fatura vinculada — selecione os CT-es que devem entrar em uma fatura */}
-      {lancamentosSemFatura.length > 0 && (
+      {abaLista === 'sem_fatura' && lancamentosSemFatura.length > 0 && (
         <div id="lancamentos-sem-fatura" className="bg-white rounded-2xl border border-amber-200 overflow-hidden">
           <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between flex-wrap gap-2">
             <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wide flex items-center gap-1.5">
