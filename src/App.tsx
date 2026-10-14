@@ -827,10 +827,10 @@ export default function App() {
     }
   };
 
-  const handleEnviarMensagemChat = async (conversaId: string, texto: string, anexo?: AnexoMensagemChat) => {
+  const handleEnviarMensagemChat = async (conversaId: string, texto: string, anexo?: AnexoMensagemChat, respostaA?: string) => {
     if (!currentUser) return;
     try {
-      await enviarMensagem(conversaId, currentUser.id, texto, anexo);
+      await enviarMensagem(conversaId, currentUser.id, texto, anexo, respostaA);
       const agora = new Date().toISOString();
       setConversasChat((prev) => prev.map((c) => (c.id === conversaId ? { ...c, atualizadoEm: agora } : c)));
       setUltimasLeiturasChat((prev) => ({ ...prev, [conversaId]: agora }));

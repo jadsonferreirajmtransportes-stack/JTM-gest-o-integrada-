@@ -253,7 +253,7 @@ const CONVERSAS: any[] = [
 ];
 const MENSAGENS: any[] = [
   { id: 'm1', conversa_id: 'cv1', autor_id: 'u2', texto: 'Bom dia! Os espelhos de setembro já estão no sistema para assinatura.', criado_em: new Date(Date.parse(agora) - 1800000).toISOString() },
-  { id: 'm2', conversa_id: 'cv1', autor_id: 'u1', texto: 'Ótimo, vou pedir para a equipe assinar hoje.', criado_em: new Date(Date.parse(agora) - 1500000).toISOString() },
+  { id: 'm2', conversa_id: 'cv1', autor_id: 'u1', resposta_a: 'm1', texto: 'Ótimo, vou pedir para a equipe assinar hoje.', criado_em: new Date(Date.parse(agora) - 1500000).toISOString() },
   { id: 'm3', conversa_id: 'cv1', autor_id: 'u2', texto: 'Obrigado! Qualquer dúvida, me chama aqui.', criado_em: new Date(Date.parse(agora) - 1200000).toISOString() },
 ];
 

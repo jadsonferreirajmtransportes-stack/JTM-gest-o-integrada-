@@ -25,7 +25,7 @@ import {
   InstrucaoTrabalho,
 } from '../../types';
 import { getMensagens, getAnexoMensagem, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem } from '../../utils/chatApi';
-import { AcoesMensagemChat, EditorMensagemChat, MensagemApagada } from './MensagemChatAcoes';
+import { AcoesMensagemChat, BarraRespondendo, CitacaoMensagem, EditorMensagemChat, MensagemApagada } from './MensagemChatAcoes';
 import { podeVerRegistroCompartilhado } from '../../utils/visibilidadeUtils';
 import { podeVerAtividade } from '../Agenda/agendaUtils';
 import { NovaConversaModal } from './NovaConversaModal';
@@ -37,7 +37,7 @@ interface ChatViewProps {
   conversas: ConversaChat[];
   ultimasLeituras: Record<string, string | null>;
   onAbrirConversa: (conversaId: string) => void;
-  onEnviarMensagem: (conversaId: string, texto: string, anexo?: AnexoMensagemChat) => void;
+  onEnviarMensagem: (conversaId: string, texto: string, anexo?: AnexoMensagemChat, respostaA?: string) => void;
   onCriarConversaDireta: (outroUsuarioId: string) => void;
   onCriarConversaGrupo: (nome: string, participantesIds: string[]) => void;
   /** Exclui a conversa (e todo o histórico dela) pra todo mundo que participava. */
@@ -303,6 +303,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
   }, [mensagens.length]);
 
   const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [respondendo, setRespondendo] = useState<MensagemChat | null>(null);
+  useEffect(() => setRespondendo(null), [conversaAbertaId]);
 
   const salvarEdicao = async (m: MensagemChat, novoTexto: string) => {
     const t = novoTexto.trim();
@@ -356,7 +358,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const handleEnviar = () => {
     if (!conversaAbertaId) return;
     if (!textoNovo.trim() && !anexoPendente) return;
-    onEnviarMensagem(conversaAbertaId, textoNovo, anexoPendente || undefined);
+    onEnviarMensagem(conversaAbertaId, textoNovo, anexoPendente || undefined, respondendo?.id);
+    setRespondendo(null);
     setTextoNovo('');
     setAnexoPendente(null);
     setErroAnexo(null);
@@ -634,12 +637,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 const ehImagem = m.anexoTipo?.startsWith('image/');
                 const editando = editandoId === m.id;
                 return (
-                  <div key={m.id} className={`group flex items-center gap-1 ${propria ? 'justify-end' : 'justify-start'}`}>
+                  <div key={m.id} id={`msg-${m.id}`} className={`group flex items-center gap-1 rounded-xl transition-colors ${propria ? 'justify-end' : 'justify-start'}`}>
                     {propria && !m.apagada && !editando && (
                       <AcoesMensagemChat
                         podeEditar={!!m.texto}
                         onEditar={() => setEditandoId(m.id)}
                         onApagar={() => handleApagarMensagem(m)}
+                        onResponder={() => setRespondendo(m)}
                       />
                     )}
                     <div className={`${editando ? 'w-[70%]' : 'max-w-[70%]'} rounded-2xl px-3.5 py-2 text-xs ${
@@ -647,6 +651,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
                     }`}>
                       {!propria && conversaAberta.tipo === 'grupo' && (
                         <p className="text-[10px] font-bold text-[#C48229] mb-0.5">{autor?.nome || 'Alguém'}</p>
+                      )}
+
+                      {m.respostaA && !m.apagada && (
+                        <CitacaoMensagem original={mensagens.find((x) => x.id === m.respostaA)} usuarios={usuarios} propria={propria} />
                       )}
 
                       {m.apagada && <MensagemApagada />}
@@ -680,6 +688,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                         {formatHora(m.criadoEm)}
                       </p>
                     </div>
+                    {!propria && !m.apagada && <AcoesMensagemChat onResponder={() => setRespondendo(m)} />}
                   </div>
                 );
               })}
@@ -710,6 +719,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 })}
               </div>
             )}
+
+            {respondendo && <BarraRespondendo mensagem={respondendo} usuarios={usuarios} onCancelar={() => setRespondendo(null)} />}
 
             {/* Prévia do anexo selecionado, antes de enviar */}
             {anexoPendente && (

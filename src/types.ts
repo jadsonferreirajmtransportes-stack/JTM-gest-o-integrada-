@@ -1791,6 +1791,8 @@ export interface MensagemChat {
   anexoUrl?: string;
   anexoNome?: string;
   anexoTipo?: string;
+  /** Mensagem respondida (citação) — migração 074. */
+  respostaA?: string;
   /** Quando o autor corrigiu o texto (migração 071). */
   editadoEm?: string;
   /** O autor apagou — texto e anexo já vêm vazios. */

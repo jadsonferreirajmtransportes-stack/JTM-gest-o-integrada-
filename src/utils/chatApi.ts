@@ -28,6 +28,7 @@ function rowToMensagem(r: any): MensagemChat {
     temAnexo: !!(r.anexo_url || r.anexo_nome || r.anexo_tipo),
     editadoEm: r.editado_em ?? undefined,
     apagada: !!r.apagada,
+    respostaA: r.resposta_a ?? undefined,
   };
 }
 
@@ -200,7 +201,7 @@ export async function criarConversaGrupo(
 export async function getMensagens(conversaId: string): Promise<MensagemChat[]> {
   const { data, error } = await supabase
     .from('chat_mensagens')
-    .select('id, conversa_id, autor_id, texto, criado_em, anexo_nome, anexo_tipo, editado_em, apagada')
+    .select('id, conversa_id, autor_id, texto, criado_em, anexo_nome, anexo_tipo, editado_em, apagada, resposta_a')
     .eq('conversa_id', conversaId)
     .order('criado_em', { ascending: true });
   assertNoError(error, 'getMensagens');
@@ -236,7 +237,8 @@ export async function enviarMensagem(
   conversaId: string,
   autorId: string,
   texto: string,
-  anexo?: AnexoMensagemChat
+  anexo?: AnexoMensagemChat,
+  respostaA?: string
 ): Promise<void> {
   const textoLimpo = texto.trim();
   // Precisa de texto OU anexo — uma imagem/PDF sozinho, sem legenda, também é uma mensagem válida.
@@ -253,6 +255,7 @@ export async function enviarMensagem(
     anexo_url: anexo?.url ?? null,
     anexo_nome: anexo?.nome ?? null,
     anexo_tipo: anexo?.tipo ?? null,
+    ...(respostaA ? { resposta_a: respostaA } : {}),
   });
   assertNoError(error, 'enviarMensagem');
 

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MessageSquare, X, Send, ArrowLeft, Maximize2, Users, User } from 'lucide-react';
 import { ConversaChat, MensagemChat, UsuarioLogin } from '../../types';
 import { getMensagens, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem } from '../../utils/chatApi';
-import { AcoesMensagemChat, EditorMensagemChat, MensagemApagada } from './MensagemChatAcoes';
+import { AcoesMensagemChat, BarraRespondendo, CitacaoMensagem, EditorMensagemChat, MensagemApagada } from './MensagemChatAcoes';
 
 interface FloatingChatWidgetProps {
   usuarios: UsuarioLogin[];
@@ -10,7 +10,7 @@ interface FloatingChatWidgetProps {
   conversas: ConversaChat[];
   ultimasLeituras: Record<string, string | null>;
   onAbrirConversa: (conversaId: string) => void;
-  onEnviarMensagem: (conversaId: string, texto: string, anexo?: AnexoMensagemChat) => void;
+  onEnviarMensagem: (conversaId: string, texto: string, anexo?: AnexoMensagemChat, respostaA?: string) => void;
   /** Leva pra tela cheia do Chat Interno (módulo completo) — usado pelo botão "expandir" e
    *  pra "Nova Conversa" (esse widget flutuante não duplica aquele fluxo). */
   onAbrirTelaCheia: () => void;
@@ -109,6 +109,8 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
   }, [mensagens.length]);
 
   const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [respondendo, setRespondendo] = useState<MensagemChat | null>(null);
+  useEffect(() => setRespondendo(null), [conversaAbertaId]);
 
   const salvarEdicao = async (m: MensagemChat, novoTexto: string) => {
     const t = novoTexto.trim();
@@ -150,7 +152,8 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
 
   const handleEnviar = () => {
     if (!conversaAbertaId || !texto.trim()) return;
-    onEnviarMensagem(conversaAbertaId, texto);
+    onEnviarMensagem(conversaAbertaId, texto, undefined, respondendo?.id);
+    setRespondendo(null);
     setTexto('');
   };
 
@@ -259,13 +262,14 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
               const autor = usuarios.find((u) => u.id === m.autorId);
               const editando = editandoId === m.id;
               return (
-                <div key={m.id} className={`group flex items-center gap-0.5 ${propria ? 'justify-end' : 'justify-start'}`}>
+                <div key={m.id} id={`msgw-${m.id}`} className={`group flex items-center gap-0.5 rounded-xl transition-colors ${propria ? 'justify-end' : 'justify-start'}`}>
                   {propria && !m.apagada && !editando && (
                     <AcoesMensagemChat
                       compacto
                       podeEditar={!!m.texto}
                       onEditar={() => setEditandoId(m.id)}
                       onApagar={() => handleApagarMensagem(m)}
+                      onResponder={() => setRespondendo(m)}
                     />
                   )}
                   <div
@@ -275,6 +279,9 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                   >
                     {!propria && conversaAberta.tipo === 'grupo' && (
                       <p className="text-[9px] font-bold text-[#92611F] mb-0.5">{autor?.nome || 'Alguém'}</p>
+                    )}
+                    {m.respostaA && !m.apagada && (
+                      <CitacaoMensagem compacto prefixoId="msgw-" original={mensagens.find((x) => x.id === m.respostaA)} usuarios={usuarios} propria={propria} />
                     )}
                     {m.apagada && <MensagemApagada />}
                     {editando ? (
@@ -294,12 +301,14 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                       {formatHora(m.criadoEm)}
                     </p>
                   </div>
+                  {!propria && !m.apagada && <AcoesMensagemChat compacto onResponder={() => setRespondendo(m)} />}
                 </div>
               );
             })}
             <div ref={fimDaListaRef} />
           </div>
 
+          {respondendo && <BarraRespondendo compacto mensagem={respondendo} usuarios={usuarios} onCancelar={() => setRespondendo(null)} />}
           <div className="p-2 border-t border-slate-100 flex items-center gap-1.5 shrink-0">
             <input
               type="text"
