@@ -251,6 +251,7 @@ import { ComunicadosView } from './components/Comunicados/ComunicadosView';
 import { JornalView } from './components/Jornal/JornalView';
 import { PopsView } from './components/Pops/PopsView';
 import { SolicitacoesDpView } from './components/Solicitacoes/SolicitacoesDpView';
+import { GamificacaoView } from './components/Gamificacao/GamificacaoView';
 import { DocumentosView } from './components/Documentos/DocumentosView';
 import { ComunicadoPublicView } from './components/Comunicados/ComunicadoPublicView';
 import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
@@ -3505,6 +3506,10 @@ export default function App() {
 
           {activeGlobalModule === 'dp' && activeSection === 'solicitacoes' && podeVerSecaoDp(currentUser, 'solicitacoes') && (
             <SolicitacoesDpView colaboradores={colaboradores} currentUser={currentUser} onSaveFerias={handleSaveFerias} />
+          )}
+
+          {activeGlobalModule === 'dp' && activeSection === 'gamificacao' && podeVerSecaoDp(currentUser, 'gamificacao') && (
+            <GamificacaoView colaboradores={colaboradores} currentUser={currentUser} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'frequencia' && podeVerSecaoDp(currentUser, 'frequencia') && (

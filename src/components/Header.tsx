@@ -126,6 +126,10 @@ const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = 
     title: 'Fale com o DP',
     subtitle: 'Contestações, pedidos de férias, documentos e atualização de dados enviados pelos colaboradores no link pessoal',
   },
+  gamificacao: {
+    title: 'Gamificação & Destaques',
+    subtitle: 'Pontos do mês por colaborador, reconhecimentos e destaque do mês no Jornal',
+  },
   frequencia: {
     title: 'Controle de Frequência',
     subtitle: 'Ponto pelo celular com localização, espelho mensal, justificativas e assinatura (controle interno)',

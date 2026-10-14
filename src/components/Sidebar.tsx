@@ -25,6 +25,7 @@ import {
   Gavel,
   GraduationCap,
   Fingerprint,
+  Trophy,
   MessageSquareText,
   Thermometer,
   Layers,
@@ -76,6 +77,7 @@ export type NavSection =
   | 'disciplinar'
   | 'educacao'
   | 'frequencia'
+  | 'gamificacao'
   | 'solicitacoes'
   | 'onboarding'
   | 'arquivo'
@@ -471,6 +473,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Fingerprint,
       // Ponto pelo celular (controle interno); supervisor vê a própria equipe.
       roles: ['admin', 'supervisor'],
+      group: 'operacional',
+    },
+    {
+      id: 'gamificacao',
+      label: 'Gamificação & Destaques',
+      icon: Trophy,
+      // Pontos do mês por colaborador (só o DP vê), reconhecimentos e destaque do mês no Jornal.
+      roles: ['admin'],
       group: 'operacional',
     },
     {

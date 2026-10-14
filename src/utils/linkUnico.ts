@@ -12,6 +12,7 @@ export type DestinoPortal =
   | 'inicio'
   | 'ponto'
   | 'historico'
+  | 'desempenho'
   | 'documentos'
   | `documento:${string}`
   | 'comunicados'

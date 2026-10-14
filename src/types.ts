@@ -43,6 +43,7 @@ export type SecaoDp =
   | 'disciplinar'
   | 'educacao'
   | 'frequencia'
+  | 'gamificacao'
   | 'solicitacoes'
   | 'onboarding'
   | 'arquivo'
