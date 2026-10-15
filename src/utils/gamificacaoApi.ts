@@ -29,15 +29,46 @@ function assertNoError(error: { message: string } | null, contexto: string) {
 }
 const novoId = (p: string) => `${p}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+export interface PosicaoColaborador {
+  periodo: string;
+  posicao: number;
+  pontos: number;
+  participantes: number;
+  /** Pontos de quem está em 10º — corte do Top 10. */
+  pontosTop10: number;
+  atualizadoEm: string;
+}
+
 // ---- Portal (só os do próprio colaborador) ----
-export async function portalGamificacao(c: CredenciaisPortal): Promise<{ reconhecimentos: Reconhecimento[]; destaques: { periodo: string; pontos: number }[] }> {
+export async function portalGamificacao(c: CredenciaisPortal): Promise<{ reconhecimentos: Reconhecimento[]; destaques: { periodo: string; pontos: number }[]; posicao?: PosicaoColaborador }> {
   const { data, error } = await supabase.rpc('portal_gamificacao', { p_token: c.token, p_cpf: c.cpf, p_nascimento: c.nascimento });
   assertNoError(error, 'portalGamificacao');
   if (data?.erro) throw new Error('Não foi possível carregar seu desempenho.');
   return {
     reconhecimentos: (data?.reconhecimentos ?? []).map((r: any) => ({ id: r.id, colaboradorId: '', data: r.data, pontos: Number(r.pontos) || 0, motivo: r.motivo })),
     destaques: data?.destaques ?? [],
+    posicao: data?.posicao ?? undefined,
   };
+}
+
+/** Grava a classificação do mês (ranking por pontos, empates na mesma posição: 1, 2, 2, 4...)
+ *  — é dela que o portal tira a colocação de cada um, sem ver os pontos dos colegas. */
+export async function salvarPosicoes(periodo: string, pontosPorColaborador: { colaboradorId: string; pontos: number }[]): Promise<void> {
+  if (!pontosPorColaborador.length) return;
+  const ordenados = [...pontosPorColaborador].sort((a, b) => b.pontos - a.pontos);
+  const corte = ordenados[Math.min(9, ordenados.length - 1)].pontos;
+  const agora = new Date().toISOString();
+  const linhas = ordenados.map((x) => ({
+    periodo,
+    colaborador_id: x.colaboradorId,
+    posicao: 1 + ordenados.filter((o) => o.pontos > x.pontos).length,
+    pontos: x.pontos,
+    participantes: ordenados.length,
+    pontos_top10: corte,
+    atualizado_em: agora,
+  }));
+  const { error } = await supabase.from('gamificacao_posicoes').upsert(linhas, { onConflict: 'periodo,colaborador_id' });
+  assertNoError(error, 'salvarPosicoes');
 }
 
 // ---- DP ----

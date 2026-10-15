@@ -6,6 +6,7 @@ import { pontoHistorico } from '../../utils/frequenciaApi';
 import { portalGamificacao, Reconhecimento } from '../../utils/gamificacaoApi';
 import { diasDoMes, hojeLocal, montarEspelho } from '../Frequencia/frequenciaCalc';
 import { nomeMes } from '../Frequencia/espelhoPdf';
+import { CartaoColocacao } from './CartaoColocacao';
 import { PONTOS, ResultadoMes, calcularMes, medalhasDe, mesAtualLocal, mesesDoPrograma, nivelDe } from '../../utils/gamificacaoCalc';
 
 // ============================================================================
@@ -110,6 +111,7 @@ export const MeuDesempenho: React.FC<{ credenciais: CredenciaisPortal; treinamen
 
   return (
     <div className="space-y-4">
+      <CartaoColocacao credenciais={credenciais} onAbrir={() => undefined} />
       {/* Nível */}
       <div className="rounded-2xl p-5 border shadow-xs" style={{ background: nivel.atual.fundo, borderColor: `${nivel.atual.cor}55` }}>
         <div className="flex items-center gap-4">

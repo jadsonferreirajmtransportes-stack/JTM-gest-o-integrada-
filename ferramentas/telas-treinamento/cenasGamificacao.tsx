@@ -73,7 +73,7 @@ export const CENAS_GAMIFICACAO: Record<string, Cena> = {
         ],
       });
       rpcs.portal_comunicados = () => ({ comunicados: [{ id: 'k1', token: 't', titulo: 'Novo horário', categoria: 'Aviso', numero: 3, ano: 2026, criadoEm: '2026-10-02T10:00:00Z', exigeCiencia: true, cienteEm: '2026-10-03T10:00:00Z' }] });
-      rpcs.portal_gamificacao = () => ({ reconhecimentos: [], destaques: [] });
+      rpcs.portal_gamificacao = () => ({ reconhecimentos: [], destaques: [], posicao: { periodo: '2026-10', posicao: 2, pontos: 66, participantes: 38, pontosTop10: 30, atualizadoEm: '2026-10-14T13:00:00Z' } });
       const treinamentos: any[] = [
         { atribuicaoId: 'a1', treinamentoId: 't1', titulo: 'Boas práticas RDC 430', status: 'Concluído', concluidoEm: '2026-10-05T15:00:00Z', conteudos: [], conteudosVistos: [], tentativas: [], cargaHorariaMin: 30 },
         { atribuicaoId: 'a2', treinamentoId: 't2', titulo: 'Cadeia fria', status: 'Concluído', concluidoEm: '2026-10-09T15:00:00Z', conteudos: [], conteudosVistos: [], tentativas: [], cargaHorariaMin: 30 },

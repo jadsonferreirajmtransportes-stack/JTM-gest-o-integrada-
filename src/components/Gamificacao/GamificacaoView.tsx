@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trophy, Loader2, ChevronLeft, ChevronRight, Plus, Trash2, X, Megaphone, Search, Lock } from 'lucide-react';
 import { Colaborador, UsuarioLogin } from '../../types';
 import { getBatidas, getInicioControle, getJornadas, getJornadasColaboradores, getJustificativas, getLocais, BatidaPonto, JornadaPonto, JustificativaDia } from '../../utils/frequenciaApi';
-import { DestaqueMes, Reconhecimento, excluirReconhecimento, getAtividadesDoMes, getDestaques, getReconhecimentos, salvarDestaque, salvarReconhecimento } from '../../utils/gamificacaoApi';
+import { DestaqueMes, Reconhecimento, excluirReconhecimento, getAtividadesDoMes, getDestaques, getReconhecimentos, salvarDestaque, salvarPosicoes, salvarReconhecimento } from '../../utils/gamificacaoApi';
 import { ResultadoMes, calcularMes, mesAtualLocal, PONTOS } from '../../utils/gamificacaoCalc';
 import { saveNoticia, novoIdJornal } from '../../utils/jornalApi';
 import { diasDoMes, hojeLocal, montarEspelho } from '../Frequencia/frequenciaCalc';
@@ -85,6 +85,8 @@ export const GamificacaoView: React.FC<{ colaboradores: Colaborador[]; currentUs
         return { c, r };
       });
       setLinhas(novas.sort((a, b) => b.r.pontos - a.r.pontos || a.c.nomeCompleto.localeCompare(b.c.nomeCompleto)));
+      // Atualiza a colocação que cada colaborador vê no início do portal (só a própria).
+      salvarPosicoes(mes, novas.map((l) => ({ colaboradorId: l.c.id, pontos: l.r.pontos }))).catch((err) => console.error('Erro ao gravar a classificação:', err));
       setReconhecimentos(recs);
       setDestaques(dests);
     } catch (err) {
