@@ -52,12 +52,14 @@ import { PontoPublicView } from '../Frequencia/PontoPublicView';
 import { pontoVincular } from '../../utils/frequenciaApi';
 import { credenciaisDoAparelho, entrouPeloAparelho, gravarAparelho, lerAparelho } from '../../utils/aparelhoColaborador';
 import { portalComunicados, portalDocumentos } from '../../utils/portalColaboradorApi';
+import type { DocumentoPortal } from '../../utils/portalColaboradorApi';
 import { PortalDocumentos } from '../Portal/PortalDocumentos';
 import { PortalComunicados } from '../Portal/PortalComunicados';
 import { PortalSolicitacoes } from '../Portal/PortalSolicitacoes';
 import { MeuHistoricoPonto } from '../Frequencia/MeuHistoricoPonto';
 import { MeuDesempenho } from '../Portal/MeuDesempenho';
 import { CartaoColocacao } from '../Portal/CartaoColocacao';
+import { CartaoDocumentosPendentes, JanelaDocumentoNovo } from '../Portal/AvisoDocumentos';
 import { portalSolicitacoes } from '../../utils/solicitacoesApi';
 
 function mascararCpf(valor: string): string {
@@ -162,6 +164,8 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
   const [abertoId, setAbertoId] = useState<string | null>(null);
   const [instrucaoAberta, setInstrucaoAberta] = useState<InstrucaoTrabalho | null>(null);
   const [resumo, setResumo] = useState<{ documentos?: number; comunicados?: number; noticias?: number; respostas?: number }>({});
+  // Documentos que faltam assinar — aviso na página de início e janela ao entrar.
+  const [docsPendentes, setDocsPendentes] = useState<DocumentoPortal[]>([]);
 
   const instrucoes: InstrucaoTrabalho[] = useMemo(() => (dados?.instrucoes ?? []).map(rowToInstrucao), [dados]);
   const aberto = dados?.treinamentos.find((t) => t.atribuicaoId === abertoId) || null;
@@ -169,7 +173,11 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
   // Pendências da tela inicial (não trava a entrada se alguma falhar).
   const carregarResumo = (cred: CredenciaisPortal) => {
     portalDocumentos(cred)
-      .then((l) => setResumo((p) => ({ ...p, documentos: l.filter((d) => d.status !== 'Assinado' && !d.vencido).length })))
+      .then((l) => {
+        const pend = l.filter((d) => d.status !== 'Assinado' && !d.vencido).sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
+        setDocsPendentes(pend);
+        setResumo((p) => ({ ...p, documentos: pend.length }));
+      })
       .catch(() => undefined);
     portalComunicados(cred)
       .then((l) => setResumo((p) => ({ ...p, comunicados: l.filter((c) => !c.visualizadoEm || (c.exigeCiencia && !c.cienteEm)).length })))
@@ -271,6 +279,11 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
     setAbertoId(null);
     setInstrucaoAberta(null);
     window.scrollTo({ top: 0 });
+  };
+  // Abre um documento específico (aviso da página de início / janela de documento novo).
+  const abrirDocumento = (id: string) => {
+    setItemDoLink({ aba: 'documentos', item: id });
+    irPara('documentos');
   };
   const itemPara = (a: Aba) => (aba === a && itemDoLink?.aba === a ? itemDoLink.item : undefined);
   const contagem: Partial<Record<Aba, number>> = { documentos: resumo.documentos, comunicados: resumo.comunicados, solicitacoes: resumo.respostas, treinamentos: pendentes, jornal: resumo.noticias };
@@ -392,6 +405,7 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
                 cargo={dados.colaborador.cargo}
                 pendencias={{ documentos: resumo.documentos, comunicados: resumo.comunicados, treinamentos: pendentes, noticias: resumo.noticias, respostas: resumo.respostas }}
                 desempenho={<CartaoColocacao credenciais={credenciais} onAbrir={() => irPara('desempenho')} />}
+                avisoDocumentos={<CartaoDocumentosPendentes documentos={docsPendentes} onAbrir={abrirDocumento} />}
                 onIr={irPara}
                 noticias={noticiasRecentes}
                 onAbrirNoticia={(id) => {
@@ -411,6 +425,8 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
               />
             )}
 
+            {token && <JanelaDocumentoNovo token={token} documentos={docsPendentes} onAbrir={abrirDocumento} />}
+
             {aba === 'historico' && <MeuHistoricoPonto credenciais={credenciais} />}
 
             {aba === 'desempenho' && dados && <MeuDesempenho credenciais={credenciais} treinamentos={dados.treinamentos} onIr={(a) => irPara(a)} />}
@@ -422,6 +438,10 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
                 onMudou={(n) => {
                   setItemDoLink(undefined);
                   setResumo((p) => ({ ...p, documentos: n }));
+                  // Assinou: tira da lista de avisos da página de início.
+                  portalDocumentos(credenciais)
+                    .then((l) => setDocsPendentes(l.filter((d) => d.status !== 'Assinado' && !d.vencido).sort((a, b) => b.criadoEm.localeCompare(a.criadoEm))))
+                    .catch(() => undefined);
                 }}
               />
             )}
@@ -522,7 +542,9 @@ const PortalInicio: React.FC<{
   onAbrirNoticia: (id: string) => void;
   /** Cartão da colocação no mês (gamificação). */
   desempenho?: React.ReactNode;
-}> = ({ nome, cargo, pendencias, onIr, noticias, onAbrirNoticia, desempenho }) => {
+  /** Documentos para assinar, em destaque. */
+  avisoDocumentos?: React.ReactNode;
+}> = ({ nome, cargo, pendencias, onIr, noticias, onAbrirNoticia, desempenho, avisoDocumentos }) => {
   const atalhos: { aba: Aba; titulo: string; texto: string; icone: React.ReactNode; qtd?: number }[] = [
     { aba: 'documentos', titulo: 'Documentos', texto: 'Contracheques, vale-alimentação, férias e outros', icone: <FileSignature className="w-5 h-5" />, qtd: pendencias.documentos },
     { aba: 'comunicados', titulo: 'Comunicados', texto: 'Avisos da empresa para você', icone: <Megaphone className="w-5 h-5" />, qtd: pendencias.comunicados },
@@ -549,6 +571,7 @@ const PortalInicio: React.FC<{
         <Fingerprint className="w-7 h-7" />
         <span className="text-base font-black">Bater ponto</span>
       </button>
+      {avisoDocumentos}
       {desempenho}
       {noticias.length > 0 && (
         <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">

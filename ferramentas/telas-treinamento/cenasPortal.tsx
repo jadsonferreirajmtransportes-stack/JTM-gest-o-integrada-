@@ -7,6 +7,8 @@ const AGORA = new Date('2026-10-02T10:00:00-03:00');
 const iso = (dias = 0) => new Date(AGORA.getTime() + dias * 86400000).toISOString();
 
 function preparar(lembrado: boolean) {
+  // As telas de treinamento não mostram a janela de "documento novo" (já marcados como avisados).
+  try { localStorage.setItem(`jmt-avisos-docs-${TOKEN.slice(0, 16)}`, JSON.stringify(['d1', 'd2', 'd3'])); } catch { /* sem armazenamento */ }
   try {
     if (lembrado) localStorage.setItem(`jmt-ponto-${TOKEN.slice(0, 16)}`, 'segredo-demo');
     else localStorage.removeItem(`jmt-ponto-${TOKEN.slice(0, 16)}`);
