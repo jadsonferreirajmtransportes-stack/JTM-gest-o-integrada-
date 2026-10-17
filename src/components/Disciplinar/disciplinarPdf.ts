@@ -195,6 +195,18 @@ export function gerarPdfMedidaDisciplinar(dados: DadosDocumentoDisciplinar): { a
   const larguraLinha = (larguraTexto - 12) / 2;
   const xEsq = MARGEM;
   const xDir = MARGEM + larguraLinha + 12;
+  // Assinatura desenhada de quem aprovou, sobre a linha do empregador.
+  if (m.assinaturaAprovador) {
+    try {
+      const props = doc.getImageProperties(m.assinaturaAprovador);
+      const h = Math.min(14, (larguraLinha * 0.7 * props.height) / props.width);
+      const w = (h * props.width) / props.height;
+      // A assinatura desenhada tem margem em branco embaixo — encosta na linha como à mão.
+      doc.addImage(m.assinaturaAprovador, 'PNG', xEsq + (larguraLinha - w) / 2, y - h + 3, w, h);
+    } catch {
+      /* imagem inválida — segue só com o nome */
+    }
+  }
   doc.setDrawColor(60, 60, 60);
   doc.setLineWidth(0.3);
   doc.line(xEsq, y, xEsq + larguraLinha, y);
@@ -253,6 +265,75 @@ export function gerarPdfMedidaDisciplinar(dados: DadosDocumentoDisciplinar): { a
   const nomeArquivo = `${tituloMedida(m).replace(/\s+/g, '_')}_${c.nomeCompleto.replace(/\s+/g, '_')}_${m.dataFato}.pdf`;
   const blob = doc.output('blob');
   return { arquivo: new File([blob], nomeArquivo, { type: 'application/pdf' }), camposAssinatura };
+}
+
+/** Termo que a testemunha assina pelo link pessoal: declara que presenciou o colaborador tomar
+ *  conhecimento da medida e se recusar a assinar. Não traz a descrição do fato (só o necessário). */
+export function gerarTermoTestemunhaPdf(params: {
+  medida: MedidaDisciplinar;
+  testemunha: { nomeCompleto: string; cpf?: string };
+  dataRecusa: string;
+  empregador?: { razaoSocial?: string; cnpj?: string };
+}): { arquivo: File; camposAssinatura: CampoAssinaturaPdf[] } {
+  const { medida: m, testemunha: t, dataRecusa, empregador } = params;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const largura = doc.internal.pageSize.getWidth();
+  const altura = doc.internal.pageSize.getHeight();
+  const larguraTexto = largura - 2 * MARGEM;
+  const logoL = 38;
+  const logoA = (logoL * 339) / 900;
+  doc.addImage(JMT_LOGO_BASE64, 'PNG', MARGEM, 14, logoL, logoA, 'jmt-logo', 'FAST');
+  let y = 14 + logoA + 6;
+  doc.setFillColor(...BRONZE);
+  doc.rect(MARGEM, y, larguraTexto, 0.6, 'F');
+  y += 14;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...TEXTO);
+  doc.text('TERMO DE TESTEMUNHA — RECUSA DE ASSINATURA', largura / 2, y, { align: 'center' });
+  y += 14;
+  const quando = new Date(dataRecusa);
+  const texto =
+    `Eu, ${t.nomeCompleto}${t.cpf ? `, CPF ${t.cpf}` : ''}, declaro, para os devidos fins, que em ${quando.toLocaleDateString('pt-BR')}, ` +
+    `às ${quando.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}, presenciei o(a) empregado(a) ${m.colaboradorNome} ` +
+    `tomar conhecimento do documento "${tituloMedida(m)}" (fato de ${dataBr(m.dataFato)})${empregador?.razaoSocial ? `, emitido por ${empregador.razaoSocial}` : ''}, ` +
+    'cujo conteúdo lhe foi apresentado, e recusar-se a assiná-lo.';
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(...CORPO);
+  const linhas = doc.splitTextToSize(texto, larguraTexto) as string[];
+  doc.text(linhas, MARGEM, y, { lineHeightFactor: 1.6 });
+  y += linhas.length * 6.5 + 8;
+  doc.setFontSize(8.5);
+  const nota = doc.splitTextToSize(
+    'Esta declaração atesta apenas que o empregado teve ciência da medida e se recusou a assinar; a testemunha não se manifesta sobre o mérito do fato.',
+    larguraTexto
+  ) as string[];
+  doc.setTextColor(...CINZA);
+  doc.text(nota, MARGEM, y);
+  y += nota.length * 4 + 34;
+  const larguraLinha = 95;
+  const xLinha = (largura - larguraLinha) / 2;
+  doc.setDrawColor(90, 90, 90);
+  doc.setLineWidth(0.3);
+  doc.line(xLinha, y, xLinha + larguraLinha, y);
+  doc.setFontSize(9.5);
+  doc.setTextColor(...TEXTO);
+  doc.text(t.nomeCompleto, largura / 2, y + 5, { align: 'center' });
+  doc.setFontSize(8.5);
+  doc.setTextColor(...CINZA);
+  doc.text('Assinatura da testemunha', largura / 2, y + 9.5, { align: 'center' });
+  const camposAssinatura: CampoAssinaturaPdf[] = [
+    { pagina: 0, x: xLinha * MM_PARA_PT, y: altura * MM_PARA_PT - y * MM_PARA_PT + 1, largura: larguraLinha * MM_PARA_PT, altura: 34 },
+  ];
+  doc.setFontSize(7.5);
+  doc.setTextColor(...BRONZE);
+  doc.text(STRATEGIC_GUIDELINES.assinatura, largura / 2, altura - 8, { align: 'center' });
+  const blob = doc.output('blob');
+  return {
+    arquivo: new File([blob], `Termo_testemunha_${t.nomeCompleto.replace(/\s+/g, '_')}_${m.dataFato}.pdf`, { type: 'application/pdf' }),
+    camposAssinatura,
+  };
 }
 
 /** PDF da medida + "Termo de recusa de assinatura" com as 2 testemunhas (nome, CPF e assinatura

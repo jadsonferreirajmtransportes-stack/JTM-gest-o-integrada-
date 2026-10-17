@@ -13,9 +13,10 @@ import {
   AlertTriangle,
   Ban,
   Info,
+  Send,
 } from 'lucide-react';
 import { Colaborador, Empregador, Ocorrencia, UsuarioLogin } from '../../types';
-import { MedidaDisciplinar, TestemunhaRecusa, getMedidaDisciplinar, saveMedidaDisciplinar } from '../../utils/disciplinarApi';
+import { MedidaDisciplinar, RecusaRemota, TestemunhaRecusa, getMedidaDisciplinar, saveMedidaDisciplinar } from '../../utils/disciplinarApi';
 import {
   DocumentoAssinatura,
   criarDocumentoAssinatura,
@@ -29,7 +30,7 @@ import { linkUnicoDe } from '../../utils/linkUnico';
 import { AssinaturaDigitalPad } from '../Epi/AssinaturaDigitalPad';
 import { gerarPdfAssinado } from '../Contracheques/pdfAssinadoUtils';
 import { ESCADA_DISCIPLINAR, avaliarMedida, contaParaReincidencia, descreverEnquadramento, situacaoDisciplinar } from './disciplinarRegras';
-import { gerarPdfComRecusa, gerarPdfMedidaDisciplinar, tituloMedida } from './disciplinarPdf';
+import { gerarPdfComRecusa, gerarPdfMedidaDisciplinar, gerarTermoTestemunhaPdf, tituloMedida } from './disciplinarPdf';
 
 interface MedidaDetalheModalProps {
   medida: MedidaDisciplinar;
@@ -89,6 +90,14 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
   const [inicioSuspensao, setInicioSuspensao] = useState(medida.suspensaoInicio || '');
   const [mostrarRecusa, setMostrarRecusa] = useState(false);
   const [testemunhas, setTestemunhas] = useState<TestemunhaRecusa[]>([{ nome: '' }, { nome: '' }]);
+  // Assinatura de quem aprova (linha "Empregador" do documento).
+  const [assinaturaAprovacao, setAssinaturaAprovacao] = useState<string | null>(null);
+  // Recusa: presencial (assinam aqui) ou à distância (termo no link pessoal de cada testemunha).
+  const [modoRecusa, setModoRecusa] = useState<'presencial' | 'remota'>('presencial');
+  const agoraLocal = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const [dataRecusa, setDataRecusa] = useState(agoraLocal());
+  const [testemunhasRemotas, setTestemunhasRemotas] = useState<string[]>(['', '']);
+  const [docsTestemunhas, setDocsTestemunhas] = useState<Record<string, DocumentoAssinatura | null>>({});
 
   const colaborador = colaboradores.find((c) => c.id === m.colaboradorId);
   const empregador = empregadores.find((e) => e.id === colaborador?.empregadorId);
@@ -114,6 +123,32 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
     getMedidaDisciplinar(medida.id).then((completo) => completo && setM(completo)).catch(console.error);
     if (medida.documentoId) getDocumentoAssinatura(medida.documentoId).then(setDocumento).catch(console.error);
   }, [medida.id, medida.documentoId]);
+
+  useEffect(() => {
+    const ids = m.recusaRemota?.testemunhas.map((t) => t.documentoId) || [];
+    if (!ids.length || m.status !== 'Aprovada') return;
+    Promise.all(ids.map((id) => getDocumentoAssinatura(id).catch(() => null))).then((docs) => {
+      const mapa: Record<string, DocumentoAssinatura | null> = {};
+      ids.forEach((id, i) => (mapa[id] = docs[i]));
+      setDocsTestemunhas(mapa);
+    });
+  }, [m.recusaRemota, m.status]);
+
+  // As duas testemunhas assinaram pelo portal: conclui a recusa com as assinaturas delas.
+  useEffect(() => {
+    const rr = m.recusaRemota;
+    if (!rr || m.status !== 'Aprovada') return;
+    const docs = rr.testemunhas.map((t) => docsTestemunhas[t.documentoId]);
+    if (docs.length !== 2 || docs.some((d) => !d || d.status !== 'Assinado' || !d.assinaturaImagem)) return;
+    salvar({
+      ...m,
+      status: 'Recusou-se a assinar',
+      recusaTestemunhas: rr.testemunhas.map((t, i) => ({ nome: t.nome, cpf: t.cpf, assinatura: docs[i]!.assinaturaImagem })),
+      recusaRegistradaEm: rr.dataRecusa,
+      recusaRegistradaPor: rr.solicitadaPor,
+    }).catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docsTestemunhas]);
 
   const executar = async (acao: string, fn: () => Promise<void>) => {
     setErro(null);
@@ -142,12 +177,14 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
   const handleAprovar = () =>
     executar('aprovar', async () => {
       if (m.tipo === 'Suspensão' && !inicioSuspensao) throw new Error('Informe a data de início da suspensão.');
+      if (!assinaturaAprovacao) throw new Error('Assine no quadro antes de aprovar — a assinatura vai na linha "Empregador" do documento.');
       const agora = new Date().toISOString();
       let aprovada: MedidaDisciplinar = {
         ...m,
         status: 'Aprovada',
         aprovadoPor: currentUser?.nome,
         aprovadoEm: agora,
+        assinaturaAprovador: assinaturaAprovacao,
         suspensaoInicio: m.tipo === 'Suspensão' ? inicioSuspensao : m.suspensaoInicio,
       };
       // Registro no prontuário (Ocorrências) — a suspensão entra no desconto do VA.
@@ -209,7 +246,15 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
 
   const handleGerarDocumento = () =>
     executar('gerar', async () => {
-      const { arquivo, camposAssinatura } = gerarPdf();
+      // Medida aprovada antes da assinatura do aprovador existir: assina agora (opcional).
+      let base = m;
+      if (!m.assinaturaAprovador && assinaturaAprovacao) base = await salvar({ ...m, assinaturaAprovador: assinaturaAprovacao });
+      const { arquivo, camposAssinatura } = gerarPdfMedidaDisciplinar({
+        medida: base,
+        colaborador: colaborador || { nomeCompleto: m.colaboradorNome },
+        empregador,
+        historico: historicoValido,
+      });
       const doc = await criarDocumentoAssinatura({
         categoria: 'disciplinar',
         colaboradorId: m.colaboradorId,
@@ -223,7 +268,7 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
       });
       setDocumento(doc);
       onDocumentoAtualizado(doc);
-      await salvar({ ...m, documentoId: doc.id });
+      await salvar({ ...base, documentoId: doc.id });
     });
 
   // Link único do colaborador abrindo direto no documento (o link antigo é a reserva).
@@ -286,6 +331,62 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
       });
       setMostrarRecusa(false);
     });
+
+  const candidatasTestemunha = colaboradores
+    .filter((c) => c.status !== 'Inativo' && c.id !== m.colaboradorId)
+    .sort((a, b) => a.nomeCompleto.localeCompare(b.nomeCompleto));
+
+  const handleEnviarTestemunhas = () =>
+    executar('testemunhas', async () => {
+      const [a, b] = testemunhasRemotas;
+      if (!a || !b || a === b) throw new Error('Escolha duas testemunhas diferentes.');
+      if (!dataRecusa) throw new Error('Informe quando o colaborador se recusou a assinar.');
+      const quando = new Date(dataRecusa).toISOString();
+      const lista: RecusaRemota['testemunhas'] = [];
+      for (const id of [a, b]) {
+        const t = colaboradores.find((c) => c.id === id)!;
+        const { arquivo, camposAssinatura } = gerarTermoTestemunhaPdf({
+          medida: m,
+          testemunha: { nomeCompleto: t.nomeCompleto, cpf: t.cpf },
+          dataRecusa: quando,
+          empregador,
+        });
+        const doc = await criarDocumentoAssinatura({
+          categoria: 'disciplinar',
+          colaboradorId: t.id,
+          colaboradorNome: t.nomeCompleto,
+          referencia: m.id,
+          tipo: 'Testemunho de recusa',
+          titulo: 'Termo de testemunha — recusa de assinatura',
+          arquivo,
+          camposAssinatura,
+          criadoPor: currentUser?.nome,
+        });
+        lista.push({ colaboradorId: t.id, nome: t.nomeCompleto, cpf: t.cpf || undefined, documentoId: doc.id });
+      }
+      await salvar({ ...m, recusaRemota: { dataRecusa: quando, solicitadaPor: currentUser?.nome, solicitadaEm: new Date().toISOString(), testemunhas: lista } });
+      setMostrarRecusa(false);
+    });
+
+  const linkTestemunha = (t: RecusaRemota['testemunhas'][number]) => linkUnicoDe(t.colaboradorId, `documento:${t.documentoId}`);
+  const handleWhatsAppTestemunha = async (t: RecusaRemota['testemunhas'][number]) => {
+    const c = colaboradores.find((x) => x.id === t.colaboradorId);
+    const msg =
+      `Olá, ${t.nome.split(' ')[0]}. O Departamento Pessoal da JM Transportes pede a sua assinatura como testemunha em um termo de recusa de assinatura que você presenciou.\n\n` +
+      `Confira e assine pelo seu link pessoal:\n${await linkTestemunha(t)}`;
+    const link = buildWhatsAppLink(c?.telefoneWhatsapp || '', msg);
+    if (!link) return alert('Testemunha sem WhatsApp cadastrado. Use "Copiar link".');
+    window.open(link, 'jmt-whatsapp');
+  };
+  const handleCopiarTestemunha = async (t: RecusaRemota['testemunhas'][number]) => {
+    const link = await linkTestemunha(t);
+    try {
+      await navigator.clipboard.writeText(link);
+      alert('Link copiado.');
+    } catch {
+      window.prompt('Copie o link:', link);
+    }
+  };
 
   const statusCiencia =
     m.status === 'Recusou-se a assinar'
@@ -390,11 +491,15 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
                       />
                     </div>
                   )}
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200 space-y-1">
+                    <p className="font-semibold text-slate-700">Sua assinatura (vai na linha "{interno ? 'Responsável — Departamento Pessoal' : 'Empregador'}" do documento)</p>
+                    <AssinaturaDigitalPad onChange={setAssinaturaAprovacao} />
+                  </div>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={handleAprovar}
-                      disabled={!!ocupado || alertas.some((a) => a.nivel === 'erro')}
+                      disabled={!!ocupado || !assinaturaAprovacao || alertas.some((a) => a.nivel === 'erro')}
                       className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold flex items-center gap-1.5 disabled:opacity-50"
                     >
                       {ocupado === 'aprovar' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} Aprovar
@@ -419,6 +524,44 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
           {(m.status === 'Aprovada' || m.status === 'Recusou-se a assinar') && (
             <div className="p-3 border border-slate-200 rounded-xl space-y-2">
               <p className="font-bold text-slate-800">Ciência do colaborador: <span className="font-semibold text-slate-600">{statusCiencia}</span></p>
+              {!interno && !documento && !m.assinaturaAprovador && ehAdmin && (
+                <div className="bg-amber-50/60 p-2.5 rounded-lg border border-amber-200 space-y-1">
+                  <p className="font-semibold text-slate-700">Assine como responsável pela empresa (linha "Empregador") antes de gerar o documento:</p>
+                  <AssinaturaDigitalPad onChange={setAssinaturaAprovacao} />
+                </div>
+              )}
+              {m.recusaRemota && m.status === 'Aprovada' && (
+                <div className="p-2.5 bg-rose-50/50 border border-rose-200 rounded-lg space-y-2">
+                  <p className="font-bold text-rose-800">
+                    Recusa em {dataHora(m.recusaRemota.dataRecusa)} — aguardando as testemunhas assinarem pelo link pessoal
+                  </p>
+                  {m.recusaRemota.testemunhas.map((t) => {
+                    const d = docsTestemunhas[t.documentoId];
+                    const assinado = d?.status === 'Assinado';
+                    return (
+                      <div key={t.documentoId} className="flex flex-wrap items-center justify-between gap-2 bg-white p-2 rounded-lg border border-slate-200">
+                        <span>
+                          <strong>{t.nome}</strong>{' '}
+                          <span className={assinado ? 'text-emerald-700 font-semibold' : 'text-slate-500'}>
+                            {assinado ? `assinou em ${dataHora(d?.assinadoEm)}` : d?.status === 'Visualizado' ? 'abriu, ainda não assinou' : 'ainda não abriu'}
+                          </span>
+                        </span>
+                        {!assinado && (
+                          <span className="flex gap-1.5">
+                            <button type="button" onClick={() => handleWhatsAppTestemunha(t)} className="px-2 py-1 bg-emerald-600 text-white rounded-md font-bold flex items-center gap-1">
+                              <MessageCircle className="w-3 h-3" /> WhatsApp
+                            </button>
+                            <button type="button" onClick={() => handleCopiarTestemunha(t)} className="px-2 py-1 border border-slate-200 rounded-md font-semibold flex items-center gap-1">
+                              <Link2 className="w-3 h-3" /> Link
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <p className="text-[11px] text-slate-500">Quando as duas assinarem, a recusa é registrada sozinha e o PDF sai com o termo e as assinaturas.</p>
+                </div>
+              )}
               <div className="flex flex-wrap gap-2">
                 {!interno && !documento && (
                   <button
@@ -439,13 +582,13 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
                     <button type="button" onClick={handleCopiarLink} className="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg font-semibold flex items-center gap-1.5">
                       <Link2 className="w-3.5 h-3.5" /> Copiar link
                     </button>
-                    <button
+                    {!m.recusaRemota && <button
                       type="button"
                       onClick={() => setMostrarRecusa((v) => !v)}
                       className="px-3 py-2 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 rounded-lg font-semibold flex items-center gap-1.5"
                     >
                       <UserX className="w-3.5 h-3.5" /> Recusou-se a assinar
-                    </button>
+                    </button>}
                   </>
                 )}
                 {(documento || interno) && (
@@ -469,9 +612,63 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
                 <div className="p-3 bg-rose-50/50 border border-rose-200 rounded-lg space-y-3">
                   <p className="text-rose-800">
                     O colaborador tomou conhecimento do documento mas se recusou a assinar. Duas testemunhas (que não sejam o
-                    responsável pela medida) devem presenciar a apresentação e assinar abaixo.
+                    responsável pela medida) devem ter presenciado a apresentação e a recusa.
                   </p>
-                  {testemunhas.map((t, i) => (
+                  <div className="flex gap-1.5">
+                    {(
+                      [
+                        ['presencial', 'Assinam aqui, agora'],
+                        ['remota', 'Assinam pelo link pessoal'],
+                      ] as const
+                    ).map(([id, rotulo]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setModoRecusa(id)}
+                        className={`px-3 py-1.5 rounded-full border text-[11px] font-bold ${modoRecusa === id ? 'bg-rose-600 text-white border-rose-600' : 'bg-white text-slate-600 border-slate-200'}`}
+                      >
+                        {rotulo}
+                      </button>
+                    ))}
+                  </div>
+                  {modoRecusa === 'remota' && (
+                    <div className="space-y-2 bg-white p-2.5 rounded-lg border border-slate-200">
+                      <p className="text-slate-600">As testemunhas precisam ser colaboradores. Cada uma recebe o termo em Documentos, no link pessoal, e assina pelo celular.</p>
+                      <label className="block">
+                        <span className="font-semibold text-slate-700 block mb-1">Quando o colaborador se recusou a assinar</span>
+                        <input type="datetime-local" value={dataRecusa} onChange={(e) => setDataRecusa(e.target.value)} className="p-2 border border-slate-200 rounded-lg" />
+                      </label>
+                      {[0, 1].map((i) => (
+                        <label key={i} className="block">
+                          <span className="font-semibold text-slate-700 block mb-1">Testemunha {i + 1}</span>
+                          <select
+                            value={testemunhasRemotas[i]}
+                            onChange={(e) => setTestemunhasRemotas((prev) => prev.map((x, k) => (k === i ? e.target.value : x)))}
+                            className="w-full p-2 border border-slate-200 rounded-lg bg-white"
+                          >
+                            <option value="">Escolha...</option>
+                            {candidatasTestemunha
+                              .filter((c) => c.id !== testemunhasRemotas[1 - i])
+                              .map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.nomeCompleto}
+                                </option>
+                              ))}
+                          </select>
+                        </label>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={handleEnviarTestemunhas}
+                        disabled={!testemunhasRemotas[0] || !testemunhasRemotas[1] || !!ocupado}
+                        className="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {ocupado === 'testemunhas' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                        Enviar termo para as testemunhas
+                      </button>
+                    </div>
+                  )}
+                  {modoRecusa === 'presencial' && testemunhas.map((t, i) => (
                     <div key={i} className="space-y-1.5 bg-white p-2.5 rounded-lg border border-slate-200">
                       <p className="font-bold text-slate-700">Testemunha {i + 1}</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -495,7 +692,7 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
                       />
                     </div>
                   ))}
-                  <button
+                  {modoRecusa === 'presencial' && <button
                     type="button"
                     onClick={handleRegistrarRecusa}
                     disabled={!recusaValida || !!ocupado}
@@ -503,7 +700,7 @@ export const MedidaDetalheModal: React.FC<MedidaDetalheModalProps> = ({
                   >
                     {ocupado === 'recusa' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserX className="w-3.5 h-3.5" />}
                     Registrar recusa
-                  </button>
+                  </button>}
                 </div>
               )}
             </div>

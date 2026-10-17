@@ -13,6 +13,15 @@ export interface TestemunhaRecusa {
   assinatura?: string;
 }
 
+/** Recusa com testemunhas que assinam o termo pelo próprio link pessoal (à distância). */
+export interface RecusaRemota {
+  /** Quando o colaborador se recusou a assinar (presenciado pelas testemunhas). */
+  dataRecusa: string;
+  solicitadaPor?: string;
+  solicitadaEm: string;
+  testemunhas: { colaboradorId: string; nome: string; cpf?: string; documentoId: string }[];
+}
+
 export interface MedidaDisciplinar {
   id: string;
   colaboradorId: string;
@@ -40,6 +49,9 @@ export interface MedidaDisciplinar {
   recusaTestemunhas?: TestemunhaRecusa[];
   recusaRegistradaEm?: string;
   recusaRegistradaPor?: string;
+  /** Assinatura desenhada de quem aprovou (PNG) — linha "Empregador" do documento (077). */
+  assinaturaAprovador?: string;
+  recusaRemota?: RecusaRemota;
   observacoes?: string;
   criadoEm?: string;
 }
@@ -82,6 +94,8 @@ function rowToMedida(r: any): MedidaDisciplinar {
     recusaTestemunhas: u(r.recusa_testemunhas),
     recusaRegistradaEm: u(r.recusa_registrada_em),
     recusaRegistradaPor: u(r.recusa_registrada_por),
+    assinaturaAprovador: u(r.assinatura_aprovador),
+    recusaRemota: u(r.recusa_remota),
     observacoes: u(r.observacoes),
     criadoEm: u(r.criado_em),
   };
@@ -115,6 +129,8 @@ function medidaToRow(m: MedidaDisciplinar) {
     recusa_testemunhas: m.recusaTestemunhas ?? null,
     recusa_registrada_em: n(m.recusaRegistradaEm),
     recusa_registrada_por: n(m.recusaRegistradaPor),
+    assinatura_aprovador: n(m.assinaturaAprovador),
+    recusa_remota: m.recusaRemota ?? null,
     observacoes: n(m.observacoes),
   };
 }
@@ -127,7 +143,7 @@ export async function getMedidasDisciplinares(): Promise<MedidaDisciplinar[]> {
       'id, colaborador_id, colaborador_nome, tipo, etapa, data_fato, data_ciencia_fato, descricao_fato, enquadramento, ' +
         'enquadramento_outro, testemunhas_fato, justificativa_etapa, ocorrencias_relacionadas, dias_suspensao, suspensao_inicio, ' +
         'status, proposto_por, proposto_em, aprovado_por, aprovado_em, motivo_rejeicao, documento_id, ocorrencia_id, ' +
-        'recusa_registrada_em, recusa_registrada_por, observacoes, criado_em'
+        'recusa_registrada_em, recusa_registrada_por, recusa_remota, observacoes, criado_em'
     )
     .order('data_fato', { ascending: false });
   assertNoError(error, 'getMedidasDisciplinares');

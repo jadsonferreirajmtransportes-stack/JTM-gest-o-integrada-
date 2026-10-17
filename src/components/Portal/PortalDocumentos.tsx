@@ -15,7 +15,7 @@ const ROTULO_CATEGORIA: Record<string, string> = {
 };
 
 export const rotuloDocumentoPortal = (d: { categoria: string; tipo: string }) => rotuloDe(d);
-const rotuloDe = (d: { categoria: string; tipo: string }) => (d.tipo === 'Folha extra' ? 'Folha extra' : ROTULO_CATEGORIA[d.categoria] || 'Documento');
+const rotuloDe = (d: { categoria: string; tipo: string }) => (d.tipo === 'Folha extra' ? 'Folha extra' : d.tipo === 'Testemunho de recusa' ? 'Termo de testemunha' : ROTULO_CATEGORIA[d.categoria] || 'Documento');
 
 const dataCurta = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '');
 
