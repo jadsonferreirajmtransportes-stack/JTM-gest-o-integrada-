@@ -128,6 +128,14 @@ const numerosDoLancamento = (l: LancamentoFaturamentoAereo) =>
     .map((v) => v.replace(/^0+/, ''))
     .filter(Boolean);
 
+/** A busca é só de números e este lançamento tem um deles exato (pra destacar a linha). */
+function bateNumeroExato(l: LancamentoFaturamentoAereo, busca: string): boolean {
+  const termos = busca.split(',').map((t) => t.trim()).filter(Boolean);
+  if (!termos.length || !termos.every((t) => /^\d+$/.test(t))) return false;
+  const nums = termos.map((t) => t.replace(/^0+/, ''));
+  return numerosDoLancamento(l).some((n) => nums.includes(n));
+}
+
 /** Busca por cliente, NF, CT-e, destinatário ou cidade (vários termos separados por vírgula).
  *  Termo só com números procura primeiro a NF/CT-e EXATA (62103 não traz 162103 nem 621030);
  *  se não houver nenhuma exata, cai na busca "contém". */
@@ -158,6 +166,8 @@ interface LancamentoRowProps {
   selecionado?: boolean;
   onToggleSelecionado?: () => void;
   showRemoverDaFatura?: boolean;
+  /** Linha do documento procurado — fica destacada em amarelo. */
+  destacado?: boolean;
   onFieldChange: (patch: Partial<LancamentoFaturamentoAereo>) => void;
   onDelete: () => void;
 }
@@ -173,6 +183,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
   selecionado,
   onToggleSelecionado,
   showRemoverDaFatura,
+  destacado,
   onFieldChange,
   onDelete,
 }) => {
@@ -187,7 +198,10 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
   const clienteTemDuasTabelas = !!cliente?.tabelaFreteRodoviario;
 
   return (
-    <tr className={`align-middle ${showSelecao && selecionado ? 'bg-emerald-50' : ''}`}>
+    <tr
+      id={`lanc-${l.id}`}
+      className={`align-middle transition-colors ${destacado ? 'bg-amber-100 outline outline-2 -outline-offset-2 outline-amber-400' : showSelecao && selecionado ? 'bg-emerald-50' : ''}`}
+    >
       {showSelecao && (
         <td className="px-2 py-1.5">
           <input
@@ -570,8 +584,22 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     });
   }, [lancamentosDaEmpresa, buscaGlobal]);
 
+  const [destaqueId, setDestaqueId] = useState<string | null>(null);
+  /** Rola até a linha do lançamento (espera a fatura abrir/a lista filtrar). */
+  const rolarAteLinha = (id: string, alternativa: string) => {
+    let tentativas = 0;
+    const tentar = () => {
+      const linha = document.getElementById(`lanc-${id}`);
+      if (linha) return linha.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (++tentativas < 15) return setTimeout(tentar, 120);
+      document.getElementById(alternativa)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    setTimeout(tentar, 80);
+  };
+
   const handleIrParaResultado = (l: LancamentoFaturamentoAereo) => {
     setBuscaGlobal('');
+    setDestaqueId(l.id);
     setAbaLista(l.faturaId ? 'faturas' : 'sem_fatura');
     if (l.faturaId) {
       // Limpa o filtro de Período antes de rolar até a fatura — senão, se o resultado
@@ -579,18 +607,10 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       // lista renderizada pra rolar até ela.
       setFiltroPeriodo('');
       setExpandedFaturaId(l.faturaId);
-      requestAnimationFrame(() => {
-        document
-          .getElementById(`fatura-aerea-${l.faturaId}`)
-          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
+      rolarAteLinha(l.id, `fatura-aerea-${l.faturaId}`);
     } else {
       setBuscaSemFatura(l.numeroCte || l.notaFiscal || '');
-      requestAnimationFrame(() => {
-        document
-          .getElementById('lancamentos-sem-fatura')
-          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
+      rolarAteLinha(l.id, 'lancamentos-sem-fatura');
     }
   };
 
@@ -1594,6 +1614,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                                   {lancamentosDaFaturaFiltrados.map((l) => (
                                     <LancamentoRow
                                       key={l.id}
+                                      destacado={l.id === destaqueId}
                                       lancamento={l}
                                       cliente={clienteDaFatura || findClienteById(clientes, l.clienteId, l.clienteNome)}
                                       showRemoverDaFatura
@@ -1747,6 +1768,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                 {lancamentosSemFaturaFiltrados.slice(0, limiteSemFatura).map((l) => (
                   <LancamentoRow
                     key={l.id}
+                    destacado={l.id === destaqueId || bateNumeroExato(l, buscaSemFaturaAdiada)}
                     lancamento={l}
                     cliente={findClienteById(clientes, l.clienteId, l.clienteNome)}
                     showCliente
