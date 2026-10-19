@@ -60,6 +60,7 @@ import { MeuHistoricoPonto } from '../Frequencia/MeuHistoricoPonto';
 import { MeuDesempenho } from '../Portal/MeuDesempenho';
 import { CartaoColocacao } from '../Portal/CartaoColocacao';
 import { CartaoDocumentosPendentes, JanelaDocumentoNovo } from '../Portal/AvisoDocumentos';
+import { CartaoAppPortal } from '../App/AppInstalavelUI';
 import { portalSolicitacoes } from '../../utils/solicitacoesApi';
 
 function mascararCpf(valor: string): string {
@@ -406,6 +407,7 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
                 pendencias={{ documentos: resumo.documentos, comunicados: resumo.comunicados, treinamentos: pendentes, noticias: resumo.noticias, respostas: resumo.respostas }}
                 desempenho={<CartaoColocacao credenciais={credenciais} onAbrir={() => irPara('desempenho')} />}
                 avisoDocumentos={<CartaoDocumentosPendentes documentos={docsPendentes} onAbrir={abrirDocumento} />}
+                cartaoApp={<CartaoAppPortal credenciais={credenciais} />}
                 onIr={irPara}
                 noticias={noticiasRecentes}
                 onAbrirNoticia={(id) => {
@@ -544,7 +546,9 @@ const PortalInicio: React.FC<{
   desempenho?: React.ReactNode;
   /** Documentos para assinar, em destaque. */
   avisoDocumentos?: React.ReactNode;
-}> = ({ nome, cargo, pendencias, onIr, noticias, onAbrirNoticia, desempenho, avisoDocumentos }) => {
+  /** Instalar o app / ativar notificações. */
+  cartaoApp?: React.ReactNode;
+}> = ({ nome, cargo, pendencias, onIr, noticias, onAbrirNoticia, desempenho, avisoDocumentos, cartaoApp }) => {
   const atalhos: { aba: Aba; titulo: string; texto: string; icone: React.ReactNode; qtd?: number }[] = [
     { aba: 'documentos', titulo: 'Documentos', texto: 'Contracheques, vale-alimentação, férias e outros', icone: <FileSignature className="w-5 h-5" />, qtd: pendencias.documentos },
     { aba: 'comunicados', titulo: 'Comunicados', texto: 'Avisos da empresa para você', icone: <Megaphone className="w-5 h-5" />, qtd: pendencias.comunicados },
@@ -572,6 +576,7 @@ const PortalInicio: React.FC<{
         <span className="text-base font-black">Bater ponto</span>
       </button>
       {avisoDocumentos}
+      {cartaoApp}
       {desempenho}
       {noticias.length > 0 && (
         <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">

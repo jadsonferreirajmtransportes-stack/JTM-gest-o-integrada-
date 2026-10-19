@@ -250,6 +250,7 @@ import { PontoPublicView } from './components/Frequencia/PontoPublicView';
 import { ComunicadosView } from './components/Comunicados/ComunicadosView';
 import { JornalView } from './components/Jornal/JornalView';
 import { PopsView } from './components/Pops/PopsView';
+import { tokenPortal } from './utils/appInstalavel';
 import { SolicitacoesDpView } from './components/Solicitacoes/SolicitacoesDpView';
 import { GamificacaoView } from './components/Gamificacao/GamificacaoView';
 import { DocumentosView } from './components/Documentos/DocumentosView';
@@ -1042,7 +1043,8 @@ export default function App() {
         setContrachequePublicoToken(searchParams.get('token') || undefined);
         setContrachequePublicoEhContracheque(formParam === 'contracheque');
       } else if (formParam === 'portal') {
-        setPortalEducacaoToken(searchParams.get('token') || '');
+        // App instalado abre em /?form=portal sem o token: usa o último link pessoal deste aparelho.
+        setPortalEducacaoToken(tokenPortal(searchParams.get('token')));
       } else if (formParam === 'ponto') {
         setPontoToken(searchParams.get('token') || '');
       } else if (formParam === 'comunicado') {

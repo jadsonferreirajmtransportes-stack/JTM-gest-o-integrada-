@@ -1,0 +1,18 @@
+{
+  "id": "/?form=portal",
+  "name": "JMT Colaborador",
+  "short_name": "JMT Colaborador",
+  "description": "Ponto, documentos, comunicados, treinamentos e Jornal da JMT no seu celular.",
+  "start_url": "/?form=portal&app=1",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8FAFC",
+  "theme_color": "#C48229",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/icons/portal-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/portal-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/portal-mascaravel-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

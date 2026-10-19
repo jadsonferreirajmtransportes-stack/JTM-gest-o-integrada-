@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { BotoesAppGestao } from './App/AppInstalavelUI';
 import {
   Menu,
   Search,
@@ -327,6 +328,9 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Ajuda / manual do sistema (F1) + tour guiado */}
         <CentralAjuda secaoAtual={currentSection} usuarioId={currentUser?.id} />
+
+        {/* App instalável + avisos do chat no celular/computador */}
+        <BotoesAppGestao usuarioId={currentUser?.id} />
 
         {/* Notifications / Alerts Tray */}
         <div className="relative" ref={alertsRef}>
