@@ -233,17 +233,17 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 opacity-100 pointer-events-none flex items-center pr-8">
+      <div className="bg-white rounded-3xl p-4 sm:p-8 shadow-sm relative overflow-hidden">
+        <div className="hidden sm:flex absolute right-0 top-0 bottom-0 opacity-100 pointer-events-none items-center pr-8">
           <ShoppingCart className="w-56 h-56 text-orange-50" />
         </div>
         <div className="relative z-10 space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 text-xs font-semibold">
+          <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 text-xs font-semibold">
             <ShoppingCart className="w-3.5 h-3.5" />
             <span>Módulo Compras</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Solicitações de Compra</h1>
-          <p className="text-sm text-slate-500 font-normal leading-relaxed">
+          <h1 className="text-lg sm:text-3xl font-bold tracking-tight text-slate-900">Solicitações de Compra</h1>
+          <p className="hidden sm:block text-sm text-slate-500 font-normal leading-relaxed">
             Peça um item, acompanhe a aprovação da diretoria e o status até a compra ser efetivada.
           </p>
         </div>

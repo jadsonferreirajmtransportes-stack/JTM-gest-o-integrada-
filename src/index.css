@@ -358,3 +358,14 @@
   color: #1e293b;
 }
 
+
+/* Celular/tablet: campo de digitação com letra menor que 16px faz o iPhone dar zoom na tela
+   inteira ao tocar nele (e não voltar sozinho) — a tela "pula" e parece site de computador.
+   Fora de @layer de propósito, para vencer o text-xs/text-sm dos utilitários do Tailwind. */
+@media (max-width: 1023px) and (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

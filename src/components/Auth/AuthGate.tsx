@@ -96,7 +96,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
         }}
         disabled={saindo}
         title={`Sair (${session.user.email})`}
-        className="fixed bottom-3 right-3 z-[9999] flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-[11px] font-semibold px-3 py-2 rounded-full shadow-lg"
+        className="hidden lg:flex fixed bottom-3 right-3 z-[9999] items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-[11px] font-semibold px-3 py-2 rounded-full shadow-lg"
       >
         {saindo ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C48229]" /> : <LogOut className="w-3.5 h-3.5 text-slate-500" />}
         Sair

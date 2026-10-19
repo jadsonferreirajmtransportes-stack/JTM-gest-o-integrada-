@@ -177,16 +177,17 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Top Banner / Hero */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-100 flex flex-row items-center justify-between gap-3 sm:gap-4">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
+          <div className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
             <CalendarDays className="w-3.5 h-3.5" />
             <span>Governança & Rotinas de Gestão JMT</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Agenda de Atividades da Gestão
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900">
+            <span className="sm:hidden">Agenda da Gestão</span>
+            <span className="hidden sm:inline">Agenda de Atividades da Gestão</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
+          <p className="hidden sm:block text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
             Painel executivo para programação e acompanhamento de comitês de liderança, auditorias RDC 430,
             fechamentos contábeis, DDS de frotas refrigeradas e reuniões estratégicas.
           </p>
@@ -196,7 +197,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
           <button
             type="button"
             onClick={() => exportAtividadesToCSV(atividades)}
-            className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+            className="hidden sm:flex px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold items-center gap-1.5 transition-colors shadow-xs"
             title="Exportar todas as atividades em planilha CSV"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
@@ -209,7 +210,8 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
             className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>Nova Atividade</span>
+            <span className="sm:hidden">Nova</span>
+            <span className="hidden sm:inline">Nova Atividade</span>
           </button>
         </div>
       </div>
@@ -243,7 +245,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
         </div>
 
         {/* Auditorias RDC 430 */}
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="hidden sm:block bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 font-medium">Auditorias RDC 430</span>
             <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
@@ -255,7 +257,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
         </div>
 
         {/* Governança */}
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="hidden sm:block bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 font-medium">Governança & Comitês</span>
             <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
@@ -267,7 +269,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
         </div>
 
         {/* Conclusão */}
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs col-span-2 sm:col-span-1">
+        <div className="hidden sm:block bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 font-medium">Taxa de Conclusão</span>
             <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -282,65 +284,65 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
       {/* Control Bar: View Switcher and Category Chips */}
       <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between flex-wrap gap-3">
         {/* View Mode Switcher */}
-        <div className="inline-flex bg-slate-100 p-1 rounded-xl">
+        <div className="flex w-full sm:w-auto sm:inline-flex bg-slate-100 p-1 rounded-xl">
           <button
             type="button"
             onClick={() => setViewMode('mes')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+            className={`flex-1 sm:flex-none justify-center px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
               viewMode === 'mes'
                 ? 'bg-white text-slate-900 shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <CalendarDays className="w-3.5 h-3.5 text-[#C48229]" />
+            <CalendarDays className="hidden sm:block w-3.5 h-3.5 text-[#C48229]" />
             <span>Mês</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode('semana')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+            className={`flex-1 sm:flex-none justify-center px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
               viewMode === 'semana'
                 ? 'bg-white text-slate-900 shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Clock className="w-3.5 h-3.5 text-[#C48229]" />
+            <Clock className="hidden sm:block w-3.5 h-3.5 text-[#C48229]" />
             <span>Semana</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode('dia')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+            className={`flex-1 sm:flex-none justify-center px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
               viewMode === 'dia'
                 ? 'bg-white text-slate-900 shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <CalendarIcon className="w-3.5 h-3.5 text-[#C48229]" />
+            <CalendarIcon className="hidden sm:block w-3.5 h-3.5 text-[#C48229]" />
             <span>Dia</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode('lista')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+            className={`flex-1 sm:flex-none justify-center px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
               viewMode === 'lista'
                 ? 'bg-white text-slate-900 shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <ListFilter className="w-3.5 h-3.5 text-[#C48229]" />
+            <ListFilter className="hidden sm:block w-3.5 h-3.5 text-[#C48229]" />
             <span>Lista</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode('kanban')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+            className={`flex-1 sm:flex-none justify-center px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
               viewMode === 'kanban'
                 ? 'bg-white text-slate-900 shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Kanban className="w-3.5 h-3.5 text-[#C48229]" />
+            <Kanban className="hidden sm:block w-3.5 h-3.5 text-[#C48229]" />
             <span>Kanban</span>
           </button>
         </div>

@@ -44,7 +44,9 @@ import {
   Calculator,
   MessageSquare,
   Download,
+  LogOut,
 } from 'lucide-react';
+import { supabase } from '../utils/supabaseClient';
 import { UserRole, GlobalModuleId, UsuarioLogin, SecaoDp, Operacao } from '../types';
 import { resolveOperacaoIcon } from '../utils/iconResolver';
 import { podeVerSecaoDp, primeiraSecaoDpPermitida, temAcessoGeralDp } from '../utils/visibilidadeUtils';
@@ -1064,7 +1066,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <aside
         id="jmt-main-sidebar"
-        className={`fixed top-0 left-0 bottom-0 z-50 bg-white text-slate-700 flex flex-col border-r border-slate-200 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 left-0 bottom-[calc(60px+env(safe-area-inset-bottom))] lg:bottom-0 z-50 bg-white text-slate-700 flex flex-col border-r border-slate-200 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         } ${collapsed ? 'w-72 lg:w-[76px]' : 'w-72'}`}
       >
@@ -1097,7 +1099,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!collapsed && (
             <>
               {/* Slogan & Official Strategic Signature */}
-              <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1">
+              <div className="hidden lg:block mt-2.5 pt-2 border-t border-slate-100 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] font-bold tracking-[0.16em] text-[#C48229] uppercase">
                     Logística da Saúde
@@ -1113,7 +1115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
 
               {/* Route accent line from brand manual */}
-              <div className="mt-2 h-[2px] w-full bg-gradient-to-r from-[#C48229] via-[#92611F] to-transparent rounded-full" />
+              <div className="hidden lg:block mt-2 h-[2px] w-full bg-gradient-to-r from-[#C48229] via-[#92611F] to-transparent rounded-full" />
             </>
           )}
         </div>
@@ -1357,7 +1359,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </p>
                   </div>
                 </div>
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-emerald-500/40 shrink-0" title="JMT Conectado · RDC 430/2020" />
+                <div className="hidden lg:block w-2.5 h-2.5 rounded-full bg-emerald-400 border border-emerald-500/40 shrink-0" title="JMT Conectado · RDC 430/2020" />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!window.confirm('Sair do sistema neste aparelho?')) return;
+                    await supabase.auth.signOut();
+                  }}
+                  className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-600 active:bg-slate-100 shrink-0"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Sair
+                </button>
               </>
             )}
           </div>

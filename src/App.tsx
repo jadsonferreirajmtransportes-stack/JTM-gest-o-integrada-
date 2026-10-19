@@ -308,6 +308,7 @@ import { supabase } from './utils/supabaseClient';
 // Module: Chat Interno (conversas diretas e em grupo entre Logins & Acessos)
 import { ChatView } from './components/Chat/ChatView';
 import { FloatingChatWidget } from './components/Chat/FloatingChatWidget';
+import { BarraInferiorMobile } from './components/App/BarraInferiorMobile';
 import {
   getConversasDoUsuario,
   getUltimasLeituras,
@@ -2973,11 +2974,11 @@ export default function App() {
         />
 
         {/* Scrollable Workspace */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 space-y-6 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 sm:pb-24 lg:pb-8 space-y-6 custom-scrollbar">
           {/* TOAST NOTIFICATION */}
           {toastMessage && (
             <div
-              className={`fixed bottom-5 right-5 z-50 max-w-md px-4 py-3 rounded-xl shadow-xl text-xs font-bold text-white flex items-center gap-2 break-words animate-in slide-in-from-bottom-4 duration-200 ${
+              className={`fixed bottom-20 lg:bottom-5 right-3 left-3 sm:left-auto lg:right-5 z-50 max-w-md px-4 py-3 rounded-xl shadow-xl text-xs font-bold text-white flex items-center gap-2 break-words animate-in slide-in-from-bottom-4 duration-200 ${
                 toastMessage.type === 'error'
                   ? 'bg-rose-600'
                   : toastMessage.type === 'info'
@@ -3811,7 +3812,9 @@ export default function App() {
       {/* 11. Chat flutuante — visível em qualquer tela do sistema, pra responder uma conversa
           sem precisar sair do que está fazendo. Escondido só quando já está dentro do módulo
           Chat Interno (a tela cheia já cobre o mesmo propósito ali). */}
+      {/* No celular o chat fica na barra de baixo — a bolha flutuante só no computador. */}
       {currentUser && activeGlobalModule !== 'chat' && activeSection !== 'chat' && (
+        <div className="hidden lg:block">
         <FloatingChatWidget
           usuarios={users}
           currentUserId={currentUser.id}
@@ -3823,6 +3826,27 @@ export default function App() {
             setActiveGlobalModule('chat');
             setActiveSection('chat');
           }}
+        />
+        </div>
+      )}
+
+      {/* 12. Barra de atalhos do celular (Chat, Agenda, Notas, Compras + Mais). */}
+      {currentUser && (
+        <BarraInferiorMobile
+          moduloAtivo={activeGlobalModule}
+          modulosPermitidos={currentUser.modulosPermitidos}
+          menuAberto={isMobileMenuOpen}
+          badges={{
+            chat: sidebarCounts.conversasChatNaoLidas,
+            agenda: sidebarCounts.atividadesHoje,
+            compras: sidebarCounts.comprasPendentesCount,
+          }}
+          onIr={(modulo, secao) => {
+            setActiveGlobalModule(modulo as any);
+            setActiveSection(secao as any);
+            setIsMobileMenuOpen(false);
+          }}
+          onAbrirMenu={() => setIsMobileMenuOpen((aberto) => !aberto)}
         />
       )}
     </div>

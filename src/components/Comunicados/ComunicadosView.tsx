@@ -102,18 +102,18 @@ export const ComunicadosView: React.FC<ComunicadosViewProps> = ({ colaboradores,
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-row items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0">
             <Megaphone className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-xl font-black text-slate-900 tracking-tight">Comunicados</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Um comunicado, três formatos no padrão JMT: texto (WhatsApp/e-mail), imagem e PDF — com histórico e ciência.</p>
+            <p className="hidden sm:block text-xs text-slate-500 mt-0.5">Um comunicado, três formatos no padrão JMT: texto (WhatsApp/e-mail), imagem e PDF — com histórico e ciência.</p>
           </div>
         </div>
         <button type="button" onClick={() => setNovo(true)} className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0">
-          <Plus className="w-4 h-4" /> Novo comunicado
+          <Plus className="w-4 h-4" /> <span className="sm:hidden">Novo</span><span className="hidden sm:inline">Novo comunicado</span>
         </button>
       </div>
 
