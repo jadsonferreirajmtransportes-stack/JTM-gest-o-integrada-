@@ -3,6 +3,8 @@ import { MessageSquare, X, Send, ArrowLeft, Maximize2, Users, User } from 'lucid
 import { ConversaChat, MensagemChat, UsuarioLogin } from '../../types';
 import { getMensagens, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem } from '../../utils/chatApi';
 import { AcoesMensagemChat, BarraRespondendo, CitacaoMensagem, EditorMensagemChat, MensagemApagada } from './MensagemChatAcoes';
+import { AudioDaMensagem, GravadorAudio, nomeAudio } from './AudioChat';
+import { enviarArquivo } from '../../utils/arquivosStorage';
 
 interface FloatingChatWidgetProps {
   usuarios: UsuarioLogin[];
@@ -110,6 +112,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
 
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [respondendo, setRespondendo] = useState<MensagemChat | null>(null);
+  const [gravandoAudio, setGravandoAudio] = useState(false);
   useEffect(() => setRespondendo(null), [conversaAbertaId]);
 
   const salvarEdicao = async (m: MensagemChat, novoTexto: string) => {
@@ -293,7 +296,8 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                     ) : (
                       m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>
                     )}
-                    {!m.apagada && (m.anexoUrl || m.temAnexo) && !m.texto && (
+                    {!m.apagada && m.anexoTipo?.startsWith('audio/') && <AudioDaMensagem mensagem={m} propria={propria} />}
+                    {!m.apagada && !m.anexoTipo?.startsWith('audio/') && (m.anexoUrl || m.temAnexo) && !m.texto && (
                       <p className="italic opacity-80">📎 {m.anexoNome || 'Anexo'}</p>
                     )}
                     <p className={`text-[8px] mt-0.5 text-right ${propria ? 'text-white/70' : 'text-slate-400'}`}>
@@ -310,7 +314,17 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
 
           {respondendo && <BarraRespondendo compacto mensagem={respondendo} usuarios={usuarios} onCancelar={() => setRespondendo(null)} />}
           <div className="p-2 border-t border-slate-100 flex items-center gap-1.5 shrink-0">
-            <input
+            <GravadorAudio
+              compacto
+              onAtivo={setGravandoAudio}
+              onEnviar={async (arquivo, duracao) => {
+                if (!conversaAbertaId) return;
+                const ref = await enviarArquivo(arquivo, 'chat/audios');
+                onEnviarMensagem(conversaAbertaId, '', { url: ref, nome: nomeAudio(duracao), tipo: arquivo.type }, respondendo?.id);
+                setRespondendo(null);
+              }}
+            />
+            {!gravandoAudio && <input
               type="text"
               data-no-uppercase="true"
               value={texto}
@@ -323,8 +337,8 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
               }}
               placeholder="Escreva uma mensagem..."
               className="flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] focus:outline-hidden focus:ring-2 focus:ring-[#C48229]/40"
-            />
-            <button
+            />}
+            {!gravandoAudio && <button
               type="button"
               onClick={handleEnviar}
               disabled={!texto.trim()}
@@ -332,7 +346,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
               title="Enviar (Enter)"
             >
               <Send className="w-3.5 h-3.5" />
-            </button>
+            </button>}
           </div>
         </>
       )}

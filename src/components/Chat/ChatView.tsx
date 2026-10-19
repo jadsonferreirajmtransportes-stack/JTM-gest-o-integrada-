@@ -26,6 +26,8 @@ import {
 } from '../../types';
 import { getMensagens, getAnexoMensagem, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem } from '../../utils/chatApi';
 import { AcoesMensagemChat, BarraRespondendo, CitacaoMensagem, EditorMensagemChat, MensagemApagada } from './MensagemChatAcoes';
+import { AudioDaMensagem, GravadorAudio, nomeAudio } from './AudioChat';
+import { enviarArquivo } from '../../utils/arquivosStorage';
 import { podeVerRegistroCompartilhado } from '../../utils/visibilidadeUtils';
 import { podeVerAtividade } from '../Agenda/agendaUtils';
 import { NovaConversaModal } from './NovaConversaModal';
@@ -304,6 +306,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [respondendo, setRespondendo] = useState<MensagemChat | null>(null);
+  const [gravandoAudio, setGravandoAudio] = useState(false);
   useEffect(() => setRespondendo(null), [conversaAbertaId]);
 
   const salvarEdicao = async (m: MensagemChat, novoTexto: string) => {
@@ -659,7 +662,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
                       {m.apagada && <MensagemApagada />}
 
-                      {!m.apagada && (m.anexoUrl || m.temAnexo) && (
+                      {!m.apagada && m.anexoTipo?.startsWith('audio/') && <AudioDaMensagem mensagem={m} propria={propria} />}
+
+                      {!m.apagada && !m.anexoTipo?.startsWith('audio/') && (m.anexoUrl || m.temAnexo) && (
                         <AnexoDaMensagem
                           mensagem={m}
                           ehImagem={!!ehImagem}
@@ -761,7 +766,16 @@ export const ChatView: React.FC<ChatViewProps> = ({
               >
                 <Paperclip className="w-4 h-4" />
               </button>
-              <div className="relative flex-1">
+              <GravadorAudio
+                onAtivo={setGravandoAudio}
+                onEnviar={async (arquivo, duracao) => {
+                  if (!conversaAbertaId) return;
+                  const ref = await enviarArquivo(arquivo, 'chat/audios');
+                  onEnviarMensagem(conversaAbertaId, '', { url: ref, nome: nomeAudio(duracao), tipo: arquivo.type }, respondendo?.id);
+                  setRespondendo(null);
+                }}
+              />
+              {!gravandoAudio && <div className="relative flex-1">
                 <input
                   ref={inputRef}
                   type="text"
@@ -782,8 +796,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400"
                 />
                 <AtSign className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-              <button
+              </div>}
+              {!gravandoAudio && <button
                 type="button"
                 onClick={handleEnviar}
                 disabled={!textoNovo.trim() && !anexoPendente}
@@ -791,7 +805,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 title="Enviar (Enter)"
               >
                 <Send className="w-4 h-4" />
-              </button>
+              </button>}
             </div>
           </>
         )}
