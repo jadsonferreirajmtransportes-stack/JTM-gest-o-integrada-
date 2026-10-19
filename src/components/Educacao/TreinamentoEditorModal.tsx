@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { EditorImagens } from './EditorImagens';
 import { CapaTreinamento } from './CapaTreinamento';
+import { CampoVideoTreinamento } from './VideoTreinamento';
 import {
   X,
   Loader2,
@@ -294,12 +295,7 @@ export const TreinamentoEditorModal: React.FC<TreinamentoEditorModalProps> = ({ 
                   </button>
                 </div>
                 {c.tipo === 'video' && (
-                  <input
-                    value={c.url || ''}
-                    onChange={(e) => atualizarConteudo(c.id, { url: e.target.value.trim() })}
-                    className={campo}
-                    placeholder="Link do YouTube, Vimeo ou Google Drive"
-                  />
+                  <CampoVideoTreinamento url={c.url || ''} onChange={(url) => atualizarConteudo(c.id, { url })} classeCampo={campo} />
                 )}
                 {c.tipo === 'pdf' && (
                   <div className="flex items-center gap-2">

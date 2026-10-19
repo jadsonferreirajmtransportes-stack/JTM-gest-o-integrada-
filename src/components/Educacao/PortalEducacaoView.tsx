@@ -29,6 +29,7 @@ import { AssinaturaDigitalPad } from '../Epi/AssinaturaDigitalPad';
 import { PdfEmTela } from '../Contracheques/ContrachequePublicView';
 import { TelasIlustradas } from './TelasIlustradas';
 import { CapaTreinamento } from './CapaTreinamento';
+import { VideoTreinamento } from './VideoTreinamento';
 import { InstrucaoTrabalho } from '../../types';
 import { rowToInstrucao } from '../../utils/gestaoApi';
 import {
@@ -92,17 +93,6 @@ function dataBr(iso?: string | null): string {
   return `${d}/${m}/${a}`;
 }
 
-/** Link de vídeo → endereço de incorporação (YouTube, Vimeo, Google Drive). */
-export function urlIncorporavel(url: string): { tipo: 'iframe' | 'video' | 'link'; src: string } {
-  const yt = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{6,})/i);
-  if (yt) return { tipo: 'iframe', src: `https://www.youtube-nocookie.com/embed/${yt[1]}?rel=0` };
-  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
-  if (vimeo) return { tipo: 'iframe', src: `https://player.vimeo.com/video/${vimeo[1]}` };
-  const drive = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/i);
-  if (drive) return { tipo: 'iframe', src: `https://drive.google.com/file/d/${drive[1]}/preview` };
-  if (/\.(mp4|webm|ogg)(\?|$)/i.test(url)) return { tipo: 'video', src: url };
-  return { tipo: 'link', src: url };
-}
 
 const ICONES: Record<ConteudoTreinamento['tipo'], React.ReactNode> = {
   video: <PlayCircle className="w-4 h-4" />,
@@ -762,7 +752,7 @@ const TreinamentoAberto: React.FC<{
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <span className="text-[#C48229]">{ICONES[conteudo.tipo]}</span> {conteudo.titulo}
           </h2>
-          {conteudo.tipo === 'video' && conteudo.url && <Video url={conteudo.url} />}
+          {conteudo.tipo === 'video' && conteudo.url && <VideoTreinamento url={conteudo.url} />}
           {conteudo.tipo === 'pdf' && conteudo.url && (
             <>
               <a href={conteudo.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#92611F] flex items-center gap-1">
@@ -921,28 +911,6 @@ const TreinamentoAberto: React.FC<{
   );
 };
 
-const Video: React.FC<{ url: string }> = ({ url }) => {
-  const v = urlIncorporavel(url);
-  if (v.tipo === 'iframe') {
-    return (
-      <div className="relative w-full overflow-hidden rounded-xl bg-black" style={{ paddingTop: '56.25%' }}>
-        <iframe
-          src={v.src}
-          title="Vídeo do treinamento"
-          className="absolute inset-0 w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-    );
-  }
-  if (v.tipo === 'video') return <video src={v.src} controls className="w-full rounded-xl bg-black" />;
-  return (
-    <a href={v.src} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#92611F] flex items-center gap-1">
-      <ExternalLink className="w-3.5 h-3.5" /> Abrir o vídeo
-    </a>
-  );
-};
 
 const ListaInstrucoes: React.FC<{ instrucoes: InstrucaoTrabalho[]; onAbrir: (i: InstrucaoTrabalho) => void }> = ({ instrucoes, onAbrir }) => {
   const [busca, setBusca] = useState('');
