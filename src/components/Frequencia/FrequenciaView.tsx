@@ -359,7 +359,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
       key={b.id}
       type="button"
       onClick={() => setAnulando(b)}
-      title={`${b.origem === 'ajuste' ? `Ajuste: ${b.motivo || ''} (${b.criadoPor || 'DP'})` : b.localNome ? `${b.localNome} — ${Math.round(b.distanciaM ?? 0)} m` : 'Sem localização'}\nClique para anular`}
+      title={`${b.origem === 'ajuste' ? `Ajuste: ${b.motivo || ''} (${b.criadoPor || 'DP'})` : b.localNome ? `${b.localNome} — ${Math.round(b.distanciaM ?? 0)} m` : 'Sem localização'}\nClique para ver onde foi a batida (mapa) ou anular`}
       className={`px-1.5 py-0.5 rounded-md border text-[11px] font-bold tabular-nums ${
         b.origem === 'ajuste'
           ? 'border-sky-200 bg-sky-50 text-sky-700'
@@ -924,6 +924,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
         <AnularModal
           batida={anulando}
           nome={colaboradorPorId.get(anulando.colaboradorId)?.nomeCompleto || ''}
+          raioPadrao={raioPadrao}
           onClose={() => setAnulando(null)}
           onAnular={async (motivo) => {
             await anularBatida(anulando.id, motivo, currentUser?.nome);
@@ -1130,37 +1131,80 @@ const AcaoDiaModal: React.FC<{
   );
 };
 
-const AnularModal: React.FC<{ batida: BatidaPonto; nome: string; onClose: () => void; onAnular: (motivo: string) => Promise<void> }> = ({ batida, nome, onClose, onAnular }) => {
+/** Detalhes da batida: onde foi (mapa no ponto exato do GPS), distância da base e precisão; e
+ *  a opção de anular (com motivo). */
+const AnularModal: React.FC<{ batida: BatidaPonto; nome: string; raioPadrao?: number; onClose: () => void; onAnular: (motivo: string) => Promise<void> }> = ({ batida, nome, raioPadrao = 300, onClose, onAnular }) => {
   const [motivo, setMotivo] = useState('');
+  const [anular, setAnular] = useState(false);
   const { salvando, erro, executar } = useAcao();
+  const temGps = batida.latitude !== undefined && batida.longitude !== undefined;
+  const longe = batida.distanciaM !== undefined && batida.distanciaM > raioPadrao;
+  const distancia = (m: number) => (m >= 1000 ? `${(m / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km` : `${Math.round(m)} m`);
   return (
     <Moldura
-      titulo="Anular batida"
+      titulo={anular ? 'Anular batida' : 'Detalhes da batida'}
       subtitulo={`${nome} — ${dataBr(dataLocal(batida.registradoEm))} às ${horaLocal(batida.registradoEm)}`}
       onClose={onClose}
       rodape={
-        <>
-          <button type="button" onClick={onClose} className={botaoSecundario}>Cancelar</button>
-          <button type="button" disabled={salvando || motivo.trim().length < 5} onClick={() => executar(() => onAnular(motivo.trim()), onClose)} className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold flex items-center gap-2 disabled:opacity-50">
-            {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />} Anular
-          </button>
-        </>
+        anular ? (
+          <>
+            <button type="button" onClick={() => setAnular(false)} className={botaoSecundario}>Voltar</button>
+            <button type="button" disabled={salvando || motivo.trim().length < 5} onClick={() => executar(() => onAnular(motivo.trim()), onClose)} className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold flex items-center gap-2 disabled:opacity-50">
+              {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />} Anular
+            </button>
+          </>
+        ) : (
+          <>
+            <button type="button" onClick={onClose} className={botaoSecundario}>Fechar</button>
+            {!batida.anulado && (
+              <button type="button" onClick={() => setAnular(true)} className="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl font-bold flex items-center gap-2">
+                <Ban className="w-4 h-4" /> Anular esta batida
+              </button>
+            )}
+          </>
+        )
       }
     >
-      <div className="p-3 bg-slate-50 rounded-xl text-slate-600 space-y-0.5">
-        <p>Origem: {batida.origem === 'ajuste' ? `ajuste do DP (${batida.criadoPor || '—'}): ${batida.motivo || ''}` : 'celular'}</p>
-        {batida.latitude !== undefined && (
-          <p>
-            Local: {batida.localNome || '—'} {batida.distanciaM !== undefined && `(${Math.round(batida.distanciaM)} m)`} ·{' '}
-            <a href={`https://www.google.com/maps?q=${batida.latitude},${batida.longitude}`} target="_blank" rel="noopener noreferrer" className="text-[#92611F] font-semibold">
-              ver no mapa
-            </a>
-          </p>
+      <div className="p-3 bg-slate-50 rounded-xl text-slate-600 space-y-1">
+        <p>Origem: {batida.origem === 'ajuste' ? `ajuste do DP (${batida.criadoPor || '—'}): ${batida.motivo || ''}` : 'celular (link pessoal)'}</p>
+        {temGps ? (
+          <>
+            <p>
+              Base mais próxima: <strong>{batida.localNome || '—'}</strong>
+              {batida.distanciaM !== undefined && (
+                <span className={longe ? 'text-rose-600 font-bold' : 'text-emerald-700 font-semibold'}>
+                  {' '}
+                  · {distancia(batida.distanciaM)} da base {longe ? '(fora do raio)' : '(dentro do raio)'}
+                </span>
+              )}
+            </p>
+            <p>
+              Coordenadas: {batida.latitude!.toFixed(6)}, {batida.longitude!.toFixed(6)}
+              {batida.precisaoM !== undefined && <span className="text-slate-400"> · precisão do GPS ± {Math.round(batida.precisaoM)} m</span>}
+            </p>
+          </>
+        ) : (
+          batida.origem !== 'ajuste' && <p className="text-[#92611F]">Sem localização: o celular não liberou o GPS na hora da batida.</p>
         )}
       </div>
+      {temGps && !anular && (
+        <div className="space-y-1.5">
+          <iframe
+            title="Local da batida"
+            src={`https://maps.google.com/maps?q=${batida.latitude},${batida.longitude}&z=16&output=embed`}
+            className="w-full h-64 rounded-xl border border-slate-200"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+          <a href={`https://www.google.com/maps?q=${batida.latitude},${batida.longitude}`} target="_blank" rel="noopener noreferrer" className="text-[#92611F] font-semibold text-xs">
+            Abrir no Google Maps (rota, Street View, endereço)
+          </a>
+          <p className="text-[10px] text-slate-400">Localização registrada só no momento da batida — dado pessoal (LGPD): use apenas para conferência do ponto.</p>
+        </div>
+      )}
       {batida.anulado ? (
         <p className="text-slate-500">Já anulada: {batida.anuladoMotivo}</p>
-      ) : (
+      ) : !anular ? null : (
         <div>
           <label className="font-bold text-slate-600 block mb-1">Motivo (fica registrado; a batida continua no histórico, riscada)</label>
           <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={2} className={campo} placeholder="Ex.: batida duplicada" />
