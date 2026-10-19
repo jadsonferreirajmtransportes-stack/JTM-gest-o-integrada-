@@ -14,6 +14,7 @@ import {
   FileCheck2,
   AtSign,
   Trash2,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   ConversaChat,
@@ -520,9 +521,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
   }, [conversas, busca, usuarios, currentUserId]);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex h-[calc(100vh-180px)] min-h-[420px]">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex h-[calc(100dvh-150px)] md:h-[calc(100vh-180px)] min-h-[420px]">
       {/* Lista de Conversas */}
-      <div className="w-72 shrink-0 border-r border-slate-200 flex flex-col">
+      {/* No celular: lista OU conversa (tela cheia, com voltar); no computador, lado a lado. */}
+      <div className={`${conversaAberta ? 'hidden md:flex' : 'flex'} w-full md:w-72 shrink-0 md:border-r border-slate-200 flex-col`}>
         <div className="p-3 border-b border-slate-100 space-y-2">
           <button
             type="button"
@@ -600,7 +602,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
       </div>
 
       {/* Thread da Conversa Aberta */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`${conversaAberta ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0`}>
         {!conversaAberta ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2">
             <User className="w-8 h-8" />
@@ -609,6 +611,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
         ) : (
           <>
             <div className="p-3.5 border-b border-slate-100 flex items-center gap-2.5 shrink-0">
+              <button type="button" onClick={() => setConversaAbertaId(null)} className="md:hidden p-1.5 -ml-1.5 rounded-lg text-slate-500 hover:bg-slate-100" title="Voltar para as conversas">
+                <ArrowLeft className="w-5 h-5" />
+              </button>
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-[11px] shrink-0 ${
                   conversaAberta.tipo === 'grupo' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-700'
