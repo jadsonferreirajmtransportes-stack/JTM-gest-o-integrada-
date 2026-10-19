@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { DetalheLancamentoModal } from './DetalheLancamentoModal';
 import {
   UploadCloud,
@@ -116,6 +116,38 @@ function tituloValorACobrarDetalhado(l: LancamentoFaturamentoAereo, cliente?: Cl
     linhas.map((linha) => `• ${linha.label}: ${formatCurrency(linha.valor)}`).join('\n') +
     `\n—\nTotal: ${formatCurrency(total)}`
   );
+}
+
+const LIMITE_LINHAS = 150;
+
+/** Números de NF/CT-e do lançamento (um campo pode ter vários: "67776/67777"), sem zeros à esquerda. */
+const numerosDoLancamento = (l: LancamentoFaturamentoAereo) =>
+  [l.notaFiscal, l.numeroCte]
+    .filter(Boolean)
+    .flatMap((v) => String(v).split(/[\s/,;|-]+/))
+    .map((v) => v.replace(/^0+/, ''))
+    .filter(Boolean);
+
+/** Busca por cliente, NF, CT-e, destinatário ou cidade (vários termos separados por vírgula).
+ *  Termo só com números procura primeiro a NF/CT-e EXATA (62103 não traz 162103 nem 621030);
+ *  se não houver nenhuma exata, cai na busca "contém". */
+function filtrarPorBusca(lista: LancamentoFaturamentoAereo[], busca: string): LancamentoFaturamentoAereo[] {
+  const termos = busca
+    .split(',')
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+  if (termos.length === 0) return lista;
+  const numericos = termos.filter((t) => /^\d+$/.test(t)).map((t) => t.replace(/^0+/, ''));
+  if (numericos.length === termos.length) {
+    const exatos = lista.filter((l) => numerosDoLancamento(l).some((n) => numericos.includes(n)));
+    if (exatos.length) return exatos;
+  }
+  return lista.filter((l) => {
+    const campos = [l.clienteNome, l.destinatario, l.notaFiscal, l.numeroCte, l.cidadeDestino]
+      .filter(Boolean)
+      .map((campo) => String(campo).toLowerCase());
+    return termos.some((termo) => campos.some((campo) => campo.includes(termo)));
+  });
 }
 
 interface LancamentoRowProps {
@@ -488,19 +520,23 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   // Busca (cliente, destinatário, NF, CT-e ou cidade) — não some com a seleção: filtrar e
   // depois limpar o campo não perde CT-es que já estavam marcados fora do resultado atual.
   // Vírgula separa vários termos (ex.: "381523, 227813") — entra quem bater com qualquer um deles.
-  const lancamentosSemFaturaFiltrados = useMemo(() => {
-    const termos = buscaSemFatura
-      .split(',')
-      .map((t) => t.trim().toLowerCase())
-      .filter(Boolean);
-    if (termos.length === 0) return lancamentosSemFatura;
-    return lancamentosSemFatura.filter((l) => {
-      const campos = [l.clienteNome, l.destinatario, l.notaFiscal, l.numeroCte, l.cidadeDestino]
-        .filter(Boolean)
-        .map((campo) => String(campo).toLowerCase());
-      return termos.some((termo) => campos.some((campo) => campo.includes(termo)));
-    });
-  }, [lancamentosSemFatura, buscaSemFatura]);
+  // A lista pode ter centenas de CT-es: a busca roda "atrasada" (não trava a digitação) e a
+  // tabela mostra os primeiros LIMITE_LINHAS, com "Mostrar mais".
+  const buscaSemFaturaAdiada = useDeferredValue(buscaSemFatura);
+  const [limiteSemFatura, setLimiteSemFatura] = useState(LIMITE_LINHAS);
+  useEffect(() => setLimiteSemFatura(LIMITE_LINHAS), [buscaSemFaturaAdiada]);
+  const lancamentosSemFaturaFiltrados = useMemo(
+    () => filtrarPorBusca(lancamentosSemFatura, buscaSemFaturaAdiada),
+    [lancamentosSemFatura, buscaSemFaturaAdiada]
+  );
+  // Número buscado que não está em "Sem fatura": em qual fatura ele está?
+  const encontradosEmFaturas = useMemo(() => {
+    if (!buscaSemFaturaAdiada.trim() || lancamentosSemFaturaFiltrados.length > 0) return [];
+    return filtrarPorBusca(
+      lancamentosDaEmpresa.filter((l) => l.faturaId),
+      buscaSemFaturaAdiada
+    ).slice(0, 5);
+  }, [buscaSemFaturaAdiada, lancamentosSemFaturaFiltrados, lancamentosDaEmpresa]);
 
   // Períodos disponíveis pro filtro — só os que realmente existem entre as faturas da empresa
   // selecionada (não faz sentido oferecer um período sem nenhuma fatura), do mais recente pro
@@ -1708,7 +1744,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {lancamentosSemFaturaFiltrados.map((l) => (
+                {lancamentosSemFaturaFiltrados.slice(0, limiteSemFatura).map((l) => (
                   <LancamentoRow
                     key={l.id}
                     lancamento={l}
@@ -1723,10 +1759,39 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                 ))}
               </tbody>
             </table>
+            {lancamentosSemFaturaFiltrados.length > limiteSemFatura && (
+              <div className="text-center py-3">
+                <button
+                  type="button"
+                  onClick={() => setLimiteSemFatura((n) => n + LIMITE_LINHAS)}
+                  className="px-3 py-1.5 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Mostrar mais ({lancamentosSemFaturaFiltrados.length - limiteSemFatura} restantes)
+                </button>
+              </div>
+            )}
             {lancamentosSemFaturaFiltrados.length === 0 && (
-              <p className="text-center text-[11px] text-slate-400 py-6">
-                Nenhum CT-e encontrado para "{buscaSemFatura}".
-              </p>
+              <div className="text-center text-[11px] text-slate-400 py-6 space-y-2">
+                <p>Nenhum CT-e sem fatura encontrado para "{buscaSemFaturaAdiada}".</p>
+                {encontradosEmFaturas.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-slate-600 font-semibold">Esse número já está em fatura:</p>
+                    {encontradosEmFaturas.map((l) => {
+                      const fat = faturas.find((x) => x.id === l.faturaId);
+                      return (
+                        <button
+                          key={l.id}
+                          type="button"
+                          onClick={() => handleIrParaResultado(l)}
+                          className="block mx-auto text-emerald-700 font-bold hover:underline"
+                        >
+                          NF {l.notaFiscal || '—'}{l.numeroCte ? ` · CT-e ${l.numeroCte}` : ''} → fatura {fat?.numeroFatura || '—'} ({fat?.periodo || ''})
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
