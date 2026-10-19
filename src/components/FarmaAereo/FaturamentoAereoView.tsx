@@ -417,7 +417,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
 };
 
 export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
-  lancamentos,
+  lancamentos: lancamentosRecebidos,
   faturas,
   clientes,
   onImport,
@@ -429,6 +429,12 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   tituloSetor = 'Farma Aéreo',
   modalPadrao,
 }) => {
+  // O mesmo CT-e nunca pode entrar duas vezes na lista: com id repetido o React se perde e
+  // deixa linhas "fantasma" na tabela (aparecem e não somem ao mudar a busca).
+  const lancamentos = useMemo(() => {
+    const vistos = new Set<string>();
+    return lancamentosRecebidos.filter((l) => (vistos.has(l.id) ? false : (vistos.add(l.id), true)));
+  }, [lancamentosRecebidos]);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isNovaFaturaOpen, setIsNovaFaturaOpen] = useState(false);
   const [expandedFaturaId, setExpandedFaturaId] = useState<string | null>(null);
