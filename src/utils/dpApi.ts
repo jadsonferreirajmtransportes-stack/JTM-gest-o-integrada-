@@ -54,6 +54,26 @@ function u<T>(v: T | null): T | undefined {
   return v === null ? undefined : v;
 }
 
+/** Busca TODAS as linhas de uma tabela em páginas de 1000 (o Supabase entrega no máximo 1000 por
+ *  consulta e cortava o resto sem avisar). Ordem única (criado_em + id) pra não repetir nem pular
+ *  linhas entre páginas. */
+async function buscarTodas(tabela: string, contexto: string): Promise<any[]> {
+  const PAGINA = 1000;
+  const todas: any[] = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await supabase
+      .from(tabela)
+      .select('*')
+      .order('criado_em', { ascending: false })
+      .order('id', { ascending: true })
+      .range(de, de + PAGINA - 1);
+    assertNoError(error, contexto);
+    todas.push(...(data ?? []));
+    if (!data || data.length < PAGINA) break;
+  }
+  return todas;
+}
+
 function assertNoError(error: { message: string } | null, contexto: string) {
   if (error) {
     throw new Error(`Erro no Supabase (${contexto}): ${error.message}`);
@@ -716,9 +736,7 @@ export function ocorrenciaToRow(o: Ocorrencia) {
   };
 }
 export async function getOcorrencias(): Promise<Ocorrencia[]> {
-  const { data, error } = await supabase.from('ocorrencias').select('*').order('criado_em', { ascending: false });
-  assertNoError(error, 'getOcorrencias');
-  return (data ?? []).map(rowToOcorrencia);
+  return (await buscarTodas('ocorrencias', 'getOcorrencias')).map(rowToOcorrencia);
 }
 export async function saveOcorrencia(item: Ocorrencia): Promise<void> {
   const registro = item.id ? item : { ...item, id: `oco-${Date.now()}` };
@@ -807,9 +825,7 @@ export function lancamentoVAToRow(l: LancamentoValeAlimentacao) {
   };
 }
 export async function getLancamentosValeAlimentacao(): Promise<LancamentoValeAlimentacao[]> {
-  const { data, error } = await supabase.from('lancamentos_va').select('*').order('criado_em', { ascending: false });
-  assertNoError(error, 'getLancamentosValeAlimentacao');
-  return (data ?? []).map(rowToLancamentoVA);
+  return (await buscarTodas('lancamentos_va', 'getLancamentosValeAlimentacao')).map(rowToLancamentoVA);
 }
 /** Grava uma lista inteira de lançamentos de uma vez (upsert em lote) — usado ao gerar/sincronizar
  *  todos os lançamentos de uma quinzena de uma só vez. */

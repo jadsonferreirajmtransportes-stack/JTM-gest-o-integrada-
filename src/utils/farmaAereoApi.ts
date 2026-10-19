@@ -398,13 +398,18 @@ export async function getLancamentosFaturamentoAereo(): Promise<LancamentoFatura
       .from('lancamentos_faturamento_aereo')
       .select('*')
       .order('criado_em', { ascending: false })
+      // Desempate pelo id: a importação cria centenas de linhas com o MESMO criado_em, e sem
+      // ordem única o banco devolvia linhas repetidas entre uma página e outra (e pulava outras).
+      .order('id', { ascending: true })
       .range(pagina * pageSize, pagina * pageSize + pageSize - 1);
     assertNoError(error, 'getLancamentosFaturamentoAereo');
     tudo = tudo.concat(data ?? []);
     if (!data || data.length < pageSize) break;
     pagina++;
   }
-  return tudo.map(rowToLancamento);
+  // Garantia extra: nunca o mesmo lançamento duas vezes na tela.
+  const vistos = new Set<string>();
+  return tudo.filter((r) => (vistos.has(r.id) ? false : (vistos.add(r.id), true))).map(rowToLancamento);
 }
 export async function saveLancamentoFaturamentoAereo(item: LancamentoFaturamentoAereo): Promise<void> {
   const registro = item.id ? item : { ...item, id: `lanc-fat-aereo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
