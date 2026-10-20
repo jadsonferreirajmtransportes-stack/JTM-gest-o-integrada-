@@ -47,6 +47,27 @@ export const MANUAL: TopicoManual[] = [
     ],
   },
 
+  {
+    id: 'app_colaborador',
+    grupo: 'Começando',
+    titulo: 'O app JMT Colaborador (portal)',
+    resumo: 'O que o colaborador vê no celular: o link pessoal do portal, que também pode ser instalado como o app JMT Colaborador. Ali ele bate o ponto, assina contracheques e documentos, lê comunicados e o Jornal JMT, faz treinamentos e fala com o DP.',
+    passos: [
+      { titulo: 'Entrar e instalar', texto: 'Abra o link pessoal que o DP mandou pelo WhatsApp e confirme CPF e data de nascimento (marque "Lembrar neste celular" se o celular for só seu). Na tela de início, toque em "Instalar" (no iPhone: Safari → Compartilhar → Adicionar à Tela de Início). Depois toque em "Ativar" para receber os avisos.' },
+      { titulo: 'Jornada de hoje', texto: 'No início aparece a jornada do dia: Entrada, Intervalo, Retorno e Saída. Verde é batida feita; o quadro escuro é a próxima batida — toque em "Bater agora". Logo abaixo: horas trabalhadas hoje e o saldo do mês.' },
+      { titulo: 'Bater o ponto', texto: 'Em "Ponto" (na barra de baixo), toque no botão grande. O horário é o do sistema, não o do celular, e a localização serve só para conferência. As últimas batidas aparecem logo abaixo.' },
+      { titulo: 'Batida faltando', texto: 'Se aparecer o aviso amarelo de dia com batida faltando ou falta, toque nele para abrir o "Meu histórico" e, se precisar, peça o ajuste em "Fale com o DP".' },
+      { titulo: 'Documentos', texto: 'Em "Documentos" ficam contracheques, vale-alimentação, férias e outros. Abra, confira e assine com o dedo na tela. O número vermelho mostra quantos faltam assinar.' },
+      { titulo: 'Mais', texto: 'Em "Mais" ficam Meu histórico, Meu desempenho, Comunicados, Fale com o DP, Jornal JMT, Treinamentos, Instruções e Regulamento — e o botão "Sair deste celular".' },
+    ],
+    dicas: [
+      'O link é pessoal: não repasse para outra pessoa.',
+      'Celular emprestado ou de outra pessoa? Não marque "Lembrar neste celular" e, ao terminar, use "Mais" → "Sair deste celular".',
+      'O sininho no topo mostra quantas pendências você tem (documentos, comunicados e respostas do DP).',
+      'Instalou um app que pediu e-mail e senha? Esse é o app da gestão: apague o ícone e instale de novo pelo seu link pessoal.',
+    ],
+  },
+
   // ---------------------------------------------------------------- Gestão
   {
     id: 'visao_geral',

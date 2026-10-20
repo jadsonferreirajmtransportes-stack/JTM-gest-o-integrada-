@@ -119,6 +119,32 @@ export const CENAS_PORTAL: Record<string, Cena> = {
   },
 };
 
+// ---- Guia do app JMT Colaborador (telas app-*): o portal dentro de um celular. O
+// transform faz a barra de baixo (position: fixed) ficar presa ao celular, não à página.
+const noCelular = (filho: React.ReactNode) => (
+  <div style={{ padding: 24, background: '#E9EDF2', display: 'flex', justifyContent: 'center' }}>
+    <div id="tela-celular" style={{ width: 400, height: 740, borderRadius: 32, border: '10px solid #22252B', overflow: 'hidden', transform: 'translateZ(0)', background: '#F8FAFC' }}>
+      <div id="rolagem-celular" style={{ height: '100%', overflowY: 'auto' }}>{filho}</div>
+    </div>
+  </div>
+);
+const montarApp = async (ir?: string) => {
+  preparar(true);
+  const { PortalEducacaoView } = await import('../../src/components/Educacao/PortalEducacaoView');
+  return noCelular(<PortalEducacaoView token={TOKEN} ir={ir} />);
+};
+const rolarCelular = async (texto: string) => {
+  const el = [...document.querySelectorAll<HTMLElement>('#rolagem-celular h2, #rolagem-celular p')].find((e) => (e.textContent || '').includes(texto));
+  const caixa = document.getElementById('rolagem-celular');
+  if (el && caixa) caixa.scrollTop = el.getBoundingClientRect().top - caixa.getBoundingClientRect().top - 90;
+  await esperar(400);
+};
+CENAS_PORTAL['app-1'] = { montar: () => montarApp(), acoes: async () => { await esperar(1500); } };
+CENAS_PORTAL['app-2'] = { montar: () => montarApp(), acoes: async () => { await esperar(1500); await rolarCelular('Receba avisos'); } };
+CENAS_PORTAL['app-3'] = { montar: () => montarApp('ponto'), acoes: async () => { await esperar(1800); } };
+CENAS_PORTAL['app-4'] = { montar: () => montarApp('documentos'), acoes: async () => { await esperar(1500); } };
+CENAS_PORTAL['app-5'] = { montar: () => montarApp(), acoes: async () => { await esperar(1200); await clicar('Mais'); await esperar(600); } };
+
 // Prévia do demonstrativo de VA (só para conferência visual, não vira tela de treinamento).
 CENAS_PORTAL['va-pdf'] = {
   montar: async () => {

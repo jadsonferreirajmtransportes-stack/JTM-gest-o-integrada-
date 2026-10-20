@@ -11,9 +11,10 @@ import { telasDaSecao } from '../../data/telasTreinamento';
 import type { ConteudoTreinamento, Treinamento } from '../../utils/educacaoApi';
 import { gerarIdCurto } from '../../utils/educacaoApi';
 
-export type GrupoTreinamentoSistema = 'Começando' | 'Corporativo' | 'Rotina do supervisor' | 'Departamento Pessoal' | 'Gestão e Operações' | 'Administração';
+export type GrupoTreinamentoSistema = 'Colaboradores' | 'Começando' | 'Corporativo' | 'Rotina do supervisor' | 'Departamento Pessoal' | 'Gestão e Operações' | 'Administração';
 
 export const GRUPOS_TREINAMENTO_SISTEMA: { grupo: GrupoTreinamentoSistema; publico: string }[] = [
+  { grupo: 'Colaboradores', publico: 'Todos os colaboradores (vai para todos)' },
   { grupo: 'Começando', publico: 'Todos que usam o sistema' },
   { grupo: 'Corporativo', publico: 'Supervisores e lideranças' },
   { grupo: 'Rotina do supervisor', publico: 'Supervisores de equipe' },
@@ -32,6 +33,8 @@ export interface ModuloTreinamento {
   porQue: string;
   pratica: string[];
   cargaHorariaMin: number;
+  /** Guia do app do colaborador: obrigatório para todos (ignora os cargos) e com textos para quem usa o celular. */
+  paraTodos?: boolean;
 }
 
 /** Prefixo comum — também serve para reconhecer os que já foram criados. */
@@ -214,9 +217,29 @@ export const MODULOS_DEMAIS: ModuloTreinamento[] = [
     ['Abra Logins & Acessos e busque um login.', 'Abra a "Matriz de Acesso Rápido" e veja os módulos de cada pessoa.', 'Veja como criar um "Novo Login de Acesso". Não crie um login de teste.']),
 ];
 
+/** Guia do app JMT Colaborador — para todos os colaboradores. */
+const MODULOS_COLABORADORES: ModuloTreinamento[] = [
+  {
+    grupo: 'Colaboradores',
+    secao: 'app_colaborador',
+    titulo: 'Como usar o app JMT Colaborador',
+    porQue: 'É pelo app que você bate o ponto, recebe e assina seus contracheques e documentos, fica sabendo dos comunicados e fala com o DP — sem papel e sem precisar ir até o escritório.',
+    pratica: [
+      'Abra o seu link pessoal (ou o app JMT Colaborador, se já instalou).',
+      'Na tela de início, veja a sua jornada de hoje e o saldo do mês.',
+      'Toque em "Ponto" na barra de baixo e veja as suas últimas batidas (não precisa bater agora).',
+      'Toque em "Documentos" e veja se tem algo para assinar.',
+      'Toque em "Mais" e abra "Fale com o DP" para conhecer a tela.',
+      'Se ainda não fez: instale o app e toque em "Ativar" para receber os avisos.',
+    ],
+    cargaHorariaMin: 10,
+    paraTodos: true,
+  },
+];
+
 /** Todos os treinamentos do sistema, na ordem dos grupos. */
 export const TODOS_MODULOS_SISTEMA: ModuloTreinamento[] = GRUPOS_TREINAMENTO_SISTEMA.flatMap(({ grupo }) =>
-  [...MODULOS_CORPORATIVOS, ...MODULOS_DEMAIS].filter((m) => m.grupo === grupo)
+  [...MODULOS_COLABORADORES, ...MODULOS_CORPORATIVOS, ...MODULOS_DEMAIS].filter((m) => m.grupo === grupo)
 );
 
 const CUIDADOS_GERAIS = [
@@ -248,24 +271,28 @@ export function montarTreinamentoSistema(m: ModuloTreinamento, opcoes: { cargos:
       id: gerarIdCurto('cont'),
       tipo: 'texto',
       titulo: 'Dicas e cuidados',
-      texto: [...(topico?.dicas || []), ...CUIDADOS_GERAIS].map((d) => `• ${d}`).join('\n'),
+      texto: [...(topico?.dicas || []), ...(m.paraTodos ? [] : CUIDADOS_GERAIS)].map((d) => `• ${d}`).join('\n'),
     },
     {
       id: gerarIdCurto('cont'),
       tipo: 'texto',
       titulo: 'Pratique no sistema',
-      texto: `Com o sistema aberto no computador ou no celular:\n\n${m.pratica.map((p, i) => `${i + 1}. ${p}`).join('\n')}\n\nDica: abra a tela e use o botão "?" → "Fazer o tour desta tela".`,
+      texto: m.paraTodos
+        ? `No seu celular:\n\n${m.pratica.map((p, i) => `${i + 1}. ${p}`).join('\n')}`
+        : `Com o sistema aberto no computador ou no celular:\n\n${m.pratica.map((p, i) => `${i + 1}. ${p}`).join('\n')}\n\nDica: abra a tela e use o botão "?" → "Fazer o tour desta tela".`,
     },
   ];
   return {
     id: '',
     titulo: `${PREFIXO_TREINAMENTO_SISTEMA}${m.titulo}`,
-    descricao: `Treinamento de uso do módulo ${m.titulo} do sistema JMT Gestão Integrada. Público: ${GRUPOS_TREINAMENTO_SISTEMA.find((g) => g.grupo === m.grupo)?.publico || 'supervisores'}.`,
+    descricao: m.paraTodos
+      ? 'Guia do portal do colaborador (app JMT Colaborador): ponto, documentos, comunicados, Fale com o DP e mais. Para todos os colaboradores.'
+      : `Treinamento de uso do módulo ${m.titulo} do sistema JMT Gestão Integrada. Público: ${GRUPOS_TREINAMENTO_SISTEMA.find((g) => g.grupo === m.grupo)?.publico || 'supervisores'}.`,
     cargaHorariaMin: m.cargaHorariaMin,
     conteudos,
     prova: undefined,
-    obrigatorioTodos: false,
-    obrigatorioCargos: opcoes.cargos,
+    obrigatorioTodos: !!m.paraTodos,
+    obrigatorioCargos: m.paraTodos ? [] : opcoes.cargos,
     obrigatorioSetores: [],
     validadeMeses: undefined,
     prazoDias: opcoes.prazoDias,

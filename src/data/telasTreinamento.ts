@@ -382,6 +382,34 @@ TELAS_TREINAMENTO.push(
     m('Parabéns12', 'O colaborador reage com um toque (toque de novo para desfazer).'),
     m('Comentários', 'Logo abaixo ficam os comentários dos colegas.'),
   ] },
+  // ---- App JMT Colaborador (portal no celular)
+  { id: 'app-1', secao: 'app_colaborador', titulo: 'A tela de início', marcas: [
+    m('Jornada de hoje', 'A jornada de hoje: Entrada, Intervalo, Retorno e Saída. Verde é batida feita.'),
+    m('Bater agora', 'A próxima batida fica em destaque — toque para bater o ponto.'),
+    m('Saldo de', 'Horas trabalhadas hoje e o saldo do mês. Toque para ver o histórico.'),
+    m('documentos para assinar', 'Documentos esperando a sua assinatura. Toque em um para abrir.'),
+    m('Pendências', 'O sininho mostra quantas pendências você tem.'),
+  ] },
+  { id: 'app-2', secao: 'app_colaborador', titulo: 'Acesso rápido e avisos no celular', marcas: [
+    m('Receba avisos no celular', 'Toque em "Ativar" para receber aviso de documento, comunicado e notícia nova.'),
+    m('Acesso rápido', 'Atalhos para o histórico, comunicados, Fale com o DP, treinamentos, jornal e desempenho.'),
+    m('Meu desempenho · ', 'Sua colocação no mês (pontos por ponto em dia, treinamentos e documentos).'),
+  ] },
+  { id: 'app-3', secao: 'app_colaborador', titulo: 'Batendo o ponto', marcas: [
+    m('Volta do intervalo', 'O botão grande bate o ponto. Embaixo dele aparece qual batida é a próxima.'),
+    m('Últimas batidas', 'As batidas de hoje, com o horário do sistema.'),
+    m('Ver meu histórico', 'O mês inteiro: batidas dia a dia e o resumo das horas.'),
+    m('Ponto', 'Na barra de baixo: Início, Ponto, Documentos e Mais.'),
+  ] },
+  { id: 'app-4', secao: 'app_colaborador', titulo: 'Documentos para assinar', marcas: [
+    m('Assinar', 'Documento esperando a sua assinatura: toque para abrir, conferir e assinar com o dedo na tela.'),
+    m('Assinado em', 'Os que você já assinou continuam aqui para consultar quando quiser.'),
+  ] },
+  { id: 'app-5', secao: 'app_colaborador', titulo: 'O menu Mais', marcas: [
+    m('Meu histórico', 'Batidas e horas do mês.'),
+    m('Fale com o DP', 'Pedidos, dúvidas e contestações direto com o DP.'),
+    m('Treinamentos', 'Cursos, provas e certificados. No fim da lista fica "Sair deste celular" — use em celular que não é seu.'),
+  ] },
   { id: 'jor-5', secao: 'jornal', titulo: 'Comentando uma notícia', marcas: [
     m('aguardando aprovação', 'O comentário novo fica visível só para quem escreveu até o administrador aprovar.'),
     m('Escreva um comentário', 'Escreva com respeito (até 1000 caracteres) e toque em Comentar.'),
