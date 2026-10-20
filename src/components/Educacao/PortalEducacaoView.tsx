@@ -23,6 +23,7 @@ import {
   Newspaper,
   Fingerprint,
   MessageSquareText,
+  Bell,
 } from 'lucide-react';
 import { JmtLogo } from '../Brand/JmtLogo';
 import { AssinaturaDigitalPad } from '../Epi/AssinaturaDigitalPad';
@@ -62,6 +63,8 @@ import { MeuDesempenho } from '../Portal/MeuDesempenho';
 import { CartaoColocacao } from '../Portal/CartaoColocacao';
 import { CartaoDocumentosPendentes, JanelaDocumentoNovo } from '../Portal/AvisoDocumentos';
 import { CartaoAppPortal } from '../App/AppInstalavelUI';
+import { CartaoJornadaHoje } from '../Portal/JornadaHoje';
+import { AREAS_PORTAL, AcessoRapidoPortal, AreaPortal, BarraPortal, MenuMaisPortal } from '../Portal/NavegacaoPortal';
 import { portalSolicitacoes } from '../../utils/solicitacoesApi';
 
 function mascararCpf(valor: string): string {
@@ -107,21 +110,15 @@ const MENSAGENS_ERRO = {
   dados: 'CPF ou data de nascimento não conferem com o cadastro. Atenção: cada link é pessoal — confira se este link foi enviado para você (o link de um colega não abre com o seu CPF). Se for o seu, fale com o Departamento Pessoal.',
 };
 
-type Aba = 'inicio' | 'ponto' | 'historico' | 'desempenho' | 'documentos' | 'comunicados' | 'solicitacoes' | 'treinamentos' | 'jornal' | 'instrucoes' | 'regulamento';
+type Aba = AreaPortal;
 
-const ABAS: [Aba, string][] = [
-  ['inicio', 'Início'],
-  ['ponto', 'Ponto'],
-  ['historico', 'Meu histórico'],
-  ['desempenho', 'Meu desempenho'],
-  ['documentos', 'Documentos'],
-  ['comunicados', 'Comunicados'],
-  ['solicitacoes', 'Fale com o DP'],
-  ['treinamentos', 'Treinamentos'],
-  ['jornal', 'Jornal'],
-  ['instrucoes', 'Instruções'],
-  ['regulamento', 'Regulamento'],
-];
+/** "Bom dia" / "Boa tarde" / "Boa noite" + primeiro nome (o cadastro vem em CAIXA ALTA). */
+function saudacao(nome: string): { cumprimento: string; primeiroNome: string } {
+  const h = new Date().getHours();
+  const cumprimento = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  const p = (nome || '').trim().split(/\s+/)[0] || '';
+  return { cumprimento, primeiroNome: p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() };
+}
 
 /** "&ir=" do link: aba e, se houver, o item (ex.: "documento:docass-123"). Aceita também o
  *  formato antigo do Jornal (&aba=jornal&noticia=). */
@@ -279,22 +276,58 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
   const itemPara = (a: Aba) => (aba === a && itemDoLink?.aba === a ? itemDoLink.item : undefined);
   const contagem: Partial<Record<Aba, number>> = { documentos: resumo.documentos, comunicados: resumo.comunicados, solicitacoes: resumo.respostas, treinamentos: pendentes, jornal: resumo.noticias };
 
+  const logado = !!(dados && credenciais);
+  const naTelaDeArea = logado && !aberto && !instrucaoAberta;
+  const totalPendencias = (resumo.documentos || 0) + (resumo.comunicados || 0) + (resumo.respostas || 0);
+  const { cumprimento, primeiroNome } = saudacao(dados?.colaborador.nome || '');
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans">
-      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <JmtLogo variant="compact" theme="light" iconSize={28} />
-        {dados && credenciais && entrouPeloAparelho(credenciais) ? (
-          <button type="button" onClick={handleSair} className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-800">
-            <LogOut className="w-4 h-4 text-[#C48229]" /> Sair deste celular
-          </button>
-        ) : (
+      {logado ? (
+        <header className="bg-[#16130F] text-white">
+          <div className={`max-w-3xl mx-auto px-4 sm:px-6 pt-4 flex items-center justify-between gap-3 ${aba === 'inicio' && naTelaDeArea ? 'pb-16' : 'pb-4'}`}>
+            {aba === 'inicio' && naTelaDeArea ? (
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-11 h-11 rounded-full bg-gradient-to-br from-[#C48229] to-[#7A4F17] text-white text-sm font-black flex items-center justify-center shrink-0 ring-2 ring-white/10">
+                  {(dados!.colaborador.nome || '?').trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[11px] text-white/60 font-semibold">{cumprimento},</p>
+                  <p className="text-lg font-black leading-tight truncate">{primeiroNome}</p>
+                  {dados!.colaborador.cargo && <p className="text-[11px] text-[#E8C48E] truncate">{dados!.colaborador.cargo}</p>}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 min-w-0">
+                <JmtLogo variant="icon" theme="dark" iconSize={26} />
+                <p className="text-base font-black truncate">{aba === 'mais' ? 'Mais opções' : AREAS_PORTAL[aba as Exclude<Aba, 'mais'>]?.rotulo || 'Portal do Colaborador'}</p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => irPara(resumo.documentos ? 'documentos' : resumo.comunicados ? 'comunicados' : resumo.respostas ? 'solicitacoes' : 'mais')}
+              className="relative w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0"
+              title="Pendências"
+            >
+              <Bell className="w-5 h-5" />
+              {totalPendencias > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-black flex items-center justify-center border-2 border-[#16130F]">
+                  {totalPendencias > 99 ? '99+' : totalPendencias}
+                </span>
+              )}
+            </button>
+          </div>
+        </header>
+      ) : (
+        <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+          <JmtLogo variant="compact" theme="light" iconSize={28} />
           <span className="flex items-center gap-1.5 text-[11px] text-slate-500">
             <ShieldCheck className="w-4 h-4 text-[#C48229]" /> Portal do Colaborador
           </span>
-        )}
-      </header>
+        </header>
+      )}
 
-      <main className="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
+      <main className={`max-w-3xl mx-auto p-4 sm:p-6 space-y-4 ${logado ? 'pb-28' : ''}`}>
         {!dados || !credenciais ? (
           entrando && !cpf ? (
             <div className="flex items-center justify-center gap-2 py-16 text-slate-500 text-xs">
@@ -374,27 +407,12 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
           </div>
         ) : (
           <>
-            <div className="flex gap-1 bg-white rounded-xl border border-slate-200 p-1 overflow-x-auto">
-              {ABAS.map(([id, rotulo]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => irPara(id)}
-                  className={`shrink-0 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 ${aba === id ? 'bg-[#C48229] text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
-                  {rotulo}
-                  {contagem[id] ? (
-                    <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] flex items-center justify-center ${aba === id ? 'bg-white text-[#92611F]' : 'bg-[#C48229] text-white'}`}>{contagem[id]}</span>
-                  ) : null}
-                </button>
-              ))}
-            </div>
+            {aba === 'mais' && <MenuMaisPortal contagem={contagem} onIr={irPara} onSair={entrouPeloAparelho(credenciais) ? handleSair : undefined} />}
 
             {aba === 'inicio' && (
               <PortalInicio
-                nome={dados.colaborador.nome}
-                cargo={dados.colaborador.cargo}
-                pendencias={{ documentos: resumo.documentos, comunicados: resumo.comunicados, treinamentos: pendentes, noticias: resumo.noticias, respostas: resumo.respostas }}
+                contagem={contagem}
+                jornadaHoje={<CartaoJornadaHoje credenciais={credenciais} onBater={() => irPara('ponto')} onHistorico={() => irPara('historico')} />}
                 desempenho={<CartaoColocacao credenciais={credenciais} onAbrir={() => irPara('desempenho')} />}
                 avisoDocumentos={<CartaoDocumentosPendentes documentos={docsPendentes} onAbrir={abrirDocumento} />}
                 cartaoApp={<CartaoAppPortal credenciais={credenciais} />}
@@ -520,15 +538,17 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
           </>
         )}
       </main>
+      {logado && <BarraPortal area={aba} contagem={contagem} onIr={irPara} />}
     </div>
   );
 };
 
-/** Tela inicial: saudação + atalhos com o que está pendente. */
+/** Página de início no jeito de app: jornada de hoje (sobre o cabeçalho escuro), documentos
+ *  para assinar, app/avisos, colocação, últimas do Jornal e acesso rápido. */
 const PortalInicio: React.FC<{
-  nome: string;
-  cargo?: string;
-  pendencias: { documentos?: number; comunicados?: number; treinamentos?: number; noticias?: number; respostas?: number };
+  contagem: Partial<Record<Aba, number>>;
+  /** Jornada de hoje: batidas, horas trabalhadas, saldo, aviso de batida faltando. */
+  jornadaHoje: React.ReactNode;
   onIr: (a: Aba) => void;
   noticias: NoticiaPortalResumo[];
   onAbrirNoticia: (id: string) => void;
@@ -538,35 +558,13 @@ const PortalInicio: React.FC<{
   avisoDocumentos?: React.ReactNode;
   /** Instalar o app / ativar notificações. */
   cartaoApp?: React.ReactNode;
-}> = ({ nome, cargo, pendencias, onIr, noticias, onAbrirNoticia, desempenho, avisoDocumentos, cartaoApp }) => {
-  const atalhos: { aba: Aba; titulo: string; texto: string; icone: React.ReactNode; qtd?: number }[] = [
-    { aba: 'documentos', titulo: 'Documentos', texto: 'Contracheques, vale-alimentação, férias e outros', icone: <FileSignature className="w-5 h-5" />, qtd: pendencias.documentos },
-    { aba: 'comunicados', titulo: 'Comunicados', texto: 'Avisos da empresa para você', icone: <Megaphone className="w-5 h-5" />, qtd: pendencias.comunicados },
-    { aba: 'solicitacoes', titulo: 'Fale com o DP', texto: 'Contestar, pedir férias, documentos ou atualizar dados', icone: <MessageSquareText className="w-5 h-5" />, qtd: pendencias.respostas },
-    { aba: 'treinamentos', titulo: 'Treinamentos', texto: 'Cursos, provas e certificados', icone: <GraduationCap className="w-5 h-5" />, qtd: pendencias.treinamentos },
-    { aba: 'jornal', titulo: 'Jornal JMT', texto: 'Notícias da empresa', icone: <Newspaper className="w-5 h-5" />, qtd: pendencias.noticias },
-    { aba: 'instrucoes', titulo: 'Instruções de Trabalho', texto: 'Como fazer cada processo', icone: <BookOpen className="w-5 h-5" /> },
-    { aba: 'regulamento', titulo: 'Regulamento Interno', texto: 'Regras e direitos', icone: <ScrollText className="w-5 h-5" /> },
-  ];
-  const total = (pendencias.documentos || 0) + (pendencias.comunicados || 0) + (pendencias.treinamentos || 0);
+}> = ({ contagem, jornadaHoje, onIr, noticias, onAbrirNoticia, desempenho, avisoDocumentos, cartaoApp }) => {
   return (
-    <div className="space-y-3">
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs">
-        <p className="text-xs text-slate-500">Olá,</p>
-        <h1 className="text-lg font-black text-slate-900">{nome}</h1>
-        {cargo && <p className="text-xs text-slate-500">{cargo}</p>}
-        <p className="text-xs mt-2 font-semibold text-[#92611F]">{total > 0 ? `Você tem ${total} pendência(s) — veja abaixo.` : 'Você está em dia. Obrigado!'}</p>
-      </div>
-      <button
-        type="button"
-        onClick={() => onIr('ponto')}
-        className="w-full py-5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-2xl shadow-md flex items-center justify-center gap-3"
-      >
-        <Fingerprint className="w-7 h-7" />
-        <span className="text-base font-black">Bater ponto</span>
-      </button>
+    <div className="space-y-4">
+      <div className="-mt-16 relative">{jornadaHoje}</div>
       {avisoDocumentos}
       {cartaoApp}
+      <AcessoRapidoPortal contagem={contagem} onIr={onIr} />
       {desempenho}
       {noticias.length > 0 && (
         <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
@@ -600,21 +598,6 @@ const PortalInicio: React.FC<{
           </div>
         </section>
       )}
-      <div className="grid grid-cols-2 gap-3">
-        {atalhos.map((a) => (
-          <button
-            key={a.aba}
-            type="button"
-            onClick={() => onIr(a.aba)}
-            className="relative text-left normal-case bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-[#C48229] transition-colors"
-          >
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#C48229] flex items-center justify-center">{a.icone}</div>
-            <p className="mt-2 text-sm font-black text-slate-900">{a.titulo}</p>
-            <p className="text-[11px] text-slate-500 leading-snug">{a.texto}</p>
-            {a.qtd ? <span className="absolute top-3 right-3 min-w-[22px] h-[22px] px-1.5 rounded-full bg-[#C48229] text-white text-[11px] font-black flex items-center justify-center">{a.qtd}</span> : null}
-          </button>
-        ))}
-      </div>
     </div>
   );
 };

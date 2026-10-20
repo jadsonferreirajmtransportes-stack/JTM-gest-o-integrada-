@@ -24,6 +24,39 @@ function preparar(lembrado: boolean) {
       instrucoes: [],
     },
   });
+  // Ponto do mês atual (data real do computador): dias úteis completos, um dia com batida
+  // faltando e hoje com entrada + saída para o intervalo.
+  rpcs.portal_ponto_historico = () => {
+    const hoje = new Date();
+    const mes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+    const batidas: any[] = [];
+    for (let d = 1; d <= hoje.getDate(); d++) {
+      const data = `${mes}-${String(d).padStart(2, '0')}`;
+      const dow = new Date(`${data}T12:00:00Z`).getUTCDay();
+      if (dow === 0 || dow === 6) continue;
+      const horas = d === hoje.getDate() ? ['07:56', '12:02'] : d === 3 ? ['07:58', '12:01', '13:00'] : ['07:58', '12:01', '13:00', '17:04'];
+      horas.forEach((h, k) => batidas.push({ id: `b-${d}-${k}`, registrado_em: new Date(`${data}T${h}:00-03:00`).toISOString(), origem: 'celular' }));
+    }
+    return {
+      colaborador: { admissao: '2024-01-10' },
+      jornada: { id: 'j1', nome: 'Comercial 08h–17h', dias_semana: [1, 2, 3, 4, 5], entrada: '08:00:00', saida_intervalo: '12:00:00', volta_intervalo: '13:00:00', saida: '17:00:00', tolerancia_min: 10, ativo: true },
+      inicio_controle: `${mes}-01`,
+      raio_padrao: 300,
+      batidas,
+      justificativas: [],
+    };
+  };
+  rpcs.ponto_estado = () => {
+    const h: any = rpcs.portal_ponto_historico({});
+    const hoje = new Date().toISOString().slice(0, 10);
+    return {
+      agora: new Date().toISOString(),
+      colaborador: { nome: 'Paula Ribeiro', cargo: 'Ajudante Operacional de Carga e Descarga' },
+      jornada: h.jornada,
+      batidas: h.batidas.filter((b: any) => b.registrado_em.slice(0, 10) === hoje).map((b: any) => ({ id: b.id, em: b.registrado_em, local: 'Base JMT', distancia: 40, origem: 'celular' })),
+    };
+  };
+  rpcs.portal_gamificacao = () => ({ reconhecimentos: [], destaques: [], posicao: { periodo: '2026-10', posicao: 4, pontos: 58, participantes: 38, pontosTop10: 30, atualizadoEm: iso(0) } });
   rpcs.portal_documentos = () => ({
     documentos: [
       { id: 'd1', categoria: 'contracheque', referencia: '2026-09', tipo: 'Mensal', titulo: 'Contracheque — Setembro/2026', status: 'Pendente', criadoEm: iso(-2), vencido: false },
