@@ -217,7 +217,7 @@ export const MANUAL: TopicoManual[] = [
     id: 'jornal',
     grupo: 'Corporativo',
     titulo: 'Jornal JMT',
-    resumo: 'Notícias da empresa no estilo blog, lidas pelos colaboradores no link pessoal do portal (aba "Jornal JMT"), com fotos, reações e comentários.',
+    resumo: 'Notícias da empresa no estilo blog, lidas pelos colaboradores no link pessoal do portal (Mais → "Jornal JMT"), com fotos, reações e comentários.',
     passos: [
       { titulo: 'Escrever', texto: 'Clique em "Nova notícia" (ou "Sugerir notícia"). Preencha título, linha fina e editoria. Escreva o texto — uma linha em branco começa um novo parágrafo — e use "Adicionar fotos" para colocar imagens no meio do texto.' },
       { titulo: 'Capa', texto: 'Sem foto, a notícia ganha uma capa automática na cor da editoria. Para usar uma foto, clique em "Enviar foto".' },
