@@ -34,6 +34,8 @@ self.addEventListener('notificationclick', (event) => {
   let url = event.notification.data?.url || '/';
   // Avisos do portal abrem na página do app JMT Colaborador (/colaborador/).
   if (url.startsWith('/?form=portal')) url = '/colaborador' + url;
+  // Avisos do sistema (chat) abrem no app JMT Gestão (/gestao/).
+  else if (url === '/' || url.startsWith('/?abrir')) url = '/gestao' + url;
   const destino = new URL(url, self.location.origin).href;
   event.waitUntil(
     (async () => {

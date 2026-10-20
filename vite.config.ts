@@ -6,12 +6,14 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
-    // Duas páginas do mesmo sistema: / (JMT Gestão) e /colaborador/ (app JMT Colaborador,
-    // com o manifest do portal já no HTML — ver ferramentas/gerar-pagina-colaborador.mjs).
+    // Páginas do mesmo sistema: / (links públicos), /gestao/ (app JMT Gestão) e /colaborador/
+    // (app JMT Colaborador) — cada app com o próprio manifest no HTML, ver
+    // ferramentas/gerar-paginas-apps.mjs.
     build: {
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html'),
+          gestao: path.resolve(__dirname, 'gestao/index.html'),
           colaborador: path.resolve(__dirname, 'colaborador/index.html'),
         },
       },

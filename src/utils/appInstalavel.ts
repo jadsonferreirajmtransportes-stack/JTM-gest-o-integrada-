@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
+import { isRotaPublica } from './publicRoutes';
 import type { CredenciaisPortal } from './educacaoApi';
 
 const CHAVE_TOKEN_PORTAL = 'jmt-portal-token-atual';
@@ -36,11 +37,25 @@ export function tokenPortal(daUrl: string | null): string {
 let eventoInstalar: any = null;
 const ouvintes = new Set<() => void>();
 
-/** Portal aberto pelo endereço antigo (/?form=portal&token=...): vai para /colaborador/, a
- *  página com o manifest do app JMT Colaborador. Devolve true quando redirecionou. */
-export function levarPortalParaPaginaPropria(): boolean {
-  if (!ehPortal() || window.location.pathname.startsWith('/colaborador')) return false;
-  window.location.replace('/colaborador/' + window.location.search + window.location.hash);
+/** Cada coisa no seu endereço — os dois apps instaláveis não podem se sobrepor:
+ *   /colaborador/  portal do colaborador (app JMT Colaborador)
+ *   /gestao/       sistema interno       (app JMT Gestão)
+ *   /              links públicos (formulários, comunicado, ponto...), fora dos dois apps
+ *  Links antigos (/?form=portal..., / do sistema) são levados para o lugar certo.
+ *  Devolve true quando redirecionou (aí não monta a tela). */
+export function levarParaPaginaCerta(): boolean {
+  const { pathname, search, hash } = window.location;
+  // Volta do login/convite do Supabase (token na URL): não mexe, senão perde a sessão.
+  if (/access_token=|refresh_token=|error_description=/.test(hash) || /[?&]code=/.test(search)) return false;
+  // /colaborador/ sem parâmetro (alguém digitou o endereço) também é o portal.
+  if (pathname.startsWith('/colaborador') && !ehPortal()) {
+    window.location.replace('/colaborador/?form=portal' + hash);
+    return true;
+  }
+  const destino = ehPortal() ? '/colaborador/' : isRotaPublica() ? '/' : '/gestao/';
+  const atual = pathname.endsWith('/') ? pathname : pathname + '/';
+  if (atual === destino) return false;
+  window.location.replace(destino + search + hash);
   return true;
 }
 

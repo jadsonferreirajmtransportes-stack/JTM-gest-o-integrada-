@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     aviso = {
       titulo: grupo ? `💬 ${conv?.nome || 'Grupo'}` : `💬 ${nomeAutor}`,
       corpo: grupo ? `${nomeAutor.split(' ')[0]}: ${conteudo}` : conteudo,
-      url: '/?abrir=chat',
+      url: '/gestao/?abrir=chat',
       tag: `chat-${m.conversa_id}`,
     };
     const ids = (part ?? []).map((p: any) => p.usuario_id);
