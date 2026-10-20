@@ -33,6 +33,9 @@ import { podeVerRegistroCompartilhado } from '../../utils/visibilidadeUtils';
 import { podeVerAtividade } from '../Agenda/agendaUtils';
 import { NovaConversaModal } from './NovaConversaModal';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
+import { ConversaDemanda } from './ConversaDemanda';
+import { ROTULO_STATUS, SolicitacaoDp } from '../../utils/solicitacoesApi';
+import { estiloStatus } from '../Portal/PortalSolicitacoes';
 
 interface ChatViewProps {
   usuarios: UsuarioLogin[];
@@ -52,6 +55,14 @@ interface ChatViewProps {
   instrucoes?: InstrucaoTrabalho[];
   /** Clicou numa menção dentro de uma mensagem — leva pro módulo correspondente e abre o item. */
   onAbrirMencao?: (tipo: 'nota' | 'atividade' | 'projeto' | 'instrucao', id: string) => void;
+  /** Demandas do "Fale com o DP" (079) — só para quem tem acesso; undefined = não mostra. */
+  demandas?: SolicitacaoDp[];
+  /** Última mensagem nova de demanda que chegou em tempo real (recarrega a conversa aberta). */
+  sinalDemanda?: { id: string; n: number };
+  onDemandasMudaram?: () => void;
+  onAbrirDemandaNoDp?: (id: string) => void;
+  /** Nome de quem responde as demandas. */
+  atendente?: string;
 }
 
 // Anexo de uma mensagem — o histórico vem sem o conteúdo do arquivo (ver getMensagens). Imagem
@@ -243,8 +254,15 @@ export const ChatView: React.FC<ChatViewProps> = ({
   projetos = [],
   instrucoes = [],
   onAbrirMencao,
+  demandas,
+  sinalDemanda,
+  onDemandasMudaram,
+  onAbrirDemandaNoDp,
+  atendente,
 }) => {
   const [conversaAbertaId, setConversaAbertaId] = useState<string | null>(null);
+  const [demandaAbertaId, setDemandaAbertaId] = useState<string | null>(null);
+  const [verEncerradas, setVerEncerradas] = useState(false);
   const [mensagens, setMensagens] = useState<MensagemChat[]>([]);
   const [carregandoMensagens, setCarregandoMensagens] = useState(false);
   const [textoNovo, setTextoNovo] = useState('');
@@ -260,6 +278,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const conversaAberta = conversas.find((c) => c.id === conversaAbertaId) || null;
+  const demandaAberta = demandas?.find((d) => d.id === demandaAbertaId) || null;
+  const algoAberto = !!conversaAberta || !!demandaAberta;
 
   // Carrega o histórico sempre que a conversa aberta muda, e assina mensagens novas em tempo
   // real — só anexa na tela quando for da conversa que está aberta agora (o filtro de "é minha
@@ -344,6 +364,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   };
 
   const handleAbrirConversa = (id: string) => {
+    setDemandaAbertaId(null);
     setConversaAbertaId(id);
     onAbrirConversa(id);
   };
@@ -520,11 +541,23 @@ export const ChatView: React.FC<ChatViewProps> = ({
     return ordenadas.filter((c) => nomeDaConversa(c, usuarios, currentUserId).toLowerCase().includes(termo));
   }, [conversas, busca, usuarios, currentUserId]);
 
+  // Demandas do Fale com o DP: em andamento sempre; encerradas só se pedir. Busca por nome,
+  // assunto ou protocolo.
+  const demandasFiltradas = useMemo(() => {
+    if (!demandas) return [];
+    const termo = busca.trim().toLowerCase();
+    return demandas
+      .filter((d) => verEncerradas || (d.status !== 'concluida' && d.status !== 'recusada') || d.id === demandaAbertaId)
+      .filter((d) => !termo || `${d.colaboradorNome} ${d.assunto} ${d.protocolo}`.toLowerCase().includes(termo))
+      .sort((a, b) => Number(a.lidaPeloDp) - Number(b.lidaPeloDp) || b.atualizadoEm.localeCompare(a.atualizadoEm));
+  }, [demandas, busca, verEncerradas, demandaAbertaId]);
+  const encerradasQtd = demandas?.filter((d) => d.status === 'concluida' || d.status === 'recusada').length ?? 0;
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex h-[calc(100dvh-150px)] md:h-[calc(100vh-180px)] min-h-[420px]">
       {/* Lista de Conversas */}
       {/* No celular: lista OU conversa (tela cheia, com voltar); no computador, lado a lado. */}
-      <div className={`${conversaAberta ? 'hidden md:flex' : 'flex'} w-full md:w-72 shrink-0 md:border-r border-slate-200 flex-col`}>
+      <div className={`${algoAberto ? 'hidden md:flex' : 'flex'} w-full md:w-72 shrink-0 md:border-r border-slate-200 flex-col`}>
         <div className="p-3 border-b border-slate-100 space-y-2">
           <button
             type="button"
@@ -546,6 +579,45 @@ export const ChatView: React.FC<ChatViewProps> = ({
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
+          {demandas && (
+            <div className="border-b border-slate-100">
+              <div className="px-3 pt-2.5 pb-1.5 flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wide text-[#92611F]">Fale com o DP</span>
+                {encerradasQtd > 0 && (
+                  <button type="button" onClick={() => setVerEncerradas((v) => !v)} className="text-[10px] font-semibold text-slate-400 hover:text-slate-700 normal-case tracking-normal">
+                    {verEncerradas ? 'Esconder encerradas' : `Ver encerradas (${encerradasQtd})`}
+                  </button>
+                )}
+              </div>
+              {demandasFiltradas.length === 0 && <p className="px-3 pb-2.5 text-[10px] text-slate-400">Nenhuma demanda em andamento.</p>}
+              {demandasFiltradas.map((d) => {
+                const ativa = d.id === demandaAbertaId;
+                const nome = d.colaboradorNome.toLowerCase().replace(/(^|\s)\S/g, (l) => l.toUpperCase());
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => {
+                      setConversaAbertaId(null);
+                      setDemandaAbertaId(d.id);
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left border-t border-slate-50 transition-colors ${ativa ? 'bg-amber-50' : 'hover:bg-slate-50'}`}
+                  >
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#C48229] to-[#7A4F17] text-white flex items-center justify-center font-black text-[11px] shrink-0">
+                      {inicialAvatar(d.colaboradorNome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join(''))}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-xs truncate ${!d.lidaPeloDp ? 'font-extrabold text-slate-900' : 'font-semibold text-slate-700'}`}>{nome}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{d.assunto} · nº {d.protocolo}</p>
+                    </div>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border shrink-0 ${estiloStatus(d.status)}`}>{ROTULO_STATUS[d.status]}</span>
+                    {!d.lidaPeloDp && <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />}
+                  </button>
+                );
+              })}
+              <p className="px-3 pt-2 pb-1 text-[10px] font-black uppercase tracking-wide text-slate-400 border-t border-slate-100">Conversas</p>
+            </div>
+          )}
           {conversasFiltradas.length === 0 && (
             <div className="text-center p-6">
               <p className="text-[11px] text-slate-400">
@@ -602,8 +674,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
       </div>
 
       {/* Thread da Conversa Aberta */}
-      <div className={`${conversaAberta ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0`}>
-        {!conversaAberta ? (
+      <div className={`${algoAberto ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0`}>
+        {demandaAberta ? (
+          <ConversaDemanda
+            demanda={demandaAberta}
+            atendente={atendente}
+            sinalNovaMensagem={sinalDemanda?.id === demandaAberta.id ? sinalDemanda.n : 0}
+            onVoltar={() => setDemandaAbertaId(null)}
+            onMudou={() => onDemandasMudaram?.()}
+            onAbrirNoDp={onAbrirDemandaNoDp ? () => onAbrirDemandaNoDp(demandaAberta.id) : undefined}
+          />
+        ) : !conversaAberta ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2">
             <User className="w-8 h-8" />
             <p className="text-xs">Selecione uma conversa pra começar</p>

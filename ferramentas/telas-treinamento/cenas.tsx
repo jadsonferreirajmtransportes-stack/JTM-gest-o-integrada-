@@ -196,6 +196,45 @@ const CENAS: Record<string, Cena> = {
       await esperar(800);
     },
   },
+  // "Fale com o DP" dentro do Chat (079) — só para conferência visual.
+  'chat-dp': {
+    montar: async () => {
+      tabelas.chat_mensagens = MENSAGENS;
+      const agora = Date.now();
+      const iso = (min: number) => new Date(agora - min * 60000).toISOString();
+      tabelas.solicitacao_mensagens = [
+        { id: 'sm1', solicitacao_id: 's1', autor: 'colaborador', autor_nome: 'PAULA RIBEIRO', texto: 'No VA da 1ª quinzena aparece 1 falta no dia 03/10, mas eu trabalhei nesse dia (estava na rota do aeroporto).', anexos: [{ caminho: 'x/foto.jpg', nome: 'foto_ponto_03-10.jpg' }], criado_em: iso(90) },
+        { id: 'sm2', solicitacao_id: 's1', autor: 'dp', autor_nome: 'Bruno', texto: 'Oi, Paula! Vou conferir com a supervisão e já te retorno.', anexos: [], criado_em: iso(60) },
+        { id: 'sm3', solicitacao_id: 's1', autor: 'colaborador', autor_nome: 'PAULA RIBEIRO', texto: 'Obrigada! O supervisor era o Renato.', anexos: [], criado_em: iso(5) },
+      ];
+      const demandas: any[] = [
+        { id: 's1', protocolo: '2026-0007', tipo: 'contestacao', assunto: 'Vale-alimentação', status: 'aberta', criadoEm: iso(90), atualizadoEm: iso(5), colaboradorId: 'c1', colaboradorNome: 'PAULA RIBEIRO', dados: {}, lidaPeloDp: false, lidaPeloColaborador: true },
+        { id: 's2', protocolo: '2026-0006', tipo: 'ferias', assunto: 'Pedido de férias', status: 'em_analise', criadoEm: iso(600), atualizadoEm: iso(300), colaboradorId: 'c2', colaboradorNome: 'RENATO CAMPOS', dados: { mes: '2027-01', dias: 30, venderDias: true }, lidaPeloDp: true, lidaPeloColaborador: true },
+        { id: 's3', protocolo: '2026-0005', tipo: 'documento', assunto: 'Declaração de vínculo', status: 'concluida', criadoEm: iso(3000), atualizadoEm: iso(2000), colaboradorId: 'c3', colaboradorNome: 'SÍLVIA MOURA', dados: {}, lidaPeloDp: true, lidaPeloColaborador: true },
+      ];
+      const { ChatView } = await import('../../src/components/Chat/ChatView');
+      return moldura(
+        <ChatView
+          usuarios={USUARIOS}
+          currentUserId="u1"
+          conversas={CONVERSAS}
+          ultimasLeituras={{}}
+          onAbrirConversa={() => {}}
+          onEnviarMensagem={() => {}}
+          onCriarConversaDireta={() => {}}
+          onCriarConversaGrupo={() => {}}
+          onExcluirConversa={() => {}}
+          demandas={demandas}
+          atendente="Bruno"
+          onAbrirDemandaNoDp={() => {}}
+        />
+      );
+    },
+    acoes: async () => {
+      await clicar('Paula Ribeiro');
+      await esperar(800);
+    },
+  },
   'notas-1': {
     montar: async () => {
       const { INITIAL_NOTAS_PAGINAS } = await import('../../src/data/initialNotasData');

@@ -16,6 +16,8 @@ interface FloatingChatWidgetProps {
   /** Leva pra tela cheia do Chat Interno (módulo completo) — usado pelo botão "expandir" e
    *  pra "Nova Conversa" (esse widget flutuante não duplica aquele fluxo). */
   onAbrirTelaCheia: () => void;
+  /** Demandas do "Fale com o DP" sem ler (079) — atalho para o Chat em tela cheia. */
+  demandasNaoLidas?: number;
 }
 
 function nomeDaConversa(conversa: ConversaChat, usuarios: UsuarioLogin[], currentUserId: string): string {
@@ -51,6 +53,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
   onAbrirConversa,
   onEnviarMensagem,
   onAbrirTelaCheia,
+  demandasNaoLidas,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [conversaAbertaId, setConversaAbertaId] = useState<string | null>(null);
@@ -175,9 +178,9 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
         style={{ width: 52, height: 52 }}
       >
         <MessageSquare className="w-5 h-5" />
-        {totalNaoLidas > 0 && (
+        {totalNaoLidas + (demandasNaoLidas || 0) > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[19px] h-[19px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white">
-            {totalNaoLidas > 9 ? '9+' : totalNaoLidas}
+            {totalNaoLidas + (demandasNaoLidas || 0) > 9 ? '9+' : totalNaoLidas + (demandasNaoLidas || 0)}
           </span>
         )}
       </button>
@@ -214,6 +217,21 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
       {!conversaAberta ? (
         /* Lista de conversas */
         <div className="flex-1 overflow-y-auto">
+          {!!demandasNaoLidas && (
+            <button
+              type="button"
+              onClick={onAbrirTelaCheia}
+              className="w-full flex items-center gap-2.5 p-2.5 border-b border-amber-100 bg-amber-50 text-left hover:bg-amber-100 transition-colors normal-case tracking-normal"
+            >
+              <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C48229] to-[#7A4F17] text-white flex items-center justify-center shrink-0">
+                <MessageSquare className="w-4 h-4" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-xs font-extrabold text-slate-900">Fale com o DP</span>
+                <span className="block text-[10px] text-[#92611F]">{demandasNaoLidas} demanda(s) com mensagem nova — abrir no Chat</span>
+              </span>
+            </button>
+          )}
           {conversasOrdenadas.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 gap-2 text-slate-400">
               <MessageSquare className="w-8 h-8" />

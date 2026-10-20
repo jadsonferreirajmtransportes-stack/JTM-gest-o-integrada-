@@ -252,3 +252,20 @@ export async function responderComoDp(
   await atualizarStatusSolicitacao(s.id, novoStatus, atendente);
   return { id: msg.id, autor: 'dp', autorNome: msg.autor_nome, texto: msg.texto, anexos, criadoEm: msg.criado_em };
 }
+
+/** Tempo real (079): demanda nova/alterada ou mensagem nova — o Chat da gestão recarrega a
+ *  lista e a conversa aberta. Devolve a função que cancela a assinatura. */
+export function assinarDemandasDp(onMudou: (mudanca: { tabela: 'solicitacoes_dp' | 'solicitacao_mensagens'; solicitacaoId?: string }) => void): () => void {
+  const canal = supabase
+    .channel(`fale_com_o_dp_${Date.now()}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitacoes_dp' }, (p: any) =>
+      onMudou({ tabela: 'solicitacoes_dp', solicitacaoId: p.new?.id || p.old?.id })
+    )
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'solicitacao_mensagens' }, (p: any) =>
+      onMudou({ tabela: 'solicitacao_mensagens', solicitacaoId: p.new?.solicitacao_id })
+    )
+    .subscribe();
+  return () => {
+    supabase.removeChannel(canal);
+  };
+}

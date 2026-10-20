@@ -309,6 +309,7 @@ import { supabase } from './utils/supabaseClient';
 import { ChatView } from './components/Chat/ChatView';
 import { FloatingChatWidget } from './components/Chat/FloatingChatWidget';
 import { BarraInferiorMobile } from './components/App/BarraInferiorMobile';
+import { useDemandasDp } from './utils/useDemandasDp';
 import {
   getConversasDoUsuario,
   getUltimasLeituras,
@@ -1717,6 +1718,16 @@ export default function App() {
     solicitacoesCompra,
   ]);
 
+  // "Fale com o DP" dentro do Chat (079): só para quem tem o módulo DP com essa seção.
+  const acessoFaleComDp =
+    !!currentUser && currentUser.modulosPermitidos.includes('dp') && podeVerSecaoDp(currentUser, 'solicitacoes');
+  const demandasDp = useDemandasDp(acessoFaleComDp);
+  // Badge do Chat (menu e barra do celular): conversas + demandas do DP não lidas.
+  const contagensMenu = useMemo(
+    () => ({ ...sidebarCounts, conversasChatNaoLidas: sidebarCounts.conversasChatNaoLidas + demandasDp.naoLidas }),
+    [sidebarCounts, demandasDp.naoLidas]
+  );
+
   // Dados do "Aviso de Abertura" (compromissos de hoje + prazos de projetos) — mesmo critério de
   // "hoje" usado no badge da Agenda acima, e projetos ativos (não Concluído/Cancelado) vencidos ou
   // com prazo dentro dos próximos 3 dias.
@@ -2921,7 +2932,7 @@ export default function App() {
         onOpenSwitchUserModal={usuarioAutenticadoReal?.role === 'admin' ? () => setIsSwitchUserModalOpen(true) : undefined}
         userRole={userRole}
         onChangeRole={setUserRole}
-        counts={sidebarCounts}
+        counts={contagensMenu}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
         isCollapsed={isSidebarCollapsed}
@@ -3238,6 +3249,14 @@ export default function App() {
               projetos={projetosVisiveis}
               instrucoes={instrucoesVisiveis}
               onAbrirMencao={handleAbrirMencaoChat}
+              demandas={demandasDp.demandas}
+              sinalDemanda={demandasDp.sinal}
+              onDemandasMudaram={demandasDp.recarregar}
+              atendente={currentUser.nome}
+              onAbrirDemandaNoDp={() => {
+                setActiveGlobalModule('dp');
+                setActiveSection('solicitacoes');
+              }}
             />
           )}
 
@@ -3826,6 +3845,7 @@ export default function App() {
             setActiveGlobalModule('chat');
             setActiveSection('chat');
           }}
+          demandasNaoLidas={demandasDp.naoLidas}
         />
         </div>
       )}
@@ -3837,7 +3857,7 @@ export default function App() {
           modulosPermitidos={currentUser.modulosPermitidos}
           menuAberto={isMobileMenuOpen}
           badges={{
-            chat: sidebarCounts.conversasChatNaoLidas,
+            chat: contagensMenu.conversasChatNaoLidas,
             agenda: sidebarCounts.atividadesHoje,
             compras: sidebarCounts.comprasPendentesCount,
           }}

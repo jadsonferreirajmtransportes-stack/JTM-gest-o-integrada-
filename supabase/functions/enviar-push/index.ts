@@ -3,7 +3,7 @@
 //
 // Chamada:
 //   { evento: 'chave' }                       → devolve a chave pública (o app usa pra se inscrever)
-//   { evento: 'documento'|'comunicado'|'noticia'|'chat', id } → chamado pelos gatilhos do banco (078)
+//   { evento: 'documento'|'comunicado'|'noticia'|'chat'|'solicitacao', id } → chamado pelos gatilhos do banco (078/079)
 //
 // Na primeira execução cria as chaves VAPID e guarda em push_config, junto com o
 // próprio endereço (os gatilhos usam). Ninguém precisa digitar chave nenhuma.
@@ -100,6 +100,28 @@ Deno.serve(async (req) => {
     };
     const ids = (part ?? []).map((p: any) => p.usuario_id);
     if (ids.length) inscricoes = (await sb.from('push_inscricoes').select(colunas).eq('tipo', 'usuario').in('usuario_id', ids)).data ?? [];
+  } else if (evento === 'solicitacao') {
+    // Mensagem numa demanda do "Fale com o DP" (079): do colaborador → avisa a gestão
+    // (quem tem o módulo DP com a seção "Fale com o DP"); do DP → avisa o colaborador.
+    const { data: m } = await sb.from('solicitacao_mensagens').select('id, solicitacao_id, autor, texto, anexos, criado_em').eq('id', id).maybeSingle();
+    if (!m || !recente(m.criado_em)) return resposta({ ok: true, ignorado: true });
+    const { data: s } = await sb.from('solicitacoes_dp').select('id, colaborador_id, colaborador_nome, assunto').eq('id', m.solicitacao_id).maybeSingle();
+    if (!s) return resposta({ ok: true, ignorado: true });
+    const conteudo = m.texto?.trim() ? m.texto.trim().slice(0, 140) : '📎 Anexo';
+    if (m.autor === 'colaborador') {
+      const primeiroNome = String(s.colaborador_nome || 'Colaborador').split(' ')[0];
+      aviso = { titulo: `🗂️ Fale com o DP · ${primeiroNome}`, corpo: `${s.assunto}: ${conteudo}`, url: '/gestao/?abrir=chat', tag: `sol-${s.id}` };
+      const { data: usuarios } = await sb.from('usuarios').select('id, status, modulos_permitidos, secoes_dp_permitidas');
+      const ids = (usuarios ?? [])
+        .filter((u: any) => u.status !== 'Inativo' && u.status !== 'Bloqueado')
+        .filter((u: any) => Array.isArray(u.modulos_permitidos) && u.modulos_permitidos.includes('dp'))
+        .filter((u: any) => !Array.isArray(u.secoes_dp_permitidas) || u.secoes_dp_permitidas.length === 0 || u.secoes_dp_permitidas.includes('solicitacoes'))
+        .map((u: any) => u.id);
+      if (ids.length) inscricoes = (await sb.from('push_inscricoes').select(colunas).eq('tipo', 'usuario').in('usuario_id', ids)).data ?? [];
+    } else {
+      aviso = { titulo: '💬 Resposta do DP', corpo: `${s.assunto}: ${conteudo}`, url: `/colaborador/?form=portal&ir=solicitacao:${s.id}`, tag: `sol-${s.id}` };
+      inscricoes = (await sb.from('push_inscricoes').select(colunas).eq('tipo', 'colaborador').eq('colaborador_id', s.colaborador_id)).data ?? [];
+    }
   } else {
     return resposta({ erro: 'evento' }, 400);
   }
