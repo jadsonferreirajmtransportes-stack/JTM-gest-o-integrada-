@@ -36,6 +36,14 @@ export function tokenPortal(daUrl: string | null): string {
 let eventoInstalar: any = null;
 const ouvintes = new Set<() => void>();
 
+/** Portal aberto pelo endereço antigo (/?form=portal&token=...): vai para /colaborador/, a
+ *  página com o manifest do app JMT Colaborador. Devolve true quando redirecionou. */
+export function levarPortalParaPaginaPropria(): boolean {
+  if (!ehPortal() || window.location.pathname.startsWith('/colaborador')) return false;
+  window.location.replace('/colaborador/' + window.location.search + window.location.hash);
+  return true;
+}
+
 export function configurarApp() {
   const params = new URLSearchParams(window.location.search);
   if (ehPortal()) {

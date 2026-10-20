@@ -62,18 +62,18 @@ Deno.serve(async (req) => {
   if (evento === 'documento') {
     const { data: d } = await sb.from('documentos_assinatura').select('id, colaborador_id, titulo, criado_em').eq('id', id).maybeSingle();
     if (!d || !recente(d.criado_em)) return resposta({ ok: true, ignorado: true });
-    aviso = { titulo: '📄 Documento para assinar', corpo: d.titulo, url: `/?form=portal&ir=documento:${d.id}`, tag: `doc-${d.id}` };
+    aviso = { titulo: '📄 Documento para assinar', corpo: d.titulo, url: `/colaborador/?form=portal&ir=documento:${d.id}`, tag: `doc-${d.id}` };
     inscricoes = (await sb.from('push_inscricoes').select(colunas).eq('tipo', 'colaborador').eq('colaborador_id', d.colaborador_id)).data ?? [];
   } else if (evento === 'comunicado') {
     const { data: d } = await sb.from('comunicado_destinatarios').select('id, ref_id, tipo, comunicados(titulo, criado_em)').eq('id', id).maybeSingle();
     const c: any = (d as any)?.comunicados;
     if (!d || d.tipo !== 'colaborador' || !d.ref_id || !recente(c?.criado_em)) return resposta({ ok: true, ignorado: true });
-    aviso = { titulo: '📢 Novo comunicado', corpo: c.titulo, url: `/?form=portal&ir=comunicado:${d.id}`, tag: `com-${d.id}` };
+    aviso = { titulo: '📢 Novo comunicado', corpo: c.titulo, url: `/colaborador/?form=portal&ir=comunicado:${d.id}`, tag: `com-${d.id}` };
     inscricoes = (await sb.from('push_inscricoes').select(colunas).eq('tipo', 'colaborador').eq('colaborador_id', d.ref_id)).data ?? [];
   } else if (evento === 'noticia') {
     const { data: n } = await sb.from('noticias').select('id, titulo, status, publicada_em, atualizado_em').eq('id', id).maybeSingle();
     if (!n || n.status !== 'publicada' || !recente(n.atualizado_em || n.publicada_em)) return resposta({ ok: true, ignorado: true });
-    aviso = { titulo: '📰 Jornal JMT', corpo: n.titulo, url: `/?form=portal&ir=jornal:${n.id}`, tag: `jornal-${n.id}` };
+    aviso = { titulo: '📰 Jornal JMT', corpo: n.titulo, url: `/colaborador/?form=portal&ir=jornal:${n.id}`, tag: `jornal-${n.id}` };
     inscricoes = (await sb.from('push_inscricoes').select(colunas).eq('tipo', 'colaborador')).data ?? [];
   } else if (evento === 'chat') {
     const { data: m } = await sb.from('chat_mensagens').select('id, conversa_id, autor_id, texto, anexo_tipo, criado_em').eq('id', id).maybeSingle();

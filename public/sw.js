@@ -31,7 +31,10 @@ self.addEventListener('push', (event) => {
 // Tocar na notificação: abre (ou traz pra frente) o app já no lugar certo.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const destino = new URL(event.notification.data?.url || '/', self.location.origin).href;
+  let url = event.notification.data?.url || '/';
+  // Avisos do portal abrem na página do app JMT Colaborador (/colaborador/).
+  if (url.startsWith('/?form=portal')) url = '/colaborador' + url;
+  const destino = new URL(url, self.location.origin).href;
   event.waitUntil(
     (async () => {
       const abertas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
