@@ -67,6 +67,12 @@ export function configurarApp() {
     document.getElementById('cor-tema-app')?.setAttribute('content', '#C48229');
     document.getElementById('apple-titulo-app')?.setAttribute('content', 'JMT Colaborador');
     document.title = 'JMT Colaborador';
+    // Com o link pessoal na URL, o app instalado já leva o link junto (no iPhone, o app da Tela
+    // de Início não enxerga o que ficou guardado no Safari). Ver api/manifest-colaborador.js.
+    const token = params.get('token') || '';
+    if (/^[a-f0-9]{64}$/i.test(token) && !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)) {
+      document.getElementById('manifest-app')?.setAttribute('href', `/api/manifest-colaborador?t=${token}`);
+    }
   }
   // Notificação do chat: abre o sistema direto no Chat.
   if (params.get('abrir') === 'chat') {

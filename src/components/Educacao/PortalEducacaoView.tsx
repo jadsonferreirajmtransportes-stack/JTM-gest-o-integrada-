@@ -63,6 +63,7 @@ import { MeuDesempenho } from '../Portal/MeuDesempenho';
 import { CartaoColocacao } from '../Portal/CartaoColocacao';
 import { CartaoDocumentosPendentes, JanelaDocumentoNovo } from '../Portal/AvisoDocumentos';
 import { CartaoAppPortal } from '../App/AppInstalavelUI';
+import { tokenPortal } from '../../utils/appInstalavel';
 import { CartaoJornadaHoje } from '../Portal/JornadaHoje';
 import { AREAS_PORTAL, AcessoRapidoPortal, AreaPortal, BarraPortal, MenuMaisPortal } from '../Portal/NavegacaoPortal';
 import { portalSolicitacoes } from '../../utils/solicitacoesApi';
@@ -142,7 +143,17 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
   // CPF digitado nesta entrada (só na memória) — vai mascarado no certificado.
   const [cpfDaSessao, setCpfDaSessao] = useState('');
   const [entrando, setEntrando] = useState(() => !!token && !!lerAparelho(token));
-  const [erro, setErro] = useState<string | null>(token ? null : MENSAGENS_ERRO.link);
+  const [erro, setErro] = useState<string | null>(null);
+  const [linkColado, setLinkColado] = useState('');
+  const usarLinkColado = () => {
+    const t = (linkColado.match(/[a-f0-9]{64}/i) || [])[0];
+    if (!t) {
+      setErro('Não encontrei o código do link. Cole o link inteiro que o DP mandou pelo WhatsApp (começa com https://).');
+      return;
+    }
+    tokenPortal(t);
+    window.location.replace(`/colaborador/?form=portal&token=${t}`);
+  };
   const [credenciais, setCredenciais] = useState<CredenciaisPortal | null>(null);
   const [dados, setDados] = useState<DadosPortal | null>(null);
   const [aba, setAba] = useState<Aba>(destino.aba);
@@ -344,6 +355,41 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
                 <p className="text-xs text-slate-500">Ponto, documentos, comunicados, treinamentos e o Jornal JMT — tudo neste link.</p>
               </div>
             </div>
+            {!token ? (
+              <div className="space-y-3">
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-[#7A4F17] leading-relaxed">
+                  <strong>Primeira vez neste app?</strong> Cole aqui o seu <strong>link pessoal</strong> — o que o DP mandou pelo WhatsApp. É só uma vez: depois o app abre direto.
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Seu link pessoal</label>
+                  <input
+                    value={linkColado}
+                    onChange={(e) => setLinkColado(e.target.value.trim())}
+                    autoComplete="off"
+                    inputMode="url"
+                    data-no-uppercase="true"
+                    placeholder="Toque e segure aqui → Colar"
+                    className="w-full p-3 border border-slate-300 rounded-xl text-base"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">No WhatsApp, toque e segure no link → Copiar. Depois volte aqui e cole.</p>
+                </div>
+                {erro && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{erro}</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={usarLinkColado}
+                  disabled={!linkColado}
+                  className="w-full py-3 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-sm font-bold disabled:opacity-50"
+                >
+                  Continuar
+                </button>
+              </div>
+            ) : (
+            <>
             <div>
               <label className="text-xs font-semibold text-slate-700 block mb-1">CPF</label>
               <input
@@ -386,6 +432,8 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
               {entrando && <Loader2 className="w-4 h-4 animate-spin" />}
               Entrar
             </button>
+            </>
+            )}
           </form>
           )
         ) : aberto ? (
