@@ -34,6 +34,8 @@ import { podeVerAtividade } from '../Agenda/agendaUtils';
 import { NovaConversaModal } from './NovaConversaModal';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { ConversaDemanda } from './ConversaDemanda';
+import { NovaMensagemColaboradorModal } from './NovaMensagemColaboradorModal';
+import { Colaborador } from '../../types';
 import { ROTULO_STATUS, SolicitacaoDp } from '../../utils/solicitacoesApi';
 import { estiloStatus } from '../Portal/PortalSolicitacoes';
 
@@ -63,6 +65,8 @@ interface ChatViewProps {
   onAbrirDemandaNoDp?: (id: string) => void;
   /** Nome de quem responde as demandas. */
   atendente?: string;
+  /** Para o DP começar uma conversa com um colaborador (vira "Mensagem do DP" no portal). */
+  colaboradores?: Colaborador[];
 }
 
 // Anexo de uma mensagem — o histórico vem sem o conteúdo do arquivo (ver getMensagens). Imagem
@@ -259,7 +263,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onDemandasMudaram,
   onAbrirDemandaNoDp,
   atendente,
+  colaboradores,
 }) => {
+  const [novaMensagemColab, setNovaMensagemColab] = useState(false);
   const [conversaAbertaId, setConversaAbertaId] = useState<string | null>(null);
   const [demandaAbertaId, setDemandaAbertaId] = useState<string | null>(null);
   const [verEncerradas, setVerEncerradas] = useState(false);
@@ -589,6 +595,18 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   </button>
                 )}
               </div>
+              {colaboradores && (
+                <div className="px-3 pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setNovaMensagemColab(true)}
+                    className="w-full py-1.5 rounded-lg border border-dashed border-[#C48229]/50 text-[11px] font-bold text-[#92611F] hover:bg-amber-50 normal-case tracking-normal"
+                    title="Mandar uma mensagem para um colaborador (ele responde pelo portal)"
+                  >
+                    + Falar com um colaborador
+                  </button>
+                </div>
+              )}
               {demandasFiltradas.length === 0 && <p className="px-3 pb-2.5 text-[10px] text-slate-400">Nenhuma demanda em andamento.</p>}
               {demandasFiltradas.map((d) => {
                 const ativa = d.id === demandaAbertaId;
@@ -683,6 +701,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
             onVoltar={() => setDemandaAbertaId(null)}
             onMudou={() => onDemandasMudaram?.()}
             onAbrirNoDp={onAbrirDemandaNoDp ? () => onAbrirDemandaNoDp(demandaAberta.id) : undefined}
+            colaborador={colaboradores?.find((c) => c.id === demandaAberta.colaboradorId)}
           />
         ) : !conversaAberta ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2">
@@ -897,6 +916,19 @@ export const ChatView: React.FC<ChatViewProps> = ({
         )}
       </div>
 
+      {novaMensagemColab && colaboradores && (
+        <NovaMensagemColaboradorModal
+          colaboradores={colaboradores}
+          atendente={atendente}
+          onClose={() => setNovaMensagemColab(false)}
+          onCriada={(id) => {
+            setNovaMensagemColab(false);
+            setConversaAbertaId(null);
+            setDemandaAbertaId(id);
+            onDemandasMudaram?.();
+          }}
+        />
+      )}
       <NovaConversaModal
         isOpen={isNovaConversaOpen}
         onClose={() => setIsNovaConversaOpen(false)}

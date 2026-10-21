@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ExternalLink, FileText, Loader2, Paperclip, Send, X } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileText, Loader2, MessageCircle, Paperclip, Send, X } from 'lucide-react';
+import { Colaborador } from '../../types';
+import { linkUnicoDe } from '../../utils/linkUnico';
+import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import {
   MensagemSolicitacao,
   ROTULO_STATUS,
@@ -33,7 +36,25 @@ export const ConversaDemanda: React.FC<{
   onVoltar: () => void;
   onMudou: () => void;
   onAbrirNoDp?: () => void;
-}> = ({ demanda: s, atendente, sinalNovaMensagem, onVoltar, onMudou, onAbrirNoDp }) => {
+  /** Cadastro do colaborador (para avisar pelo WhatsApp com o link pessoal). */
+  colaborador?: Colaborador;
+}> = ({ demanda: s, atendente, sinalNovaMensagem, onVoltar, onMudou, onAbrirNoDp, colaborador }) => {
+  const avisarWhatsApp = async () => {
+    if (!colaborador?.telefoneWhatsapp) return alert('Colaborador sem WhatsApp no cadastro.');
+    const janela = window.open('', 'jmt-whatsapp');
+    try {
+      const link = await linkUnicoDe(colaborador.id, `solicitacao:${s.id}`);
+      const url = buildWhatsAppLink(
+        colaborador.telefoneWhatsapp,
+        `Olá, ${nomeBonito(colaborador.nomeCompleto).split(' ')[0]}! O DP respondeu sobre "${s.assunto}" (nº ${s.protocolo}). Veja pelo seu link pessoal:\n${link}\n\nJM Transportes — Departamento Pessoal`
+      );
+      if (url && janela) janela.location.href = url;
+      else janela?.close();
+    } catch (err) {
+      janela?.close();
+      alert('Não foi possível montar o link pessoal agora.');
+    }
+  };
   const [mensagens, setMensagens] = useState<MensagemSolicitacao[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [texto, setTexto] = useState('');
@@ -135,6 +156,11 @@ export const ConversaDemanda: React.FC<{
               ))}
             </select>
         </div>
+        {colaborador?.telefoneWhatsapp && (
+          <button type="button" onClick={avisarWhatsApp} className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 shrink-0" title="Avisar pelo WhatsApp (com o link pessoal abrindo esta conversa)">
+            <MessageCircle className="w-4 h-4" />
+          </button>
+        )}
         {onAbrirNoDp && (
           <button type="button" onClick={onAbrirNoDp} className="hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-[#92611F] hover:bg-amber-50" title="Abrir no Fale com o DP (ex.: criar a programação de férias)">
             <ExternalLink className="w-4 h-4" />

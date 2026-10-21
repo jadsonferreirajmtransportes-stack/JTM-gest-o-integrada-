@@ -366,8 +366,9 @@ export async function regenerarTokenPortal(colaboradorId: string): Promise<strin
   return token;
 }
 
+/** Link pessoal do portal — sempre na página do app JMT Colaborador (/colaborador/). */
 export function montarLinkPortal(token: string): string {
-  return `${window.location.origin}${window.location.pathname}?form=portal&token=${token}`;
+  return `${window.location.origin}/colaborador/?form=portal&token=${token}`;
 }
 
 // ---------------------------------------------------------------------------

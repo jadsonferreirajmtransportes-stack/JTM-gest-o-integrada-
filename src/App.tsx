@@ -3253,6 +3253,7 @@ export default function App() {
               sinalDemanda={demandasDp.sinal}
               onDemandasMudaram={demandasDp.recarregar}
               atendente={currentUser.nome}
+              colaboradores={acessoFaleComDp ? colaboradoresEquipeVisiveis : undefined}
               onAbrirDemandaNoDp={() => {
                 setActiveGlobalModule('dp');
                 setActiveSection('solicitacoes');

@@ -52,7 +52,8 @@ export const ROTULO_STATUS: Record<StatusSolicitacao, string> = {
   recusada: 'Não atendida',
 };
 
-export const tituloTipo = (t: string) => TIPOS_SOLICITACAO.find((x) => x.tipo === t)?.titulo || 'Solicitação';
+export const tituloTipo = (t: string) =>
+  t === 'dp' ? 'Mensagem do DP' : TIPOS_SOLICITACAO.find((x) => x.tipo === t)?.titulo || 'Solicitação';
 
 export interface AnexoSolicitacao {
   caminho?: string;
@@ -251,6 +252,53 @@ export async function responderComoDp(
   falhou(error, 'responderComoDp');
   await atualizarStatusSolicitacao(s.id, novoStatus, atendente);
   return { id: msg.id, autor: 'dp', autorNome: msg.autor_nome, texto: msg.texto, anexos, criadoEm: msg.criado_em };
+}
+
+/** O DP começa a conversa (pelo Chat): vira uma demanda do Fale com o DP do tipo 'dp'
+ *  ("Mensagem do DP"), já com a primeira mensagem. O colaborador vê no portal (Fale com o DP),
+ *  recebe o aviso no app e responde por lá. */
+export async function iniciarConversaDp(p: {
+  colaboradorId: string;
+  colaboradorNome: string;
+  assunto: string;
+  texto: string;
+  arquivos: File[];
+  atendente?: string;
+}): Promise<SolicitacaoDp> {
+  const ano = new Date().getFullYear();
+  for (let tentativa = 0; tentativa < 4; tentativa++) {
+    const { data: ultima, error: e1 } = await supabase
+      .from('solicitacoes_dp')
+      .select('numero')
+      .eq('ano', ano)
+      .order('numero', { ascending: false })
+      .limit(1);
+    falhou(e1, 'iniciarConversaDp');
+    const agora = new Date().toISOString();
+    const linha = {
+      id: `sol-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      numero: ((ultima?.[0] as any)?.numero || 0) + 1 + tentativa,
+      ano,
+      colaborador_id: p.colaboradorId,
+      colaborador_nome: p.colaboradorNome,
+      tipo: 'dp',
+      assunto: p.assunto.trim().slice(0, 120) || 'Recado do DP',
+      dados: {},
+      status: 'respondida',
+      lida_pelo_dp: true,
+      lida_pelo_colaborador: false,
+      atendente: p.atendente || null,
+      criado_em: agora,
+      atualizado_em: agora,
+    };
+    const { error } = await supabase.from('solicitacoes_dp').insert(linha);
+    if (error && (error as any).code === '23505') continue; // número já usado — tenta o próximo
+    falhou(error, 'iniciarConversaDp');
+    const s = rowToSolicitacao(linha);
+    await responderComoDp(s, p.texto, p.arquivos, 'respondida', p.atendente);
+    return s;
+  }
+  throw new Error('Não foi possível criar a conversa agora. Tente de novo.');
 }
 
 /** Tempo real (079): demanda nova/alterada ou mensagem nova — o Chat da gestão recarrega a

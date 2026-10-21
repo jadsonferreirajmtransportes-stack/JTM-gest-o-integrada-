@@ -227,12 +227,23 @@ const CENAS: Record<string, Cena> = {
           demandas={demandas}
           atendente="Bruno"
           onAbrirDemandaNoDp={() => {}}
+          colaboradores={['Paula Ribeiro', 'Renato Campos', 'Sílvia Moura'].map((n, i) => ({ id: `c${i + 1}`, nomeCompleto: n.toUpperCase(), status: 'Ativo', funcaoCargo: 'Ajudante Operacional', setor: 'Expedição', telefoneWhatsapp: '(84) 90000-0000' })) as any}
         />
       );
     },
     acoes: async () => {
       await clicar('Paula Ribeiro');
       await esperar(800);
+    },
+  },
+  'chat-dp-novo': {
+    montar: async () => CENAS['chat-dp'].montar(),
+    acoes: async () => {
+      await esperar(600);
+      await clicar('+ Falar com um colaborador');
+      await esperar(400);
+      await clicar('Sílvia Moura');
+      await esperar(400);
     },
   },
   'notas-1': {
