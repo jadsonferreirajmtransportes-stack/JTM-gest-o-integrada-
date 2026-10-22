@@ -249,12 +249,15 @@ export function montarTabelaFreteWorkbook(cliente: Cliente): ExcelJS.Workbook {
   const extrasPadrao = cliente.tabelaFrete?.custosExtras || [];
   // Rodoviário com custos extras próprios ganha a aba dele; sem eles, valem os do cliente.
   const extrasRodProprios = cliente.tabelaFreteRodoviario?.custosExtras || [];
+  // Com as duas tabelas, cada aba de custos extras diz de qual modal é.
+  const abaExtrasAereo = temRodoviario && extrasRodProprios.length ? 'Custos extras — Aéreo' : 'Custos extras';
   const abaExtrasRod = extrasRodProprios.length ? 'Custos extras — Rodoviário' : 'Custos extras';
-  abaTarifario(workbook, temRodoviario ? 'Aéreo' : 'Tabela de frete', temRodoviario ? 'Tabela de frete — Aéreo' : 'Tabela de frete', cliente.tabelaFrete, cliente, extrasPadrao, 'Custos extras');
+  abaTarifario(workbook, temRodoviario ? 'Aéreo' : 'Tabela de frete', temRodoviario ? 'Tabela de frete — Aéreo' : 'Tabela de frete', cliente.tabelaFrete, cliente, extrasPadrao, abaExtrasAereo);
   if (cliente.tabelaFreteRodoviario) {
     abaTarifario(workbook, 'Rodoviário', 'Tabela de frete — Rodoviário', cliente.tabelaFreteRodoviario, cliente, extrasRodProprios.length ? extrasRodProprios : extrasPadrao, abaExtrasRod);
   }
-  if (extrasPadrao.length) abaCustosExtras(workbook, 'Custos extras', 'Custos extras e encargos', cliente, extrasPadrao);
+  if (extrasPadrao.length)
+    abaCustosExtras(workbook, abaExtrasAereo, abaExtrasAereo === 'Custos extras' ? 'Custos extras e encargos' : 'Custos extras e encargos — Aéreo', cliente, extrasPadrao);
   if (extrasRodProprios.length) abaCustosExtras(workbook, 'Custos extras — Rodoviário', 'Custos extras e encargos — Rodoviário', cliente, extrasRodProprios);
   return workbook;
 }
