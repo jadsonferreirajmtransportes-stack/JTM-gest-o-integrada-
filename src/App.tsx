@@ -201,7 +201,7 @@ import {
   isVinculadoAoSetor,
   SetorModuloId,
 } from './utils/sectorUtils';
-import { ehModalRodoviario } from './components/FarmaAereo/faturamentoAereoUtils';
+import { computeValorACobrar, ehModalRodoviario, findClienteById } from './components/FarmaAereo/faturamentoAereoUtils';
 import { SectorLinkModal } from './components/Common/SectorLinkModal';
 
 // Layout & Core Navigation
@@ -2379,12 +2379,39 @@ export default function App() {
   const handleSaveCliente = async (cliente: Cliente) => {
     try {
       const item = cliente.id ? cliente : { ...cliente, id: `cli-${Date.now()}` };
+      // Tabela de frete mudou: o Valor a Cobrar é calculado na hora com a tabela do cliente,
+      // então os CT-es que JÁ ESTÃO EM FATURA ficam com o valor atual gravado (congelado em
+      // valorACobrarManual) antes da troca — a tabela nova só vale para os sem fatura e os novos.
+      const anterior = clientes.find((c) => c.id === item.id);
+      let congelados = 0;
+      if (
+        anterior &&
+        (JSON.stringify(anterior.tabelaFrete ?? null) !== JSON.stringify(item.tabelaFrete ?? null) ||
+          JSON.stringify(anterior.tabelaFreteRodoviario ?? null) !== JSON.stringify(item.tabelaFreteRodoviario ?? null))
+      ) {
+        // Lista ainda não carregada (salvou logo ao abrir o sistema): busca do banco antes.
+        const base = lancamentosFaturamentoAereo.length ? lancamentosFaturamentoAereo : await getLancamentosFaturamentoAereo();
+        const paraCongelar = base
+          .filter((l) => l.faturaId && l.valorACobrarManual === undefined && findClienteById(clientes, l.clienteId, l.clienteNome)?.id === anterior.id)
+          .map((l) => ({ ...l, valorACobrarManual: Math.round(computeValorACobrar(l, anterior) * 100) / 100 }));
+        if (paraCongelar.length) {
+          await importLancamentosFaturamentoAereo(paraCongelar);
+          const porId = new Map(paraCongelar.map((l) => [l.id, l]));
+          setLancamentosFaturamentoAereo((prev) => prev.map((l) => porId.get(l.id) || l));
+          congelados = paraCongelar.length;
+        }
+      }
       await saveCliente(item);
       setClientes((prev) => {
         const idx = prev.findIndex((c) => c.id === item.id);
         return idx >= 0 ? prev.map((c) => (c.id === item.id ? item : c)) : [item, ...prev];
       });
-      showToast(`Cliente ${cliente.razaoSocial} salvo com sucesso!`, 'success');
+      showToast(
+        congelados
+          ? `Cliente ${cliente.razaoSocial} salvo! Tabela nova em vigor — ${congelados} CT-e(s) já em fatura mantiveram o valor antigo.`
+          : `Cliente ${cliente.razaoSocial} salvo com sucesso!`,
+        'success'
+      );
     } catch (err) {
       console.error(err);
       showToast('Não foi possível salvar o cliente. Tente novamente.', 'info');
