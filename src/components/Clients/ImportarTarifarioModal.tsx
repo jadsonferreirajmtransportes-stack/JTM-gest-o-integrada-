@@ -135,7 +135,21 @@ export const ImportarTarifarioModal: React.FC<{
                   <input type="checkbox" checked={trocarExtras} onChange={(e) => setTrocarExtras(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#C48229]" />
                   <span>
                     <b>Trocar os custos extras</b> pelos {aba.custosExtras.length} da planilha (hoje: {value.custosExtras?.length || 0}):{' '}
-                    <span className="text-slate-500">{aba.custosExtras.map((c) => `${c.itemDescricao} ${brl(c.valor)}${c.tipoCobranca === 'Valor/KM' ? '/km' : ''}`).join(' · ')}</span>
+                    <span className="block mt-1 space-y-0.5 text-slate-500">
+                      {Array.from(new Set(aba.custosExtras.map((c) => c.categoria))).map((cat) => {
+                        const itens = aba.custosExtras.filter((c) => c.categoria === cat);
+                        return (
+                          <span key={cat} className="block">
+                            <b className="text-slate-700">{cat}</b> ({itens.length}):{' '}
+                            {itens
+                              .slice(0, 4)
+                              .map((c) => `${c.itemDescricao}${c.valor ? ` ${brl(c.valor)}${c.tipoCobranca === 'Valor/KM' ? '/km' : ''}` : ''}`)
+                              .join(' · ')}
+                            {itens.length > 4 ? ` · +${itens.length - 4}` : ''}
+                          </span>
+                        );
+                      })}
+                    </span>
                   </span>
                 </label>
               )}

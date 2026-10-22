@@ -49,23 +49,90 @@ function valoresPorVeiculo(texto: string): { veiculo: string; valor: number }[] 
   return saida;
 }
 
-/** Generalidades da aba de premissas (ex.: "TDE / Por Veiculo | 102,3", "Ajudante | 102,3"). */
-function lerGeneralidades(linhas: unknown[][]): CustoExtraTarifa[] {
-  const saida: CustoExtraTarifa[] = [];
-  let naSecao = false;
+/** Um bloco "Proposta" da aba de premissas — no modelo da LUFT há dois (Rodoviário e Aéreo),
+ *  cada um com o valor da Capital (usado para saber de qual tabela ele é) e todos os custos
+ *  extras: generalidades, dedicado capital, dedicado interior por km, TDE por destinatário,
+ *  serviços avulsos (coletas, embarques, manutenção, reentrega...) e observações. */
+interface BlocoPremissas {
+  capital?: number;
+  custosExtras: CustoExtraTarifa[];
+  observacoes: string[];
+}
+
+function lerPremissas(linhas: unknown[][]): BlocoPremissas[] {
+  const blocos: BlocoPremissas[] = [];
+  let bloco: BlocoPremissas | null = null;
+  let secao: { categoria: string; tipo: CustoExtraTarifa['tipoCobranca'] } | 'obs' | null = null;
+  let vazias = 0;
   for (const l of linhas) {
-    const rotulo = String(l.find((c) => String(c).trim()) ?? '').trim();
-    const n = norm(rotulo);
-    if (n.startsWith('GENERALIDADES')) {
-      naSecao = true;
+    const celulas = l.map((c) => (typeof c === 'string' ? c.trim() : c));
+    const iRot = celulas.findIndex((c) => c !== '' && c !== null && c !== undefined);
+    if (iRot < 0) {
+      vazias += 1;
       continue;
     }
-    if (!naSecao) continue;
-    if (!rotulo || n.startsWith('TIPO DE VEICULO')) break;
-    const valor = l.map(numero).find((x, i) => i > l.indexOf(rotulo) && x !== undefined);
-    if (valor) saida.push({ id: novoId('cex'), categoria: 'GENERALIDADES', itemDescricao: rotulo, grupoDestinatario: '', tipoCobranca: 'Valor fechado', valor });
+    const rotulo = String(celulas[iRot]).trim();
+    const n = norm(rotulo);
+    const resto = celulas.slice(iRot + 1).filter((c) => c !== '' && c !== null && c !== undefined);
+    const depoisDeVazias = vazias;
+    vazias = 0;
+
+    if (n === 'PROPOSTA' || (n === 'PREMISSA' && !bloco)) {
+      bloco = { custosExtras: [], observacoes: [] };
+      blocos.push(bloco);
+      secao = null;
+      continue;
+    }
+    if (!bloco) continue;
+    if (n === 'CAPITAL' && bloco.capital === undefined) {
+      bloco.capital = resto.map(numero).find((x) => x !== undefined && x > 1);
+      continue;
+    }
+    if (n.startsWith('GENERALIDADES')) {
+      secao = { categoria: 'GENERALIDADES', tipo: 'Valor fechado' };
+      continue;
+    }
+    if (n.startsWith('GENERALIDADE')) {
+      secao = 'obs';
+      continue;
+    }
+    if (n.startsWith('TIPO DE VEICULO')) {
+      const porKm = /KM/.test(resto.map(norm).join(' ')) || n.includes('INTERIOR');
+      secao = {
+        categoria: n.includes('INTERIOR') ? 'DEDICADO INTERIOR (POR KM RODADO)' : 'DEDICADO CAPITAL',
+        tipo: porKm && n.includes('INTERIOR') ? 'Valor/KM' : 'Valor fechado',
+      };
+      continue;
+    }
+    if (n.startsWith('TDE - PARA') || n.startsWith('TDE PARA')) {
+      secao = { categoria: 'TDE POR DESTINATÁRIO', tipo: 'Valor fechado' };
+      continue;
+    }
+    if (secao === 'obs') {
+      const texto = rotulo.replace(/^\d+\)\s*/, '').trim();
+      if (texto) bloco.observacoes.push(texto);
+      continue;
+    }
+    // Itens depois de linhas em branco sem cabeçalho (coletas, embarques...) = serviços avulsos.
+    if (secao && depoisDeVazias >= 2) secao = { categoria: 'SERVIÇOS AVULSOS', tipo: 'Serviço avulso' };
+    if (!secao) continue;
+    const valor = resto.map(numero).find((x) => x !== undefined);
+    const texto = resto.find((c) => typeof c === 'string' && numero(c) === undefined && !/^R\$\s*-?$/.test(String(c).trim()));
+    if (valor) {
+      bloco.custosExtras.push({ id: novoId('cex'), categoria: secao.categoria, itemDescricao: rotulo, grupoDestinatario: '', tipoCobranca: secao.tipo, valor });
+    } else if (texto) {
+      // Sem valor fixo ("CONSULTAR TABELA", "TAXA DA ENTREGA"): entra com a regra na descrição.
+      bloco.custosExtras.push({
+        id: novoId('cex'),
+        categoria: secao.categoria,
+        itemDescricao: `${rotulo} — ${String(texto).toLowerCase()}`,
+        grupoDestinatario: '',
+        tipoCobranca: secao.tipo,
+        valor: 0,
+      });
+    }
   }
-  return saida;
+  return blocos.filter((b) => b.custosExtras.length || b.observacoes.length);
 }
 
 function lerAbaTabela(nome: string, linhas: unknown[][], iCab: number): AbaTarifario {
@@ -169,7 +236,7 @@ function lerAbaTabela(nome: string, linhas: unknown[][], iCab: number): AbaTarif
 export function lerTarifarioExcel(dados: ArrayBuffer): AbaTarifario[] {
   const wb = XLSX.read(dados, { type: 'array' });
   const abas: AbaTarifario[] = [];
-  let generalidades: CustoExtraTarifa[] = [];
+  const blocos: BlocoPremissas[] = [];
   wb.SheetNames.forEach((nome) => {
     const linhas = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[nome], { header: 1, defval: '' });
     const iCab = linhas.findIndex((l) => {
@@ -177,12 +244,21 @@ export function lerTarifarioExcel(dados: ArrayBuffer): AbaTarifario[] {
       return n.some((x) => x === 'CIDADE') && n.some((x) => x.startsWith('ATE 10') || x.startsWith('KG EXCEDENTE'));
     });
     if (iCab >= 0) abas.push(lerAbaTabela(nome, linhas, iCab));
-    else if (!generalidades.length) generalidades = lerGeneralidades(linhas);
+    else blocos.push(...lerPremissas(linhas));
   });
-  if (generalidades.length) {
-    abas.forEach((a) => {
-      a.custosExtras = [...generalidades.map((g) => ({ ...g, id: novoId('cex') })), ...a.custosExtras];
-    });
-  }
+  // Cada bloco de premissas vai para a tabela cuja Capital tem o mesmo valor (ex.: R$ 40,18 =
+  // Rodoviário, R$ 43,20 = Aéreo). Achou: os custos extras do bloco (completos) substituem os
+  // lidos do topo da aba; as observações do bloco somam às da aba.
+  const usados = new Set<BlocoPremissas>();
+  abas.forEach((a) => {
+    const cap = a.faixas[0]?.valorAte10Kg;
+    if (cap === undefined) return;
+    const candidatos = blocos.filter((b) => b.capital !== undefined && !usados.has(b) && Math.abs((b.capital as number) - cap) <= 0.5);
+    const bloco = candidatos.sort((x, y) => Math.abs((x.capital as number) - cap) - Math.abs((y.capital as number) - cap))[0];
+    if (!bloco) return;
+    usados.add(bloco);
+    if (bloco.custosExtras.length) a.custosExtras = bloco.custosExtras.map((c) => ({ ...c, id: novoId('cex') }));
+    a.observacoes = [...a.observacoes, ...bloco.observacoes];
+  });
   return abas;
 }
