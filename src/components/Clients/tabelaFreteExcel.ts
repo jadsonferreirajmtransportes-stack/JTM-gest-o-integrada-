@@ -1,0 +1,219 @@
+import ExcelJS from 'exceljs';
+import { Cliente, FaixaTarifaCidade, TabelaPrecoFrete } from '../../types';
+import { STRATEGIC_GUIDELINES } from '../../data/strategicGuidelines';
+import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
+
+// Tabela de frete do cliente em Excel, no padrão JMT: as cidades agrupadas pela faixa de
+// distância (o "raio" do tarifário — Capital e região, interior até 300 km...) e, dentro de
+// cada faixa, em ordem de km. Uma aba por tarifário (Aéreo/padrão e Rodoviário, quando o
+// cliente tem os dois) e outra com os custos extras.
+
+const BRONZE = 'FFC48229';
+const BRONZE_ESCURO = 'FF92611F';
+const AREIA = 'FFF4EEE1';
+const BRANCO = 'FFFFFFFF';
+const CINZA = 'FF555555';
+const BORDA: Partial<ExcelJS.Borders> = {
+  top: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+  left: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+  bottom: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+  right: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+};
+const MOEDA = '"R$" #,##0.00';
+
+/** Faixa de km quando o tarifário não traz o "raio" escrito. */
+function faixaPorKm(km?: number): string {
+  if (km === undefined || km === null || Number.isNaN(km)) return 'Sem distância informada';
+  if (km <= 50) return 'Até 50 km';
+  if (km <= 100) return 'De 51 a 100 km';
+  if (km <= 200) return 'De 101 a 200 km';
+  if (km <= 300) return 'De 201 a 300 km';
+  if (km <= 500) return 'De 301 a 500 km';
+  return 'Acima de 500 km';
+}
+
+/** Agrupa por faixa (raio do tarifário ou, sem ele, faixa de km); faixas e cidades em ordem de km. */
+export function agruparPorFaixa(tarifas: FaixaTarifaCidade[]): { faixa: string; cidades: FaixaTarifaCidade[] }[] {
+  const temRaio = tarifas.some((t) => (t.raio || '').trim());
+  const grupos = new Map<string, FaixaTarifaCidade[]>();
+  tarifas.forEach((t) => {
+    const faixa = temRaio ? (t.raio || '').trim() || 'Sem faixa informada' : faixaPorKm(t.distanciaKm);
+    grupos.set(faixa, [...(grupos.get(faixa) || []), t]);
+  });
+  const km = (t: FaixaTarifaCidade) => (t.distanciaKm ?? Number.MAX_SAFE_INTEGER);
+  return Array.from(grupos.entries())
+    .map(([faixa, cidades]) => ({
+      faixa,
+      cidades: [...cidades].sort((a, b) => km(a) - km(b) || a.cidade.localeCompare(b.cidade)),
+    }))
+    .sort((a, b) => {
+      const menor = (g: FaixaTarifaCidade[]) => Math.min(...g.map(km));
+      return menor(a.cidades) - menor(b.cidades) || a.faixa.localeCompare(b.faixa);
+    });
+}
+
+function cabecalho(workbook: ExcelJS.Workbook, sheet: ExcelJS.Worksheet, titulo: string, cliente: Cliente) {
+  const logo = workbook.addImage({ base64: JMT_LOGO_BASE64, extension: 'png' });
+  sheet.addImage(logo, { tl: { col: 0, row: 0 }, ext: { width: 120, height: 45 } });
+  sheet.getRow(1).height = 24;
+  sheet.getRow(2).height = 18;
+  sheet.mergeCells('C1:E1');
+  const t = sheet.getCell('C1');
+  t.value = titulo;
+  t.font = { bold: true, size: 14, color: { argb: BRONZE_ESCURO }, name: 'Arial' };
+  t.alignment = { vertical: 'middle' };
+  sheet.mergeCells('C2:E2');
+  const c = sheet.getCell('C2');
+  c.value = cliente.nomeFantasia || cliente.razaoSocial;
+  c.font = { bold: true, size: 11, color: { argb: 'FF111111' }, name: 'Arial' };
+  sheet.mergeCells('C3:E3');
+  const d = sheet.getCell('C3');
+  d.value = `Gerada em ${new Date().toLocaleDateString('pt-BR')} — valores sujeitos ao contrato vigente`;
+  d.font = { italic: true, size: 9, color: { argb: CINZA }, name: 'Arial' };
+}
+
+function linhaInfo(sheet: ExcelJS.Worksheet, linha: number, rotulo: string, valor: string | number, moeda = false) {
+  const a = sheet.getCell(linha, 1);
+  a.value = rotulo;
+  a.font = { bold: true, size: 10, color: { argb: CINZA }, name: 'Arial' };
+  sheet.mergeCells(linha, 2, linha, 3);
+  const b = sheet.getCell(linha, 2);
+  b.value = valor;
+  b.font = { size: 10, name: 'Arial' };
+  if (moeda && typeof valor === 'number') b.numFmt = MOEDA;
+  b.alignment = { horizontal: 'left' };
+}
+
+function abaTarifario(workbook: ExcelJS.Workbook, nomeAba: string, titulo: string, tabela: TabelaPrecoFrete, cliente: Cliente) {
+  const sheet = workbook.addWorksheet(nomeAba, { views: [{ state: 'frozen', ySplit: 0 }], pageSetup: { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+  sheet.columns = [
+    { key: 'cidade', width: 34 },
+    { key: 'km', width: 10 },
+    { key: 'ate10', width: 16 },
+    { key: 'exc', width: 18 },
+    { key: 'obs', width: 30 },
+  ];
+  cabecalho(workbook, sheet, titulo, cliente);
+
+  let linha = 5;
+  if (tabela.freteMinimo) linhaInfo(sheet, linha++, 'Frete mínimo', tabela.freteMinimo, true);
+  if (tabela.taxaDescargaAjudante) linhaInfo(sheet, linha++, 'Descarga / ajudante', tabela.taxaDescargaAjudante, true);
+  if (tabela.percentualGrisPedagio) linhaInfo(sheet, linha++, 'GRIS / pedágio', `${tabela.percentualGrisPedagio}%`);
+  if (tabela.percentualAdValoremNF) linhaInfo(sheet, linha++, 'Ad valorem sobre a NF', `${tabela.percentualAdValoremNF}%`);
+  if (tabela.condicaoPagamento) linhaInfo(sheet, linha++, 'Condição de pagamento', tabela.condicaoPagamento);
+  linha += 1;
+
+  const tarifas = tabela.tarifasPorCidade || [];
+  if (tarifas.length === 0) {
+    // Sem tabela por cidade: tarifa única.
+    linhaInfo(sheet, linha++, 'Tarifa base (até 10 kg)', tabela.valorBase || 0, true);
+    linhaInfo(sheet, linha++, 'Kg excedente', tabela.valorKgExcedente || 0, true);
+  }
+
+  agruparPorFaixa(tarifas).forEach(({ faixa, cidades }) => {
+    // Título da faixa
+    sheet.mergeCells(linha, 1, linha, 5);
+    const tf = sheet.getCell(linha, 1);
+    tf.value = `${faixa.toUpperCase()}  —  ${cidades.length} cidade(s)`;
+    tf.font = { bold: true, size: 11, color: { argb: BRANCO }, name: 'Arial' };
+    tf.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRONZE_ESCURO } };
+    tf.alignment = { vertical: 'middle' };
+    sheet.getRow(linha).height = 20;
+    linha += 1;
+    // Cabeçalho das colunas
+    ['Cidade', 'Km', 'Até 10 kg', 'Kg excedente', 'Faixa'].forEach((h, i) => {
+      const cell = sheet.getCell(linha, i + 1);
+      cell.value = h;
+      cell.font = { bold: true, size: 10, color: { argb: BRANCO }, name: 'Arial' };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRONZE } };
+      cell.border = BORDA;
+      cell.alignment = { horizontal: i === 0 || i === 4 ? 'left' : 'right' };
+    });
+    linha += 1;
+    cidades.forEach((t, idx) => {
+      const valores = [t.cidade, t.distanciaKm ?? '', t.valorAte10Kg ?? 0, t.valorKgExcedente ?? 0, t.raio || ''];
+      valores.forEach((v, i) => {
+        const cell = sheet.getCell(linha, i + 1);
+        cell.value = v as any;
+        cell.font = { size: 10, name: 'Arial', color: { argb: i === 4 ? CINZA : 'FF111111' } };
+        cell.border = BORDA;
+        if (i === 2 || i === 3) cell.numFmt = MOEDA;
+        if (i === 1) cell.alignment = { horizontal: 'right' };
+        if (idx % 2 === 1) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AREIA } };
+      });
+      linha += 1;
+    });
+    linha += 1;
+  });
+
+  if (tabela.observacoesTarifa) {
+    sheet.mergeCells(linha, 1, linha, 5);
+    const o = sheet.getCell(linha, 1);
+    o.value = `Observações: ${tabela.observacoesTarifa}`;
+    o.font = { italic: true, size: 9, color: { argb: CINZA }, name: 'Arial' };
+    o.alignment = { wrapText: true };
+    sheet.getRow(linha).height = 30;
+    linha += 2;
+  }
+
+  sheet.mergeCells(linha, 1, linha, 5);
+  const r = sheet.getCell(linha, 1);
+  r.value = STRATEGIC_GUIDELINES.assinatura;
+  r.font = { bold: true, size: 9, color: { argb: BRONZE_ESCURO }, name: 'Arial' };
+  r.alignment = { horizontal: 'center' };
+}
+
+function abaCustosExtras(workbook: ExcelJS.Workbook, cliente: Cliente, tabela: TabelaPrecoFrete) {
+  const extras = tabela.custosExtras || [];
+  if (!extras.length) return;
+  const sheet = workbook.addWorksheet('Custos extras');
+  sheet.columns = [{ width: 24 }, { width: 28 }, { width: 34 }, { width: 18 }, { width: 14 }];
+  cabecalho(workbook, sheet, 'Custos extras / encargos', cliente);
+  let linha = 6;
+  ['Categoria', 'Grupo / destinatário', 'Item / descrição', 'Tipo de cobrança', 'Valor'].forEach((h, i) => {
+    const cell = sheet.getCell(linha, i + 1);
+    cell.value = h;
+    cell.font = { bold: true, size: 10, color: { argb: BRANCO }, name: 'Arial' };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRONZE } };
+    cell.border = BORDA;
+  });
+  linha += 1;
+  extras.forEach((c) => {
+    [c.categoria || '', c.grupoDestinatario || '', c.itemDescricao || '', c.tipoCobranca, c.valor || 0].forEach((v, i) => {
+      const cell = sheet.getCell(linha, i + 1);
+      cell.value = v as any;
+      cell.font = { size: 10, name: 'Arial' };
+      cell.border = BORDA;
+      if (i === 4) cell.numFmt = MOEDA;
+    });
+    linha += 1;
+  });
+}
+
+/** Monta a planilha (separado do download para poder testar). */
+export function montarTabelaFreteWorkbook(cliente: Cliente): ExcelJS.Workbook {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = STRATEGIC_GUIDELINES.empresa;
+  workbook.created = new Date();
+  const temRodoviario = !!cliente.tabelaFreteRodoviario;
+  abaTarifario(workbook, temRodoviario ? 'Aéreo' : 'Tabela de frete', temRodoviario ? 'Tabela de frete — Aéreo' : 'Tabela de frete', cliente.tabelaFrete, cliente);
+  if (cliente.tabelaFreteRodoviario) abaTarifario(workbook, 'Rodoviário', 'Tabela de frete — Rodoviário', cliente.tabelaFreteRodoviario, cliente);
+  abaCustosExtras(workbook, cliente, cliente.tabelaFrete);
+  return workbook;
+}
+
+/** Gera e baixa a tabela de frete do cliente (.xlsx). */
+export async function baixarTabelaFreteExcel(cliente: Cliente): Promise<void> {
+  const workbook = montarTabelaFreteWorkbook(cliente);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const nome = (cliente.nomeFantasia || cliente.razaoSocial || 'cliente').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Tabela_de_frete_${nome}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}

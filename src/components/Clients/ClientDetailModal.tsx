@@ -24,7 +24,9 @@ import {
   Share2,
   Award,
   FileSignature,
+  FileSpreadsheet,
 } from 'lucide-react';
+import { baixarTabelaFreteExcel } from './tabelaFreteExcel';
 import { Cliente, Empregador, Supervisor, UserRole } from '../../types';
 import { formatCurrency, formatDateBR } from '../../utils/formatters';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
@@ -133,6 +135,23 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             >
               <FileSignature className="w-3.5 h-3.5" />
               <span>Proposta Comercial</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await baixarTabelaFreteExcel(cliente);
+                } catch (err) {
+                  console.error(err);
+                  alert('Não foi possível gerar a planilha. Tente de novo.');
+                }
+              }}
+              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              title="Baixar a tabela de frete em Excel, com as cidades agrupadas por faixa de km"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Tabela de frete (Excel)</span>
             </button>
 
             {userRole === 'admin' && (
@@ -578,9 +597,27 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
                 {!!cliente.tabelaFrete?.tarifasPorCidade?.length && (
                   <div className="pt-2 border-t border-slate-200">
-                    <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold block mb-1.5">
-                      Tabela Detalhada por Cidade / Praça ({cliente.tabelaFrete.tarifasPorCidade.length})
-                    </span>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold block">
+                        Tabela Detalhada por Cidade / Praça ({cliente.tabelaFrete.tarifasPorCidade.length})
+                      </span>
+                      <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await baixarTabelaFreteExcel(cliente);
+                } catch (err) {
+                  console.error(err);
+                  alert('Não foi possível gerar a planilha. Tente de novo.');
+                }
+              }}
+              className="px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 shrink-0"
+              title="Baixar a tabela de frete em Excel, com as cidades agrupadas por faixa de km"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Baixar em Excel</span>
+            </button>
+                    </div>
                     <div className="overflow-x-auto rounded-lg border border-slate-200">
                       <table className="w-full text-[11px]">
                         <thead>
