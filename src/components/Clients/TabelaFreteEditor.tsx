@@ -1,5 +1,6 @@
-import React from 'react';
-import { DollarSign, Plus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { DollarSign, FileSpreadsheet, Plus, Trash2 } from 'lucide-react';
+import { ImportarTarifarioModal } from './ImportarTarifarioModal';
 import { TabelaPrecoFrete, FaixaTarifaCidade, CustoExtraTarifa } from '../../types';
 
 interface TabelaFreteEditorProps {
@@ -17,6 +18,7 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
   const modeloPrecificacao = value.modeloPrecificacao || 'tarifa_base';
   const tarifasPorCidade = value.tarifasPorCidade || [];
   const custosExtras = value.custosExtras || [];
+  const [importando, setImportando] = useState(false);
 
   const handleAddTarifaCidade = () => {
     onChange({
@@ -169,6 +171,16 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
                 Use quando a taxa varia por cidade/raio — mesmo formato do tarifário real (Cidade, Raio, Até 10kg, Kg Excedente, Km).
               </p>
             </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setImportando(true)}
+              className="text-[11px] bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium"
+              title="Trocar a tabela por cidade pela de uma planilha de tarifário (Excel)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Importar do Excel</span>
+            </button>
             <button
               type="button"
               onClick={handleAddTarifaCidade}
@@ -177,7 +189,19 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
               <Plus className="w-3.5 h-3.5" />
               <span>Adicionar Cidade</span>
             </button>
+            </div>
           </div>
+          {importando && (
+            <ImportarTarifarioModal
+              titulo={titulo}
+              value={value}
+              onClose={() => setImportando(false)}
+              onAplicar={(nova) => {
+                onChange(nova);
+                setImportando(false);
+              }}
+            />
+          )}
 
           {tarifasPorCidade.length > 0 && (
             <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">

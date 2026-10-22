@@ -96,7 +96,7 @@ function abaTarifario(workbook: ExcelJS.Workbook, nomeAba: string, titulo: strin
     { key: 'km', width: 10 },
     { key: 'ate10', width: 16 },
     { key: 'exc', width: 18 },
-    { key: 'obs', width: 30 },
+    { key: 'obs', width: 14 },
   ];
   cabecalho(workbook, sheet, titulo, cliente);
 
@@ -137,7 +137,7 @@ function abaTarifario(workbook: ExcelJS.Workbook, nomeAba: string, titulo: strin
     sheet.getRow(linha).height = 20;
     linha += 1;
     // Cabeçalho das colunas
-    ['Cidade', 'Km', 'Até 10 kg', 'Kg excedente', 'Faixa'].forEach((h, i) => {
+    ['Cidade', 'Km', 'Até 10 kg', 'Kg excedente', 'Prazo'].forEach((h, i) => {
       const cell = sheet.getCell(linha, i + 1);
       cell.value = h;
       cell.font = { bold: true, size: 10, color: { argb: BRANCO }, name: 'Arial' };
@@ -147,7 +147,7 @@ function abaTarifario(workbook: ExcelJS.Workbook, nomeAba: string, titulo: strin
     });
     linha += 1;
     cidades.forEach((t, idx) => {
-      const valores = [t.cidade, t.distanciaKm ?? '', t.valorAte10Kg ?? 0, t.valorKgExcedente ?? 0, t.raio || ''];
+      const valores = [t.cidade, t.distanciaKm ?? '', t.valorAte10Kg ?? 0, t.valorKgExcedente ?? 0, t.prazo || ''];
       valores.forEach((v, i) => {
         const cell = sheet.getCell(linha, i + 1);
         cell.value = v as any;

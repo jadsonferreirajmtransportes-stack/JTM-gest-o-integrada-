@@ -916,6 +916,9 @@ export interface FaixaTarifaCidade {
   valorAte10Kg: number; // R$ — taxa de entrega até o peso-base da faixa
   valorKgExcedente: number; // R$/kg — cobrado por kg que ultrapassar o peso-base
   distanciaKm?: number;
+  uf?: string;
+  /** Prazo de entrega do tarifário (ex.: '24HS', '48HS'). */
+  prazo?: string;
 }
 
 /**
