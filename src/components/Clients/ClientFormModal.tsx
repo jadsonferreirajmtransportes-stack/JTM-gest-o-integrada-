@@ -18,6 +18,7 @@ import {
   Clock,
   User,
   Loader2,
+  FileSpreadsheet,
 } from 'lucide-react';
 import {
   Cliente,
@@ -34,6 +35,7 @@ import {
   TabelaPrecoFrete,
 } from '../../types';
 import { TabelaFreteEditor, TABELA_FRETE_PADRAO } from './TabelaFreteEditor';
+import { ImportarTarifarioModal } from './ImportarTarifarioModal';
 import { maskCNPJ, maskCEP, maskPhone } from '../../utils/formatters';
 
 interface ClientFormModalProps {
@@ -135,6 +137,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   const [tabelaCondicaoPagamento, setTabelaCondicaoPagamento] = useState('Faturamento Quinzenal (15 dias)');
   const [tabelaDiaFechamento, setTabelaDiaFechamento] = useState(15);
   const [tabelaObservacoes, setTabelaObservacoes] = useState('');
+  const [importandoTarifario, setImportandoTarifario] = useState(false);
   // Tarifário específico do Rodoviário — opcional, só usado quando o cliente cobra diferente
   // por modal (hoje só a LUFT: "TARIFARIO - LUFT AEREO" x "TARIFARIO - LUFT RODOVIARIO" no Coda).
   // Sem isso marcado, lançamentos Rodoviários desse cliente continuam usando a tabelaFrete acima.
@@ -455,6 +458,9 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
     const valorBaseFinal = tabelaModeloPrecificacao === 'ad_valorem' ? percentualAdValoremFinal : Number(tabelaValorBase) || 0;
 
     const clienteToSave: Cliente = {
+      // Começa do cadastro existente: o que o formulário não edita (ex.: vínculo com as
+      // operações — setoresVinculados/setorAtuacao) era apagado a cada "Salvar".
+      ...(initialData || {}),
       id: initialData?.id || `cli-${Date.now()}`,
       codigoCliente: codigoCliente || `CLI-${String(existingClientsCount + 1).padStart(3, '0')}`,
       razaoSocial: razaoSocial.trim(),
@@ -1172,6 +1178,16 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                           Use quando a taxa varia por cidade/raio — mesmo formato do tarifário real (Cidade, Raio, Até 10kg, Kg Excedente, Km).
                         </p>
                       </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setImportandoTarifario(true)}
+                        className="text-[11px] bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 font-medium"
+                        title="Trocar a tabela por cidade pela de uma planilha de tarifário (Excel)"
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                        <span>Importar do Excel</span>
+                      </button>
                       <button
                         type="button"
                         onClick={handleAddTarifaCidade}
@@ -1180,7 +1196,32 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                         <Plus className="w-3.5 h-3.5" />
                         <span>Adicionar Cidade</span>
                       </button>
+                      </div>
                     </div>
+                    {importandoTarifario && (
+                      <ImportarTarifarioModal
+                        titulo={temTarifarioRodoviarioDistinto ? 'Tabela de frete — Aéreo' : 'Tabela de frete'}
+                        value={{
+                          ...TABELA_FRETE_PADRAO,
+                          modeloPrecificacao: tabelaModeloPrecificacao,
+                          valorBase: tabelaValorBase,
+                          valorKgExcedente: tabelaKgExcedente,
+                          tarifasPorCidade,
+                          custosExtras,
+                          observacoesTarifa: tabelaObservacoes,
+                        }}
+                        onClose={() => setImportandoTarifario(false)}
+                        onAplicar={(nova) => {
+                          setTabelaModeloPrecificacao('tarifa_base');
+                          setTarifasPorCidade(nova.tarifasPorCidade || []);
+                          setCustosExtras(nova.custosExtras || []);
+                          setTabelaObservacoes(nova.observacoesTarifa || '');
+                          setTabelaValorBase(nova.valorBase || 0);
+                          setTabelaKgExcedente(nova.valorKgExcedente || 0);
+                          setImportandoTarifario(false);
+                        }}
+                      />
+                    )}
 
                     {tarifasPorCidade.length > 0 && (
                       <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">

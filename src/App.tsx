@@ -2384,10 +2384,25 @@ export default function App() {
       // valorACobrarManual) antes da troca — a tabela nova só vale para os sem fatura e os novos.
       const anterior = clientes.find((c) => c.id === item.id);
       let congelados = 0;
+      // Só o que muda o preço conta (o formulário remonta a tabela inteira a cada "Salvar").
+      const precoDe = (t?: Cliente['tabelaFrete']) =>
+        t
+          ? JSON.stringify([
+              t.modeloPrecificacao || '',
+              t.tipoCobranca || '',
+              Number(t.valorBase) || 0,
+              Number(t.valorKgExcedente) || 0,
+              Number(t.freteMinimo) || 0,
+              Number(t.percentualAdValoremNF) || 0,
+              Number(t.taxaDescargaAjudante) || 0,
+              (t.tarifasPorCidade || [])
+                .map((x) => [x.cidade.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase(), Number(x.valorAte10Kg) || 0, Number(x.valorKgExcedente) || 0])
+                .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+            ])
+          : '';
       if (
         anterior &&
-        (JSON.stringify(anterior.tabelaFrete ?? null) !== JSON.stringify(item.tabelaFrete ?? null) ||
-          JSON.stringify(anterior.tabelaFreteRodoviario ?? null) !== JSON.stringify(item.tabelaFreteRodoviario ?? null))
+        (precoDe(anterior.tabelaFrete) !== precoDe(item.tabelaFrete) || precoDe(anterior.tabelaFreteRodoviario) !== precoDe(item.tabelaFreteRodoviario))
       ) {
         // Lista ainda não carregada (salvou logo ao abrir o sistema): busca do banco antes.
         const base = lancamentosFaturamentoAereo.length ? lancamentosFaturamentoAereo : await getLancamentosFaturamentoAereo();
