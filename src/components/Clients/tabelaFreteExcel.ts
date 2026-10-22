@@ -1,12 +1,12 @@
 import ExcelJS from 'exceljs';
-import { Cliente, FaixaTarifaCidade, TabelaPrecoFrete } from '../../types';
+import { Cliente, CustoExtraTarifa, FaixaTarifaCidade, TabelaPrecoFrete } from '../../types';
 import { STRATEGIC_GUIDELINES } from '../../data/strategicGuidelines';
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 
 // Tabela de frete do cliente em Excel, no padrão JMT: as cidades agrupadas pela faixa de
 // distância (o "raio" do tarifário — Capital e região, interior até 300 km...) e, dentro de
 // cada faixa, em ordem de km. Uma aba por tarifário (Aéreo/padrão e Rodoviário, quando o
-// cliente tem os dois) e outra com os custos extras.
+// cliente tem os dois), cada uma com o quadro de custos extras em destaque no topo.
 
 const BRONZE = 'FFC48229';
 const BRONZE_ESCURO = 'FF92611F';
@@ -20,6 +20,66 @@ const BORDA: Partial<ExcelJS.Borders> = {
   right: { style: 'thin', color: { argb: 'FFBFBFBF' } },
 };
 const MOEDA = '"R$" #,##0.00';
+const PETROLEO = 'FF28464E';
+const PETROLEO_CLARO = 'FFE6EEF0';
+
+const COMO_COBRA: Record<string, string> = {
+  'Valor fechado': 'Valor fechado por serviço',
+  'Valor/KM': 'Por km rodado',
+  'Serviço avulso': 'Por serviço avulso',
+};
+
+/** Quadro "Custos extras" em destaque na própria aba do tarifário, separado por categoria.
+ *  Devolve a próxima linha livre. */
+function blocoCustosExtras(sheet: ExcelJS.Worksheet, inicio: number, extras: CustoExtraTarifa[]): number {
+  let linha = inicio;
+  sheet.mergeCells(linha, 1, linha, 5);
+  const t = sheet.getCell(linha, 1);
+  t.value = `CUSTOS EXTRAS / ENCARGOS  —  cobrados além do frete, quando o serviço é usado (${extras.length})`;
+  t.font = { bold: true, size: 11, color: { argb: BRANCO }, name: 'Arial' };
+  t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: PETROLEO } };
+  t.alignment = { vertical: 'middle' };
+  sheet.getRow(linha).height = 22;
+  linha += 1;
+  ['Item / descrição', 'Grupo / destinatário', '', 'Como é cobrado', 'Valor'].forEach((h, i) => {
+    const cell = sheet.getCell(linha, i + 1);
+    cell.value = h;
+    cell.font = { bold: true, size: 10, color: { argb: PETROLEO }, name: 'Arial' };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: PETROLEO_CLARO } };
+    cell.border = BORDA;
+  });
+  sheet.mergeCells(linha, 2, linha, 3);
+  linha += 1;
+
+  const categorias = new Map<string, CustoExtraTarifa[]>();
+  extras.forEach((c) => {
+    const cat = (c.categoria || 'Outros').trim() || 'Outros';
+    categorias.set(cat, [...(categorias.get(cat) || []), c]);
+  });
+  categorias.forEach((itens, cat) => {
+    sheet.mergeCells(linha, 1, linha, 5);
+    const cc = sheet.getCell(linha, 1);
+    cc.value = cat.toUpperCase();
+    cc.font = { bold: true, size: 10, color: { argb: BRONZE_ESCURO }, name: 'Arial' };
+    cc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AREIA } };
+    cc.border = BORDA;
+    linha += 1;
+    itens.forEach((c) => {
+      const valores: (string | number)[] = [c.itemDescricao || c.categoria || '—', c.grupoDestinatario || 'Todos', '', COMO_COBRA[c.tipoCobranca] || c.tipoCobranca, c.valor || 0];
+      valores.forEach((v, i) => {
+        const cell = sheet.getCell(linha, i + 1);
+        cell.value = v;
+        cell.font = { size: 10, name: 'Arial', bold: i === 4, color: { argb: i === 4 ? PETROLEO : 'FF111111' } };
+        cell.border = BORDA;
+        cell.alignment = { wrapText: true, vertical: 'middle', horizontal: i === 4 ? 'right' : 'left' };
+        if (i === 4) cell.numFmt = c.tipoCobranca === 'Valor/KM' ? '"R$" #,##0.00" /km"' : MOEDA;
+      });
+      sheet.mergeCells(linha, 2, linha, 3);
+      linha += 1;
+    });
+  });
+  return linha + 1;
+}
 
 /** Faixa de km quando o tarifário não traz o "raio" escrito. */
 function faixaPorKm(km?: number): string {
@@ -84,7 +144,7 @@ function linhaInfo(sheet: ExcelJS.Worksheet, linha: number, rotulo: string, valo
   b.alignment = { horizontal: 'left' };
 }
 
-function abaTarifario(workbook: ExcelJS.Workbook, nomeAba: string, titulo: string, tabela: TabelaPrecoFrete, cliente: Cliente) {
+function abaTarifario(workbook: ExcelJS.Workbook, nomeAba: string, titulo: string, tabela: TabelaPrecoFrete, cliente: Cliente, extras: CustoExtraTarifa[]) {
   const sheet = workbook.addWorksheet(nomeAba, { views: [{ state: 'frozen', ySplit: 0 }], pageSetup: { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
   sheet.columns = [
     { key: 'cidade', width: 34 },
@@ -102,6 +162,7 @@ function abaTarifario(workbook: ExcelJS.Workbook, nomeAba: string, titulo: strin
   if (tabela.percentualAdValoremNF) linhaInfo(sheet, linha++, 'Ad valorem sobre a NF', `${tabela.percentualAdValoremNF}%`);
   if (tabela.condicaoPagamento) linhaInfo(sheet, linha++, 'Condição de pagamento', tabela.condicaoPagamento);
   linha += 1;
+  if (extras.length) linha = blocoCustosExtras(sheet, linha, extras);
 
   const tarifas = tabela.tarifasPorCidade || [];
   if (tarifas.length === 0) {
@@ -163,42 +224,19 @@ function abaTarifario(workbook: ExcelJS.Workbook, nomeAba: string, titulo: strin
   r.alignment = { horizontal: 'center' };
 }
 
-function abaCustosExtras(workbook: ExcelJS.Workbook, cliente: Cliente, tabela: TabelaPrecoFrete) {
-  const extras = tabela.custosExtras || [];
-  if (!extras.length) return;
-  const sheet = workbook.addWorksheet('Custos extras');
-  sheet.columns = [{ width: 24 }, { width: 28 }, { width: 34 }, { width: 18 }, { width: 14 }];
-  cabecalho(workbook, sheet, 'Custos extras / encargos', cliente);
-  let linha = 6;
-  ['Categoria', 'Grupo / destinatário', 'Item / descrição', 'Tipo de cobrança', 'Valor'].forEach((h, i) => {
-    const cell = sheet.getCell(linha, i + 1);
-    cell.value = h;
-    cell.font = { bold: true, size: 10, color: { argb: BRANCO }, name: 'Arial' };
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRONZE } };
-    cell.border = BORDA;
-  });
-  linha += 1;
-  extras.forEach((c) => {
-    [c.categoria || '', c.grupoDestinatario || '', c.itemDescricao || '', c.tipoCobranca, c.valor || 0].forEach((v, i) => {
-      const cell = sheet.getCell(linha, i + 1);
-      cell.value = v as any;
-      cell.font = { size: 10, name: 'Arial' };
-      cell.border = BORDA;
-      if (i === 4) cell.numFmt = MOEDA;
-    });
-    linha += 1;
-  });
-}
-
 /** Monta a planilha (separado do download para poder testar). */
 export function montarTabelaFreteWorkbook(cliente: Cliente): ExcelJS.Workbook {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = STRATEGIC_GUIDELINES.empresa;
   workbook.created = new Date();
   const temRodoviario = !!cliente.tabelaFreteRodoviario;
-  abaTarifario(workbook, temRodoviario ? 'Aéreo' : 'Tabela de frete', temRodoviario ? 'Tabela de frete — Aéreo' : 'Tabela de frete', cliente.tabelaFrete, cliente);
-  if (cliente.tabelaFreteRodoviario) abaTarifario(workbook, 'Rodoviário', 'Tabela de frete — Rodoviário', cliente.tabelaFreteRodoviario, cliente);
-  abaCustosExtras(workbook, cliente, cliente.tabelaFrete);
+  const extrasPadrao = cliente.tabelaFrete?.custosExtras || [];
+  abaTarifario(workbook, temRodoviario ? 'Aéreo' : 'Tabela de frete', temRodoviario ? 'Tabela de frete — Aéreo' : 'Tabela de frete', cliente.tabelaFrete, cliente, extrasPadrao);
+  if (cliente.tabelaFreteRodoviario) {
+    // Rodoviário: os custos extras próprios dele; sem eles, os do cliente (valem para os dois).
+    const extrasRod = cliente.tabelaFreteRodoviario.custosExtras?.length ? cliente.tabelaFreteRodoviario.custosExtras : extrasPadrao;
+    abaTarifario(workbook, 'Rodoviário', 'Tabela de frete — Rodoviário', cliente.tabelaFreteRodoviario, cliente, extrasRod);
+  }
   return workbook;
 }
 
