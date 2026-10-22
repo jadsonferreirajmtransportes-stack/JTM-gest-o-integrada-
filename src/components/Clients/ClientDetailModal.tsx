@@ -599,7 +599,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                   <div className="pt-2 border-t border-slate-200">
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold block">
-                        Tabela Detalhada por Cidade / Praça ({cliente.tabelaFrete.tarifasPorCidade.length})
+                        Tabela Detalhada por Cidade / Praça{cliente.tabelaFreteRodoviario ? ' — Aéreo' : ''} ({cliente.tabelaFrete.tarifasPorCidade.length})
                       </span>
                       <button
               type="button"
@@ -648,7 +648,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                 {!!cliente.tabelaFrete?.custosExtras?.length && (
                   <div className="pt-2 border-t border-slate-200">
                     <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold block mb-1.5">
-                      Custos Extras / Encargos Avulsos ({cliente.tabelaFrete.custosExtras.length})
+                      Custos Extras / Encargos Avulsos{cliente.tabelaFreteRodoviario ? ' — Aéreo' : ''} ({cliente.tabelaFrete.custosExtras.length})
                     </span>
                     <div className="overflow-x-auto rounded-lg border border-slate-200">
                       <table className="w-full text-[11px]">
@@ -674,6 +674,85 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                         </tbody>
                       </table>
                     </div>
+                  </div>
+                )}
+
+                {/* Tarifário do Rodoviário (quando o cliente cobra diferente por modal — ex.: LUFT) */}
+                {cliente.tabelaFreteRodoviario && (
+                  <div className="pt-3 mt-1 border-t-2 border-[#C48229]/30 space-y-3">
+                    <span className="text-xs font-bold text-[#92611F] uppercase tracking-wider block">Tarifário Rodoviário</span>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white p-3 rounded-lg border border-slate-200">
+                        <span className="text-slate-400 block text-[11px]">Tarifa padrão até 10 kg:</span>
+                        <span className="text-slate-700 font-semibold block mt-0.5">{formatCurrency(cliente.tabelaFreteRodoviario.valorBase || 0)}</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg border border-slate-200">
+                        <span className="text-slate-400 block text-[11px]">Kg excedente padrão:</span>
+                        <span className="text-slate-700 font-semibold block mt-0.5">{formatCurrency(cliente.tabelaFreteRodoviario.valorKgExcedente || 0)}</span>
+                      </div>
+                    </div>
+                    {!!cliente.tabelaFreteRodoviario.tarifasPorCidade?.length && (
+                      <div>
+                        <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold block mb-1.5">
+                          Tabela Detalhada por Cidade / Praça — Rodoviário ({cliente.tabelaFreteRodoviario.tarifasPorCidade.length})
+                        </span>
+                        <div className="overflow-x-auto rounded-lg border border-slate-200 max-h-72 overflow-y-auto">
+                          <table className="w-full text-[11px]">
+                            <thead>
+                              <tr className="bg-slate-100 text-slate-500">
+                                <th className="text-left p-2 font-semibold">Cidade</th>
+                                <th className="text-left p-2 font-semibold">Raio</th>
+                                <th className="text-right p-2 font-semibold">Até 10kg</th>
+                                <th className="text-right p-2 font-semibold">Kg Exc.</th>
+                                <th className="text-right p-2 font-semibold">Km</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {cliente.tabelaFreteRodoviario.tarifasPorCidade.map((t) => (
+                                <tr key={t.id} className="bg-white text-slate-700">
+                                  <td className="p-2">{t.cidade}</td>
+                                  <td className="p-2 text-slate-400">{t.raio}</td>
+                                  <td className="p-2 text-right font-semibold">{formatCurrency(t.valorAte10Kg)}</td>
+                                  <td className="p-2 text-right font-semibold">{formatCurrency(t.valorKgExcedente)}</td>
+                                  <td className="p-2 text-right text-slate-400">{t.distanciaKm ?? '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                    {!!cliente.tabelaFreteRodoviario.custosExtras?.length && (
+                      <div>
+                        <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold block mb-1.5">
+                          Custos Extras / Encargos Avulsos — Rodoviário ({cliente.tabelaFreteRodoviario.custosExtras.length})
+                        </span>
+                        <div className="overflow-x-auto rounded-lg border border-slate-200">
+                          <table className="w-full text-[11px]">
+                            <thead>
+                              <tr className="bg-slate-100 text-slate-500">
+                                <th className="text-left p-2 font-semibold">Categoria</th>
+                                <th className="text-left p-2 font-semibold">Grupo / Destinatário</th>
+                                <th className="text-left p-2 font-semibold">Item / Descrição</th>
+                                <th className="text-left p-2 font-semibold">Tipo</th>
+                                <th className="text-right p-2 font-semibold">Valor</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {cliente.tabelaFreteRodoviario.custosExtras.map((c) => (
+                                <tr key={c.id} className="bg-white text-slate-700">
+                                  <td className="p-2">{c.categoria || '—'}</td>
+                                  <td className="p-2 text-slate-400">{c.grupoDestinatario || '—'}</td>
+                                  <td className="p-2 text-slate-400">{c.itemDescricao || '—'}</td>
+                                  <td className="p-2 text-slate-400">{c.tipoCobranca}</td>
+                                  <td className="p-2 text-right font-semibold">{formatCurrency(c.valor)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
