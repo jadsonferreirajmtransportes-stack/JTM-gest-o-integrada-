@@ -16,7 +16,9 @@ interface ClientInteractionModalProps {
   onClose: () => void;
   cliente: Cliente | null;
   supervisores: Supervisor[];
-  onSaveInteraction: (clienteId: string, interacao: InteracaoCliente) => void;
+  onSaveInteraction: (clienteId: string, interacao: InteracaoCliente, criarCompromisso?: boolean) => void;
+  /** Mostra a opção de criar o compromisso na Agenda (só quem tem a Agenda liberada). */
+  podeCriarCompromisso?: boolean;
 }
 
 export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
@@ -25,6 +27,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
   cliente,
   supervisores,
   onSaveInteraction,
+  podeCriarCompromisso,
 }) => {
   const today = new Date().toISOString().split('T')[0];
 
@@ -36,6 +39,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
   const [resumo, setResumo] = useState('');
   const [proximoPasso, setProximoPasso] = useState('');
   const [dataProximoPasso, setDataProximoPasso] = useState('');
+  const [criarCompromisso, setCriarCompromisso] = useState(true);
 
   if (!isOpen || !cliente) return null;
 
@@ -56,7 +60,7 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
       dataProximoPasso: dataProximoPasso || undefined,
     };
 
-    onSaveInteraction(cliente.id, novaInteracao);
+    onSaveInteraction(cliente.id, novaInteracao, !!(podeCriarCompromisso && criarCompromisso && novaInteracao.proximoPasso && novaInteracao.dataProximoPasso));
     onClose();
   };
 
@@ -182,6 +186,16 @@ export const ClientInteractionModal: React.FC<ClientInteractionModalProps> = ({
               />
             </div>
           </div>
+
+          {podeCriarCompromisso && proximoPasso.trim() && dataProximoPasso && (
+            <label className="flex items-start gap-2 text-xs text-slate-700 cursor-pointer bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <input type="checkbox" checked={criarCompromisso} onChange={(e) => setCriarCompromisso(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#C48229]" />
+              <span>
+                <strong>Criar compromisso na Agenda da Gestão</strong> para {dataProximoPasso.split('-').reverse().join('/')} — o responsável vê o prazo
+                e, ao concluir na Agenda, o próximo passo fica resolvido no funil.
+              </span>
+            </label>
+          )}
 
           {/* Footer Actions */}
           <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">

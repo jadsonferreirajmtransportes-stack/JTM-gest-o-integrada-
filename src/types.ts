@@ -994,6 +994,10 @@ export interface InteracaoCliente {
   resumo: string;
   proximoPasso?: string;
   dataProximoPasso?: string;
+  /** Compromisso criado na Agenda da Gestão para o próximo passo (concluí-lo lá conclui aqui). */
+  atividadeId?: string;
+  /** Próximo passo resolvido (marcado no funil comercial). */
+  proximoPassoConcluido?: boolean;
 }
 
 export interface RegiaoAtendimento {

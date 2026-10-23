@@ -3099,6 +3099,34 @@ export default function App() {
               empregadores={empregadores}
               supervisores={supervisores}
               userRole={userRole}
+              atividades={atividadesVisiveis}
+              onCriarCompromisso={
+                currentUser?.modulosPermitidos.includes('agenda')
+                  ? async (cli, inter) => {
+                      const id = `act-crm-${Date.now()}`;
+                      const nome = cli.nomeFantasia || cli.razaoSocial;
+                      await handleSaveAtividadeGestao({
+                        id,
+                        titulo: `${nome}: ${inter.proximoPasso}`,
+                        descricao: `Próximo passo do CRM (${inter.tipo} de ${inter.data.split('-').reverse().join('/')}): ${inter.resumo}`,
+                        categoria: 'Comercial & Clientes',
+                        status: 'Agendada',
+                        prioridade: 'Média',
+                        data: inter.dataProximoPasso as string,
+                        horaInicio: '08:00',
+                        horaFim: '18:00',
+                        diaInteiro: true,
+                        responsavel: inter.responsavelJMT,
+                        participantes: [],
+                        localOuLink: 'A definir',
+                        moduloRelacionado: 'clientes',
+                        recorrencia: 'Nenhuma',
+                        criadoEm: new Date().toISOString(),
+                      });
+                      return id;
+                    }
+                  : undefined
+              }
             />
           )}
 

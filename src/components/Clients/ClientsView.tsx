@@ -13,6 +13,7 @@ import {
   Download,
   LayoutGrid,
   List,
+  Columns3,
   Edit2,
   Trash2,
   Clock,
@@ -22,7 +23,8 @@ import {
   User,
   ChevronRight,
 } from 'lucide-react';
-import { Cliente, Empregador, Supervisor, UserRole, InteracaoCliente } from '../../types';
+import { Cliente, Empregador, Supervisor, UserRole, InteracaoCliente, AtividadeGestao } from '../../types';
+import { ClientesFunil } from './ClientesFunil';
 import { formatCurrency, formatDateBR } from '../../utils/formatters';
 import { ClientCard } from './ClientCard';
 import { ClientFormModal } from './ClientFormModal';
@@ -37,6 +39,10 @@ interface ClientsViewProps {
   empregadores: Empregador[];
   supervisores: Supervisor[];
   userRole: UserRole;
+  /** Próximo passo de uma interação → compromisso na Agenda da Gestão; devolve o id criado. */
+  onCriarCompromisso?: (cliente: Cliente, interacao: InteracaoCliente) => Promise<string | undefined>;
+  /** Compromissos da Agenda (para saber se o próximo passo já foi concluído lá). */
+  atividades?: AtividadeGestao[];
 }
 
 export const ClientsView: React.FC<ClientsViewProps> = ({
@@ -46,6 +52,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   empregadores,
   supervisores,
   userRole,
+  onCriarCompromisso,
+  atividades = [],
 }) => {
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,7 +61,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   const [selectedSegmento, setSelectedSegmento] = useState<string>('all');
   const [selectedTemperatura, setSelectedTemperatura] = useState<string>('all');
   const [selectedGestor, setSelectedGestor] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'table' | 'funil'>('grid');
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -139,9 +147,19 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     setPropostaClient(cliente);
   };
 
-  const handleSaveInteraction = (clienteId: string, interacao: InteracaoCliente) => {
+  const handleSaveInteraction = async (clienteId: string, interacaoRecebida: InteracaoCliente, criarCompromisso?: boolean) => {
     const target = clientes.find((c) => c.id === clienteId);
     if (!target) return;
+    let interacao = interacaoRecebida;
+    if (criarCompromisso && onCriarCompromisso) {
+      try {
+        const atividadeId = await onCriarCompromisso(target, interacao);
+        if (atividadeId) interacao = { ...interacao, atividadeId };
+      } catch (err) {
+        console.error(err);
+        alert('A interação foi salva, mas não foi possível criar o compromisso na Agenda.');
+      }
+    }
     const updated: Cliente = {
       ...target,
       interacoes: [interacao, ...(target.interacoes || [])],
@@ -151,6 +169,16 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     if (selectedDetailClient && selectedDetailClient.id === clienteId) {
       setSelectedDetailClient(updated);
     }
+  };
+
+  const handleConcluirPasso = (clienteId: string, interacaoId: string) => {
+    const target = clientes.find((c) => c.id === clienteId);
+    if (!target) return;
+    onSaveCliente({
+      ...target,
+      interacoes: (target.interacoes || []).map((i) => (i.id === interacaoId ? { ...i, proximoPassoConcluido: true } : i)),
+      atualizadoEm: new Date().toISOString(),
+    });
   };
 
   const handleUpdateStatus = (clienteId: string, newStatus: Cliente['status']) => {
@@ -419,12 +447,33 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             >
               <List className="w-4 h-4" />
             </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('funil')}
+              className={`p-2 xl:px-2.5 rounded-lg transition-colors text-[11px] font-bold flex items-center gap-1 ${
+                viewMode === 'funil'
+                  ? 'bg-[#C48229]/15 text-[#C48229] border border-[#C48229]/30'
+                  : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+              title="Funil comercial: clientes por etapa e próximos passos"
+            >
+              <Columns3 className="w-4 h-4" />
+              <span className="hidden xl:inline">Funil</span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Clients Display: Grid vs. Table */}
-      {viewMode === 'grid' ? (
+      {/* Clients Display: Grid vs. Table vs. Funil */}
+      {viewMode === 'funil' ? (
+        <ClientesFunil
+          clientes={filteredClientes}
+          atividades={atividades}
+          onAbrir={(c) => setSelectedDetailClient(c)}
+          onMudarEtapa={(id, status) => handleUpdateStatus(id, status)}
+          onConcluirPasso={handleConcluirPasso}
+        />
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredClientes.map((cliente) => (
             <ClientCard
@@ -593,6 +642,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
         cliente={interactionModalClient}
         supervisores={supervisores}
         onSaveInteraction={handleSaveInteraction}
+        podeCriarCompromisso={!!onCriarCompromisso}
       />
 
       <PropostaComercialModal
