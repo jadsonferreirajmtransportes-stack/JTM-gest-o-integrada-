@@ -85,7 +85,9 @@ export function gerarPdfComunicado(c: DadosPdfComunicado): File {
   doc.setFontSize(11);
   doc.setTextColor(...CORPO);
   // O PDF é o mesmo para todos — a saudação com {nome} vira uma saudação geral.
-  doc.text(c.publico === 'Clientes' ? 'Prezados clientes e parceiros,' : 'Prezados colaboradores,', MARGEM, y);
+  const saudacaoGeral = c.publico === 'Clientes' ? 'Prezados clientes e parceiros,' : 'Prezados colaboradores,';
+  // Comunicado em caixa alta → saudação também.
+  doc.text(c.corpo === c.corpo.toLocaleUpperCase('pt-BR') ? saudacaoGeral.toLocaleUpperCase('pt-BR') : saudacaoGeral, MARGEM, y);
   y += 9;
   const texto = textoParaImagem(c.corpo).replace(/\*([^*\n]+)\*/g, '$1'); // tira o negrito do WhatsApp
   for (const paragrafo of texto.split(/\n/)) {

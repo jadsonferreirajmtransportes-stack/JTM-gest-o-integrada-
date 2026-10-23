@@ -422,5 +422,14 @@ export function montarComunicado(categoria: string, publico: PublicoComunicado, 
     .filter((c) => c.obrigatorio && (c.tipo === 'lista' ? ler.lista(c.chave).length === 0 : c.tipo === 'sim_nao' ? false : !ler.t(c.chave)))
     .map((c) => c.rotulo.replace(/\s*\(.*\)$/, ''));
   if (!modelo) return { titulo: '', corpo: '', textoImagem: '', faltando: ['Categoria'] };
-  return { ...modelo.montar(ler, publico), faltando };
+  // Padrão JMT: comunicado todo em CAIXA ALTA (título, texto, imagem e destaque).
+  const alto = (s: string) => s.toLocaleUpperCase('pt-BR');
+  const m = modelo.montar(ler, publico);
+  return {
+    titulo: alto(m.titulo),
+    corpo: alto(m.corpo),
+    textoImagem: alto(m.textoImagem),
+    destaque: m.destaque ? alto(m.destaque) : m.destaque,
+    faltando,
+  };
 }

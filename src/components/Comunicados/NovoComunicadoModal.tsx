@@ -46,6 +46,46 @@ export interface RascunhoComunicado {
   colaboradoresIds?: string[];
 }
 
+/** Campos que dizem a mesma coisa em categorias diferentes — ao trocar de categoria, o que
+ *  já foi preenchido vai junto (antes a troca apagava tudo). */
+const EQUIVALENTES: string[][] = [
+  ['assunto', 'nome', 'tema'],
+  ['data', 'aPartirDe', 'prazo'],
+  ['hora', 'prazoHora'],
+  ['horaFim'],
+  ['local'],
+  ['oQue', 'informacao', 'situacao', 'detalhes', 'risco', 'conquista'],
+  ['acao', 'levar'],
+  ['duvidas', 'saibaMais', 'contato'],
+  ['quem', 'publicoAlvo', 'homenageado'],
+  ['pontos', 'regras', 'pauta'],
+  ['motivo'],
+];
+export function levarValores(anteriores: ValoresModelo, categoria: string, publico: PublicoComunicado): ValoresModelo {
+  // Guarda tudo o que já foi digitado (voltar para uma categoria traz de volta) e preenche os
+  // campos da categoria nova pelos equivalentes; o que não existir recebe o padrão.
+  const padroes = valoresIniciais(categoria, publico);
+  const novos: ValoresModelo = { ...anteriores };
+  Object.keys(padroes).forEach((k) => {
+    if (novos[k] === undefined) novos[k] = padroes[k];
+  });
+  const preenchido = (v: ValoresModelo[string]) => (Array.isArray(v) ? v.some((x) => x.trim()) : typeof v === 'string' ? !!v.trim() : false);
+  camposDe(categoria, publico).forEach((campo) => {
+    const grupo = EQUIVALENTES.find((g) => g.includes(campo.chave)) || [campo.chave];
+    // O próprio campo primeiro (se já tinha valor, fica); senão, o equivalente de outra categoria.
+    const origem = [campo.chave, ...grupo.filter((k) => k !== campo.chave)].map((k) => anteriores[k]).find(preenchido);
+    if (origem === undefined) return;
+    if (campo.tipo === 'lista') novos[campo.chave] = Array.isArray(origem) ? origem : [String(origem)];
+    else if (campo.tipo === 'opcoes') {
+      if (typeof origem === 'string' && campo.opcoes?.includes(origem)) novos[campo.chave] = origem;
+    } else if (campo.tipo === 'texto' || campo.tipo === 'data' || campo.tipo === 'hora') {
+      if (typeof origem === 'string') novos[campo.chave] = origem;
+      else if (Array.isArray(origem) && campo.tipo === 'texto') novos[campo.chave] = origem.filter((x) => x.trim()).join('; ');
+    }
+  });
+  return novos;
+}
+
 interface Candidato extends NovoDestinatario {
   chave: string;
   grupo: string; // setor do colaborador ou empresa do cliente
@@ -180,7 +220,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
   const trocarCategoria = (c: string, p: PublicoComunicado = publico) => {
     setCategoria(c);
     setModelo(MODELO_POR_CATEGORIA[c] || 'aviso');
-    setValores(valoresIniciais(c, p));
+    setValores((anteriores) => levarValores(anteriores, c, p));
   };
   const [exigeCiencia, setExigeCiencia] = useState(true);
   const [foto, setFoto] = useState<{ arquivo: File; url: string } | null>(null);
@@ -422,6 +462,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
                     {corpo.split(/\n\n/).map((paragrafo, i) => (
                       <p key={i} className="whitespace-pre-line">
                         {paragrafo
+                          .replace(/\{NOME\}/g, publico === 'clientes' ? 'MARIA' : 'JOÃO')
                           .replace(/\{nome\}/g, publico === 'clientes' ? 'Maria' : 'João')
                           .split(/(\*[^*\n]+\*)/g)
                           .map((parte, k) => (/^\*[^*\n]+\*$/.test(parte) ? <strong key={k}>{parte.slice(1, -1)}</strong> : <React.Fragment key={k}>{parte}</React.Fragment>))}

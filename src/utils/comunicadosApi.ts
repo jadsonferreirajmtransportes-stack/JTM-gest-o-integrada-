@@ -251,10 +251,12 @@ export function numeroFormatado(c: Pick<Comunicado, 'numero' | 'ano'>): string {
   return `${String(c.numero).padStart(3, '0')}/${c.ano}`;
 }
 
-/** {nome} → primeiro nome (com inicial maiúscula). */
+/** {nome} → primeiro nome (com inicial maiúscula); {NOME} (texto em caixa alta) → em maiúsculas. */
 export function personalizar(texto: string, nome: string): string {
   const p = (nome || '').trim().split(/\s+/)[0] || '';
-  return texto.replace(/\{nome\}/gi, p.charAt(0).toUpperCase() + p.slice(1).toLowerCase());
+  return texto
+    .replace(/\{NOME\}/g, p.toLocaleUpperCase('pt-BR'))
+    .replace(/\{nome\}/gi, p.charAt(0).toUpperCase() + p.slice(1).toLowerCase());
 }
 
 // ---- Público (sem login) ----
