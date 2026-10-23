@@ -276,7 +276,10 @@ function decorar(ctx: CanvasRenderingContext2D, modelo: ModeloImagem, tema: Tema
 }
 
 /** Desenha a imagem e devolve o PNG. Também diz se o texto foi cortado. */
-export async function gerarImagemComunicado(d: DadosImagem): Promise<{ blob: Blob; textoCortado: boolean }> {
+export async function gerarImagemComunicado(dados: DadosImagem): Promise<{ blob: Blob; textoCortado: boolean }> {
+  // Padrão JMT: o texto da IMAGEM sai todo em caixa alta (a mensagem escrita fica normal).
+  const alto = (s: string) => s.toLocaleUpperCase('pt-BR');
+  const d: DadosImagem = { ...dados, titulo: alto(dados.titulo), texto: alto(dados.texto), destaque: dados.destaque ? alto(dados.destaque) : dados.destaque };
   await Promise.all([
     document.fonts?.load('800 80px "Bricolage Grotesque"').catch(() => undefined),
     document.fonts?.load('500 40px "Hanken Grotesk"').catch(() => undefined),
