@@ -64,6 +64,10 @@ const PALAVRAS_INICIO = new Set([
   'o', 'a', 'os', 'as', 'um', 'uma', 'uns', 'umas', 'nosso', 'nossa', 'nossos', 'nossas', 'seu', 'sua', 'este', 'esta', 'esse', 'essa',
   'haverá', 'será', 'serão', 'teremos', 'vamos', 'todos', 'todas', 'cada', 'no', 'na', 'nos', 'nas', 'em', 'de', 'do', 'da', 'para', 'pelo', 'pela',
   'agora', 'hoje', 'amanhã', 'durante', 'houve', 'ocorreu', 'foi', 'está', 'estão', 'temos', 'precisamos', 'bateu', 'bateram', 'completou', 'atingiu', 'atingimos',
+  // verbos comuns no começo do "o que muda / o que fazer"
+  'ir', 'vá', 'você', 'vocês', 'deve', 'devem', 'deverá', 'deverão', 'comparecer', 'compareça', 'realizar', 'realize', 'fazer', 'faça', 'levar', 'leve',
+  'apresentar', 'apresente', 'entregar', 'entregue', 'enviar', 'envie', 'trazer', 'traga', 'chegar', 'chegue', 'participar', 'participe', 'passa', 'passam',
+  'começa', 'começam', 'acontece', 'acontecerá', 'haverá', 'teremos', 'fica', 'ficam', 'será', 'serão',
 ]);
 /** Primeira letra minúscula quando o trecho entra no meio da frase — só se a 1ª palavra for
  *  comum ("O horário…" → "o horário…"); nomes próprios e siglas ficam como estão. */
@@ -93,6 +97,29 @@ const marcadores = (itens: string[]) => itens.map((i) => `• ${inicioDeFrase(i)
 const numerados = (itens: string[]) => itens.map((i, k) => `${k + 1}. ${inicioDeFrase(i)}`).join('\n');
 const saudacao = (p: PublicoComunicado) => (p === 'clientes' ? 'Prezado(a) {nome},' : 'Olá, {nome}!');
 
+/** Como a data entra na frase (nem todo aviso é "a partir de"). */
+export const OPCOES_TIPO_DATA = ['A partir de', 'No dia', 'Até (prazo)'];
+const campoTipoData: CampoModelo = { chave: 'tipoData', rotulo: 'A data é', tipo: 'opcoes', opcoes: OPCOES_TIPO_DATA, padrao: 'A partir de' };
+/** Trecho da frase: "a partir de *segunda-feira, 26 de outubro de 2026*" / "na *segunda-feira,
+ *  dia 26 de outubro de 2026*" / "até *segunda-feira, 26 de outubro de 2026*". */
+function fraseData(tipo: string, iso: string): string {
+  const d = dataObj(iso);
+  if (tipo === 'No dia') {
+    const dia = DIAS[d.getDay()];
+    const artigo = d.getDay() === 0 || d.getDay() === 6 ? 'no' : 'na';
+    return `${artigo} *${dia}, dia ${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}*`;
+  }
+  if (tipo.startsWith('Até')) return `até *${dataExtenso(iso)}*`;
+  return `a partir de *${dataExtenso(iso)}*`;
+}
+/** Linha de destaque da imagem: "A partir de Seg, 26/10" / "Seg, 26/10" / "Até Seg, 26/10". */
+function destaqueData(tipo: string, iso: string): string {
+  const base = `${diaCurto(iso)}, ${dataCurta(iso)}`;
+  if (tipo === 'No dia') return base;
+  if (tipo.startsWith('Até')) return `Até ${base}`;
+  return `A partir de ${base}`;
+}
+
 // ---------------------------------------------------------------------------
 // Modelos por categoria
 // ---------------------------------------------------------------------------
@@ -103,7 +130,8 @@ export const MODELOS_REDACAO: Record<string, ModeloRedacao> = {
     campos: [
       { chave: 'assunto', rotulo: 'Assunto (vira o título)', tipo: 'texto', obrigatorio: true, placeholder: 'Ex.: Novo horário de expedição' },
       { chave: 'oQue', rotulo: 'O que muda ou vai acontecer', tipo: 'texto', obrigatorio: true, placeholder: 'Ex.: o horário de saída da expedição passa a ser 6h30' },
-      { chave: 'aPartirDe', rotulo: 'A partir de quando', tipo: 'data' },
+      { chave: 'aPartirDe', rotulo: 'Data', tipo: 'data' },
+      campoTipoData,
       { chave: 'quem', rotulo: 'Para quem vale', tipo: 'texto', placeholder: 'Ex.: motoristas e ajudantes do Farma Rodoviário' },
       { chave: 'acao', rotulo: 'O que a pessoa precisa fazer', tipo: 'texto', placeholder: 'Ex.: chegar 10 minutos antes e conferir o checklist do veículo' },
       { chave: 'motivo', rotulo: 'Motivo (opcional)', tipo: 'texto', placeholder: 'Ex.: aumento das coletas no período da manhã' },
@@ -112,7 +140,8 @@ export const MODELOS_REDACAO: Record<string, ModeloRedacao> = {
     montar: (v, p) => {
       const data = v.t('aPartirDe');
       const oQue = meioDeFrase(v.t('oQue'));
-      const partes = [saudacao(p), `Informamos que${data ? `, a partir de *${dataExtenso(data)}*,` : ''} ${oQue}.`];
+      const tipoData = v.t('tipoData') || 'A partir de';
+      const partes = [saudacao(p), `Informamos que${data ? `, ${fraseData(tipoData, data)},` : ''} ${oQue}.`];
       if (v.t('quem')) partes.push(`Este aviso vale para: *${v.t('quem')}*.`);
       if (v.t('motivo')) partes.push(`Motivo: ${inicioDeFrase(v.t('motivo'))}.`);
       if (v.t('acao')) partes.push(`*${p === 'clientes' ? 'Próximos passos' : 'O que você precisa fazer'}:* ${inicioDeFrase(v.t('acao'))}.`);
@@ -123,7 +152,7 @@ export const MODELOS_REDACAO: Record<string, ModeloRedacao> = {
         titulo: inicioDeFrase(v.t('assunto')),
         corpo: partes.join('\n\n'),
         textoImagem: [`${inicioDeFrase(v.t('oQue'))}.`, v.t('acao') ? `${inicioDeFrase(v.t('acao'))}.` : ''].filter(Boolean).join('\n\n'),
-        destaque: data ? `A partir de ${diaCurto(data)}, ${dataCurta(data)}${v.t('quem') ? ` — ${v.t('quem')}` : ''}` : undefined,
+        destaque: data ? `${destaqueData(tipoData, data)}${v.t('quem') ? ` — ${v.t('quem')}` : ''}` : undefined,
       };
     },
   },
@@ -293,14 +322,16 @@ export const MODELOS_REDACAO: Record<string, ModeloRedacao> = {
     campos: [
       { chave: 'assunto', rotulo: 'Assunto (vira o título)', tipo: 'texto', obrigatorio: true, placeholder: 'Ex.: Novo horário de coleta' },
       { chave: 'oQue', rotulo: 'O que muda', tipo: 'texto', obrigatorio: true, placeholder: 'Ex.: as coletas passam a ser feitas das 14h às 17h' },
-      { chave: 'aPartirDe', rotulo: 'A partir de quando', tipo: 'data', obrigatorio: true },
+      { chave: 'aPartirDe', rotulo: 'Data', tipo: 'data', obrigatorio: true },
+      campoTipoData,
       { chave: 'impacto', rotulo: 'Próximos passos para o cliente', tipo: 'texto', placeholder: 'Ex.: deixar as cargas separadas até as 13h30' },
       { chave: 'motivo', rotulo: 'Motivo (opcional)', tipo: 'texto', placeholder: 'Ex.: ampliação da nossa malha de entregas' },
       { chave: 'contato', rotulo: 'Contato comercial', tipo: 'texto', obrigatorio: true, placeholder: 'Ex.: Fulano — (84) 99999-9999' },
     ],
     montar: (v) => {
       const data = v.t('aPartirDe');
-      const partes = ['Prezado(a) {nome},', `A JM Transportes informa que${data ? `, a partir de *${dataExtenso(data)}*,` : ''} ${meioDeFrase(v.t('oQue'))}.`];
+      const tipoData = v.t('tipoData') || 'A partir de';
+      const partes = ['Prezado(a) {nome},', `A JM Transportes informa que${data ? `, ${fraseData(tipoData, data)},` : ''} ${meioDeFrase(v.t('oQue'))}.`];
       if (v.t('motivo')) partes.push(`Motivo: ${inicioDeFrase(v.t('motivo'))}.`);
       if (v.t('impacto')) partes.push(`*Próximos passos:* ${inicioDeFrase(v.t('impacto'))}.`);
       partes.push(`Nossa equipe está à disposição para esclarecer qualquer dúvida: ${v.t('contato')}.`);
@@ -309,7 +340,7 @@ export const MODELOS_REDACAO: Record<string, ModeloRedacao> = {
         titulo: inicioDeFrase(v.t('assunto')),
         corpo: partes.join('\n\n'),
         textoImagem: [`${inicioDeFrase(v.t('oQue'))}.`, v.t('impacto') ? `${inicioDeFrase(v.t('impacto'))}.` : ''].filter(Boolean).join('\n\n'),
-        destaque: data ? `A partir de ${diaCurto(data)}, ${dataCurta(data)}` : undefined,
+        destaque: data ? destaqueData(tipoData, data) : undefined,
       };
     },
   },
