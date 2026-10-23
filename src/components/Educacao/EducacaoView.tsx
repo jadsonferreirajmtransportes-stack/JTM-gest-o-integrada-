@@ -855,7 +855,7 @@ export const PacoteSistemaModal: React.FC<{
         }
         // Já existe: troca só o conteúdo (mantém quem faz, prazo, validade e o histórico de quem concluiu).
         atualizados += 1;
-        return { ...atual, conteudos: novo.conteudos, descricao: novo.descricao, cargaHorariaMin: novo.cargaHorariaMin };
+        return { ...atual, conteudos: novo.conteudos, descricao: novo.descricao, cargaHorariaMin: novo.cargaHorariaMin, prova: novo.prova };
       });
       const atribuicoes = await onCriar(lista);
       setResultado(
@@ -877,7 +877,7 @@ export const PacoteSistemaModal: React.FC<{
         <div className="p-4 border-b border-slate-200 flex items-start justify-between gap-2">
           <div>
             <h2 className="text-sm font-black text-slate-900">Treinamentos do sistema</h2>
-            <p className="text-slate-500 mt-0.5">Um treinamento por módulo, com as telas do sistema passo a passo e um exercício prático. Sem prova: leitura + assinatura de ciência. Escolha um grupo de cada vez com os cargos certos.</p>
+            <p className="text-slate-500 mt-0.5">Um treinamento por módulo, com as telas do sistema passo a passo e um exercício prático. Cada um tem uma provinha de 4 perguntas (acertar 3 para passar, pode refazer) e certificado ao concluir. Os que já existem são atualizados com a prova. Escolha um grupo de cada vez com os cargos certos.</p>
           </div>
           <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
             <X className="w-4 h-4" />

@@ -1,6 +1,7 @@
 // ============================================================================
 // Pacote "Treinamentos do sistema" (pedido de 2026-10-02): um treinamento por
-// módulo corporativo do JMT, para os supervisores — sem prova, só leitura +
+// módulo corporativo do JMT, para os supervisores — leitura + provinha (provasSistema.ts,
+// desde 2026-10-22) +
 // assinatura de ciência no Portal de Educação. O conteúdo vem do manual do
 // sistema (src/data/manualSistema.ts), mais um exercício prático por módulo,
 // então ajuda (F1) e treinamento dizem sempre a mesma coisa.
@@ -10,6 +11,7 @@ import { topicoDaSecao } from '../../data/manualSistema';
 import { telasDaSecao } from '../../data/telasTreinamento';
 import type { ConteudoTreinamento, Treinamento } from '../../utils/educacaoApi';
 import { gerarIdCurto } from '../../utils/educacaoApi';
+import { provaDoModulo } from './provasSistema';
 
 export type GrupoTreinamentoSistema = 'Colaboradores' | 'Começando' | 'Corporativo' | 'Rotina do supervisor' | 'Departamento Pessoal' | 'Gestão e Operações' | 'Administração';
 
@@ -290,7 +292,7 @@ export function montarTreinamentoSistema(m: ModuloTreinamento, opcoes: { cargos:
       : `Treinamento de uso do módulo ${m.titulo} do sistema JMT Gestão Integrada. Público: ${GRUPOS_TREINAMENTO_SISTEMA.find((g) => g.grupo === m.grupo)?.publico || 'supervisores'}.`,
     cargaHorariaMin: m.cargaHorariaMin,
     conteudos,
-    prova: undefined,
+    prova: provaDoModulo(m.secao),
     obrigatorioTodos: !!m.paraTodos,
     obrigatorioCargos: m.paraTodos ? [] : opcoes.cargos,
     obrigatorioSetores: [],
