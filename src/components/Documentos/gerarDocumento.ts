@@ -210,6 +210,39 @@ export async function gerarPdfDocumento(d: DocumentoPadronizado): Promise<File> 
         y += 5;
       }
       y += 3;
+    } else if (b.tipo === 'assinaturas' && b.pessoas.length) {
+      // Até 3 por linha (4 = 2 + 2); cada espaço: papel, área para assinar, linha, nome, cargo e data.
+      const porLinha = b.pessoas.length === 4 ? 2 : Math.min(3, b.pessoas.length);
+      const vao = 10;
+      const larg = (larguraTexto - vao * (porLinha - 1)) / porLinha;
+      const alturaEspaco = 34 + (b.comData ? 6 : 0);
+      y += 4;
+      for (let i = 0; i < b.pessoas.length; i += porLinha) {
+        espaco(alturaEspaco);
+        b.pessoas.slice(i, i + porLinha).forEach((pessoa, k) => {
+          const x = MARGEM + k * (larg + vao);
+          const meio = x + larg / 2;
+          if (pessoa.papel) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor(...BRONZE);
+            doc.text(pessoa.papel.toUpperCase(), meio, y, { align: 'center', maxWidth: larg });
+          }
+          doc.setDrawColor(...TEXTO);
+          doc.setLineWidth(0.3);
+          doc.line(x + 2, y + 16, x + larg - 2, y + 16);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.setTextColor(...TEXTO);
+          doc.text(pessoa.nome || 'Nome: ________________', meio, y + 20.5, { align: 'center', maxWidth: larg });
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(...CINZA);
+          if (pessoa.cargo) doc.text(pessoa.cargo, meio, y + 24.5, { align: 'center', maxWidth: larg });
+          if (b.comData) doc.text(`Data: ${pessoa.data || '____/____/________'}`, meio, y + (pessoa.cargo ? 29.5 : 25.5), { align: 'center' });
+        });
+        y += alturaEspaco;
+      }
     }
   }
 
@@ -413,6 +446,46 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
         filhos.push(
           new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [new TextRun({ text: b.legenda, italics: true, font: FONTE, size: 17, color: '777777' })] })
         );
+    } else if (b.tipo === 'assinaturas' && b.pessoas.length) {
+      const porLinha = b.pessoas.length === 4 ? 2 : Math.min(3, b.pessoas.length);
+      const nada = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+      const centro = (children: InstanceType<typeof TextRun>[], extra: Record<string, unknown> = {}) => new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children, ...extra });
+      const linhasTabela: InstanceType<typeof TableRow>[] = [];
+      for (let i = 0; i < b.pessoas.length; i += porLinha) {
+        const grupo = b.pessoas.slice(i, i + porLinha);
+        linhasTabela.push(
+          new TableRow({
+            cantSplit: true,
+            children: Array.from({ length: porLinha }, (_, k) => {
+              const pessoa = grupo[k];
+              const filhosCelula = pessoa
+                ? [
+                    centro([new TextRun({ text: (pessoa.papel || ' ').toUpperCase(), bold: true, font: FONTE, size: 14, color: BRONZE_HEX })]),
+                    new Paragraph({ text: '', spacing: { before: 480, after: 0 }, border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '111111', space: 1 } } }),
+                    centro([new TextRun({ text: pessoa.nome || 'Nome: ________________', bold: true, font: FONTE, size: 18, color: '111111' })], { spacing: { before: 60, after: 20 } }),
+                    ...(pessoa.cargo ? [centro([new TextRun({ text: pessoa.cargo, font: FONTE, size: 16, color: '777777' })])] : []),
+                    ...(b.comData ? [centro([new TextRun({ text: `Data: ${pessoa.data || '____/____/________'}`, font: FONTE, size: 16, color: '777777' })])] : []),
+                  ]
+                : [new Paragraph({ text: '' })];
+              return new TableCell({
+                width: { size: Math.floor(100 / porLinha), type: WidthType.PERCENTAGE },
+                borders: { top: nada, bottom: nada, left: nada, right: nada },
+                margins: { top: 120, bottom: 200, left: 240, right: 240 },
+                children: filhosCelula,
+              });
+            }),
+          })
+        );
+      }
+      filhos.push(new Paragraph({ text: '', spacing: { after: 120 } }));
+      filhos.push(
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: { top: nada, bottom: nada, left: nada, right: nada, insideHorizontal: nada, insideVertical: nada },
+          rows: linhasTabela,
+        })
+      );
+      filhos.push(new Paragraph({ text: '', spacing: { after: 160 } }));
     }
   }
 
@@ -530,6 +603,11 @@ export async function gerarXlsxDocumento(d: DocumentoPadronizado): Promise<File>
         r.getCell(1).font = { bold: true, size: b.nivel === 1 ? 13 : 11, color: { argb: 'FF111111' } };
       } else if (b.tipo === 'lista') b.itens.forEach((it, i) => ws.addRow([`${b.ordenada ? `${i + 1}.` : '•'} ${it}`]).getCell(1).alignment = { wrapText: true });
       else if (b.tipo === 'paragrafo' || b.tipo === 'destaque') ws.addRow([b.texto]).getCell(1).alignment = { wrapText: true, vertical: 'top' };
+      else if (b.tipo === 'assinaturas')
+        b.pessoas.forEach((p) => {
+          ws.addRow([]);
+          ws.addRow([`${p.papel ? `${p.papel}: ` : ''}______________________________   ${[p.nome, p.cargo].filter(Boolean).join(' — ')}${b.comData ? `   Data: ${p.data || '____/____/________'}` : ''}`]);
+        });
       else if (b.tipo === 'imagem') ws.addRow([`[Imagem${b.legenda ? `: ${b.legenda}` : ''} — veja no PDF ou Word]`]).getCell(1).font = { italic: true, size: 9, color: { argb: 'FF777777' } };
     });
   }

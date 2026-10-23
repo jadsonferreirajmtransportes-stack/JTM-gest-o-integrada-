@@ -49,6 +49,9 @@ export function verificarPadrao(d: DocumentoPadronizado): ProblemaPadrao[] {
       if (b.cabecalho.length > 8) p.push({ nivel: 'aviso', mensagem: `Tabela com ${b.cabecalho.length} colunas — no PDF/Word ela fica apertada; considere gerar em Excel.`, blocoId: b.id });
     } else if (b.tipo === 'imagem') {
       if (!b.ref) p.push({ nivel: 'aviso', mensagem: 'Há um bloco de imagem sem imagem — envie a imagem ou remova o bloco.', blocoId: b.id });
+    } else if (b.tipo === 'assinaturas') {
+      if (b.pessoas.length === 0) p.push({ nivel: 'aviso', mensagem: 'Bloco de assinaturas sem nenhuma pessoa.', blocoId: b.id });
+      if (b.pessoas.some((x) => !x.papel.trim() && !x.nome.trim())) p.push({ nivel: 'aviso', mensagem: 'Há assinatura sem papel e sem nome — diga quem assina (ex.: Aprovado por).', blocoId: b.id });
     }
   });
   return p;

@@ -29,7 +29,7 @@ export interface ResultadoImportacao {
 const LIMITE_PARTE = 3500; // caracteres por conteúdo de texto
 
 function blocoParaLinhas(b: BlocoDocumento): string[] {
-  if (b.tipo === 'imagem') return [];
+  if (b.tipo === 'imagem' || b.tipo === 'assinaturas') return [];
   if (b.tipo === 'paragrafo') return [b.texto];
   if (b.tipo === 'destaque') return [`Atenção: ${b.texto}`];
   if (b.tipo === 'titulo') return [b.texto.toUpperCase()];
@@ -125,7 +125,7 @@ async function lerDocxComImagens(arquivo: File): Promise<{ blocos: BlocoDocument
   const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
   const imagens = new Map<number, { dataUrl: string; legenda: string }[]>();
   // Para cada imagem, acha o bloco cujo texto vem logo antes dela no documento.
-  const textos = base.blocos.map((b) => (b.tipo === 'lista' ? b.itens.join(' ') : b.tipo === 'tabela' ? b.cabecalho.join(' ') : b.tipo === 'imagem' ? '' : b.texto).slice(0, 40).trim());
+  const textos = base.blocos.map((b) => (b.tipo === 'lista' ? b.itens.join(' ') : b.tipo === 'tabela' ? b.cabecalho.join(' ') : 'texto' in b ? b.texto : '').slice(0, 40).trim());
   let indiceAtual = -1;
   Array.from(doc.body.children).forEach((el) => {
     const t = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40);
@@ -221,7 +221,7 @@ async function extrairImagensPdf(
   const posicoes = blocos.map(() => ({ pagina: 0, y: 0 }));
   let cursor = 0;
   blocos.forEach((b, i) => {
-    const inicio = normalizar(b.tipo === 'lista' ? b.itens[0] || '' : b.tipo === 'tabela' ? b.cabecalho.join('') : b.tipo === 'imagem' ? '' : b.texto).slice(0, 18);
+    const inicio = normalizar(b.tipo === 'lista' ? b.itens[0] || '' : b.tipo === 'tabela' ? b.cabecalho.join('') : 'texto' in b ? b.texto : '').slice(0, 18);
     if (!inicio) return;
     for (let k = cursor; k < linhasPorPagina.length; k++) {
       const linha = normalizar(linhasPorPagina[k].texto);

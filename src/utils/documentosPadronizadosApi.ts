@@ -11,7 +11,9 @@ export type BlocoDocumento =
   | { id: string; tipo: 'tabela'; cabecalho: string[]; linhas: string[][] }
   | { id: string; tipo: 'destaque'; texto: string }
   /** Imagem (arquivo no Storage "anexos" — ref "storage:<caminho>"); largura em % da página. */
-  | { id: string; tipo: 'imagem'; ref: string; legenda?: string; largura?: 50 | 75 | 100 };
+  | { id: string; tipo: 'imagem'; ref: string; legenda?: string; largura?: 50 | 75 | 100 }
+  /** Espaços para assinatura (linha, nome, cargo e data opcional). Nome/data em branco = preencher à mão. */
+  | { id: string; tipo: 'assinaturas'; pessoas: { papel: string; nome: string; cargo?: string; data?: string }[]; comData?: boolean };
 
 export type StatusDocumento = 'Rascunho' | 'Vigente' | 'Obsoleto';
 

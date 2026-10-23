@@ -570,9 +570,26 @@ async function gradesDaPagina(pagina: any, pdfjs: any, itens: ItemPdf[]): Promis
  *  padrão JMT numera as seções sozinho) e descarta blocos vazios. */
 function finalizar(r: DocumentoImportado): DocumentoImportado {
   const blocos = r.blocos
-    .map((b) => (b.tipo === 'titulo' ? { ...b, texto: b.texto.replace(/^\d+(?:\.\d+)*[.)]\s+(?=\p{L})/u, '').trim() } : b))
-    .filter((b) => (b.tipo === 'lista' ? b.itens.length > 0 : b.tipo === 'tabela' || b.tipo === 'imagem' ? true : b.texto.trim().length > 0));
+    .map((b) => (b.tipo === 'titulo' ? { ...b, texto: b.texto.replace(/^\d+(?:\.\d+)*[.)]\s+(?=\p{L})/u, '').trim() } : b.tipo === 'tabela' ? tabelaDeAssinaturas(b) || b : b))
+    .filter((b) => (b.tipo === 'lista' ? b.itens.length > 0 : 'texto' in b ? b.texto.trim().length > 0 : true));
   return { ...r, blocos };
+}
+
+/** Tabela que é, na verdade, o quadro de assinaturas ("Elaborado | Revisado | Aprovado" com
+ *  "Nome: … Assinatura: … Data: …" embaixo) vira o bloco de assinaturas. */
+function tabelaDeAssinaturas(b: Extract<BlocoDocumento, { tipo: 'tabela' }>): BlocoDocumento | null {
+  const n = b.cabecalho.length;
+  if (n < 1 || n > 6 || b.linhas.length > 4) return null;
+  const corpo = b.linhas.map((l) => l.join(' ')).join(' ');
+  if (!/assinatura/i.test(corpo) && !/assinatura/i.test(b.cabecalho.join(' '))) return null;
+  const pegar = (t: string, rotulo: string) =>
+    limpar(t.match(new RegExp(`${rotulo}\\s*:\\s*(.*?)(?=\\s*\\b(?:Nome|Cargo|Função|Assinatura|Data)\\s*:|$)`, 'i'))?.[1] || '').replace(/^[:\s]+/, '').replace(/^[_\s/.-]+$/, '');
+  const pessoas = b.cabecalho.map((papel, i) => {
+    const texto = b.linhas.map((l) => l[i] || '').join(' ');
+    return { papel: limpar(papel), nome: pegar(texto, 'Nome'), cargo: pegar(texto, '(?:Cargo|Função)') || undefined, data: pegar(texto, 'Data') || undefined };
+  });
+  if (!pessoas.some((p) => p.papel || p.nome)) return null;
+  return { id: b.id, tipo: 'assinaturas', comData: /data/i.test(corpo), pessoas };
 }
 
 function adicionarItemLista(blocos: BlocoDocumento[], texto: string) {

@@ -24,6 +24,7 @@ import {
   RotateCcw,
   X,
   Image as ImageIcon,
+  PenLine,
 } from 'lucide-react';
 import {
   BlocoDocumento,
@@ -42,6 +43,7 @@ import { corrigirAutomaticamente, verificarPadrao } from './padraoDocumento';
 import { gerarDocxDocumento, gerarPdfDocumento, gerarXlsxDocumento } from './gerarDocumento';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { BlocoImagem } from './BlocoImagem';
+import { BlocoAssinaturas } from './BlocoAssinaturas';
 
 interface DocumentoEditorProps {
   documento: DocumentoPadronizado;
@@ -58,6 +60,7 @@ const TIPOS_BLOCO: { tipo: BlocoDocumento['tipo']; rotulo: string; icone: React.
   { tipo: 'tabela', rotulo: 'Tabela', icone: <TableIcon className="w-3.5 h-3.5" /> },
   { tipo: 'destaque', rotulo: 'Destaque', icone: <Quote className="w-3.5 h-3.5" /> },
   { tipo: 'imagem', rotulo: 'Imagem', icone: <ImageIcon className="w-3.5 h-3.5" /> },
+  { tipo: 'assinaturas', rotulo: 'Assinaturas', icone: <PenLine className="w-3.5 h-3.5" /> },
 ];
 
 function blocoVazio(tipo: BlocoDocumento['tipo']): BlocoDocumento {
@@ -66,6 +69,8 @@ function blocoVazio(tipo: BlocoDocumento['tipo']): BlocoDocumento {
   if (tipo === 'lista') return { id, tipo, ordenada: false, itens: [''] };
   if (tipo === 'tabela') return { id, tipo, cabecalho: ['Coluna 1', 'Coluna 2'], linhas: [['', '']] };
   if (tipo === 'imagem') return { id, tipo, ref: '', largura: 100 };
+  if (tipo === 'assinaturas')
+    return { id, tipo, comData: true, pessoas: [{ papel: 'Elaborado por', nome: '' }, { papel: 'Revisado por', nome: '' }, { papel: 'Aprovado por', nome: '' }] };
   return { id, tipo, texto: '' } as BlocoDocumento;
 }
 
@@ -78,7 +83,23 @@ function converter(b: BlocoDocumento, tipo: BlocoDocumento['tipo']): BlocoDocume
         ? [b.cabecalho.join(' | '), ...b.linhas.map((l) => l.join(' | '))].join('\n')
         : b.tipo === 'imagem'
           ? b.legenda || ''
-          : b.texto;
+          : b.tipo === 'assinaturas'
+            ? b.pessoas.map((p) => [p.papel, p.nome, p.cargo].filter(Boolean).join(' | ')).join('\n')
+            : b.texto;
+  if (tipo === 'assinaturas')
+    return {
+      id: b.id,
+      tipo,
+      comData: true,
+      pessoas: texto
+        .split(/\n+/)
+        .filter((l) => l.trim())
+        .slice(0, 6)
+        .map((l) => {
+          const [papel = '', nome = '', cargo] = l.split(/\s*\|\s*/);
+          return { papel, nome, cargo: cargo || undefined };
+        }),
+    };
   if (tipo === 'imagem') return { id: b.id, tipo, ref: b.tipo === 'imagem' ? b.ref : '', legenda: texto || undefined, largura: 100 };
   if (tipo === 'titulo') return { id: b.id, tipo, nivel: 2, texto: texto.replace(/\n/g, ' ') };
   if (tipo === 'lista') return { id: b.id, tipo, ordenada: false, itens: texto.split(/\n+/).map((t) => t.trim()).filter(Boolean) };
@@ -487,6 +508,7 @@ const EditorBloco: React.FC<{ bloco: BlocoDocumento; somenteLeitura: boolean; on
     return <TextoAuto valor={b.texto} disabled={somenteLeitura} onChange={(texto) => onChange({ ...b, texto })} className={tamanho} placeholder="Título" />;
   }
   if (b.tipo === 'imagem') return <BlocoImagem bloco={b} somenteLeitura={somenteLeitura} onChange={onChange} />;
+  if (b.tipo === 'assinaturas') return <BlocoAssinaturas bloco={b} somenteLeitura={somenteLeitura} onChange={onChange} />;
   if (b.tipo === 'paragrafo') return <TextoAuto valor={b.texto} disabled={somenteLeitura} onChange={(texto) => onChange({ ...b, texto })} className="text-sm text-slate-700 leading-relaxed" placeholder="Texto" />;
   if (b.tipo === 'destaque')
     return (
