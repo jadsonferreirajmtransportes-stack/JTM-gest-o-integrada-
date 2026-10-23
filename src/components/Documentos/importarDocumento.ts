@@ -170,6 +170,11 @@ interface LinhaPdf {
   pagina: number;
   /** Quando a "linha" é uma figura recortada da página. */
   figura?: { dataUrl: string; largura: 50 | 75 | 100 };
+  /** Tabela desenhada (células já separadas, 1ª linha = cabeçalho). */
+  tabela?: string[][];
+  /** Quadro de uma coluna só (texto em "texto") — vira destaque. */
+  caixa?: boolean;
+  etapas?: string[];
 }
 
 async function lerPdf(arquivo: File, opcoes: OpcoesImportacao = {}): Promise<{ blocos: BlocoDocumento[]; avisos: string[] }> {
@@ -184,9 +189,14 @@ async function lerPdf(arquivo: File, opcoes: OpcoesImportacao = {}): Promise<{ b
     const dentroDeFigura = (x: number, y: number) => figuras.some((f) => x >= f.x1 - 2 && x <= f.x2 + 2 && y >= f.y1 - 2 && y <= f.y2 + 2);
     const itens = (conteudo.items as any[])
       .filter((it) => typeof it.str === 'string' && it.str.trim())
-      .map((it) => ({ str: it.str as string, x: it.transform[4] as number, y: it.transform[5] as number, h: Math.abs(it.transform[3] as number) || (it.height as number) || 10 }))
+      .map((it) => ({ str: it.str as string, x: it.transform[4] as number, y: it.transform[5] as number, w: (it.width as number) || 0, h: Math.abs(it.transform[3] as number) || (it.height as number) || 10 }))
       // Texto por cima de uma foto (OCR escondido de documento escaneado) não é conteúdo.
       .filter((it) => !dentroDeFigura(it.x, it.y));
+    // Tabelas e quadros desenhados: o texto de dentro sai do fluxo e entra como tabela/destaque.
+    const grades = await gradesDaPagina(pagina, pdfjs, itens).catch(() => [] as GradePdf[]);
+    for (const g of grades) linhas.push({ texto: g.caixa || '', y: g.y2, altura: 0, pagina: p, tabela: g.celulas, caixa: !!g.caixa, etapas: g.etapas });
+    const naGrade = (it: ItemPdf) => grades.some((g) => it.x + it.w / 2 > g.x1 && it.x + it.w / 2 < g.x2 && it.y + it.h / 3 > g.y1 && it.y + it.h / 3 < g.y2);
+    for (let i = itens.length - 1; i >= 0; i--) if (naGrade(itens[i])) itens.splice(i, 1);
     // Agrupa por linha (mesmo y, com tolerância).
     itens.sort((a, b) => b.y - a.y || a.x - b.x);
     const grupos: (typeof itens)[] = [];
@@ -224,8 +234,8 @@ async function lerPdf(arquivo: File, opcoes: OpcoesImportacao = {}): Promise<{ b
         const largura = (f.x2 - f.x1) / (pagina.view[2] || 595);
         linhas.push({ texto: '', y: f.y2, altura: 0, pagina: p, figura: { dataUrl: recorte.toDataURL('image/jpeg', 0.88), largura: largura > 0.8 ? 100 : largura > 0.55 ? 75 : 50 } });
       }
-      linhas.sort((a, b) => a.pagina - b.pagina || b.y - a.y);
     }
+    linhas.sort((a, b) => a.pagina - b.pagina || b.y - a.y);
   }
   const totalFiguras = linhas.filter((l) => l.figura).length;
   const avisos: string[] = [];
@@ -237,13 +247,13 @@ async function lerPdf(arquivo: File, opcoes: OpcoesImportacao = {}): Promise<{ b
   if (pdf.numPages >= 3) {
     const chave = (t: string) => t.replace(/\d+/g, '#');
     const contagem = new Map<string, Set<number>>();
-    linhas.forEach((l) => !l.figura && contagem.set(chave(l.texto), (contagem.get(chave(l.texto)) || new Set()).add(l.pagina)));
+    linhas.forEach((l) => !l.figura && !l.tabela && !l.etapas && contagem.set(chave(l.texto), (contagem.get(chave(l.texto)) || new Set()).add(l.pagina)));
     const repetidas = new Set(Array.from(contagem.entries()).filter(([, ps]) => ps.size > pdf.numPages / 2).map(([k]) => k));
-    for (let i = linhas.length - 1; i >= 0; i--) if (!linhas[i].figura && repetidas.has(chave(linhas[i].texto))) linhas.splice(i, 1);
+    for (let i = linhas.length - 1; i >= 0; i--) if (!linhas[i].figura && !linhas[i].tabela && !linhas[i].etapas && repetidas.has(chave(linhas[i].texto))) linhas.splice(i, 1);
     if (repetidas.size) avisos.push('Cabeçalho e rodapé que se repetiam em todas as páginas foram retirados (o padrão JMT coloca os seus).');
   }
 
-  const alturas = linhas.filter((l) => !l.figura).map((l) => l.altura).sort((a, b) => a - b);
+  const alturas = linhas.filter((l) => l.altura > 0).map((l) => l.altura).sort((a, b) => a - b);
   const alturaTexto = alturas[Math.floor(alturas.length / 2)] || 10;
   const blocos: BlocoDocumento[] = [];
   let paragrafo: string[] = [];
@@ -258,6 +268,9 @@ async function lerPdf(arquivo: File, opcoes: OpcoesImportacao = {}): Promise<{ b
 
   let alturaUltimoTitulo = 0;
   let enviadas = 0;
+  let tabelas = 0;
+  let ultimaFoiTabela = false;
+  let ultimaFoiEtapas = false;
   for (const l of linhas) {
     if (l.figura) {
       fecharParagrafo();
@@ -270,6 +283,41 @@ async function lerPdf(arquivo: File, opcoes: OpcoesImportacao = {}): Promise<{ b
         console.error(e);
         avisos.push(`A imagem ${enviadas} não pôde ser enviada.`);
       }
+      anterior = null;
+      continue;
+    }
+    if (l.tabela) {
+      fecharParagrafo();
+      const [cabecalho, ...corpo] = l.tabela;
+      const ultimo = blocos[blocos.length - 1];
+      // Tabela que continua na página seguinte (mesmas colunas, logo depois da anterior):
+      // junta, sem repetir o cabeçalho.
+      if (ultimo?.tipo === 'tabela' && ultimaFoiTabela && ultimo.cabecalho.length === cabecalho.length) {
+        const repeteCabecalho = cabecalho.every((c, i) => c === ultimo.cabecalho[i]);
+        ultimo.linhas.push(...(repeteCabecalho ? corpo : l.tabela));
+      } else {
+        blocos.push(normalizarTabela(cabecalho, corpo));
+        tabelas += 1;
+      }
+      ultimaFoiTabela = true;
+      anterior = null;
+      continue;
+    }
+    ultimaFoiTabela = false;
+    if (l.etapas) {
+      fecharParagrafo();
+      const ultimo = blocos[blocos.length - 1];
+      // Fluxo que continua na página seguinte entra na mesma lista.
+      if (ultimo?.tipo === 'lista' && ultimo.ordenada && ultimaFoiEtapas) ultimo.itens.push(...l.etapas);
+      else blocos.push({ id: novoIdBloco(), tipo: 'lista', ordenada: true, itens: [...l.etapas] });
+      ultimaFoiEtapas = true;
+      anterior = null;
+      continue;
+    }
+    ultimaFoiEtapas = false;
+    if (l.caixa) {
+      fecharParagrafo();
+      blocos.push({ id: novoIdBloco(), tipo: 'destaque', texto: l.texto });
       anterior = null;
       continue;
     }
@@ -312,7 +360,11 @@ async function lerPdf(arquivo: File, opcoes: OpcoesImportacao = {}): Promise<{ b
     anterior = l;
   }
   fecharParagrafo();
-  avisos.push('Em PDF, tabelas e colunas podem vir como texto corrido — confira e, se precisar, transforme em tabela no editor.');
+  avisos.push(
+    tabelas
+      ? `${tabelas} tabela(s) do PDF foram reconhecidas pelas bordas — confira as células no editor. Tabelas sem borda podem vir como texto corrido.`
+      : 'Em PDF, tabelas e colunas podem vir como texto corrido — confira e, se precisar, transforme em tabela no editor.'
+  );
   if (totalFiguras) avisos.push(`${totalFiguras} imagem(ns) do PDF entraram como blocos de imagem — confira a posição e a legenda no editor.`);
   return { blocos, avisos };
 }
@@ -327,17 +379,18 @@ interface CaixaFigura {
   x2: number;
   y2: number;
 }
+const multiplicar = (m1: number[], m2: number[]) => [
+  m1[0] * m2[0] + m1[2] * m2[1],
+  m1[1] * m2[0] + m1[3] * m2[1],
+  m1[0] * m2[2] + m1[2] * m2[3],
+  m1[1] * m2[2] + m1[3] * m2[3],
+  m1[0] * m2[4] + m1[2] * m2[5] + m1[4],
+  m1[1] * m2[4] + m1[3] * m2[5] + m1[5],
+];
+const aplicar = (p: number[], m: number[]) => [p[0] * m[0] + p[1] * m[2] + m[4], p[0] * m[1] + p[1] * m[3] + m[5]];
+
 async function caixasDeFiguras(pdf: any, pdfjs: any): Promise<Map<number, CaixaFigura[]>> {
   const { OPS } = pdfjs;
-  const multiplicar = (m1: number[], m2: number[]) => [
-    m1[0] * m2[0] + m1[2] * m2[1],
-    m1[1] * m2[0] + m1[3] * m2[1],
-    m1[0] * m2[2] + m1[2] * m2[3],
-    m1[1] * m2[2] + m1[3] * m2[3],
-    m1[0] * m2[4] + m1[2] * m2[5] + m1[4],
-    m1[1] * m2[4] + m1[3] * m2[5] + m1[5],
-  ];
-  const aplicar = (p: number[], m: number[]) => [p[0] * m[0] + p[1] * m[2] + m[4], p[0] * m[1] + p[1] * m[3] + m[5]];
   const todas: (CaixaFigura & { pagina: number; area: number; largura: number; altura: number })[] = [];
   for (let p = 1; p <= pdf.numPages; p++) {
     const pagina = await pdf.getPage(p);
@@ -378,6 +431,138 @@ async function caixasDeFiguras(pdf: any, pdfjs: any): Promise<Map<number, CaixaF
     mapa.set(c.pagina, [...(mapa.get(c.pagina) || []), { x1: c.x1, y1: c.y1, x2: c.x2, y2: c.y2 }]);
   });
   return mapa;
+}
+
+// ---------------------------------------------------------------------------
+// Tabelas do PDF (pdf.js): as bordas e fundos das células são desenhados como retângulos e
+// linhas finas. Cada conjunto de desenhos encostados vira uma região; as linhas finas
+// verticais/horizontais dão as colunas e as linhas da grade, e o texto cai na célula pelo centro.
+// Região de uma coluna só (ex.: quadro "PONTO DE ATENÇÃO") vira um destaque.
+// ---------------------------------------------------------------------------
+interface ItemPdf {
+  str: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+interface GradePdf {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  celulas?: string[][];
+  caixa?: string;
+  /** Uma coluna com várias faixas (ex.: fluxo em etapas) — vira lista numerada. */
+  etapas?: string[];
+}
+function agrupar(valores: number[], tolerancia: number): number[] {
+  const ord = [...valores].sort((a, b) => a - b);
+  const grupos: number[][] = [];
+  for (const v of ord) {
+    const g = grupos[grupos.length - 1];
+    if (g && v - g[g.length - 1] <= tolerancia) g.push(v);
+    else grupos.push([v]);
+  }
+  return grupos.map((g) => g.reduce((s, v) => s + v, 0) / g.length);
+}
+function textoDosItens(itens: ItemPdf[]): string {
+  const ord = [...itens].sort((a, b) => b.y - a.y || a.x - b.x);
+  const linhas: ItemPdf[][] = [];
+  for (const it of ord) {
+    const l = linhas.find((x) => Math.abs(x[0].y - it.y) < Math.max(2, it.h * 0.35));
+    if (l) l.push(it);
+    else linhas.push([it]);
+  }
+  return limpar(
+    linhas
+      .map((l) => l.sort((a, b) => a.x - b.x).map((i) => i.str).join(' '))
+      .join(' ')
+      .replace(/\s+([,.;:])/g, '$1')
+      .replace(/(\p{L})- (\p{Ll})/gu, '$1$2')
+  );
+}
+async function gradesDaPagina(pagina: any, pdfjs: any, itens: ItemPdf[]): Promise<GradePdf[]> {
+  const { OPS } = pdfjs;
+  const [, , largura, altura] = pagina.view;
+  const ops = await pagina.getOperatorList();
+  type Caixa = { x1: number; y1: number; x2: number; y2: number };
+  const desenhos: Caixa[] = [];
+  let ctm = [1, 0, 0, 1, 0, 0];
+  const pilha: number[][] = [];
+  for (let i = 0; i < ops.fnArray.length; i++) {
+    const fn = ops.fnArray[i];
+    const args = ops.argsArray[i];
+    if (fn === OPS.save) pilha.push(ctm);
+    else if (fn === OPS.restore) ctm = pilha.pop() || [1, 0, 0, 1, 0, 0];
+    else if (fn === OPS.transform) ctm = multiplicar(ctm, args);
+    else if (fn === OPS.constructPath && args?.[0] !== OPS.endPath && args?.[2]) {
+      const m = args[2];
+      const cantos = [[m[0], m[1]], [m[2], m[1]], [m[0], m[3]], [m[2], m[3]]].map((c) => aplicar(c, ctm));
+      const xs = cantos.map((c) => c[0]);
+      const ys = cantos.map((c) => c[1]);
+      const c = { x1: Math.min(...xs), y1: Math.min(...ys), x2: Math.max(...xs), y2: Math.max(...ys) };
+      // Fundo da página inteira não conta.
+      if (c.x2 - c.x1 > largura * 0.95 && c.y2 - c.y1 > altura * 0.5) continue;
+      desenhos.push(c);
+    }
+  }
+  if (!desenhos.length) return [];
+  // Regiões: desenhos que se encostam (tolerância de 2pt).
+  const pai = desenhos.map((_, i) => i);
+  const raiz = (i: number): number => (pai[i] === i ? i : (pai[i] = raiz(pai[i])));
+  const ordem = desenhos.map((_, i) => i).sort((a, b) => desenhos[a].x1 - desenhos[b].x1);
+  for (let a = 0; a < ordem.length; a++) {
+    const A = desenhos[ordem[a]];
+    for (let b = a + 1; b < ordem.length; b++) {
+      const B = desenhos[ordem[b]];
+      if (B.x1 > A.x2 + 2) break;
+      if (B.y1 <= A.y2 + 2 && B.y2 >= A.y1 - 2) pai[raiz(ordem[a])] = raiz(ordem[b]);
+    }
+  }
+  const regioes = new Map<number, Caixa[]>();
+  desenhos.forEach((d, i) => regioes.set(raiz(i), [...(regioes.get(raiz(i)) || []), d]));
+
+  const grades: GradePdf[] = [];
+  for (const partes of regioes.values()) {
+    const r = { x1: Math.min(...partes.map((p) => p.x1)), y1: Math.min(...partes.map((p) => p.y1)), x2: Math.max(...partes.map((p) => p.x2)), y2: Math.max(...partes.map((p) => p.y2)) };
+    if (r.x2 - r.x1 < 60 || r.y2 - r.y1 < 12) continue;
+    const centro = (it: ItemPdf) => [it.x + it.w / 2, it.y + it.h / 3];
+    const dentro = itens.filter((it) => {
+      const [cx, cy] = centro(it);
+      return cx > r.x1 && cx < r.x2 && cy > r.y1 && cy < r.y2;
+    });
+    if (!dentro.length) continue;
+    // Separadores: linhas finas; sem elas, as bordas das caixas mais externas (as internas são enchimento).
+    const verticais = partes.filter((p) => p.x2 - p.x1 < 2 && p.y2 - p.y1 > 3).map((p) => (p.x1 + p.x2) / 2);
+    const horizontais = partes.filter((p) => p.y2 - p.y1 < 2 && p.x2 - p.x1 > 8).map((p) => (p.y1 + p.y2) / 2);
+    const caixas = partes.filter((p) => p.x2 - p.x1 >= 8 && p.y2 - p.y1 >= 8);
+    const area = (c: Caixa) => (c.x2 - c.x1) * (c.y2 - c.y1);
+    const externas = caixas.filter((c) => !caixas.some((o) => o !== c && o.x1 <= c.x1 + 0.5 && o.y1 <= c.y1 + 0.5 && o.x2 >= c.x2 - 0.5 && o.y2 >= c.y2 - 0.5 && area(o) > area(c) + 1));
+    let xs = agrupar([r.x1, r.x2, ...verticais], 2.5);
+    if (xs.length < 3) xs = agrupar([r.x1, r.x2, ...externas.flatMap((c) => [c.x1, c.x2])], 2.5);
+    let ys = agrupar([r.y1, r.y2, ...horizontais], 2.5);
+    if (ys.length < 3) ys = agrupar([r.y1, r.y2, ...externas.flatMap((c) => [c.y1, c.y2])], 2.5);
+    const colunas = xs.slice(1).map((x, i) => [xs[i], x]).filter(([a, b]) => b - a > 8);
+    const faixas = ys.slice(1).map((y, i) => [y, ys[i]]).filter(([topo, base]) => topo - base > 6).reverse(); // de cima para baixo
+    const matriz = faixas.map(([topo, base]) =>
+      colunas.map(([esq, dir]) =>
+        textoDosItens(
+          dentro.filter((it) => {
+            const [cx, cy] = centro(it);
+            return cx >= esq && cx < dir && cy <= topo && cy > base;
+          })
+        )
+      )
+    );
+    const usadas = colunas.map((_, c) => matriz.some((l) => l[c]));
+    const celulas = matriz.map((l) => l.filter((_, c) => usadas[c])).filter((l) => l.some(Boolean));
+    if (!celulas.length) continue;
+    if (celulas[0].length < 2 && celulas.length > 1) grades.push({ ...r, etapas: celulas.map((l) => l.join(' ')) });
+    else if (celulas[0].length < 2) grades.push({ ...r, caixa: textoDosItens(dentro) });
+    else grades.push({ ...r, celulas });
+  }
+  return grades;
 }
 
 // ---------------------------------------------------------------------------
