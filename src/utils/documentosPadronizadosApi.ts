@@ -9,7 +9,9 @@ export type BlocoDocumento =
   | { id: string; tipo: 'paragrafo'; texto: string }
   | { id: string; tipo: 'lista'; ordenada: boolean; itens: string[] }
   | { id: string; tipo: 'tabela'; cabecalho: string[]; linhas: string[][] }
-  | { id: string; tipo: 'destaque'; texto: string };
+  | { id: string; tipo: 'destaque'; texto: string }
+  /** Imagem (arquivo no Storage "anexos" — ref "storage:<caminho>"); largura em % da página. */
+  | { id: string; tipo: 'imagem'; ref: string; legenda?: string; largura?: 50 | 75 | 100 };
 
 export type StatusDocumento = 'Rascunho' | 'Vigente' | 'Obsoleto';
 

@@ -91,7 +91,7 @@ export const DocumentosView: React.FC<DocumentosViewProps> = ({ currentUser }) =
     setImportando(true);
     setErro(null);
     try {
-      const r = await importarArquivo(arquivo);
+      const r = await importarArquivo(arquivo, { imagens: true });
       if (r.blocos.length === 0 && r.avisos.length === 0) r.avisos.push('Nenhum conteúdo encontrado no arquivo.');
       setAberto({
         doc: { ...documentoNovo(currentUser?.nome), titulo: r.tituloSugerido, blocos: r.blocos, origemArquivo: arquivo.name, origemTipo: r.origemTipo, tipo: r.origemTipo === 'xlsx' || r.origemTipo === 'csv' ? 'Planilha' : 'Procedimento' },

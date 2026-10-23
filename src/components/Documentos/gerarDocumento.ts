@@ -11,6 +11,40 @@ import autoTable from 'jspdf-autotable';
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 import { BlocoDocumento, DocumentoPadronizado, SETORES_DOCUMENTO } from '../../utils/documentosPadronizadosApi';
+import { obterUrlArquivo } from '../../utils/arquivosStorage';
+
+interface ImagemCarregada {
+  dataUrl: string; // sempre JPEG (fundo branco) — leve e aceito por PDF, Word e Excel
+  w: number;
+  h: number;
+}
+
+/** Baixa as imagens dos blocos (Storage privado) e converte para JPEG, com o tamanho natural. */
+async function carregarImagens(d: DocumentoPadronizado): Promise<Map<string, ImagemCarregada>> {
+  const mapa = new Map<string, ImagemCarregada>();
+  const refs = [...new Set(d.blocos.filter((b) => b.tipo === 'imagem' && b.ref).map((b) => (b as { ref: string }).ref))];
+  await Promise.all(
+    refs.map(async (ref) => {
+      try {
+        const url = ref.startsWith('data:') ? ref : await obterUrlArquivo(ref);
+        const blob = await (await fetch(url)).blob();
+        const bitmap = await createImageBitmap(blob);
+        const escala = Math.min(1, 1800 / bitmap.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(bitmap.width * escala);
+        canvas.height = Math.round(bitmap.height * escala);
+        const ctx = canvas.getContext('2d')!;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        mapa.set(ref, { dataUrl: canvas.toDataURL('image/jpeg', 0.85), w: canvas.width, h: canvas.height });
+      } catch (e) {
+        console.warn('Imagem do documento não carregou', e);
+      }
+    })
+  );
+  return mapa;
+}
 
 const BRONZE: [number, number, number] = [196, 130, 41];
 const BRONZE_HEX = 'C48229';
@@ -43,7 +77,8 @@ function quadroControle(d: DocumentoPadronizado): [string, string][] {
 // ---------------------------------------------------------------------------
 // PDF
 // ---------------------------------------------------------------------------
-export function gerarPdfDocumento(d: DocumentoPadronizado): File {
+export async function gerarPdfDocumento(d: DocumentoPadronizado): Promise<File> {
+  const imagens = await carregarImagens(d);
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const largura = doc.internal.pageSize.getWidth();
   const altura = doc.internal.pageSize.getHeight();
@@ -150,6 +185,31 @@ export function gerarPdfDocumento(d: DocumentoPadronizado): File {
         alternateRowStyles: { fillColor: [252, 250, 247] },
       });
       y = (doc as any).lastAutoTable.finalY + 6;
+    } else if (b.tipo === 'imagem') {
+      const img = imagens.get(b.ref);
+      if (!img) continue;
+      let w = (larguraTexto * (b.largura || 100)) / 100;
+      let h = (w * img.h) / img.w;
+      const alturaMax = LIMITE - TOPO - (b.legenda ? 8 : 2);
+      if (h > alturaMax) {
+        w = (w * alturaMax) / h;
+        h = alturaMax;
+      }
+      espaco(h + (b.legenda ? 8 : 2));
+      const x = MARGEM + (larguraTexto - w) / 2;
+      doc.addImage(img.dataUrl, 'JPEG', x, y, w, h, undefined, 'FAST');
+      doc.setDrawColor(225, 225, 225);
+      doc.setLineWidth(0.2);
+      doc.rect(x, y, w, h);
+      y += h + 4;
+      if (b.legenda) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...CINZA);
+        doc.text(b.legenda, largura / 2, y, { align: 'center', maxWidth: larguraTexto });
+        y += 5;
+      }
+      y += 3;
     }
   }
 
@@ -199,6 +259,7 @@ function base64ParaBytes(dataUrl: string): Uint8Array {
 }
 
 export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File> {
+  const imagens = await carregarImagens(d);
   const docx = await import('docx');
   const {
     Document,
@@ -331,6 +392,27 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
         })
       );
       filhos.push(new Paragraph({ text: '', spacing: { after: 160 } }));
+    } else if (b.tipo === 'imagem') {
+      const img = imagens.get(b.ref);
+      if (!img) continue;
+      // Largura útil da página A4 com margens ≈ 600 px
+      let w = (600 * (b.largura || 100)) / 100;
+      let h = (w * img.h) / img.w;
+      if (h > 820) {
+        w = (w * 820) / h;
+        h = 820;
+      }
+      filhos.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 120, after: b.legenda ? 60 : 200 },
+          children: [new ImageRun({ type: 'jpg', data: base64ParaBytes(img.dataUrl), transformation: { width: Math.round(w), height: Math.round(h) } })],
+        })
+      );
+      if (b.legenda)
+        filhos.push(
+          new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [new TextRun({ text: b.legenda, italics: true, font: FONTE, size: 17, color: '777777' })] })
+        );
     }
   }
 
@@ -448,6 +530,7 @@ export async function gerarXlsxDocumento(d: DocumentoPadronizado): Promise<File>
         r.getCell(1).font = { bold: true, size: b.nivel === 1 ? 13 : 11, color: { argb: 'FF111111' } };
       } else if (b.tipo === 'lista') b.itens.forEach((it, i) => ws.addRow([`${b.ordenada ? `${i + 1}.` : '•'} ${it}`]).getCell(1).alignment = { wrapText: true });
       else if (b.tipo === 'paragrafo' || b.tipo === 'destaque') ws.addRow([b.texto]).getCell(1).alignment = { wrapText: true, vertical: 'top' };
+      else if (b.tipo === 'imagem') ws.addRow([`[Imagem${b.legenda ? `: ${b.legenda}` : ''} — veja no PDF ou Word]`]).getCell(1).font = { italic: true, size: 9, color: { argb: 'FF777777' } };
     });
   }
   tabelas.forEach((t, i) => {

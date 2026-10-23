@@ -47,6 +47,8 @@ export function verificarPadrao(d: DocumentoPadronizado): ProblemaPadrao[] {
       if (b.cabecalho.every((c) => !c.trim())) p.push({ nivel: 'aviso', mensagem: 'Tabela sem cabeçalho — dê nome às colunas.', blocoId: b.id });
       if (b.linhas.length === 0) p.push({ nivel: 'aviso', mensagem: 'Tabela sem linhas.', blocoId: b.id });
       if (b.cabecalho.length > 8) p.push({ nivel: 'aviso', mensagem: `Tabela com ${b.cabecalho.length} colunas — no PDF/Word ela fica apertada; considere gerar em Excel.`, blocoId: b.id });
+    } else if (b.tipo === 'imagem') {
+      if (!b.ref) p.push({ nivel: 'aviso', mensagem: 'Há um bloco de imagem sem imagem — envie a imagem ou remova o bloco.', blocoId: b.id });
     }
   });
   return p;

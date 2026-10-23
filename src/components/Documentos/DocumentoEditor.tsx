@@ -23,6 +23,7 @@ import {
   BadgeCheck,
   RotateCcw,
   X,
+  Image as ImageIcon,
 } from 'lucide-react';
 import {
   BlocoDocumento,
@@ -40,6 +41,7 @@ import {
 import { corrigirAutomaticamente, verificarPadrao } from './padraoDocumento';
 import { gerarDocxDocumento, gerarPdfDocumento, gerarXlsxDocumento } from './gerarDocumento';
 import { baixarBlob } from '../../utils/downloadUtils';
+import { BlocoImagem } from './BlocoImagem';
 
 interface DocumentoEditorProps {
   documento: DocumentoPadronizado;
@@ -55,6 +57,7 @@ const TIPOS_BLOCO: { tipo: BlocoDocumento['tipo']; rotulo: string; icone: React.
   { tipo: 'lista', rotulo: 'Lista', icone: <List className="w-3.5 h-3.5" /> },
   { tipo: 'tabela', rotulo: 'Tabela', icone: <TableIcon className="w-3.5 h-3.5" /> },
   { tipo: 'destaque', rotulo: 'Destaque', icone: <Quote className="w-3.5 h-3.5" /> },
+  { tipo: 'imagem', rotulo: 'Imagem', icone: <ImageIcon className="w-3.5 h-3.5" /> },
 ];
 
 function blocoVazio(tipo: BlocoDocumento['tipo']): BlocoDocumento {
@@ -62,13 +65,21 @@ function blocoVazio(tipo: BlocoDocumento['tipo']): BlocoDocumento {
   if (tipo === 'titulo') return { id, tipo, nivel: 2, texto: '' };
   if (tipo === 'lista') return { id, tipo, ordenada: false, itens: [''] };
   if (tipo === 'tabela') return { id, tipo, cabecalho: ['Coluna 1', 'Coluna 2'], linhas: [['', '']] };
+  if (tipo === 'imagem') return { id, tipo, ref: '', largura: 100 };
   return { id, tipo, texto: '' } as BlocoDocumento;
 }
 
 /** Converte um bloco para outro tipo aproveitando o texto. */
 function converter(b: BlocoDocumento, tipo: BlocoDocumento['tipo']): BlocoDocumento {
   const texto =
-    b.tipo === 'lista' ? b.itens.join('\n') : b.tipo === 'tabela' ? [b.cabecalho.join(' | '), ...b.linhas.map((l) => l.join(' | '))].join('\n') : b.texto;
+    b.tipo === 'lista'
+      ? b.itens.join('\n')
+      : b.tipo === 'tabela'
+        ? [b.cabecalho.join(' | '), ...b.linhas.map((l) => l.join(' | '))].join('\n')
+        : b.tipo === 'imagem'
+          ? b.legenda || ''
+          : b.texto;
+  if (tipo === 'imagem') return { id: b.id, tipo, ref: b.tipo === 'imagem' ? b.ref : '', legenda: texto || undefined, largura: 100 };
   if (tipo === 'titulo') return { id: b.id, tipo, nivel: 2, texto: texto.replace(/\n/g, ' ') };
   if (tipo === 'lista') return { id: b.id, tipo, ordenada: false, itens: texto.split(/\n+/).map((t) => t.trim()).filter(Boolean) };
   if (tipo === 'tabela') {
@@ -146,7 +157,7 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, avi
   const baixar = async (formato: 'pdf' | 'docx' | 'xlsx') => {
     setGerando(formato);
     try {
-      const arquivo = formato === 'pdf' ? gerarPdfDocumento(d) : formato === 'docx' ? await gerarDocxDocumento(d) : await gerarXlsxDocumento(d);
+      const arquivo = formato === 'pdf' ? await gerarPdfDocumento(d) : formato === 'docx' ? await gerarDocxDocumento(d) : await gerarXlsxDocumento(d);
       baixarBlob(arquivo, arquivo.name);
     } catch (err) {
       console.error(err);
@@ -475,6 +486,7 @@ const EditorBloco: React.FC<{ bloco: BlocoDocumento; somenteLeitura: boolean; on
     const tamanho = b.nivel === 1 ? 'text-base font-black uppercase tracking-wide text-slate-900' : b.nivel === 2 ? 'text-sm font-black text-slate-900' : 'text-sm font-bold text-slate-700';
     return <TextoAuto valor={b.texto} disabled={somenteLeitura} onChange={(texto) => onChange({ ...b, texto })} className={tamanho} placeholder="Título" />;
   }
+  if (b.tipo === 'imagem') return <BlocoImagem bloco={b} somenteLeitura={somenteLeitura} onChange={onChange} />;
   if (b.tipo === 'paragrafo') return <TextoAuto valor={b.texto} disabled={somenteLeitura} onChange={(texto) => onChange({ ...b, texto })} className="text-sm text-slate-700 leading-relaxed" placeholder="Texto" />;
   if (b.tipo === 'destaque')
     return (
@@ -642,8 +654,8 @@ const HistoricoModal: React.FC<{ documento: DocumentoPadronizado; versoes: Versa
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    const arquivo = gerarPdfDocumento({ ...documento, ...v.dados, titulo: v.titulo, versao: v.versao, blocos: v.blocos, status: v.versao === documento.versao && documento.status === 'Vigente' ? 'Vigente' : 'Obsoleto' } as DocumentoPadronizado);
+                  onClick={async () => {
+                    const arquivo = await gerarPdfDocumento({ ...documento, ...v.dados, titulo: v.titulo, versao: v.versao, blocos: v.blocos, status: v.versao === documento.versao && documento.status === 'Vigente' ? 'Vigente' : 'Obsoleto' } as DocumentoPadronizado);
                     baixarBlob(arquivo, arquivo.name);
                   }}
                   className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-semibold flex items-center gap-1 shrink-0"
