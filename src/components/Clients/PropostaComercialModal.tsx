@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Printer, AlertTriangle } from 'lucide-react';
-import { Cliente } from '../../types';
+import { Cliente, CustoExtraTarifa, TabelaPrecoFrete } from '../../types';
+import { agruparPorFaixa } from './tabelaFreteExcel';
 import { formatCurrency } from '../../utils/formatters';
 import { JmtLogo } from '../Brand/JmtLogo';
 import { STRATEGIC_GUIDELINES } from '../../data/strategicGuidelines';
@@ -48,10 +49,146 @@ function normalizeKey(text: string): string {
 }
 
 function formatValorCustoExtra(tipoCobranca: string, valor: number): string {
+  if (!valor) return 'Sob consulta';
   if (tipoCobranca === 'Valor/KM') return `${formatCurrency(valor)}/km`;
-  if (tipoCobranca === 'Serviço avulso') return 'Sob consulta';
   return formatCurrency(valor);
 }
+
+const COMO_COBRA: Record<string, string> = {
+  'Valor fechado': 'Valor fechado',
+  'Valor/KM': 'Por km rodado',
+  'Serviço avulso': 'Por serviço',
+};
+
+/** Tarifário tem preço de verdade (tarifa base, ad valorem ou tabela por cidade). */
+function temPreco(t?: TabelaPrecoFrete): t is TabelaPrecoFrete {
+  return !!t && !!(t.valorBase || t.percentualAdValoremNF || t.tarifasPorCidade?.length || t.custosExtras?.length);
+}
+
+/** Valor mais comum de uma lista (ex.: prazo da faixa). */
+function maisComum(valores: (string | undefined)[]): string | undefined {
+  const cont = new Map<string, number>();
+  valores.filter(Boolean).forEach((v) => cont.set(v as string, (cont.get(v as string) || 0) + 1));
+  return Array.from(cont.entries()).sort((a, b) => b[1] - a[1])[0]?.[0];
+}
+
+/** Uma parte da seção 5 — um tarifário (Aéreo, Rodoviário ou o único do cliente). */
+const BlocoTarifario: React.FC<{ titulo?: string; tabela: TabelaPrecoFrete; incluirDedicada: boolean; incluirFracionada: boolean }> = ({
+  titulo,
+  tabela: t,
+  incluirDedicada,
+  incluirFracionada,
+}) => {
+  const adValorem = t.modeloPrecificacao === 'ad_valorem';
+  const faixas = agruparPorFaixa(t.tarifasPorCidade || []);
+  const extras = (t.custosExtras || []).filter((c) => incluirDedicada || !normalizeKey(c.categoria).includes('dedicado'));
+  const categorias = Array.from(new Set(extras.map((c) => c.categoria || 'Outros')));
+  const condicoes = (t.observacoesTarifa || '')
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return (
+    <div className="mb-4">
+      {titulo && <h4 className="jmt-proposta-subtitle font-bold text-[#92611F] text-[13px] mt-3 mb-1.5 uppercase tracking-wide">{titulo}</h4>}
+      {adValorem ? (
+        <div className="jmt-proposta-callout mb-2">
+          Será aplicado o percentual de <strong>{t.percentualAdValoremNF ?? 0}%</strong> sobre o valor de cada Nota Fiscal transportada.
+        </div>
+      ) : incluirFracionada && faixas.length > 0 ? (
+        <>
+          <p className="mb-1.5">Modalidade Fracionada — tarifa por faixa de distância (até 10 kg + valor por kg excedente):</p>
+          <table className="jmt-proposta-table mb-2">
+            <thead>
+              <tr>
+                <th>Faixa</th>
+                <th>Até 10 kg</th>
+                <th>Kg excedente</th>
+                <th>Prazo</th>
+                <th>Cidades</th>
+              </tr>
+            </thead>
+            <tbody>
+              {faixas.map(({ faixa, cidades }) => {
+                const v10 = cidades.map((c) => c.valorAte10Kg);
+                const vExc = cidades.map((c) => c.valorKgExcedente);
+                const iguais = (l: number[]) => l.every((x) => x === l[0]);
+                return (
+                  <tr key={faixa}>
+                    <td>{faixa}</td>
+                    <td>{iguais(v10) ? formatCurrency(v10[0]) : `a partir de ${formatCurrency(Math.min(...v10))}`}</td>
+                    <td>{iguais(vExc) ? formatCurrency(vExc[0]) : `a partir de ${formatCurrency(Math.min(...vExc))}`}</td>
+                    <td>{maisComum(cidades.map((c) => c.prazo)) || '—'}</td>
+                    <td>{cidades.length}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </>
+      ) : incluirFracionada && t.valorBase ? (
+        <p className="mb-2">
+          Modalidade Fracionada: tarifa de <strong>{formatCurrency(t.valorBase)}</strong> até 10 kg
+          {t.valorKgExcedente ? `, acrescida de ${formatCurrency(t.valorKgExcedente)} por kg excedente` : ''}.
+        </p>
+      ) : null}
+
+      {(t.freteMinimo || t.taxaDescargaAjudante || t.percentualGrisPedagio) ? (
+        <ul className="list-disc pl-5 space-y-0.5 mb-2">
+          {!!t.freteMinimo && <li>Frete mínimo por entrega: <strong>{formatCurrency(t.freteMinimo)}</strong>.</li>}
+          {!!t.taxaDescargaAjudante && <li>Descarga / ajudante: <strong>{formatCurrency(t.taxaDescargaAjudante)}</strong>.</li>}
+          {!!t.percentualGrisPedagio && <li>GRIS / pedágio: <strong>{t.percentualGrisPedagio}%</strong>.</li>}
+        </ul>
+      ) : null}
+
+      {extras.length > 0 && (
+        <>
+          <p className="mb-1.5">Custos extras e encargos — cobrados além do frete, somente quando o serviço é utilizado:</p>
+          <table className="jmt-proposta-table mb-2">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Como é cobrado</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categorias.map((cat) => (
+                <React.Fragment key={cat}>
+                  <tr>
+                    <td colSpan={3} className="jmt-proposta-table-group font-bold text-[#92611F] bg-[#F4EEE1]">{cat}</td>
+                  </tr>
+                  {extras
+                    .filter((c) => (c.categoria || 'Outros') === cat)
+                    .map((c: CustoExtraTarifa) => (
+                      <tr key={c.id}>
+                        <td>
+                          {c.itemDescricao || c.categoria}
+                          {c.grupoDestinatario ? ` (${c.grupoDestinatario})` : ''}
+                        </td>
+                        <td>{COMO_COBRA[c.tipoCobranca] || c.tipoCobranca}</td>
+                        <td>{formatValorCustoExtra(c.tipoCobranca, c.valor)}</td>
+                      </tr>
+                    ))}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+
+      {condicoes.length > 0 && (
+        <>
+          <p className="mb-1 font-semibold text-slate-900">Condições:</p>
+          <ul className="list-disc pl-5 space-y-0.5 text-[12px]">
+            {condicoes.map((c, i) => (
+              <li key={i}>{c}</li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+};
 
 const SectionHead: React.FC<{ n: number; children: React.ReactNode }> = ({ n, children }) => (
   <div className="jmt-proposta-section-head">
@@ -90,7 +227,15 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
   if (!isOpen || !cliente) return null;
 
   const tf = cliente.tabelaFrete;
-  const isAdValorem = tf?.modeloPrecificacao === 'ad_valorem';
+  // Um bloco por tarifário: o do cliente e, quando cobra diferente por modal (ex.: LUFT), o Rodoviário.
+  const tarifarios: { titulo?: string; tabela: TabelaPrecoFrete }[] = temPreco(cliente.tabelaFreteRodoviario)
+    ? [
+        ...(temPreco(tf) ? [{ titulo: 'Tarifário Aéreo', tabela: tf }] : []),
+        { titulo: 'Tarifário Rodoviário', tabela: cliente.tabelaFreteRodoviario as TabelaPrecoFrete },
+      ]
+    : temPreco(tf)
+      ? [{ tabela: tf }]
+      : [];
   const uf = extrairUF(cliente.cidadeUF || '');
   const nomeEstado = uf ? NOMES_ESTADOS[uf] : undefined;
   // Forma sem preposição, para uso em rótulos/parênteses (ex.: "(Rio Grande do Norte)").
@@ -107,12 +252,12 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
     (v, i, arr) => v && arr.indexOf(v) === i
   );
 
-  const custosDedicado = (tf?.custosExtras || []).filter(
-    (c) => normalizeKey(c.categoria).includes('dedicado') || normalizeKey(c.grupoDestinatario || '').includes('dedicado')
-  );
-  const tarifaSemInfo = !isAdValorem && !tf?.valorBase && custosDedicado.length === 0;
+  const tarifaSemInfo = tarifarios.length === 0;
 
-  const cidadesAnexo = (tf?.tarifasPorCidade || []).map((t) => t.cidade).filter(Boolean);
+  // Anexo I: cidades da tabela principal agrupadas por faixa (os valores de cada faixa estão na seção 5).
+  const tabelaCidades = (tf?.tarifasPorCidade?.length ? tf.tarifasPorCidade : cliente.tabelaFreteRodoviario?.tarifasPorCidade) || [];
+  const faixasAnexo = agruparPorFaixa(tabelaCidades.filter((t) => t.cidade));
+  const cidadesAnexo = tabelaCidades.map((t) => t.cidade).filter(Boolean);
 
   const handlePrint = () => window.print();
 
@@ -281,6 +426,11 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
                   compartilhamento com outros clientes.
                 </li>
               )}
+              {tarifarios.length > 1 && (
+                <li>
+                  <strong>Modais Aéreo e Rodoviário</strong> — cada um com tarifário próprio, detalhado na seção 5.
+                </li>
+              )}
               {!incluirFracionada && !incluirDedicada && (
                 <li className="text-slate-400">Nenhuma modalidade selecionada — marque acima.</li>
               )}
@@ -327,46 +477,19 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
               <p className="text-slate-400 italic">
                 Tabela de Frete do cliente ainda não preenchida — edite o cadastro para completar esta seção.
               </p>
-            ) : isAdValorem ? (
-              <div className="jmt-proposta-callout">
-                Será aplicado o percentual de <strong>{tf?.percentualAdValoremNF ?? 0}%</strong> sobre o valor de
-                cada Nota Fiscal transportada.
-                {tf?.freteMinimo ? ` Aplica-se frete mínimo de ${formatCurrency(tf.freteMinimo)} por entrega.` : ''}
-              </div>
             ) : (
               <>
-                {!!tf?.valorBase && (
-                  <p className="mb-2">
-                    Para a modalidade Fracionada, será aplicada a tarifa de{' '}
-                    <strong>{formatCurrency(tf.valorBase)}</strong> até 10kg
-                    {tf.valorKgExcedente
-                      ? `, acrescida de ${formatCurrency(tf.valorKgExcedente)} por kg excedente`
-                      : ''}
-                    .{cidadesAnexo.length > 0 ? ' Tarifas específicas por praça constam no Anexo I.' : ''}
-                  </p>
-                )}
-                {custosDedicado.length > 0 && (
-                  <>
-                    <p className="mb-1.5">
-                      Para a modalidade Dedicada, quando solicitada, aplicam-se os valores fixos abaixo:
-                    </p>
-                    <table className="jmt-proposta-table">
-                      <thead>
-                        <tr>
-                          <th>Tipo de Veículo</th>
-                          <th>Custo Dedicado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {custosDedicado.map((c) => (
-                          <tr key={c.id}>
-                            <td>{c.itemDescricao || c.categoria}</td>
-                            <td>{formatValorCustoExtra(c.tipoCobranca, c.valor)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
+                {tarifarios.map((tar) => (
+                  <BlocoTarifario
+                    key={tar.titulo || 'unico'}
+                    titulo={tar.titulo}
+                    tabela={tar.tabela}
+                    incluirDedicada={incluirDedicada}
+                    incluirFracionada={incluirFracionada}
+                  />
+                ))}
+                {cidadesAnexo.length > 0 && (
+                  <p className="text-[11.5px] text-slate-500 italic">A relação das cidades de cada faixa, com distância e prazo, consta no Anexo I.</p>
                 )}
               </>
             )}
@@ -441,14 +564,36 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
               <>
                 <div className="mt-10 pt-3 border-t-2 border-[#C48229]">
                   <h3 className="font-bold text-slate-900 text-[13px]">
-                    Anexo I — Cidades Atendidas{nomeEstadoPlano ? ` (${nomeEstadoPlano})` : ''}
+                    Anexo I — Cidades Atendidas por Faixa{nomeEstadoPlano ? ` (${nomeEstadoPlano})` : ''}
                   </h3>
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-3 gap-y-1 text-[11px] text-slate-700 mt-2">
-                  {cidadesAnexo.map((cidade, idx) => (
-                    <div key={idx}>{cidade}</div>
-                  ))}
-                </div>
+                {faixasAnexo.map(({ faixa, cidades }) => (
+                  <div key={faixa} className="mt-3 break-inside-avoid-page">
+                    <div className="font-bold text-[#92611F] text-[11.5px] uppercase">
+                      {faixa} — {cidades.length} cidade(s)
+                    </div>
+                    <table className="jmt-proposta-table mt-1">
+                      <thead>
+                        <tr>
+                          <th>Cidade</th>
+                          <th>UF</th>
+                          <th>Km</th>
+                          <th>Prazo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cidades.map((c) => (
+                          <tr key={c.id}>
+                            <td>{c.cidade}</td>
+                            <td>{c.uf || '—'}</td>
+                            <td>{c.distanciaKm ?? '—'}</td>
+                            <td>{c.prazo || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
               </>
             )}
 
