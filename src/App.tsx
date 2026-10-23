@@ -3100,6 +3100,7 @@ export default function App() {
               supervisores={supervisores}
               userRole={userRole}
               atividades={atividadesVisiveis}
+              usuarioNome={currentUser?.nome}
               onCriarCompromisso={
                 currentUser?.modulosPermitidos.includes('agenda')
                   ? async (cli, inter) => {
@@ -3757,6 +3758,15 @@ export default function App() {
         onAddInteraction={(c) => setFichaClienteInteracao(c)}
         onUpdateStatus={handleAtualizarStatusFicha}
         onGerarProposta={handleGerarPropostaFicha}
+        usuarioNome={currentUser?.nome}
+        // Quem abre a ficha de fora do módulo Clientes só vê os documentos; enviar/apagar é de quem tem o módulo.
+        onSalvarDocumentos={!currentUser?.modulosPermitidos.includes('clientes') ? undefined : (id, documentos) => {
+          const atual = clientes.find((c) => c.id === id);
+          if (!atual) return;
+          const atualizado = { ...atual, documentos, atualizadoEm: new Date().toISOString() };
+          handleSaveCliente(atualizado);
+          setFichaClienteSelecionado(atualizado);
+        }}
       />
       <ClientFormModal
         isOpen={!!fichaClienteEmEdicao}

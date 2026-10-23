@@ -43,6 +43,8 @@ interface ClientsViewProps {
   onCriarCompromisso?: (cliente: Cliente, interacao: InteracaoCliente) => Promise<string | undefined>;
   /** Compromissos da Agenda (para saber se o próximo passo já foi concluído lá). */
   atividades?: AtividadeGestao[];
+  /** Nome de quem está logado (vai como "enviado por" nos documentos). */
+  usuarioNome?: string;
 }
 
 export const ClientsView: React.FC<ClientsViewProps> = ({
@@ -54,6 +56,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   userRole,
   onCriarCompromisso,
   atividades = [],
+  usuarioNome,
 }) => {
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
@@ -169,6 +172,14 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     if (selectedDetailClient && selectedDetailClient.id === clienteId) {
       setSelectedDetailClient(updated);
     }
+  };
+
+  const handleSalvarDocumentos = (clienteId: string, documentos: Cliente['documentos']) => {
+    const target = clientes.find((c) => c.id === clienteId);
+    if (!target) return;
+    const updated: Cliente = { ...target, documentos, atualizadoEm: new Date().toISOString() };
+    onSaveCliente(updated);
+    if (selectedDetailClient && selectedDetailClient.id === clienteId) setSelectedDetailClient(updated);
   };
 
   const handleConcluirPasso = (clienteId: string, interacaoId: string) => {
@@ -634,6 +645,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
         onAddInteraction={handleOpenAddInteraction}
         onUpdateStatus={handleUpdateStatus}
         onGerarProposta={handleGerarProposta}
+        onSalvarDocumentos={handleSalvarDocumentos}
+        usuarioNome={usuarioNome}
       />
 
       <ClientInteractionModal

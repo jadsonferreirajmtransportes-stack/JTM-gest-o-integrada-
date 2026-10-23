@@ -27,7 +27,8 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { baixarTabelaFreteExcel } from './tabelaFreteExcel';
-import { Cliente, Empregador, Supervisor, UserRole } from '../../types';
+import { Cliente, DocumentoCliente, Empregador, Supervisor, UserRole } from '../../types';
+import { DocumentosCliente } from './DocumentosCliente';
 import { formatCurrency, formatDateBR } from '../../utils/formatters';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
 
@@ -42,6 +43,9 @@ interface ClientDetailModalProps {
   onAddInteraction: (cliente: Cliente) => void;
   onUpdateStatus: (clienteId: string, status: Cliente['status']) => void;
   onGerarProposta: (cliente: Cliente) => void;
+  /** Grava a lista de documentos do cliente (aba Documentos). */
+  onSalvarDocumentos?: (clienteId: string, documentos: DocumentoCliente[]) => void;
+  usuarioNome?: string;
 }
 
 export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
@@ -55,8 +59,10 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
   onAddInteraction,
   onUpdateStatus,
   onGerarProposta,
+  onSalvarDocumentos,
+  usuarioNome,
 }) => {
-  const [activeTab, setActiveTab] = useState<'geral' | 'operacao' | 'contrato' | 'rotas' | 'contatos' | 'crm'>('geral');
+  const [activeTab, setActiveTab] = useState<'geral' | 'operacao' | 'contrato' | 'rotas' | 'contatos' | 'crm' | 'documentos'>('geral');
 
   if (!isOpen || !cliente) return null;
 
@@ -257,6 +263,19 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           >
             <Clock className="w-3.5 h-3.5 text-purple-600" />
             <span>Histórico CRM ({cliente.interacoes?.length || 0})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('documentos')}
+            className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+              activeTab === 'documentos'
+                ? 'border-[#C48229] text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 text-[#C48229]" />
+            <span>Documentos ({cliente.documentos?.length || 0})</span>
           </button>
         </div>
 
@@ -805,6 +824,15 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           )}
 
           {/* TAB 5: CONTATOS */}
+          {activeTab === 'documentos' && (
+            <DocumentosCliente
+              cliente={cliente}
+              podeEditar={!!onSalvarDocumentos}
+              usuarioNome={usuarioNome}
+              onSalvar={(docs) => onSalvarDocumentos?.(cliente.id, docs)}
+            />
+          )}
+
           {activeTab === 'contatos' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">

@@ -53,6 +53,13 @@ export async function enviarArquivo(arquivo: File, pasta: string): Promise<strin
   return `${PREFIXO_REF}${caminho}`;
 }
 
+/** Apaga do Storage um arquivo enviado por enviarArquivo (ignora o formato antigo em base64). */
+export async function removerArquivo(valor?: string | null): Promise<void> {
+  if (!ehRefStorage(valor)) return;
+  const { error } = await supabase.storage.from(BUCKET).remove([caminhoDaRef(valor)]);
+  if (error) throw new Error(`Não foi possível apagar o arquivo: ${error.message}`);
+}
+
 // Links assinados já gerados nesta sessão — reaproveitar o mesmo link (enquanto válido) deixa
 // o navegador usar o próprio cache do arquivo em vez de baixar de novo a cada abertura.
 const cacheLinks = new Map<string, { url: string; expiraEm: number }>();

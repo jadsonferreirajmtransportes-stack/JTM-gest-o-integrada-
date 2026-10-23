@@ -979,6 +979,20 @@ export interface TabelaPrecoFrete {
   observacoesTarifa?: string;
 }
 
+/** Documento anexado ao cadastro do cliente (arquivo no Storage "anexos" — migração 080). */
+export interface DocumentoCliente {
+  id: string;
+  tipo: string; // ex.: 'Contrato', 'Aditivo', 'Licença sanitária (LS/AFE)'
+  descricao?: string;
+  /** Validade (YYYY-MM-DD) — para licenças, alvarás, contratos com prazo. */
+  validade?: string;
+  arquivoRef: string; // "storage:<caminho>"
+  arquivoNome: string;
+  tamanho?: number;
+  enviadoEm: string;
+  enviadoPor?: string;
+}
+
 export interface InteracaoCliente {
   id: string;
   data: string; // YYYY-MM-DD
@@ -1062,6 +1076,8 @@ export interface Cliente {
   contatos: ContatoCliente[];
   regioesAtendidas: RegiaoAtendimento[];
   interacoes: InteracaoCliente[];
+  /** Documentos do cliente (contrato, licenças, cartão CNPJ...) — migração 080. */
+  documentos?: DocumentoCliente[];
   observacoesOperacionais?: string;
   satisfacaoNPS?: number; // 1 a 10
 
