@@ -310,6 +310,8 @@ import { ChatView } from './components/Chat/ChatView';
 import { FloatingChatWidget } from './components/Chat/FloatingChatWidget';
 import { BarraInferiorMobile } from './components/App/BarraInferiorMobile';
 import { useDemandasDp } from './utils/useDemandasDp';
+import type { RascunhoComunicado } from './components/Comunicados/NovoComunicadoModal';
+import { rascunhoDaAtividade } from './components/Agenda/comunicadoDaAgenda';
 import {
   getConversasDoUsuario,
   getUltimasLeituras,
@@ -650,6 +652,8 @@ export default function App() {
   const [contrachequePublicoEhContracheque, setContrachequePublicoEhContracheque] = useState(true);
   // Portal de Educação do colaborador (?form=portal&token=...) — entra com CPF + nascimento.
   const [portalEducacaoToken, setPortalEducacaoToken] = useState<string | null>(null);
+  // Compromisso da Agenda → comunicado já preenchido (abre no módulo Comunicados).
+  const [rascunhoComunicado, setRascunhoComunicado] = useState<RascunhoComunicado | null>(null);
   // Ponto pelo celular (?form=ponto&token=...) — mesmo token do portal.
   const [pontoToken, setPontoToken] = useState<string | null>(null);
   // Link de comunicado (?form=comunicado&token=...) — leitura e ciência.
@@ -3254,6 +3258,15 @@ export default function App() {
               onUpdateDeliberacoes={handleUpdateDeliberacoes}
               abrirAtividadeId={mencaoAlvo?.tipo === 'atividade' ? mencaoAlvo.id : undefined}
               abrirAtividadeSinal={mencaoAlvo?.tipo === 'atividade' ? mencaoAlvo.sinal : undefined}
+              onGerarComunicado={
+                currentUser?.modulosPermitidos.includes('comunicados')
+                  ? (a) => {
+                      setRascunhoComunicado(rascunhoDaAtividade(a, colaboradores));
+                      setActiveGlobalModule('comunicados');
+                      setActiveSection('comunicados');
+                    }
+                  : undefined
+              }
             />
           )}
 
@@ -3372,7 +3385,13 @@ export default function App() {
           {(activeGlobalModule === 'documentos' || activeSection === 'documentos') && <DocumentosView currentUser={currentUser} />}
 
           {(activeGlobalModule === 'comunicados' || activeSection === 'comunicados') && (
-            <ComunicadosView colaboradores={colaboradores} clientes={clientes} currentUser={currentUser} />
+            <ComunicadosView
+              colaboradores={colaboradores}
+              clientes={clientes}
+              currentUser={currentUser}
+              rascunho={rascunhoComunicado}
+              onRascunhoUsado={() => setRascunhoComunicado(null)}
+            />
           )}
 
           {(activeGlobalModule === 'jornal' || activeSection === 'jornal') && <JornalView colaboradores={colaboradores} currentUser={currentUser} />}

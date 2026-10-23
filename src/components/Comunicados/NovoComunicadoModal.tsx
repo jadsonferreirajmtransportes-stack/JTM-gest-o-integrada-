@@ -22,6 +22,7 @@ interface NovoComunicadoModalProps {
   criadoPor?: string;
   onClose: () => void;
   onCriado: (c: Comunicado, d: DestinatarioComunicado[]) => void;
+  inicial?: RascunhoComunicado;
 }
 
 const ASSINATURAS = ['Departamento Pessoal', 'Diretoria', 'Gestão de Qualidade', 'Comercial', 'Operações'];
@@ -33,8 +34,17 @@ const MODELO_POR_CATEGORIA: Record<string, ModeloImagem> = {
   Segurança: 'seguranca',
   Parabéns: 'parabens',
   Evento: 'evento',
+  Lembrete: 'aviso',
   Comercial: 'comercial',
 };
+
+/** Comunicado já preenchido (ex.: gerado de um compromisso da Agenda). */
+export interface RascunhoComunicado {
+  categoria: string;
+  valores: ValoresModelo;
+  /** Colaboradores já marcados como destinatários. */
+  colaboradoresIds?: string[];
+}
 
 interface Candidato extends NovoDestinatario {
   chave: string;
@@ -120,15 +130,17 @@ const CampoDoModelo: React.FC<{ campo: CampoModelo; valor: ValoresModelo[string]
 };
 
 /** Novo comunicado: conteúdo (com prévia da imagem) → destinatários → cria e gera os links. */
-export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colaboradores, clientes, criadoPor, onClose, onCriado }) => {
+export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colaboradores, clientes, criadoPor, onClose, onCriado, inicial }) => {
   const [etapa, setEtapa] = useState<1 | 2>(1);
   const [publico, setPublico] = useState<PublicoComunicado>('colaboradores');
-  const [categoria, setCategoria] = useState<string>('Aviso');
+  const [categoria, setCategoria] = useState<string>(inicial?.categoria || 'Aviso');
   // Sem texto livre: os pontos-chave de cada categoria viram o texto final pelo modelo de
   // redação (ver comunicadoModelos.ts). Para mudar o texto, muda-se os campos.
-  const [valores, setValores] = useState<ValoresModelo>(() => valoresIniciais('Aviso', 'colaboradores'));
+  const [valores, setValores] = useState<ValoresModelo>(() =>
+    inicial ? { ...valoresIniciais(inicial.categoria, 'colaboradores'), ...inicial.valores } : valoresIniciais('Aviso', 'colaboradores')
+  );
   const [assinatura, setAssinatura] = useState(ASSINATURAS[0]);
-  const [modelo, setModelo] = useState<ModeloImagem>('aviso');
+  const [modelo, setModelo] = useState<ModeloImagem>(inicial ? MODELO_POR_CATEGORIA[inicial.categoria] || 'aviso' : 'aviso');
   const [estilo, setEstilo] = useState(1);
   // Miniaturas dos 5 estilos do tipo escolhido (texto de exemplo, geradas uma vez por tipo).
   const [miniaturas, setMiniaturas] = useState<Record<string, string>>({});
@@ -174,7 +186,7 @@ export const NovoComunicadoModal: React.FC<NovoComunicadoModalProps> = ({ colabo
   const [foto, setFoto] = useState<{ arquivo: File; url: string } | null>(null);
   const [previa, setPrevia] = useState<{ url: string; cortado: boolean } | null>(null);
   const [gerandoPrevia, setGerandoPrevia] = useState(false);
-  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [selecionados, setSelecionados] = useState<Set<string>>(() => new Set((inicial?.colaboradoresIds || []).map((id) => `col:${id}`)));
   const [filtroGrupo, setFiltroGrupo] = useState('');
   const [busca, setBusca] = useState('');
   const [salvando, setSalvando] = useState(false);

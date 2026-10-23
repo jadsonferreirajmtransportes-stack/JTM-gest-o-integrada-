@@ -10,7 +10,7 @@ export type ModeloImagem = 'aviso' | 'urgente' | 'seguranca' | 'parabens' | 'eve
 /** "aviso" (estilo 1) ou "aviso:3" — o estilo vai no mesmo campo, sem mudar o banco. */
 export const gravarModeloImagem = (modelo: ModeloImagem, estilo?: number) => (estilo && estilo > 1 ? `${modelo}:${estilo}` : modelo);
 
-export const CATEGORIAS_COMUNICADO = ['Aviso', 'Informativo', 'Urgente', 'Segurança', 'Parabéns', 'Evento', 'Comercial'] as const;
+export const CATEGORIAS_COMUNICADO = ['Aviso', 'Informativo', 'Urgente', 'Segurança', 'Parabéns', 'Evento', 'Lembrete', 'Comercial'] as const;
 
 export interface Comunicado {
   id: string;

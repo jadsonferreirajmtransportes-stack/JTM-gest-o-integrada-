@@ -34,7 +34,7 @@ import {
 import { EnvioWhatsAppEmMassaModal, ItemEnvioWhatsApp } from '../Common/EnvioWhatsAppEmMassaModal';
 import { useLinksUnicos } from '../../utils/linkUnico';
 import { baixarBlob } from '../../utils/downloadUtils';
-import { NovoComunicadoModal } from './NovoComunicadoModal';
+import { NovoComunicadoModal, RascunhoComunicado } from './NovoComunicadoModal';
 import { EditarComunicadoModal } from './EditarComunicadoModal';
 import { gerarPdfComunicado } from './comunicadoPdf';
 import { gerarImagemComunicado, textoParaImagem } from './comunicadoImagem';
@@ -43,6 +43,9 @@ interface ComunicadosViewProps {
   colaboradores: Colaborador[];
   clientes: Cliente[];
   currentUser?: UsuarioLogin;
+  /** Rascunho vindo de outro módulo (ex.: compromisso da Agenda) — abre o "Novo comunicado" preenchido. */
+  rascunho?: RascunhoComunicado | null;
+  onRascunhoUsado?: () => void;
 }
 
 const dataHora = (iso?: string) => (iso ? new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—');
@@ -70,12 +73,20 @@ function mailto(para: string[], assunto: string, corpo: string, oculto = false):
 
 /** Comunicados padronizados (colaboradores e clientes): texto para WhatsApp/e-mail, imagem nos
  *  modelos JMT, PDF numerado, histórico de envio e ciência por link. */
-export const ComunicadosView: React.FC<ComunicadosViewProps> = ({ colaboradores, clientes, currentUser }) => {
+export const ComunicadosView: React.FC<ComunicadosViewProps> = ({ colaboradores, clientes, currentUser, rascunho, onRascunhoUsado }) => {
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [destinatarios, setDestinatarios] = useState<DestinatarioComunicado[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [novo, setNovo] = useState(false);
+  const [inicialNovo, setInicialNovo] = useState<RascunhoComunicado | undefined>(undefined);
+  useEffect(() => {
+    if (!rascunho) return;
+    setInicialNovo(rascunho);
+    setNovo(true);
+    onRascunhoUsado?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rascunho]);
   const [aberto, setAberto] = useState<Comunicado | null>(null);
   const [busca, setBusca] = useState('');
 
@@ -175,11 +186,16 @@ export const ComunicadosView: React.FC<ComunicadosViewProps> = ({ colaboradores,
           colaboradores={colaboradores}
           clientes={clientes}
           criadoPor={currentUser?.nome}
-          onClose={() => setNovo(false)}
+          inicial={inicialNovo}
+          onClose={() => {
+            setNovo(false);
+            setInicialNovo(undefined);
+          }}
           onCriado={(c, ds) => {
             setComunicados((prev) => [c, ...prev]);
             setDestinatarios((prev) => [...ds, ...prev]);
             setNovo(false);
+            setInicialNovo(undefined);
             setAberto(c);
           }}
         />

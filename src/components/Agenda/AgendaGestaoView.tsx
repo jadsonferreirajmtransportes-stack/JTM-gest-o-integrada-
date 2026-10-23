@@ -48,6 +48,8 @@ interface AgendaGestaoViewProps {
   abrirAtividadeId?: string;
   /** Muda a cada clique de menção, mesmo pra mesma atividade, pra forçar reabrir. */
   abrirAtividadeSinal?: number;
+  /** Compromisso → comunicado (Lembrete) para o portal dos colaboradores. */
+  onGerarComunicado?: (atividade: AtividadeGestao) => void;
 }
 
 type ViewMode = 'mes' | 'semana' | 'dia' | 'lista' | 'kanban';
@@ -63,6 +65,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
   onUpdateDeliberacoes,
   abrirAtividadeId,
   abrirAtividadeSinal,
+  onGerarComunicado,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('mes');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -486,6 +489,14 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
         onStatusChange={onStatusChange}
         onUpdateDeliberacoes={onUpdateDeliberacoes}
         onOpenAlerta={handleOpenAlerta}
+        onGerarComunicado={
+          onGerarComunicado
+            ? (a) => {
+                setIsDetailModalOpen(false);
+                onGerarComunicado(a);
+              }
+            : undefined
+        }
       />
 
       {/* Alerta WhatsApp / E-mail Modal */}

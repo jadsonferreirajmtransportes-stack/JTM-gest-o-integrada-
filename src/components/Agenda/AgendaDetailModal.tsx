@@ -24,6 +24,7 @@ import {
   Video,
   Navigation,
   Paperclip,
+  Megaphone,
 } from 'lucide-react';
 import { AtividadeGestao, StatusAtividadeGestao, ItemDeliberacaoAta } from '../../types';
 import {
@@ -48,6 +49,8 @@ interface AgendaDetailModalProps {
   onStatusChange: (id: string, newStatus: StatusAtividadeGestao) => void;
   onUpdateDeliberacoes: (id: string, deliberacoes: ItemDeliberacaoAta[]) => void;
   onOpenAlerta?: (atividade: AtividadeGestao) => void;
+  /** Gera um comunicado (Lembrete) já preenchido, que vai para o portal dos colaboradores. */
+  onGerarComunicado?: (atividade: AtividadeGestao) => void;
 }
 
 export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
@@ -59,6 +62,7 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
   onStatusChange,
   onUpdateDeliberacoes,
   onOpenAlerta,
+  onGerarComunicado,
 }) => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [anexoVisualizando, setAnexoVisualizando] = useState<{ url: string; nome: string } | null>(null);
@@ -469,6 +473,18 @@ export const AgendaDetailModal: React.FC<AgendaDetailModalProps> = ({
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Mandar Alerta (WhatsApp / E-mail)</span>
+              </button>
+            )}
+
+            {onGerarComunicado && (
+              <button
+                type="button"
+                onClick={() => onGerarComunicado(atividade)}
+                className="px-3 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+                title="Criar um comunicado (Lembrete) com este compromisso — vai para o portal dos colaboradores"
+              >
+                <Megaphone className="w-3.5 h-3.5" />
+                <span>Gerar comunicado</span>
               </button>
             )}
 

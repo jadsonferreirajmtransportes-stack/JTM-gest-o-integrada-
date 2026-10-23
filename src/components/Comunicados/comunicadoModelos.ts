@@ -316,6 +316,46 @@ export const MODELOS_REDACAO: Record<string, ModeloRedacao> = {
     },
   },
 
+  Lembrete: {
+    publicos: ['colaboradores'],
+    descricao: 'Compromisso marcado: exame, reunião, entrega de documento, treinamento (também gerado pela Agenda).',
+    campos: [
+      { chave: 'assunto', rotulo: 'Compromisso (vira o título)', tipo: 'texto', obrigatorio: true, placeholder: 'Ex.: Exame periódico (ASO)' },
+      { chave: 'data', rotulo: 'Data', tipo: 'data', obrigatorio: true },
+      { chave: 'hora', rotulo: 'Horário de início (opcional)', tipo: 'hora' },
+      { chave: 'horaFim', rotulo: 'Horário de término (opcional)', tipo: 'hora' },
+      { chave: 'local', rotulo: 'Local', tipo: 'texto', placeholder: 'Ex.: clínica do trabalhador — Av. ..., 100' },
+      { chave: 'detalhes', rotulo: 'Detalhes (opcional)', tipo: 'texto', placeholder: 'Ex.: atualização do ASO' },
+      { chave: 'acao', rotulo: 'O que a pessoa precisa fazer', tipo: 'texto', placeholder: 'Ex.: chegar meia hora antes, com documento com foto' },
+      { chave: 'duvidas', rotulo: 'Dúvidas com', tipo: 'texto', placeholder: 'Ex.: o Departamento Pessoal', padrao: '' },
+    ],
+    montar: (v, p) => {
+      const data = v.t('data');
+      const hora = v.t('hora');
+      const fim = v.t('horaFim');
+      const quando = [data ? fraseData('No dia', data) : '', hora ? (fim ? `das *${horaFalada(hora)} às ${horaFalada(fim)}*` : `às *${horaFalada(hora)}*`) : '']
+        .filter(Boolean)
+        .join(', ');
+      const partes = [
+        saudacao(p),
+        `Lembramos do compromisso *${v.t('assunto')}*${quando ? `: ${quando}` : ''}${v.t('local') ? `, em *${v.t('local')}*` : ''}.`,
+      ];
+      if (v.t('detalhes')) partes.push(`${inicioDeFrase(v.t('detalhes'))}.`);
+      if (v.t('acao')) partes.push(`*O que você precisa fazer:* ${inicioDeFrase(v.t('acao'))}.`);
+      const duvidas = v.t('duvidas') || 'o seu supervisor ou o Departamento Pessoal';
+      partes.push(`Em caso de dúvidas, fale com ${meioDeFrase(duvidas)}.`);
+      partes.push('Contamos com você!');
+      return {
+        titulo: `Lembrete: ${inicioDeFrase(v.t('assunto'))}`,
+        corpo: partes.join('\n\n'),
+        textoImagem: [v.t('detalhes') ? `${inicioDeFrase(v.t('detalhes'))}.` : '', v.t('acao') ? `${inicioDeFrase(v.t('acao'))}.` : ''].filter(Boolean).join('\n\n'),
+        destaque: data
+          ? `${diaCurto(data)}, ${dataCurta(data)}${hora ? ` às ${horaFalada(hora)}` : ''}${v.t('local') ? ` — ${v.t('local')}` : ''}`
+          : undefined,
+      };
+    },
+  },
+
   Comercial: {
     publicos: ['clientes'],
     descricao: 'Mudança no serviço para os clientes (horários, coleta, tabela, procedimento).',
