@@ -19,6 +19,8 @@ const TEXTO: [number, number, number] = [17, 17, 17];
 const CORPO: [number, number, number] = [51, 51, 51];
 const CINZA: [number, number, number] = [120, 120, 120];
 const FUNDO_CABECALHO: [number, number, number] = [248, 240, 228];
+/** Fundo da faixa de informações do documento (areia bem clara). */
+const AREIA: [number, number, number] = [250, 246, 238];
 
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—');
 const nomeSetor = (sigla: string) => SETORES_DOCUMENTO.find((s) => s.sigla === sigla)?.nome || sigla;
@@ -80,16 +82,30 @@ export function gerarPdfDocumento(d: DocumentoPadronizado): File {
   const titulo = doc.splitTextToSize(d.titulo.toUpperCase(), larguraTexto) as string[];
   doc.text(titulo, MARGEM, y + 2);
   y += titulo.length * 7.5 + 4;
+  // Faixa de informações do documento (sem grade): fundo areia, barra dourada à esquerda e
+  // 4 colunas com o rótulo pequeno em dourado e o valor embaixo.
   const controle = quadroControle(d);
-  autoTable(doc, {
-    startY: y,
-    margin: { left: MARGEM, right: MARGEM, top: TOPO, bottom: 26 },
-    body: [0, 2, 4, 6].map((i) => [controle[i][0], controle[i][1], controle[i + 1][0], controle[i + 1][1]]),
-    theme: 'grid',
-    styles: { fontSize: 8.5, cellPadding: 1.8, textColor: CORPO, lineColor: [225, 225, 225], lineWidth: 0.15 },
-    columnStyles: { 0: { fontStyle: 'bold', fillColor: FUNDO_CABECALHO, cellWidth: 28 }, 2: { fontStyle: 'bold', fillColor: FUNDO_CABECALHO, cellWidth: 28 } },
+  const alturaLinha = 10.5;
+  const alturaFaixa = 4 + alturaLinha * 2 + 1;
+  doc.setFillColor(...AREIA);
+  doc.rect(MARGEM, y, larguraTexto, alturaFaixa, 'F');
+  doc.setFillColor(...BRONZE);
+  doc.rect(MARGEM, y, 1.2, alturaFaixa, 'F');
+  const larguraColuna = (larguraTexto - 8) / 4;
+  controle.forEach(([rotulo, valor], i) => {
+    const x = MARGEM + 6 + (i % 4) * larguraColuna;
+    const yLinha = y + 6 + Math.floor(i / 4) * alturaLinha;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(...BRONZE);
+    doc.text(rotulo.toUpperCase(), x, yLinha);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...TEXTO);
+    const v = doc.splitTextToSize(valor, larguraColuna - 3) as string[];
+    doc.text(v.length > 1 ? `${v[0].replace(/\s+\S*$/, '')}…` : v[0] || '—', x, yLinha + 4.2);
   });
-  y = (doc as any).lastAutoTable.finalY + 9;
+  y += alturaFaixa + 9;
 
   let numeroSecao = 0;
   for (const b of d.blocos) {
@@ -221,10 +237,40 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
       spacing: { after: 200 },
       children: [new TextRun({ text: d.titulo.toUpperCase(), bold: true, size: 34, font: FONTE, color: '111111' })],
     }),
+    // Faixa de informações (sem grade): fundo areia, barra dourada à esquerda, rótulo pequeno
+    // em dourado e o valor embaixo, em 4 colunas.
     new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
-      rows: [0, 2, 4, 6].map(
-        (i) => new TableRow({ children: [celula(controle[i][0], true, 18), celula(controle[i][1], false, 32), celula(controle[i + 1][0], true, 18), celula(controle[i + 1][1], false, 32)] })
+      borders: {
+        top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        left: { style: BorderStyle.SINGLE, size: 24, color: BRONZE_HEX },
+        insideHorizontal: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        insideVertical: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+      },
+      rows: [0, 4].map(
+        (inicio) =>
+          new TableRow({
+            children: controle.slice(inicio, inicio + 4).map(
+              ([rotulo, valor]) =>
+                new TableCell({
+                  width: { size: 25, type: WidthType.PERCENTAGE },
+                  shading: { fill: 'FAF6EE', type: ShadingType.CLEAR, color: 'auto' },
+                  margins: { top: 90, bottom: 90, left: 160, right: 80 },
+                  borders: {
+                    top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                    bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                    left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                    right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                  },
+                  children: [
+                    new Paragraph({ children: [new TextRun({ text: rotulo.toUpperCase(), bold: true, font: FONTE, size: 13, color: BRONZE_HEX })] }),
+                    new Paragraph({ spacing: { before: 30 }, children: [new TextRun({ text: valor, bold: true, font: FONTE, size: 18, color: '111111' })] }),
+                  ],
+                })
+            ),
+          })
       ),
     }),
     new Paragraph({ text: '', spacing: { after: 200 } }),
