@@ -36,6 +36,7 @@ import {
 } from '../../types';
 import { TabelaFreteEditor, TABELA_FRETE_PADRAO } from './TabelaFreteEditor';
 import { ImportarTarifarioModal } from './ImportarTarifarioModal';
+import { ListaTarifasCidade } from './ListaTarifasCidade';
 import { maskCNPJ, maskCEP, maskPhone } from '../../utils/formatters';
 
 interface ClientFormModalProps {
@@ -399,15 +400,6 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
     ]);
   };
 
-  const handleUpdateTarifaCidade = (index: number, field: keyof FaixaTarifaCidade, value: any) => {
-    const updated = [...tarifasPorCidade];
-    updated[index] = { ...updated[index], [field]: value };
-    setTarifasPorCidade(updated);
-  };
-
-  const handleRemoveTarifaCidade = (index: number) => {
-    setTarifasPorCidade(tarifasPorCidade.filter((_, idx) => idx !== index));
-  };
 
   // Custos Extras / Encargos Avulsos Handlers
   const handleAddCustoExtra = () => {
@@ -1175,7 +1167,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                           <span className="text-slate-500 font-normal">(opcional)</span>
                         </span>
                         <p className="text-[10px] text-slate-500">
-                          Use quando a taxa varia por cidade/raio — mesmo formato do tarifário real (Cidade, Raio, Até 10kg, Kg Excedente, Km).
+                          Use quando a taxa varia por cidade/raio — mesmo formato do tarifário real (Cidade, Raio, Até 10kg, Kg Excedente, Km, Prazo).
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -1223,68 +1215,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                       />
                     )}
 
-                    {tarifasPorCidade.length > 0 && (
-                      <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-                        {tarifasPorCidade.map((tarifa, idx) => (
-                          <div
-                            key={tarifa.id}
-                            className="bg-slate-50 p-2 rounded-lg border border-slate-200 space-y-1.5"
-                          >
-                            <div className="grid grid-cols-2 gap-1.5">
-                              <input
-                                type="text"
-                                value={tarifa.cidade}
-                                onChange={(e) => handleUpdateTarifaCidade(idx, 'cidade', e.target.value)}
-                                placeholder="Cidade"
-                                className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
-                              />
-                              <input
-                                type="text"
-                                value={tarifa.raio}
-                                onChange={(e) => handleUpdateTarifaCidade(idx, 'raio', e.target.value)}
-                                placeholder="Raio / Faixa (Ex: Capital, Até 300km)"
-                                className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 gap-1.5 items-center">
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={tarifa.valorAte10Kg}
-                                onChange={(e) => handleUpdateTarifaCidade(idx, 'valorAte10Kg', Number(e.target.value))}
-                                placeholder="Até 10kg (R$)"
-                                className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
-                              />
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={tarifa.valorKgExcedente}
-                                onChange={(e) => handleUpdateTarifaCidade(idx, 'valorKgExcedente', Number(e.target.value))}
-                                placeholder="Kg exc. (R$)"
-                                className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
-                              />
-                              <input
-                                type="number"
-                                value={tarifa.distanciaKm ?? ''}
-                                onChange={(e) =>
-                                  handleUpdateTarifaCidade(idx, 'distanciaKm', e.target.value ? Number(e.target.value) : undefined)
-                                }
-                                placeholder="Km"
-                                className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-900"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveTarifaCidade(idx)}
-                                className="p-1.5 text-slate-500 hover:text-rose-600 rounded transition-colors justify-self-end"
-                                title="Remover Cidade"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <ListaTarifasCidade tarifas={tarifasPorCidade} onChange={setTarifasPorCidade} />
                   </div>
                 )}
 
