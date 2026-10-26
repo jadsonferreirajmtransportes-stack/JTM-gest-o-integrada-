@@ -2359,10 +2359,15 @@ export default function App() {
     const pre = await getPreAdmissaoById(preAdmissaoId);
     if (!pre) return;
     try {
+      // Empresa/supervisor só entram se existirem no cadastro — um id que não existe (ex.: o
+      // padrão antigo "emp-01"/"sup-01") faz o banco recusar o colaborador inteiro. Sem eles, o
+      // colaborador entra sem empresa/supervisor e o DP completa na ficha.
+      const empregadorId = empregadores.some((e) => e.id === pre.empresaPredefinidaId) ? pre.empresaPredefinidaId : empregadores.length === 1 ? empregadores[0].id : undefined;
+      const supervisorId = supervisores.some((s) => s.id === pre.supervisorPredefinidoId) ? pre.supervisorPredefinidoId : undefined;
       const colab = await efetivarPreAdmissao(pre, {
-        empregadorId: pre.empresaPredefinidaId,
+        empregadorId,
         funcaoCargo: pre.cargoPredefinido,
-        supervisorId: pre.supervisorPredefinidoId,
+        supervisorId,
       });
       await updatePreAdmissaoStatus(preAdmissaoId, 'Aprovado', `Efetivado como ${colab.codigoMatricula} em ${new Date().toLocaleDateString('pt-BR')}`);
       const preAtualizado = await getPreAdmissaoById(preAdmissaoId);
@@ -2370,11 +2375,18 @@ export default function App() {
         await savePreAdmissao({ ...preAtualizado, colaboradorEfetivadoId: colab.id });
       }
       await recarregarDp('preAdmissoes', 'colaboradores');
-      showToast(`Admissão de ${colab.nomeCompleto} efetivada com sucesso no quadro de ativos!`, 'success');
+      const faltando = [!empregadorId && 'empresa', !supervisorId && 'supervisor'].filter(Boolean).join(' e ');
+      showToast(
+        faltando
+          ? `Admissão de ${colab.nomeCompleto} efetivada! Complete ${faltando} na ficha do colaborador.`
+          : `Admissão de ${colab.nomeCompleto} efetivada com sucesso no quadro de ativos!`,
+        'success'
+      );
       setSelectedColaboradorDetail(colab);
     } catch (err) {
       console.error(err);
-      showToast('Não foi possível efetivar a admissão. Tente novamente.', 'info');
+      const motivo = err instanceof Error ? err.message : String(err);
+      showToast(`Não foi possível efetivar a admissão. Detalhe técnico: ${motivo}`, 'error');
     }
   };
 

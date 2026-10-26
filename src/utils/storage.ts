@@ -536,7 +536,9 @@ export function buildColaboradorFromPreAdmissao(
   colaboradoresExistentes: number
 ): Colaborador {
   const resolvedConfig = {
-    empregadorId: config?.empregadorId || pre.empresaPredefinidaId || 'emp-01',
+    // Sem empresa/supervisor válidos fica em branco (o DP completa na ficha) — um id inventado
+    // faz o banco recusar o cadastro (chave estrangeira).
+    empregadorId: (config ? config.empregadorId : pre.empresaPredefinidaId) || '',
     funcaoCargo: config?.funcaoCargo || pre.cargoPredefinido || 'Operador Logístico Farma',
     setor: config?.setor || 'Operações / Farma',
     dataAdmissao: config?.dataAdmissao || new Date().toISOString().slice(0, 10),
@@ -544,7 +546,7 @@ export function buildColaboradorFromPreAdmissao(
     gratificacao: config?.gratificacao || 0,
     valorValeAlimentacaoDia: config?.valorValeAlimentacaoDia || 28.5,
     jornadaTrabalho: config?.jornadaTrabalho || '44h semanais (Segunda a Sexta 08h-18h)',
-    supervisorId: config?.supervisorId || pre.supervisorPredefinidoId || 'sup-01',
+    supervisorId: (config ? config.supervisorId : pre.supervisorPredefinidoId) || undefined,
   };
 
   const now = new Date().toISOString();
