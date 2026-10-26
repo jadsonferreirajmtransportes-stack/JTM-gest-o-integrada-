@@ -41,7 +41,7 @@ function gerar(pasta, { titulo, manifest, icone, cor, nomeApp }) {
   console.log(`${pasta}/index.html gerado`);
 }
 
-gerar('gestao', { manifest: 'manifest-gestao.webmanifest', icone: 'gestao-apple-180.png', cor: '#16130F', nomeApp: 'JMT Gestão' });
+gerar('gestao', { titulo: 'JMT Gestão', manifest: 'manifest-gestao.webmanifest', icone: 'gestao-apple-180.png', cor: '#16130F', nomeApp: 'JMT Gestão' });
 gerar('colaborador', {
   titulo: 'JMT Colaborador',
   manifest: 'manifest-portal.webmanifest',
