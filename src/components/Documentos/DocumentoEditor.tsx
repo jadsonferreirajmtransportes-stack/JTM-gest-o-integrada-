@@ -44,9 +44,12 @@ import { gerarDocxDocumento, gerarPdfDocumento, gerarXlsxDocumento } from './ger
 import { baixarBlob } from '../../utils/downloadUtils';
 import { BlocoImagem } from './BlocoImagem';
 import { BlocoAssinaturas } from './BlocoAssinaturas';
+import { EnviarAssinaturaDocumentoModal } from './EnviarAssinaturaDocumentoModal';
+import type { Colaborador } from '../../types';
 
 interface DocumentoEditorProps {
   documento: DocumentoPadronizado;
+  colaboradores?: Colaborador[];
   avisosImportacao?: string[];
   usuario?: string;
   onVoltar: () => void;
@@ -120,7 +123,8 @@ const STATUS_ESTILO: Record<string, string> = {
 
 /** Editor do documento padronizado: dados de controle, crivo do padrão JMT, blocos de conteúdo
  *  e saída em PDF/Word/Excel. Publicar = versão Vigente guardada no histórico. */
-export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, avisosImportacao = [], usuario, onVoltar, onSalvo }) => {
+export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, colaboradores = [], avisosImportacao = [], usuario, onVoltar, onSalvo }) => {
+  const [enviandoAssinatura, setEnviandoAssinatura] = useState(false);
   const [d, setD] = useState<DocumentoPadronizado>(documento);
   const [alterado, setAlterado] = useState(!documento.id);
   const [salvando, setSalvando] = useState(false);
@@ -252,6 +256,17 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, avi
         {d.id && (
           <button
             type="button"
+            onClick={() => (alterado ? setErro('Salve o documento antes de enviar para assinatura.') : setEnviandoAssinatura(true))}
+            disabled={!d.blocos.some((b) => b.tipo === 'assinaturas')}
+            title={d.blocos.some((b) => b.tipo === 'assinaturas') ? 'Enviar para quem está no bloco Assinaturas assinar (portal ou link)' : 'Adicione um bloco de Assinaturas para enviar'}
+            className="px-3 py-2 bg-white border border-[#C48229] text-[#92611F] rounded-lg text-xs font-bold flex items-center gap-1.5 hover:bg-amber-50 disabled:opacity-40"
+          >
+            <PenLine className="w-3.5 h-3.5" /> Assinaturas
+          </button>
+        )}
+        {d.id && (
+          <button
+            type="button"
             onClick={async () => setHistorico(await getVersoes(d.id).catch(() => []))}
             className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1.5 hover:bg-slate-50"
           >
@@ -279,6 +294,7 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, avi
         </div>
       </div>
 
+      {enviandoAssinatura && <EnviarAssinaturaDocumentoModal documento={d} colaboradores={colaboradores} criadoPor={usuario} onClose={() => setEnviandoAssinatura(false)} />}
       {erro && <div className="mx-4 mt-3 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}
       {mostrarAvisos && (
         <div className="mx-4 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-[#92611F] flex items-start gap-2">

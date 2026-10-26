@@ -25,6 +25,9 @@ interface ContrachequePublicViewProps {
 
 /** Texto que o colaborador declara ao assinar — varia pelo tipo de documento. */
 function montarDeclaracao(doc: DocumentoPublico): string {
+  if (doc.categoria === 'padronizado') {
+    return `Declaro que li o documento "${doc.titulo}" e que o assino na condição de: ${doc.tipo}.`;
+  }
   if (doc.categoria === 'disciplinar') {
     return `Declaro que recebi e tomei ciência do documento "${doc.titulo}". Estou ciente de que a minha assinatura indica apenas o recebimento e a ciência desta comunicação, e não a concordância com o seu conteúdo.`;
   }

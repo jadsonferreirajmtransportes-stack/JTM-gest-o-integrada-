@@ -87,6 +87,12 @@ const TEXTOS: Record<CategoriaDocumentoAssinatura, { titulo: string; descricao: 
     vazio: 'Nenhum demonstrativo desta quinzena no portal ainda. Use "Disponibilizar no portal" acima.',
   },
   // Ciência dos POPs — enviada pela tela do POP vigente (módulo POPs).
+  padronizado: {
+    titulo: 'Documentos padronizados — Assinaturas',
+    descricao: 'Documentos enviados para quem elabora, revisa e aprova assinar.',
+    importar: '',
+    vazio: 'Nenhum documento enviado para assinatura.',
+  },
   instrucao: {
     titulo: 'Instruções de Trabalho — Ciência dos colaboradores',
     descricao: 'Instruções enviadas para o colaborador ler e assinar a ciência no link pessoal.',

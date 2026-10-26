@@ -7,14 +7,20 @@
 import { supabase } from './supabaseClient';
 import { enviarArquivo, obterUrlArquivo } from './arquivosStorage';
 
-export type CategoriaDocumentoAssinatura = 'contracheque' | 'ferias' | 'disciplinar' | 'regulamento' | 'ponto' | 'vale_alimentacao' | 'pop' | 'instrucao';
+export type CategoriaDocumentoAssinatura = 'contracheque' | 'ferias' | 'disciplinar' | 'regulamento' | 'ponto' | 'vale_alimentacao' | 'pop' | 'instrucao' | 'padronizado';
 export type StatusDocumentoAssinatura = 'Pendente' | 'Visualizado' | 'Assinado';
 
 export interface DocumentoAssinatura {
   id: string;
   categoria: CategoriaDocumentoAssinatura;
+  /** Vazio quando quem assina é de fora da empresa (ver signatarioCpf — migração 081). */
   colaboradorId: string;
   colaboradorNome: string;
+  /** Pessoa de fora: CPF que o link confere e WhatsApp/e-mail para o aviso (migração 081). */
+  signatarioCpf?: string;
+  signatarioContato?: string;
+  /** Documento padronizado: '<id do bloco>:<índice da pessoa>' no bloco Assinaturas. */
+  posicao?: string;
   /** Contracheque: competência 'YYYY-MM'. */
   referencia: string;
   tipo: string;
@@ -78,8 +84,11 @@ function rowToDocumento(r: any): DocumentoAssinatura {
   return {
     id: r.id,
     categoria: r.categoria,
-    colaboradorId: r.colaborador_id,
+    colaboradorId: r.colaborador_id ?? '',
     colaboradorNome: r.colaborador_nome,
+    signatarioCpf: u(r.signatario_cpf ?? null),
+    signatarioContato: u(r.signatario_contato ?? null),
+    posicao: u(r.posicao ?? null),
     referencia: r.referencia,
     tipo: r.tipo,
     titulo: r.titulo,
@@ -99,6 +108,14 @@ function rowToDocumento(r: any): DocumentoAssinatura {
     criadoEm: r.criado_em,
     criadoPor: u(r.criado_por),
   };
+}
+
+/** Todas as assinaturas de uma referência, COM a imagem (para montar o PDF assinado) —
+ *  ex.: as de um documento padronizado ('<id>@v<versão>'). */
+export async function getAssinaturasDaReferencia(categoria: CategoriaDocumentoAssinatura, referencia: string): Promise<DocumentoAssinatura[]> {
+  const { data, error } = await supabase.from('documentos_assinatura').select('*').eq('categoria', categoria).eq('referencia', referencia).order('criado_em');
+  assertNoError(error, 'getAssinaturasDaReferencia');
+  return (data ?? []).map(rowToDocumento);
 }
 
 function gerarToken(): string {
@@ -133,8 +150,12 @@ export async function getDocumentoAssinatura(id: string): Promise<DocumentoAssin
 
 export interface NovoDocumentoAssinatura {
   categoria: CategoriaDocumentoAssinatura;
+  /** Vazio para pessoa de fora — aí signatarioCpf é obrigatório (é o que o link confere). */
   colaboradorId: string;
   colaboradorNome: string;
+  signatarioCpf?: string;
+  signatarioContato?: string;
+  posicao?: string;
   referencia: string;
   tipo: string;
   titulo: string;
@@ -153,8 +174,12 @@ export async function criarDocumentoAssinatura(novo: NovoDocumentoAssinatura): P
   const row = {
     id: `docass-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     categoria: novo.categoria,
-    colaborador_id: novo.colaboradorId,
+    colaborador_id: novo.colaboradorId || null,
     colaborador_nome: novo.colaboradorNome,
+    // Colunas da migração 081 só vão quando usadas — os envios antigos seguem iguais.
+    ...(novo.signatarioCpf ? { signatario_cpf: novo.signatarioCpf.replace(/\D/g, '') } : {}),
+    ...(novo.signatarioContato ? { signatario_contato: novo.signatarioContato } : {}),
+    ...(novo.posicao ? { posicao: novo.posicao } : {}),
     referencia: novo.referencia,
     tipo: novo.tipo,
     titulo: novo.titulo,

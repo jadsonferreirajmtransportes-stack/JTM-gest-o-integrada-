@@ -12,6 +12,7 @@ import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 import { BlocoDocumento, DocumentoPadronizado, SETORES_DOCUMENTO } from '../../utils/documentosPadronizadosApi';
 import { obterUrlArquivo } from '../../utils/arquivosStorage';
+import type { CampoAssinaturaPdf } from '../../utils/documentosAssinaturaApi';
 
 interface ImagemCarregada {
   dataUrl: string; // sempre JPEG (fundo branco) — leve e aceito por PDF, Word e Excel
@@ -77,7 +78,23 @@ function quadroControle(d: DocumentoPadronizado): [string, string][] {
 // ---------------------------------------------------------------------------
 // PDF
 // ---------------------------------------------------------------------------
-export async function gerarPdfDocumento(d: DocumentoPadronizado): Promise<File> {
+/** Assinatura já feita (link/portal) a desenhar no espaço da pessoa no bloco Assinaturas. */
+export interface AssinaturaNoDocumento {
+  imagem: string; // PNG (data URL)
+  em: string; // ISO
+}
+const MM_PARA_PT = 72 / 25.4;
+
+export async function gerarPdfDocumento(
+  d: DocumentoPadronizado,
+  opcoes: {
+    /** posição ('<bloco>:<índice>') → assinatura feita. */
+    assinaturas?: Record<string, AssinaturaNoDocumento>;
+    /** Recebe a área (em pontos do PDF) de cada espaço de assinatura — usado no envio, para o
+     *  comprovante de quem assina mostrar a assinatura no lugar certo. */
+    campos?: Record<string, CampoAssinaturaPdf>;
+  } = {}
+): Promise<File> {
   const imagens = await carregarImagens(d);
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const largura = doc.internal.pageSize.getWidth();
@@ -222,6 +239,29 @@ export async function gerarPdfDocumento(d: DocumentoPadronizado): Promise<File> 
         b.pessoas.slice(i, i + porLinha).forEach((pessoa, k) => {
           const x = MARGEM + k * (larg + vao);
           const meio = x + larg / 2;
+          const posicao = `${b.id}:${i + k}`;
+          const assinada = opcoes.assinaturas?.[posicao];
+          if (opcoes.campos)
+            opcoes.campos[posicao] = {
+              pagina: doc.getNumberOfPages() - 1,
+              x: (x + 2) * MM_PARA_PT,
+              y: (altura - (y + 16)) * MM_PARA_PT + 1,
+              largura: (larg - 4) * MM_PARA_PT,
+              altura: 34,
+            };
+          if (assinada) {
+            try {
+              const prop = doc.getImageProperties(assinada.imagem);
+              const maxW = larg - 8;
+              const maxH = 11;
+              const escala = Math.min(maxW / prop.width, maxH / prop.height);
+              const w = prop.width * escala;
+              const h = prop.height * escala;
+              doc.addImage(assinada.imagem, 'PNG', meio - w / 2, y + 15.5 - h, w, h);
+            } catch (e) {
+              console.warn('Assinatura não pôde ser desenhada', e);
+            }
+          }
           if (pessoa.papel) {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(7);
@@ -239,7 +279,17 @@ export async function gerarPdfDocumento(d: DocumentoPadronizado): Promise<File> 
           doc.setFontSize(8);
           doc.setTextColor(...CINZA);
           if (pessoa.cargo) doc.text(pessoa.cargo, meio, y + 24.5, { align: 'center', maxWidth: larg });
-          if (b.comData) doc.text(`Data: ${pessoa.data || '____/____/________'}`, meio, y + (pessoa.cargo ? 29.5 : 25.5), { align: 'center' });
+          const dataAssinatura = assinada ? new Date(assinada.em).toLocaleDateString('pt-BR') : undefined;
+          if (b.comData) doc.text(`Data: ${dataAssinatura || pessoa.data || '____/____/________'}`, meio, y + (pessoa.cargo ? 29.5 : 25.5), { align: 'center' });
+          if (assinada) {
+            doc.setFontSize(6);
+            doc.text(
+              `Assinado eletronicamente em ${new Date(assinada.em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`,
+              meio,
+              y + (pessoa.cargo ? 29.5 : 25.5) + (b.comData ? 3.5 : 0),
+              { align: 'center' }
+            );
+          }
         });
         y += alturaEspaco;
       }

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FileStack, Upload, Plus, Loader2, Search, FileText, FileType2, Sheet, Ban, Trash2 } from 'lucide-react';
-import { UsuarioLogin } from '../../types';
+import { Colaborador, UsuarioLogin } from '../../types';
 import {
   DocumentoPadronizado,
   SETORES_DOCUMENTO,
@@ -14,6 +14,8 @@ import { DocumentoEditor } from './DocumentoEditor';
 
 interface DocumentosViewProps {
   currentUser?: UsuarioLogin;
+  /** Para enviar o documento para assinatura (bloco Assinaturas). */
+  colaboradores?: Colaborador[];
 }
 
 const STATUS_ESTILO: Record<string, string> = {
@@ -50,7 +52,7 @@ function documentoNovo(usuario?: string): DocumentoPadronizado {
 
 /** Padronização de Documentos: importa PDF/Word/Excel, revisa no editor com o crivo do padrão
  *  JMT e gera o documento na identidade da empresa. Biblioteca com código (DOC-SETOR-NNN) e versão. */
-export const DocumentosView: React.FC<DocumentosViewProps> = ({ currentUser }) => {
+export const DocumentosView: React.FC<DocumentosViewProps> = ({ currentUser, colaboradores }) => {
   const [documentos, setDocumentos] = useState<DocumentoPadronizado[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -128,6 +130,7 @@ export const DocumentosView: React.FC<DocumentosViewProps> = ({ currentUser }) =
         documento={aberto.doc}
         avisosImportacao={aberto.avisos}
         usuario={currentUser?.nome}
+        colaboradores={colaboradores}
         onVoltar={() => setAberto(null)}
         onSalvo={atualizarNaLista}
       />
