@@ -534,7 +534,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
+        <div className="px-6 py-4 border-b border-slate-100 flex shrink-0 items-center justify-between bg-white">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#92611F]">
               <Building2 className="w-5 h-5" />
@@ -558,7 +558,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-100 bg-slate-50 px-6 gap-2 overflow-x-auto custom-scrollbar">
+        <div className="flex shrink-0 border-b border-slate-100 bg-slate-50 px-6 gap-2 overflow-x-auto custom-scrollbar">
           <button
             type="button"
             onClick={() => setActiveTab('cadastral')}
