@@ -647,6 +647,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                             <th className="text-right p-2 font-semibold">Até 10kg</th>
                             <th className="text-right p-2 font-semibold">Kg Exc.</th>
                             <th className="text-right p-2 font-semibold">Km</th>
+                                <th className="text-right p-2 font-semibold">Prazo</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -657,6 +658,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                               <td className="p-2 text-right font-semibold">{formatCurrency(t.valorAte10Kg)}</td>
                               <td className="p-2 text-right font-semibold">{formatCurrency(t.valorKgExcedente)}</td>
                               <td className="p-2 text-right text-slate-400">{t.distanciaKm ?? '—'}</td>
+                                  <td className="p-2 text-right font-semibold text-slate-600">{t.prazo || '—'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -725,6 +727,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                                 <th className="text-right p-2 font-semibold">Até 10kg</th>
                                 <th className="text-right p-2 font-semibold">Kg Exc.</th>
                                 <th className="text-right p-2 font-semibold">Km</th>
+                                <th className="text-right p-2 font-semibold">Prazo</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -735,6 +738,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                                   <td className="p-2 text-right font-semibold">{formatCurrency(t.valorAte10Kg)}</td>
                                   <td className="p-2 text-right font-semibold">{formatCurrency(t.valorKgExcedente)}</td>
                                   <td className="p-2 text-right text-slate-400">{t.distanciaKm ?? '—'}</td>
+                                  <td className="p-2 text-right font-semibold text-slate-600">{t.prazo || '—'}</td>
                                 </tr>
                               ))}
                             </tbody>

@@ -66,10 +66,11 @@ function temPreco(t?: TabelaPrecoFrete): t is TabelaPrecoFrete {
 }
 
 /** Valor mais comum de uma lista (ex.: prazo da faixa). */
-function maisComum(valores: (string | undefined)[]): string | undefined {
-  const cont = new Map<string, number>();
-  valores.filter(Boolean).forEach((v) => cont.set(v as string, (cont.get(v as string) || 0) + 1));
-  return Array.from(cont.entries()).sort((a, b) => b[1] - a[1])[0]?.[0];
+/** Prazo da faixa: um só quando todas as cidades têm o mesmo; senão os prazos que existem
+ *  (ex.: "24HS / 48HS") — o prazo de cada cidade fica no Anexo I. */
+function prazosDaFaixa(valores: (string | undefined)[]): string | undefined {
+  const distintos = Array.from(new Set(valores.map((v) => v?.trim()).filter(Boolean))) as string[];
+  return distintos.length ? distintos.join(' / ') : undefined;
 }
 
 /** Uma parte da seção 5 — um tarifário (Aéreo, Rodoviário ou o único do cliente). */
@@ -117,7 +118,7 @@ const BlocoTarifario: React.FC<{ titulo?: string; tabela: TabelaPrecoFrete; incl
                     <td>{faixa}</td>
                     <td>{iguais(v10) ? formatCurrency(v10[0]) : `a partir de ${formatCurrency(Math.min(...v10))}`}</td>
                     <td>{iguais(vExc) ? formatCurrency(vExc[0]) : `a partir de ${formatCurrency(Math.min(...vExc))}`}</td>
-                    <td>{maisComum(cidades.map((c) => c.prazo)) || '—'}</td>
+                    <td>{prazosDaFaixa(cidades.map((c) => c.prazo)) || '—'}</td>
                     <td>{cidades.length}</td>
                   </tr>
                 );
