@@ -8,7 +8,7 @@ import { JmtLogo } from '../Brand/JmtLogo';
  *  link), mas ainda não tem senha própria definida. Só depois de definir aqui é que ela entra
  *  de fato no sistema. Ver AuthGate.tsx (detecta type=invite/recovery na URL) e a Edge Function
  *  convidar-usuario (dispara o e-mail com esse link). */
-export const DefinirSenhaScreen: React.FC<{ onConcluido: () => void }> = ({ onConcluido }) => {
+export const DefinirSenhaScreen: React.FC<{ onConcluido: () => void; recuperacao?: boolean }> = ({ onConcluido, recuperacao }) => {
   const [senha, setSenha] = useState('');
   const [confirmacao, setConfirmacao] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -50,8 +50,8 @@ export const DefinirSenhaScreen: React.FC<{ onConcluido: () => void }> = ({ onCo
           <div className="flex justify-center mb-3">
             <JmtLogo variant="icon" theme="light" iconSize={40} />
           </div>
-          <h1 className="text-slate-900 text-lg">Bem-vindo(a) à JMT Gestão Integrada</h1>
-          <p className="text-slate-500 text-xs mt-1">Defina sua senha de acesso pra continuar</p>
+          <h1 className="text-slate-900 text-lg">{recuperacao ? 'Criar uma senha nova' : 'Bem-vindo(a) à JMT Gestão Integrada'}</h1>
+          <p className="text-slate-500 text-xs mt-1">{recuperacao ? 'Digite a senha nova duas vezes para continuar' : 'Defina sua senha de acesso pra continuar'}</p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {erro && (

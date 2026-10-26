@@ -10,6 +10,8 @@ import { DefinirSenhaScreen } from './DefinirSenhaScreen';
  *  — o Supabase já consome esse hash e cria a sessão sozinho antes daqui, então só precisamos
  *  checar se é esse o motivo da sessão existir, pra decidir se mostra a tela de "definir senha"
  *  antes de deixar entrar no sistema de verdade. */
+const ehRecuperacao = typeof window !== 'undefined' && new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type') === 'recovery';
+
 function ehLinkDeConviteOuRecuperacao(): boolean {
   if (typeof window === 'undefined') return false;
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
@@ -75,6 +77,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
   if (precisaDefinirSenha) {
     return (
       <DefinirSenhaScreen
+        recuperacao={ehRecuperacao}
         onConcluido={() => {
           setPrecisaDefinirSenha(false);
           // Limpa o #access_token=...&type=invite da URL — sem isso, um F5 nessa página
