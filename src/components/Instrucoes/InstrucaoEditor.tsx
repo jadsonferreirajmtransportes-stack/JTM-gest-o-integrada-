@@ -63,6 +63,8 @@ interface InstrucaoEditorProps {
   /** Abre o modal de compartilhamento do link público de preenchimento. Omitido no próprio
    *  formulário público (não faz sentido gerar link de dentro do link). */
   onShare?: () => void;
+  /** Abre o envio para os colaboradores (link pessoal + termo de ciência). */
+  onCompartilharColaboradores?: () => void;
   /** Modo de preenchimento por link público (colaborador sem login): esconde exclusão,
    *  favoritar e o vínculo com outros módulos — o preenchedor só cuida do conteúdo do processo. */
   modoPublico?: boolean;
@@ -92,6 +94,7 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
   onOpenVincular,
   onNavigateToVinculo,
   onShare,
+  onCompartilharColaboradores,
   modoPublico = false,
   usuarios = [],
 }) => {
@@ -513,6 +516,16 @@ export const InstrucaoEditor: React.FC<InstrucaoEditorProps> = ({
         <span className="text-[11px] text-slate-400">Versão {form.versao}</span>
 
         <div className="ml-auto flex items-center gap-1">
+          {!modoPublico && onCompartilharColaboradores && (
+            <button
+              type="button"
+              onClick={onCompartilharColaboradores}
+              className="mr-1 px-2.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-[11px] font-bold flex items-center gap-1.5 normal-case tracking-normal"
+              title="Enviar aos colaboradores pelo link pessoal, com termo de ciência"
+            >
+              <Users className="w-3.5 h-3.5" /> Enviar aos colaboradores
+            </button>
+          )}
           {!modoPublico && onShare && (
             <button
               type="button"

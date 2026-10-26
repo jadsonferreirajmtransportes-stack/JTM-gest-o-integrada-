@@ -12,6 +12,7 @@ const ROTULO_CATEGORIA: Record<string, string> = {
   disciplinar: 'Medida disciplinar',
   regulamento: 'Regulamento',
   pop: 'POP — Procedimento',
+  instrucao: 'Instrução de Trabalho',
 };
 
 export const rotuloDocumentoPortal = (d: { categoria: string; tipo: string }) => rotuloDe(d);

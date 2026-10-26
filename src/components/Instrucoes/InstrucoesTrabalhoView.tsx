@@ -17,6 +17,7 @@ import {
 import { CATEGORIAS_INSTRUCAO, STATUS_INSTRUCAO_CONFIG, TEMPLATES_INSTRUCAO, criarInstrucaoVazia, getCategoriaConfig } from './instrucoesTrabalhoUtils';
 import { InstrucaoEditor } from './InstrucaoEditor';
 import { InstrucaoLinkModal } from './InstrucaoLinkModal';
+import { CienciaInstrucaoModal } from './CienciaInstrucaoModal';
 import { VincularModuloModal } from '../Notas/VincularModuloModal';
 import { formatDateBR } from '../../utils/formatters';
 
@@ -64,6 +65,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
   const [filtroCategoria, setFiltroCategoria] = useState<CategoriaInstrucaoTrabalho | 'todas'>('todas');
   const [isVincularOpen, setIsVincularOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [isCienciaOpen, setIsCienciaOpen] = useState(false);
   const [isNovaOpen, setIsNovaOpen] = useState(false);
   const [categoriaEscolhida, setCategoriaEscolhida] = useState<CategoriaInstrucaoTrabalho | null>(null);
 
@@ -240,6 +242,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
               onOpenVincular={() => setIsVincularOpen(true)}
               onNavigateToVinculo={onNavigateModule}
               onShare={() => setIsLinkModalOpen(true)}
+              onCompartilharColaboradores={() => setIsCienciaOpen(true)}
               usuarios={usuarios}
             />
           ) : (
@@ -285,6 +288,10 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
           onClose={() => setIsLinkModalOpen(false)}
           instrucao={instrucaoSelecionada}
         />
+      )}
+
+      {instrucaoSelecionada && isCienciaOpen && (
+        <CienciaInstrucaoModal instrucao={instrucaoSelecionada} colaboradores={colaboradores} criadoPor={currentUserName} onClose={() => setIsCienciaOpen(false)} />
       )}
 
       {/* Modal: Nova Instrução — escolher operação e, em seguida, um modelo pronto ou em branco */}
