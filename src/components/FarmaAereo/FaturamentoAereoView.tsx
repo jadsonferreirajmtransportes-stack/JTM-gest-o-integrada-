@@ -709,6 +709,16 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     });
   };
 
+  // Faturas marcadas na lista — a barra do topo soma cobrado/pago/em aberto só delas.
+  const [faturasMarcadas, setFaturasMarcadas] = useState<Set<string>>(new Set());
+  const alternarFaturaMarcada = (id: string) =>
+    setFaturasMarcadas((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+
   const toggleSelecionado = (id: string) => {
     setSelecionados((prev) => {
       const next = new Set(prev);
@@ -1193,10 +1203,46 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       {/* Tabela de Faturas */}
       {abaLista === 'faturas' && (
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
+        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center gap-3 flex-wrap">
+          {faturasFiltradas.length > 0 && (
+            <input
+              type="checkbox"
+              title="Marcar todas as faturas listadas"
+              checked={faturasFiltradas.every((f) => faturasMarcadas.has(f.id))}
+              ref={(el) => {
+                if (el) el.indeterminate = faturasFiltradas.some((f) => faturasMarcadas.has(f.id)) && !faturasFiltradas.every((f) => faturasMarcadas.has(f.id));
+              }}
+              onChange={(e) => setFaturasMarcadas(e.target.checked ? new Set(faturasFiltradas.map((f) => f.id)) : new Set())}
+              className="rounded border-slate-300 text-[#C48229] focus:ring-[#C48229]"
+            />
+          )}
           <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
             Faturas ({faturasFiltradas.length})
           </h4>
+          {(() => {
+            const marcadas = faturasFiltradas.filter((f) => faturasMarcadas.has(f.id));
+            if (!marcadas.length) return <span className="text-[11px] text-slate-400">Marque as faturas para ver o total delas.</span>;
+            const soma = marcadas.reduce(
+              (acc, f) => {
+                const r = computeResumoFatura(f.id, lancamentos, clientes);
+                return { cobrado: acc.cobrado + r.valorTotalCobrado, pago: acc.pago + r.valorPago };
+              },
+              { cobrado: 0, pago: 0 }
+            );
+            return (
+              <div className="ml-auto flex items-center gap-3 flex-wrap text-[11px] bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+                <span className="font-bold text-[#92611F]">{marcadas.length} selecionada(s)</span>
+                <span>
+                  Total: <b className="text-slate-900 text-xs">{formatCurrency(soma.cobrado)}</b>
+                </span>
+                <span className="text-emerald-700">Pago: <b>{formatCurrency(soma.pago)}</b></span>
+                <span className="text-rose-700">Em aberto: <b>{formatCurrency(soma.cobrado - soma.pago)}</b></span>
+                <button type="button" onClick={() => setFaturasMarcadas(new Set())} className="text-slate-500 hover:text-slate-800 underline normal-case tracking-normal">
+                  limpar
+                </button>
+              </div>
+            );
+          })()}
         </div>
 
         {faturasFiltradas.length === 0 ? (
@@ -1246,8 +1292,17 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                         setExpandedFaturaId(isExpanded ? null : fatura.id);
                       }
                     }}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left cursor-pointer"
+                    className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left cursor-pointer ${faturasMarcadas.has(fatura.id) ? 'bg-amber-50/50' : ''}`}
                   >
+                    <input
+                      type="checkbox"
+                      checked={faturasMarcadas.has(fatura.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      onChange={() => alternarFaturaMarcada(fatura.id)}
+                      title="Marcar para somar com as outras faturas marcadas"
+                      className="rounded border-slate-300 text-[#C48229] focus:ring-[#C48229] shrink-0"
+                    />
                     {isExpanded ? (
                       <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
                     ) : (
