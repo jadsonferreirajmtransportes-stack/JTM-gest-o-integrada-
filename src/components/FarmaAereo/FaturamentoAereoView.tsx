@@ -692,6 +692,23 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       onUpdateLancamento(atualizado);
     };
 
+  // "Pago" de todos os lançamentos visíveis da fatura de uma vez — mesma regra do checkbox de
+  // cada linha (data de conclusão e Valor Recebido preenchidos só quando estão vazios).
+  const marcarTodosPagos = (lista: LancamentoFaturamentoAereo[], pago: boolean, clienteDaFatura?: Cliente) => {
+    const alvo = lista.filter((l) => !!l.confirmacaoPagamento !== pago);
+    if (!alvo.length) return;
+    if (alvo.length > 1 && !window.confirm(`${pago ? 'Marcar' : 'Desmarcar'} ${alvo.length} lançamento(s) como pago?`)) return;
+    const hojeIso = new Date().toISOString().split('T')[0];
+    alvo.forEach((l) => {
+      const cliente = clienteDaFatura || findClienteById(clientes, l.clienteId, l.clienteNome);
+      handleFieldChangeFactory(l)({
+        confirmacaoPagamento: pago,
+        dataConclusao: pago ? l.dataConclusao || hojeIso : undefined,
+        valorRecebido: pago && !l.valorRecebido ? computeValorACobrar(l, cliente) : l.valorRecebido,
+      });
+    });
+  };
+
   const toggleSelecionado = (id: string) => {
     setSelecionados((prev) => {
       const next = new Set(prev);
@@ -1611,7 +1628,20 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                                     <th className="px-2 py-2">Data</th>
                                     <th className="px-2 py-2 text-right">Valor a Cobrar</th>
                                     <th className="px-2 py-2">Valor Recebido</th>
-                                    <th className="px-2 py-2 text-center">Pago</th>
+                                    <th className="px-2 py-2 text-center">
+                                      <label className="inline-flex flex-col items-center gap-0.5 cursor-pointer" title="Marcar ou desmarcar todos os lançamentos listados como pagos">
+                                        <span>Pago</span>
+                                        <input
+                                          type="checkbox"
+                                          checked={lancamentosDaFaturaFiltrados.length > 0 && lancamentosDaFaturaFiltrados.every((l) => l.confirmacaoPagamento)}
+                                          ref={(el) => {
+                                            if (el) el.indeterminate = lancamentosDaFaturaFiltrados.some((l) => l.confirmacaoPagamento) && !lancamentosDaFaturaFiltrados.every((l) => l.confirmacaoPagamento);
+                                          }}
+                                          onChange={(e) => marcarTodosPagos(lancamentosDaFaturaFiltrados, e.target.checked, clienteDaFatura)}
+                                          className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                        />
+                                      </label>
+                                    </th>
                                     <th className="px-2 py-2 text-center">Fatura</th>
                                     <th className="px-2 py-2" />
                                   </tr>
