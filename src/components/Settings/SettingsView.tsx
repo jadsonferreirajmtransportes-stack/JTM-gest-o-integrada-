@@ -20,6 +20,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import {
+  Colaborador,
   Empregador,
   CargoSalario,
   MotivoOcorrenciaConfig,
@@ -55,6 +56,8 @@ const CORES_OPERACAO = [
 ];
 
 interface SettingsViewProps {
+  /** Para criar um supervisor a partir de um colaborador já cadastrado. */
+  colaboradores?: Colaborador[];
   empregadores: Empregador[];
   cargos: CargoSalario[];
   supervisores: Supervisor[];
@@ -70,6 +73,7 @@ interface SettingsViewProps {
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
+  colaboradores = [],
   empregadores,
   cargos,
   supervisores,
@@ -185,6 +189,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [supSetor, setSupSetor] = useState('Transporte de Medicamentos');
   const [supEmail, setSupEmail] = useState('');
   const [supTelefone, setSupTelefone] = useState('');
+  const [supColaboradorId, setSupColaboradorId] = useState('');
+  // Escolher um colaborador cadastrado preenche nome, cargo, setor, e-mail e WhatsApp do cadastro.
+  const escolherColaboradorSupervisor = (id: string) => {
+    setSupColaboradorId(id);
+    const c = colaboradores.find((x) => x.id === id);
+    if (!c) return;
+    setSupNome(c.nomeCompleto);
+    if (c.funcaoCargo) setSupCargo(c.funcaoCargo);
+    if (c.setor) setSupSetor(c.setor);
+    setSupEmail(c.email || '');
+    setSupTelefone(c.telefoneWhatsapp || '');
+  };
 
   // New Empregador Form
   const [empRazao, setEmpRazao] = useState('');
@@ -225,6 +241,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       ativo: true,
     });
     setSupNome('');
+    setSupColaboradorId('');
     setIsAddModalOpen(false);
   };
 
@@ -851,6 +868,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             {activeTab === 'supervisores' && (
               <form onSubmit={handleSaveSupervisor} className="p-5 space-y-3 text-xs">
+                {colaboradores.length > 0 && (
+                  <div className="bg-amber-50/60 border border-amber-200 rounded-lg p-2.5">
+                    <label className="font-semibold text-slate-700 block mb-1">Escolher um colaborador cadastrado</label>
+                    <select
+                      value={supColaboradorId}
+                      onChange={(e) => escolherColaboradorSupervisor(e.target.value)}
+                      className="w-full p-2 border border-slate-200 rounded-lg bg-white"
+                    >
+                      <option value="">— Digitar os dados à mão —</option>
+                      {colaboradores
+                        .filter((c) => c.status !== 'Inativo' && !supervisores.some((s) => s.nome.trim().toUpperCase() === c.nomeCompleto.trim().toUpperCase()))
+                        .sort((a, b) => a.nomeCompleto.localeCompare(b.nomeCompleto))
+                        .map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.nomeCompleto}
+                            {c.funcaoCargo ? ` · ${c.funcaoCargo}` : ''}
+                          </option>
+                        ))}
+                    </select>
+                    <p className="text-[10px] text-slate-500 mt-1">Nome, cargo, setor, e-mail e WhatsApp vêm do cadastro — dá para ajustar abaixo.</p>
+                  </div>
+                )}
                 <div>
                   <label className="font-semibold text-slate-700 block mb-1">Nome Completo *</label>
                   <input

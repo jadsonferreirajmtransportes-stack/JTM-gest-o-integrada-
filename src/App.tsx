@@ -3679,6 +3679,7 @@ export default function App() {
 
           {activeGlobalModule === 'dp' && (activeSection === 'cargos' || activeSection === 'supervisores') && (podeVerSecaoDp(currentUser, 'cargos') || podeVerSecaoDp(currentUser, 'supervisores')) && (
             <SettingsView
+              colaboradores={colaboradores}
               empregadores={empregadores}
               cargos={cargos}
               supervisores={supervisores}
