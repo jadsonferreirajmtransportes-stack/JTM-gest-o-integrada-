@@ -711,6 +711,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
 
   // Faturas marcadas na lista — a barra do topo soma cobrado/pago/em aberto só delas.
   const [faturasMarcadas, setFaturasMarcadas] = useState<Set<string>>(new Set());
+  const [somenteMarcadas, setSomenteMarcadas] = useState(false);
   const alternarFaturaMarcada = (id: string) =>
     setFaturasMarcadas((prev) => {
       const n = new Set(prev);
@@ -1237,7 +1238,21 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                 </span>
                 <span className="text-emerald-700">Pago: <b>{formatCurrency(soma.pago)}</b></span>
                 <span className="text-rose-700">Em aberto: <b>{formatCurrency(soma.cobrado - soma.pago)}</b></span>
-                <button type="button" onClick={() => setFaturasMarcadas(new Set())} className="text-slate-500 hover:text-slate-800 underline normal-case tracking-normal">
+                <button
+                  type="button"
+                  onClick={() => setSomenteMarcadas((v) => !v)}
+                  className={`px-2 py-1 rounded-md border font-semibold normal-case tracking-normal ${somenteMarcadas ? 'bg-[#C48229] border-[#C48229] text-white' : 'bg-white border-amber-300 text-[#92611F]'}`}
+                >
+                  {somenteMarcadas ? 'Mostrar todas' : 'Mostrar só as selecionadas'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFaturasMarcadas(new Set());
+                    setSomenteMarcadas(false);
+                  }}
+                  className="text-slate-500 hover:text-slate-800 underline normal-case tracking-normal"
+                >
                   limpar
                 </button>
               </div>
@@ -1253,7 +1268,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {faturasFiltradas.map((fatura) => {
+            {(somenteMarcadas && faturasMarcadas.size ? faturasFiltradas.filter((f) => faturasMarcadas.has(f.id)) : faturasFiltradas).map((fatura) => {
               const resumo = computeResumoFatura(fatura.id, lancamentos, clientes);
               const statusCfg = STATUS_FATURA_CONFIG[resumo.status];
               const isExpanded = expandedFaturaId === fatura.id;
