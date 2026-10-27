@@ -25,6 +25,9 @@ interface ContrachequePublicViewProps {
 
 /** Texto que o colaborador declara ao assinar — varia pelo tipo de documento. */
 function montarDeclaracao(doc: DocumentoPublico): string {
+  if (doc.categoria === 'termo_cartao_va') {
+    return `Declaro que recebi o cartão de vale-alimentação descrito no ${doc.titulo.split(' — ')[0]} e que estou ciente das regras de uso nele informadas.`;
+  }
   if (doc.categoria === 'padronizado') {
     return `Declaro que li o documento "${doc.titulo}" e que o assino na condição de: ${doc.tipo}.`;
   }

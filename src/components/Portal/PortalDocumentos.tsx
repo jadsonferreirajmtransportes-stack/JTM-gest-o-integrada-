@@ -14,6 +14,7 @@ const ROTULO_CATEGORIA: Record<string, string> = {
   pop: 'POP — Procedimento',
   instrucao: 'Instrução de Trabalho',
   padronizado: 'Documento para assinatura',
+  termo_cartao_va: 'Termo do cartão de vale-alimentação',
 };
 
 export const rotuloDocumentoPortal = (d: { categoria: string; tipo: string }) => rotuloDe(d);

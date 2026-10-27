@@ -18,6 +18,7 @@ import {
   Search,
   Send,
   Loader2,
+  CreditCard,
 } from 'lucide-react';
 import {
   Colaborador,
@@ -29,6 +30,7 @@ import {
 } from '../../types';
 import { criarDocumentoAssinatura, getDocumentosAssinatura } from '../../utils/documentosAssinaturaApi';
 import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
+import { TermoCartaoVaModal } from './TermoCartaoVaModal';
 import { gerarDemonstrativoVaPdf, quinzenaPorExtenso } from './demonstrativoVaPdf';
 import { useLinksUnicos } from '../../utils/linkUnico';
 import {
@@ -98,6 +100,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
     quinzenasOrdenadas[quinzenasOrdenadas.length - 1];
 
   const [isNovaQuinzenaOpen, setIsNovaQuinzenaOpen] = useState(false);
+  const [termoCartaoAberto, setTermoCartaoAberto] = useState(false);
   const [novaIdentificacao, setNovaIdentificacao] = useState('');
   const [novaDataInicio, setNovaDataInicio] = useState('');
   const [novaDataTermino, setNovaDataTermino] = useState('');
@@ -324,6 +327,16 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
             calculado a partir dos dias úteis do período menos as faltas e os dias de férias.
           </p>
         </div>
+        <div className="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          onClick={() => setTermoCartaoAberto(true)}
+          className="px-3 py-2 bg-white hover:bg-amber-50 border border-[#C48229] text-[#92611F] rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+          title="Termo de entrega do cartão de vale-alimentação, assinado pelo colaborador no portal"
+        >
+          <CreditCard className="w-3.5 h-3.5" />
+          Termo de entrega do cartão
+        </button>
         <button
           type="button"
           onClick={() => setIsNovaQuinzenaOpen(true)}
@@ -332,6 +345,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
           <Plus className="w-3.5 h-3.5" />
           Nova Quinzena
         </button>
+        </div>
       </div>
 
       {/* Seletor de quinzena */}
@@ -805,6 +819,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
           <PrintDocumentFooter />
         </div>
       )}
+      {termoCartaoAberto && <TermoCartaoVaModal colaboradores={colaboradores} currentUser={currentUser} onClose={() => setTermoCartaoAberto(false)} />}
     </div>
   );
 };
