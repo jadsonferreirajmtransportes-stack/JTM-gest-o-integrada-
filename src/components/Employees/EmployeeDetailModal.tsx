@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   X,
   Printer,
+  FolderOpen,
   Edit2,
   Calendar,
   AlertTriangle,
@@ -45,7 +46,8 @@ import {
 } from '../../utils/formatters';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { ImagemArquivo } from '../Common/ImagemArquivo';
-import { baixarArquivo } from '../../utils/downloadUtils';
+import { baixarArquivo, baixarBlob } from '../../utils/downloadUtils';
+import { gerarCapaPastaPdf } from './capaPastaPdf';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
 import { EmployeeDossierSection } from './EmployeeDossierSection';
 import { CompartilharFichaModal } from './CompartilharFichaModal';
@@ -180,6 +182,19 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
             >
               <Printer className="w-4 h-4 text-[#92611F]" />
               <span>Imprimir Ficha</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const arquivo = gerarCapaPastaPdf(colaborador, empregador, supervisor);
+                baixarBlob(arquivo, arquivo.name);
+              }}
+              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-200"
+              title="Baixar a capa (com etiqueta de lombada) para a pasta física do colaborador"
+            >
+              <FolderOpen className="w-4 h-4 text-[#92611F]" />
+              <span>Capa da pasta</span>
             </button>
 
             {temAcessoGeralDp && (
