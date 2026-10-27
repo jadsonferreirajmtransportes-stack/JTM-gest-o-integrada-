@@ -14,7 +14,10 @@ export interface DocumentoParaCiencia {
   /** O que está sendo enviado (linha de baixo do título da janela). */
   descricao: string;
   prefixoLote: string;
-  gerarPdf: (c: Colaborador) => { arquivo: File; camposAssinatura: CampoAssinaturaPdf[] };
+  /** `extra` = o que foi digitado no campoPorColaborador (quando existe). */
+  gerarPdf: (c: Colaborador, extra?: string) => { arquivo: File; camposAssinatura: CampoAssinaturaPdf[] };
+  /** Campo digitado para cada colaborador marcado (ex.: número do cartão de VA). */
+  campoPorColaborador?: { rotulo: string; placeholder?: string; obrigatorio?: boolean };
 }
 
 /** Gera, para cada colaborador escolhido, uma cópia do documento com o termo de ciência e cria o
@@ -33,6 +36,9 @@ export const EnviarCienciaModal: React.FC<{
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [progresso, setProgresso] = useState<{ feito: number; total: number } | null>(null);
   const [resultado, setResultado] = useState<{ ok: number; falhas: string[] } | null>(null);
+  const [extras, setExtras] = useState<Record<string, string>>({});
+  const campoExtra = documento.campoPorColaborador;
+  const faltaExtra = !!campoExtra?.obrigatorio && Array.from(selecionados).some((id) => !extras[id]?.trim());
 
   useEffect(() => {
     getDocumentosAssinatura(documento.categoria)
@@ -71,7 +77,7 @@ export const EnviarCienciaModal: React.FC<{
     setProgresso({ feito: 0, total: escolhidos.length });
     for (const [i, c] of escolhidos.entries()) {
       try {
-        const { arquivo, camposAssinatura } = documento.gerarPdf(c);
+        const { arquivo, camposAssinatura } = documento.gerarPdf(c, extras[c.id]?.trim() || undefined);
         criados.push(
           await criarDocumentoAssinatura({
             categoria: documento.categoria,
@@ -152,6 +158,16 @@ export const EnviarCienciaModal: React.FC<{
                       <span className="font-semibold text-slate-800">{c.nomeCompleto}</span>
                       <span className="text-slate-400"> · {c.funcaoCargo || '—'}{c.setor ? ` · ${c.setor}` : ''}</span>
                     </span>
+                    {campoExtra && !recebeu && selecionados.has(c.id) && (
+                      <input
+                        value={extras[c.id] || ''}
+                        onChange={(e) => setExtras((prev) => ({ ...prev, [c.id]: e.target.value }))}
+                        disabled={!!progresso}
+                        placeholder={campoExtra.placeholder || campoExtra.rotulo}
+                        title={campoExtra.rotulo}
+                        className={`w-44 border rounded-lg px-2 py-1.5 ${campoExtra.obrigatorio && !extras[c.id]?.trim() ? 'border-amber-300 bg-amber-50/50' : 'border-slate-200'}`}
+                      />
+                    )}
                     {recebeu && <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5">Já recebeu</span>}
                   </li>
                 );
@@ -168,14 +184,14 @@ export const EnviarCienciaModal: React.FC<{
               </span>
             ) : (
               <>
-                <b>{selecionados.size}</b> selecionado(s)
+                <b>{selecionados.size}</b> selecionado(s){faltaExtra ? <span className="text-amber-700"> · preencha {campoExtra!.rotulo.toLowerCase()} de todos</span> : null}
               </>
             )}
           </div>
           <button
             type="button"
             onClick={enviar}
-            disabled={!!progresso || selecionados.size === 0}
+            disabled={!!progresso || selecionados.size === 0 || faltaExtra}
             className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg font-bold flex items-center gap-2 disabled:opacity-50"
           >
             {progresso ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSignature className="w-4 h-4" />}

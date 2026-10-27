@@ -1,8 +1,8 @@
 // ============================================================================
 // Termo de entrega do cartão de vale-alimentação — um PDF por colaborador, com a
 // linha de assinatura (assinada no portal/link, documentos_assinatura categoria
-// 'termo_cartao_va'). Sem número do cartão: o termo não precisa dele (LGPD —
-// minimização), basta a operadora e a data da entrega.
+// 'termo_cartao_va'). O número do cartão (opcional) é digitado no envio, para cada
+// colaborador, e fica só no PDF (bucket privado).
 // ============================================================================
 
 import jsPDF from 'jspdf';
@@ -31,7 +31,8 @@ export const tituloTermoCartaoVa = (d: DadosTermoCartaoVa) =>
 
 export function gerarTermoCartaoVaPdf(
   dados: DadosTermoCartaoVa,
-  colaborador: { nomeCompleto: string; cpf?: string; funcaoCargo?: string; codigoMatricula?: string }
+  colaborador: { nomeCompleto: string; cpf?: string; funcaoCargo?: string; codigoMatricula?: string },
+  numeroCartao?: string
 ): { arquivo: File; camposAssinatura: CampoAssinaturaPdf[] } {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const largura = doc.internal.pageSize.getWidth();
@@ -82,7 +83,7 @@ export function gerarTermoCartaoVaPdf(
     .join(', ');
   paragrafo(
     `Eu, ${identificacao}, declaro que recebi da ${EMPRESA_REGULAMENTO.razaoSocial}, CNPJ ${EMPRESA_REGULAMENTO.cnpj}, em ${dataBr(dados.dataEntrega)}, ` +
-      `${dados.motivo === 'segunda_via' ? 'a 2ª via do ' : 'o '}cartão de vale-alimentação${dados.operadora ? ` da operadora ${dados.operadora}` : ''}, ` +
+      `${dados.motivo === 'segunda_via' ? 'a 2ª via do ' : 'o '}cartão de vale-alimentação${dados.operadora ? ` da operadora ${dados.operadora}` : ''}${numeroCartao ? ` nº ${numeroCartao}` : ''}, ` +
       `de uso pessoal e intransferível, destinado exclusivamente à compra de gêneros alimentícios.`
   );
   paragrafo('Declaro também estar ciente de que:');

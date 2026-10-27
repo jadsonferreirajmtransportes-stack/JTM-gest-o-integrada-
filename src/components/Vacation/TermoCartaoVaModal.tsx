@@ -71,7 +71,8 @@ export const TermoCartaoVaModal: React.FC<{ colaboradores: Colaborador[]; curren
             titulo: tituloTermoCartaoVa(dados),
             descricao: `${tituloTermoCartaoVa(dados)}.`,
             prefixoLote: 'termo-va',
-            gerarPdf: (c) => gerarTermoCartaoVaPdf(dados, c),
+            gerarPdf: (c, numeroCartao) => gerarTermoCartaoVaPdf(dados, c, numeroCartao),
+            campoPorColaborador: { rotulo: 'Número do cartão', placeholder: 'Nº do cartão', obrigatorio: true },
           }}
           colaboradores={colaboradores}
           criadoPor={currentUser?.nome}
