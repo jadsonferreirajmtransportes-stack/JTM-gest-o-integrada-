@@ -655,9 +655,10 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                   />
                   <span className="text-xs text-slate-700">
                     <strong className="font-bold">Restringir à própria equipe/carteira</strong> —
-                    em Clientes, Colaboradores e Ocorrências, esse login só vê o que está sob a
-                    responsabilidade do supervisor vinculado acima (não dá acesso a nada novo, só
-                    filtra o que já seria visível pros módulos/seções marcados abaixo).
+                    em todas as telas do DP (colaboradores, férias, vale-alimentação, contracheques,
+                    ocorrências, Fale com o DP...) e em Clientes, esse login só vê quem está sob a
+                    responsabilidade do supervisor escolhido acima.
+                    {!supervisorId && <span className="block mt-1 font-semibold text-amber-700">Escolha o supervisor acima para liberar esta opção.</span>}
                   </span>
                 </label>
               </div>
