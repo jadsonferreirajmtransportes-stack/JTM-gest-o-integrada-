@@ -22,6 +22,7 @@ import {
   TrendingUp,
   User,
   ChevronRight,
+  Calculator,
 } from 'lucide-react';
 import { Cliente, Empregador, Supervisor, UserRole, InteracaoCliente, AtividadeGestao } from '../../types';
 import { ClientesFunil } from './ClientesFunil';
@@ -31,6 +32,7 @@ import { ClientFormModal } from './ClientFormModal';
 import { ClientDetailModal } from './ClientDetailModal';
 import { ClientInteractionModal } from './ClientInteractionModal';
 import { PropostaComercialModal } from './PropostaComercialModal';
+import { CalculadoraFreteModal } from './CalculadoraFreteModal';
 
 interface ClientsViewProps {
   clientes: Cliente[];
@@ -60,6 +62,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 }) => {
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
+  const [calculadoraAberta, setCalculadoraAberta] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedSegmento, setSelectedSegmento] = useState<string>('all');
   const [selectedTemperatura, setSelectedTemperatura] = useState<string>('all');
@@ -282,6 +285,15 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+            <button
+              type="button"
+              onClick={() => setCalculadoraAberta(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-amber-50 border border-[#C48229] text-[#92611F] text-xs font-bold transition-colors shadow-xs"
+              title="Simular o frete pela tabela de um cliente"
+            >
+              <Calculator className="w-4 h-4" />
+              <span>Calculadora de frete</span>
+            </button>
             <button
               id="btn-export-clients-csv"
               type="button"
@@ -663,6 +675,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
         onClose={() => setPropostaClient(null)}
         cliente={propostaClient}
       />
+      {calculadoraAberta && <CalculadoraFreteModal clientes={clientes} onClose={() => setCalculadoraAberta(false)} />}
     </div>
   );
 };

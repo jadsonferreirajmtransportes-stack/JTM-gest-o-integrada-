@@ -107,7 +107,7 @@ export interface LinhaValorACobrar {
  *  `tabelaFreteParaModal`) quando o lançamento é Aéreo ou Rodoviário. Retorna `undefined`
  *  quando não há tarifário suficiente para calcular (sem cliente vinculado, sem tarifa da
  *  cidade, etc.). */
-function detalharTarifaPorPeso(
+export function detalharTarifaPorPeso(
   l: Pick<LancamentoFaturamentoAereo, 'cidadeDestino' | 'pesoKg' | 'valorPrestacao' | 'valorNF' | 'modal'>,
   cliente?: Cliente
 ): LinhaValorACobrar[] | undefined {
@@ -1387,7 +1387,7 @@ export function normalizeKey(text: string): string {
  *  numa linha só do tarifário) precisam casar. NÃO usar em `normalizeKey` genérico: ele também
  *  compara nº de fatura (ex.: prefixos "BOMI-ITAPEVI-..." em `getTemplateBomiPorNumeroFatura`,
  *  que dependem do hífen ficar intacto). */
-function normalizeCidade(text: string): string {
+export function normalizeCidade(text: string): string {
   return normalizeKey(text).replace(/[-/]/g, ' ').replace(/\s+/g, ' ');
 }
 
