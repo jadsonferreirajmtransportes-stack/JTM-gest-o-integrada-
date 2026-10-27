@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { X, Calculator, Copy, CheckCircle2, AlertTriangle, Plane, Truck, Clock, MapPin, Plus, Trash2 } from 'lucide-react';
+import { X, Calculator, Copy, CheckCircle2, AlertTriangle, Plane, Truck, Clock, MapPin, Plus, Trash2, Package, Car } from 'lucide-react';
 import { Cliente, CustoExtraTarifa } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { LinhaValorACobrar, detalharTarifaPorPeso, normalizeCidade, tabelaFreteParaModal } from '../FarmaAereo/faturamentoAereoUtils';
@@ -41,6 +41,13 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
   const [incluirGris, setIncluirGris] = useState(false);
   const [incluirDescarga, setIncluirDescarga] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  // Dedicado por km: veículo (tarifa "Valor/KM" da tabela do cliente ou valor digitado) × km da rota.
+  const [modo, setModo] = useState<'fracionado' | 'dedicado'>('fracionado');
+  const [veiculoId, setVeiculoId] = useState('');
+  const [valorKmManual, setValorKmManual] = useState('');
+  const [km, setKm] = useState('');
+  const [idaEVolta, setIdaEVolta] = useState(false);
+  const [pedagio, setPedagio] = useState('');
 
   const cliente = comTabela.find((c) => c.id === clienteId);
   const temRodoviarioProprio = !!cliente?.tabelaFreteRodoviario;
@@ -55,31 +62,58 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
   const pesoCalculo = Math.max(pesoReal, pesoCubado);
   const nf = numero(valorNF);
 
-  const custosExtras: CustoExtraTarifa[] = tabela?.custosExtras ?? [];
-  const valorDoExtra = (c: CustoExtraTarifa) => (c.tipoCobranca === 'Valor/KM' ? c.valor * (tarifaCidade?.distanciaKm ?? 0) : c.valor);
+  // Tarifas por km (veículos do dedicado) ficam no modo Dedicado; os demais extras valem nos dois modos.
+  const veiculosKm: CustoExtraTarifa[] = (tabela?.custosExtras ?? []).filter((c) => c.tipoCobranca === 'Valor/KM' && c.valor > 0);
+  const custosExtras: CustoExtraTarifa[] = (tabela?.custosExtras ?? []).filter((c) => c.tipoCobranca !== 'Valor/KM');
+  const valorDoExtra = (c: CustoExtraTarifa) => c.valor;
+  const nomeExtra = (c: CustoExtraTarifa) => [c.categoria, c.grupoDestinatario, c.itemDescricao].filter(Boolean).join(' — ');
+  const veiculo = veiculosKm.find((c) => c.id === veiculoId);
+  const valorKm = veiculoId === 'manual' ? numero(valorKmManual) : veiculo?.valor ?? 0;
+  const kmRota = numero(km) || tarifaCidade?.distanciaKm || 0;
+  const kmTotal = kmRota * (idaEVolta ? 2 : 1);
+  const valorPedagio = numero(pedagio);
 
   const resultado = useMemo(() => {
     if (!cliente || !tabela) return null;
+    const extrasMarcadosLinhas = (): LinhaValorACobrar[] => {
+      const l: LinhaValorACobrar[] = custosExtras.filter((c) => extrasMarcados.has(c.id)).map((c) => ({ label: nomeExtra(c), valor: valorDoExtra(c) }));
+      if (incluirDescarga && tabela.taxaDescargaAjudante) l.push({ label: 'Descarga / ajudante', valor: tabela.taxaDescargaAjudante });
+      if (incluirGris && tabela.percentualGrisPedagio && nf) l.push({ label: `GRIS / pedágio (${tabela.percentualGrisPedagio}% sobre a NF de ${formatCurrency(nf)})`, valor: (tabela.percentualGrisPedagio / 100) * nf });
+      return l;
+    };
+    if (modo === 'dedicado') {
+      if (!valorKm || !kmTotal) return null;
+      const nomeVeiculo = veiculoId === 'manual' ? 'Dedicado' : `Dedicado ${veiculo?.itemDescricao || nomeExtra(veiculo!)}`;
+      const linhas: LinhaValorACobrar[] = [
+        {
+          label: `${nomeVeiculo} — ${kmTotal.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km${idaEVolta ? ` (ida e volta: ${kmRota} × 2)` : ''} × ${formatCurrency(valorKm)}/km`,
+          valor: kmTotal * valorKm,
+        },
+      ];
+      if (valorPedagio) linhas.push({ label: 'Pedágio', valor: valorPedagio });
+      linhas.push(...extrasMarcadosLinhas());
+      return { linhas, total: linhas.reduce((s, l) => s + l.valor, 0) };
+    }
     const base = detalharTarifaPorPeso({ cidadeDestino: cidade, pesoKg: pesoCalculo, valorNF: nf || undefined, valorPrestacao: undefined, modal }, cliente);
     if (!base) return null;
-    const linhas: LinhaValorACobrar[] = [...base];
-    custosExtras.forEach((c) => {
-      if (!extrasMarcados.has(c.id)) return;
-      const rotulo = [c.categoria, c.grupoDestinatario, c.itemDescricao].filter(Boolean).join(' — ');
-      const sufixo = c.tipoCobranca === 'Valor/KM' ? ` (${formatCurrency(c.valor)}/km × ${tarifaCidade?.distanciaKm ?? 0} km)` : '';
-      linhas.push({ label: `${rotulo}${sufixo}`, valor: valorDoExtra(c) });
-    });
-    if (incluirDescarga && tabela.taxaDescargaAjudante) linhas.push({ label: 'Descarga / ajudante', valor: tabela.taxaDescargaAjudante });
-    if (incluirGris && tabela.percentualGrisPedagio && nf) linhas.push({ label: `GRIS / pedágio (${tabela.percentualGrisPedagio}% sobre a NF de ${formatCurrency(nf)})`, valor: (tabela.percentualGrisPedagio / 100) * nf });
+    const linhas: LinhaValorACobrar[] = [...base, ...extrasMarcadosLinhas()];
     return { linhas, total: linhas.reduce((s, l) => s + l.valor, 0) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cliente, tabela, cidade, pesoCalculo, nf, modal, extrasMarcados, incluirDescarga, incluirGris, tarifaCidade]);
+  }, [cliente, tabela, cidade, pesoCalculo, nf, modal, extrasMarcados, incluirDescarga, incluirGris, tarifaCidade, modo, valorKm, kmTotal, valorPedagio, veiculoId, idaEVolta]);
 
   const ehAdValorem = tabela?.modeloPrecificacao === 'ad_valorem' || (!tabela?.modeloPrecificacao && tabela?.tipoCobranca === '% sobre Nota Fiscal (Ad Valorem)');
   const faltando = !cliente
     ? 'Escolha o cliente.'
     : !tabela
       ? 'Este cliente não tem tabela de frete cadastrada.'
+      : modo === 'dedicado'
+        ? !valorKm
+          ? veiculosKm.length
+            ? 'Escolha o veículo (ou informe o valor por km).'
+            : 'A tabela deste cliente não tem valor por km de veículo — informe o valor por km.'
+          : !kmTotal
+            ? 'Informe o km da rota (ou escolha a cidade para usar o km da tabela).'
+            : null
       : ehAdValorem
         ? !nf
           ? 'Informe o valor da nota fiscal (a tabela é % Ad Valorem).'
@@ -96,8 +130,8 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
     if (!resultado || !cliente) return '';
     const linhas = [
       `Cotação de frete — ${cliente.nomeFantasia || cliente.razaoSocial}`,
-      `Modal: ${modal}${tarifaCidade ? ` · Destino: ${tarifaCidade.cidade}${tarifaCidade.uf ? `/${tarifaCidade.uf}` : ''}` : cidade ? ` · Destino: ${cidade}` : ''}`,
-      `Peso considerado: ${pesoCalculo.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} kg${pesoCubado > pesoReal ? ' (cubado)' : ''}`,
+      `${modo === 'dedicado' ? 'Dedicado por km' : `Modal: ${modal}`}${tarifaCidade ? ` · Destino: ${tarifaCidade.cidade}${tarifaCidade.uf ? `/${tarifaCidade.uf}` : ''}` : cidade ? ` · Destino: ${cidade}` : ''}`,
+      ...(modo === 'dedicado' ? [] : [`Peso considerado: ${pesoCalculo.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} kg${pesoCubado > pesoReal ? ' (cubado)' : ''}`]),
       ...resultado.linhas.map((l) => `• ${l.label}: ${formatCurrency(l.valor)}`),
       `Total: ${formatCurrency(resultado.total)}`,
       ...(tarifaCidade?.prazo ? [`Prazo de entrega: ${tarifaCidade.prazo}`] : []),
@@ -159,6 +193,61 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
               </select>
             </div>
 
+            {cliente && (
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    ['fracionado', 'Fracionado (por peso)', <Package key="f" className="w-3.5 h-3.5" />],
+                    ['dedicado', 'Dedicado por km', <Car key="d" className="w-3.5 h-3.5" />],
+                  ] as const
+                ).map(([m, rotuloModo, icone]) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setModo(m)}
+                    className={`px-3 py-2 rounded-lg border text-xs font-bold flex items-center justify-center gap-1.5 normal-case tracking-normal ${modo === m ? 'bg-[#C48229] border-[#C48229] text-white' : 'bg-white border-slate-200 text-slate-500'}`}
+                  >
+                    {icone} {rotuloModo}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {modo === 'dedicado' && cliente && (
+              <div className="border border-amber-200 bg-amber-50/40 rounded-xl p-3 space-y-3">
+                <div>
+                  <label className={rotulo}>Veículo</label>
+                  <select value={veiculoId} onChange={(e) => setVeiculoId(e.target.value)} className={campo}>
+                    <option value="">Escolha o veículo...</option>
+                    {veiculosKm.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.itemDescricao || nomeExtra(c)} — {formatCurrency(c.valor)}/km
+                      </option>
+                    ))}
+                    <option value="manual">Outro — informar o valor por km</option>
+                  </select>
+                  {veiculoId === 'manual' && (
+                    <input value={valorKmManual} onChange={(e) => setValorKmManual(e.target.value)} inputMode="decimal" placeholder="Valor por km (R$) — ex.: 3,82" className={`${campo} mt-2`} />
+                  )}
+                  {!veiculosKm.length && <p className="text-[11px] text-amber-800 mt-1">A tabela deste cliente não tem valor por km de veículo cadastrado — use "Outro".</p>}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={rotulo}>Km da rota</label>
+                    <input value={km} onChange={(e) => setKm(e.target.value)} inputMode="decimal" placeholder={tarifaCidade?.distanciaKm ? `${tarifaCidade.distanciaKm} (da cidade)` : 'Ex.: 120'} className={campo} />
+                  </div>
+                  <div>
+                    <label className={rotulo}>Pedágio (R$) <span className="font-normal text-slate-400">(opcional)</span></label>
+                    <input value={pedagio} onChange={(e) => setPedagio(e.target.value)} inputMode="decimal" placeholder="0,00" className={campo} />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                  <input type="checkbox" checked={idaEVolta} onChange={(e) => setIdaEVolta(e.target.checked)} /> Cobrar ida e volta (km × 2)
+                </label>
+                <p className="text-[11px] text-slate-500">Sem km digitado, usa o km da cidade de destino na tabela do cliente.</p>
+              </div>
+            )}
+
             {temRodoviarioProprio && (
               <div className="flex gap-2">
                 {(['Aéreo', 'Rodoviário'] as const).map((m) => (
@@ -198,6 +287,7 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
               </div>
             )}
 
+            {modo === 'fracionado' && (<>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={rotulo}>Peso real (kg)</label>
@@ -251,6 +341,7 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
                 </>
               )}
             </div>
+            </>)}
 
             {tabela && (custosExtras.length > 0 || tabela.taxaDescargaAjudante || tabela.percentualGrisPedagio) ? (
               <div className="border border-slate-200 rounded-xl p-3 space-y-1.5">
@@ -272,13 +363,10 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
                   <label key={c.id} className="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
                     <input type="checkbox" checked={extrasMarcados.has(c.id)} onChange={() => alternarExtra(c.id)} className="mt-0.5" />
                     <span className="flex-1">
-                      {[c.categoria, c.grupoDestinatario, c.itemDescricao].filter(Boolean).join(' — ')}
+                      {nomeExtra(c)}
                       <span className="text-slate-400"> · {c.tipoCobranca}</span>
                     </span>
-                    <span className="font-semibold whitespace-nowrap">
-                      {formatCurrency(c.valor)}
-                      {c.tipoCobranca === 'Valor/KM' ? '/km' : ''}
-                    </span>
+                    <span className="font-semibold whitespace-nowrap">{c.valor ? formatCurrency(c.valor) : 'consultar'}</span>
                   </label>
                 ))}
               </div>
@@ -300,9 +388,11 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
                     <Clock className="w-3.5 h-3.5" /> Prazo: {tarifaCidade.prazo}
                   </p>
                 )}
-                <p className="text-[11px] text-slate-500">
-                  Peso considerado: {pesoCalculo.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} kg{pesoCubado > pesoReal ? ' (cubado)' : ''}
-                </p>
+                {modo === 'fracionado' && (
+                  <p className="text-[11px] text-slate-500">
+                    Peso considerado: {pesoCalculo.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} kg{pesoCubado > pesoReal ? ' (cubado)' : ''}
+                  </p>
+                )}
                 <ul className="divide-y divide-slate-200 border-t border-b border-slate-200">
                   {resultado.linhas.map((l, i) => (
                     <li key={i} className="py-1.5 flex justify-between gap-3 text-xs">
@@ -318,7 +408,11 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
                 >
                   {copiado ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />} {copiado ? 'Copiado!' : 'Copiar cotação (WhatsApp / e-mail)'}
                 </button>
-                <p className="text-[10px] text-slate-400">Mesmo cálculo do Valor a Cobrar do Controle Financeiro, com a tabela atual do cliente. Custos extras só entram quando marcados.</p>
+                <p className="text-[10px] text-slate-400">
+                  {modo === 'dedicado'
+                    ? 'Dedicado: km × valor por km do veículo na tabela do cliente. No CT-e, lance esse total como Custo Extra "Dedicado por KM".'
+                    : 'Mesmo cálculo do Valor a Cobrar do Controle Financeiro, com a tabela atual do cliente. Custos extras só entram quando marcados.'}
+                </p>
               </>
             )}
           </div>

@@ -97,10 +97,12 @@ function lerPremissas(linhas: unknown[][]): BlocoPremissas[] {
       continue;
     }
     if (n.startsWith('TIPO DE VEICULO')) {
-      const porKm = /KM/.test(resto.map(norm).join(' ')) || n.includes('INTERIOR');
+      // "TARIFAS / Valor KM" (ex.: TEMP LOG) é por km rodado mesmo na capital; "Valor Fechado" não.
+      const cabecalho = resto.map(norm).join(' ');
+      const porKm = /VALOR\s*(\/\s*)?KM|POR KM|KM RODADO/.test(cabecalho) || (n.includes('INTERIOR') && !/FECHADO/.test(cabecalho));
       secao = {
-        categoria: n.includes('INTERIOR') ? 'DEDICADO INTERIOR (POR KM RODADO)' : 'DEDICADO CAPITAL',
-        tipo: porKm && n.includes('INTERIOR') ? 'Valor/KM' : 'Valor fechado',
+        categoria: n.includes('INTERIOR') ? 'DEDICADO INTERIOR (POR KM RODADO)' : porKm ? 'DEDICADO CAPITAL (POR KM RODADO)' : 'DEDICADO CAPITAL',
+        tipo: porKm ? 'Valor/KM' : 'Valor fechado',
       };
       continue;
     }
