@@ -1402,6 +1402,13 @@ export default function App() {
       ),
     [clientes, currentUser, supervisorVinculado]
   );
+  // Supervisor com "só a própria equipe": as demais listas do DP também ficam só da equipe.
+  const apenasEquipe = !!(currentUser?.escopoApenasProprioSetor && currentUser?.supervisorId);
+  const idsEquipe = useMemo(() => new Set(colaboradoresEquipeVisiveis.map((c) => c.id)), [colaboradoresEquipeVisiveis]);
+  const feriasEquipe = useMemo(() => (apenasEquipe ? feriasList.filter((f) => idsEquipe.has(f.colaboradorId)) : feriasList), [apenasEquipe, feriasList, idsEquipe]);
+  const lancamentosVAEquipe = useMemo(() => (apenasEquipe ? lancamentosVA.filter((l) => idsEquipe.has(l.colaboradorId)) : lancamentosVA), [apenasEquipe, lancamentosVA, idsEquipe]);
+  const entregasEpiEquipe = useMemo(() => (apenasEquipe ? entregasEpi.filter((e) => idsEquipe.has(e.colaboradorId)) : entregasEpi), [apenasEquipe, entregasEpi, idsEquipe]);
+
   const ocorrenciasEquipeVisiveis = useMemo(() => {
     if (!currentUser?.escopoApenasProprioSetor) return ocorrencias;
     const idsEquipe = new Set(colaboradoresEquipeVisiveis.map((c) => c.id));
@@ -3499,9 +3506,9 @@ export default function App() {
           {/* ========================================================================= */}
           {activeGlobalModule === 'dp' && activeSection === 'dashboard' && podeVerSecaoDp(currentUser, 'dashboard') && (
             <Dashboard
-              colaboradores={colaboradores}
-              ferias={feriasList}
-              ocorrencias={ocorrencias}
+              colaboradores={colaboradoresEquipeVisiveis}
+              ferias={feriasEquipe}
+              ocorrencias={ocorrenciasEquipeVisiveis}
               alertas={alertas}
               userRole={userRole}
               temAcessoGeralDp={temAcessoGeralDp(currentUser)}
@@ -3549,7 +3556,7 @@ export default function App() {
 
           {activeGlobalModule === 'dp' && activeSection === 'arquivo' && podeVerSecaoDp(currentUser, 'arquivo') && (
             <EmployeeList
-              colaboradores={colaboradores.filter((c) => c.status === 'Inativo')}
+              colaboradores={colaboradoresEquipeVisiveis.filter((c) => c.status === 'Inativo')}
               apenasInativos
               empregadores={empregadores}
               supervisores={supervisores}
@@ -3569,18 +3576,18 @@ export default function App() {
 
           {activeGlobalModule === 'dp' && (activeSection === 'custos' || activeSection === 'beneficios') && (podeVerSecaoDp(currentUser, 'custos') || podeVerSecaoDp(currentUser, 'beneficios')) && (
             <MonthlyCostView
-              colaboradores={colaboradores}
+              colaboradores={colaboradoresEquipeVisiveis}
               empregadores={empregadores}
             />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'vale_alimentacao' && podeVerSecaoDp(currentUser, 'vale_alimentacao') && (
             <ValeAlimentacaoView
-              colaboradores={colaboradores}
-              ocorrencias={ocorrencias}
-              feriasList={feriasList}
+              colaboradores={colaboradoresEquipeVisiveis}
+              ocorrencias={ocorrenciasEquipeVisiveis}
+              feriasList={feriasEquipe}
               quinzenas={quinzenasVA}
-              lancamentos={lancamentosVA}
+              lancamentos={lancamentosVAEquipe}
               onSaveQuinzena={handleSaveQuinzenaVA}
               onDeleteQuinzena={handleDeleteQuinzenaVA}
               onGerarLancamentos={handleGerarLancamentosVA}
@@ -3593,8 +3600,8 @@ export default function App() {
 
           {activeGlobalModule === 'dp' && activeSection === 'ferias' && podeVerSecaoDp(currentUser, 'ferias') && (
             <VacationView
-              colaboradores={colaboradores}
-              feriasList={feriasList}
+              colaboradores={colaboradoresEquipeVisiveis}
+              feriasList={feriasEquipe}
               userRole={userRole}
               currentUser={currentUser}
               onSaveFerias={handleSaveFerias}
@@ -3630,11 +3637,11 @@ export default function App() {
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'solicitacoes' && podeVerSecaoDp(currentUser, 'solicitacoes') && (
-            <SolicitacoesDpView colaboradores={colaboradores} currentUser={currentUser} onSaveFerias={handleSaveFerias} />
+            <SolicitacoesDpView colaboradores={colaboradoresEquipeVisiveis} apenasEquipe={apenasEquipe} currentUser={currentUser} onSaveFerias={handleSaveFerias} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'gamificacao' && podeVerSecaoDp(currentUser, 'gamificacao') && (
-            <GamificacaoView colaboradores={colaboradores} currentUser={currentUser} />
+            <GamificacaoView colaboradores={colaboradoresEquipeVisiveis} currentUser={currentUser} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'frequencia' && podeVerSecaoDp(currentUser, 'frequencia') && (
@@ -3642,12 +3649,12 @@ export default function App() {
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'educacao' && podeVerSecaoDp(currentUser, 'educacao') && (
-            <EducacaoView colaboradores={colaboradores} instrucoes={instrucoesTrabalho} currentUser={currentUser} />
+            <EducacaoView colaboradores={colaboradoresEquipeVisiveis} apenasEquipe={apenasEquipe} instrucoes={instrucoesTrabalho} currentUser={currentUser} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'saude' && podeVerSecaoDp(currentUser, 'saude') && (
             <AnvisaExamsView
-              colaboradores={colaboradores}
+              colaboradores={colaboradoresEquipeVisiveis}
               empregadores={empregadores}
               onUpdateExame={handleUpdateExame}
               onAgendarExame={handleAgendarExame}
@@ -3657,8 +3664,8 @@ export default function App() {
 
           {activeGlobalModule === 'dp' && activeSection === 'epis' && podeVerSecaoDp(currentUser, 'epis') && (
             <EpiView
-              colaboradores={colaboradores}
-              entregas={entregasEpi}
+              colaboradores={colaboradoresEquipeVisiveis}
+              entregas={entregasEpiEquipe}
               currentUserName={currentUser?.nome}
               onSaveEntrega={handleSaveEntregaEpi}
               onDeleteEntrega={handleDeleteEntregaEpi}
@@ -3667,12 +3674,12 @@ export default function App() {
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'contracheques' && podeVerSecaoDp(currentUser, 'contracheques') && (
-            <DocumentosAssinaturaView categoria="contracheque" colaboradores={colaboradores} currentUser={currentUser} />
+            <DocumentosAssinaturaView categoria="contracheque" colaboradores={colaboradoresEquipeVisiveis} apenasEquipe={apenasEquipe} currentUser={currentUser} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'onboarding' && podeVerSecaoDp(currentUser, 'onboarding') && (
             <OnboardingView
-              colaboradores={colaboradores}
+              colaboradores={colaboradoresEquipeVisiveis}
               onUpdateOnboardingItem={handleUpdateOnboardingItem}
             />
           )}
@@ -3818,7 +3825,7 @@ export default function App() {
       <PublicOccurrenceForm
         isOpen={isPublicOccurrenceFormOpen}
         onClose={() => setIsPublicOccurrenceFormOpen(false)}
-        colaboradores={colaboradores}
+        colaboradores={colaboradoresEquipeVisiveis}
         supervisores={supervisores}
         onSuccessSubmit={handleSaveOcorrencia}
       />

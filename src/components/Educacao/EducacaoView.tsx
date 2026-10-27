@@ -52,6 +52,8 @@ import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaV
 
 interface EducacaoViewProps {
   colaboradores: Colaborador[];
+  /** Supervisor com "só a própria equipe" (colaboradores já vem filtrado). */
+  apenasEquipe?: boolean;
   instrucoes: InstrucaoTrabalho[];
   currentUser?: UsuarioLogin;
 }
@@ -85,7 +87,7 @@ function dataBr(iso?: string): string {
  *  atribuição automática por cargo/setor e reciclagem), links do portal e o Regulamento
  *  Interno para ciência e assinatura. O colaborador faz tudo pelo link pessoal
  *  (?form=portal), entrando com CPF + data de nascimento. */
-export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instrucoes, currentUser }) => {
+export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instrucoes, currentUser, apenasEquipe }) => {
   const [aba, setAba] = useState<Aba>('treinamentos');
   const [treinamentos, setTreinamentos] = useState<Treinamento[]>([]);
   const [atribuicoes, setAtribuicoes] = useState<AtribuicaoTreinamento[]>([]);
@@ -407,7 +409,7 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
       )}
 
       {aba === 'regulamento' ? (
-        <DocumentosAssinaturaView categoria="regulamento" colaboradores={colaboradores} currentUser={currentUser} compacto />
+        <DocumentosAssinaturaView categoria="regulamento" colaboradores={colaboradores} currentUser={currentUser} compacto apenasEquipe={apenasEquipe} />
       ) : carregando ? (
         <div className="flex items-center justify-center gap-2 py-16 text-slate-400 text-xs">
           <Loader2 className="w-5 h-5 animate-spin text-[#C48229]" /> Carregando...

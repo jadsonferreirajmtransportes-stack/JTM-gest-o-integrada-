@@ -38,9 +38,11 @@ function somarDias(iso: string, dias: number): string {
 /** "Fale com o DP": fila das solicitações abertas pelos colaboradores no portal. Só o DP vê. */
 export const SolicitacoesDpView: React.FC<{
   colaboradores: Colaborador[];
+  /** Supervisor com "só a própria equipe": só solicitações de quem está em colaboradores. */
+  apenasEquipe?: boolean;
   currentUser?: UsuarioLogin | null;
   onSaveFerias?: (f: ProgramacaoFerias) => Promise<void> | void;
-}> = ({ colaboradores, currentUser, onSaveFerias }) => {
+}> = ({ colaboradores, apenasEquipe, currentUser, onSaveFerias }) => {
   const [lista, setLista] = useState<SolicitacaoDp[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<Filtro>('pendentes');
@@ -50,14 +52,16 @@ export const SolicitacoesDpView: React.FC<{
 
   const carregar = useCallback(async () => {
     try {
-      setLista(await getSolicitacoesDp());
+      const todas = await getSolicitacoesDp();
+      // Supervisor com "só a própria equipe": só as solicitações da equipe dele.
+      setLista(apenasEquipe ? todas.filter((s) => colaboradores.some((c) => c.id === s.colaboradorId)) : todas);
       setErro(null);
     } catch (err) {
       console.error(err);
       setErro('Não foi possível carregar as solicitações. Se acabou de ser instalado, confira se a migração 069 foi rodada no Supabase.');
       setLista([]);
     }
-  }, []);
+  }, [apenasEquipe, colaboradores]);
 
   useEffect(() => {
     carregar();

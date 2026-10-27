@@ -49,6 +49,8 @@ interface DocumentosAssinaturaViewProps {
   onDocumentosChange?: (documentos: DocumentoAssinatura[]) => void;
   /** Mostra só os documentos desta referência (ex.: Vale-Alimentação mostra a quinzena escolhida). */
   referenciaFixa?: string;
+  /** Supervisor com "só a própria equipe": esconde documentos de quem não está em `colaboradores`. */
+  apenasEquipe?: boolean;
 }
 
 const TEXTOS: Record<CategoriaDocumentoAssinatura, { titulo: string; descricao: string; importar: string; vazio: string }> = {
@@ -140,8 +142,10 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
   compacto = false,
   onDocumentosChange,
   referenciaFixa,
+  apenasEquipe = false,
 }) => {
   const textos = TEXTOS[categoria];
+  const idsEquipe = useMemo(() => new Set(colaboradores.map((c) => c.id)), [colaboradores]);
   const ehContracheque = categoria === 'contracheque';
   const [documentos, setDocumentos] = useState<DocumentoAssinatura[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -186,11 +190,12 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
     const termo = busca.trim().toLowerCase();
     return documentos.filter(
       (d) =>
+        (!apenasEquipe || idsEquipe.has(d.colaboradorId)) &&
         (!referenciaFixa || d.referencia === referenciaFixa) &&
         (!competencia || d.referencia === competencia) &&
         (!termo || d.colaboradorNome.toLowerCase().includes(termo))
     );
-  }, [documentos, competencia, busca, referenciaFixa]);
+  }, [documentos, competencia, busca, referenciaFixa, apenasEquipe, idsEquipe]);
   const totais = useMemo(
     () => ({
       total: visiveis.length,
