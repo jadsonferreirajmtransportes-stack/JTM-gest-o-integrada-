@@ -25,6 +25,7 @@ import {
   X,
   Image as ImageIcon,
   PenLine,
+  Users,
 } from 'lucide-react';
 import {
   BlocoDocumento,
@@ -45,6 +46,7 @@ import { baixarBlob } from '../../utils/downloadUtils';
 import { BlocoImagem } from './BlocoImagem';
 import { BlocoAssinaturas } from './BlocoAssinaturas';
 import { EnviarAssinaturaDocumentoModal } from './EnviarAssinaturaDocumentoModal';
+import { CienciaDocumentoModal } from './CienciaDocumentoModal';
 import type { Colaborador } from '../../types';
 
 interface DocumentoEditorProps {
@@ -125,6 +127,7 @@ const STATUS_ESTILO: Record<string, string> = {
  *  e saída em PDF/Word/Excel. Publicar = versão Vigente guardada no histórico. */
 export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, colaboradores = [], avisosImportacao = [], usuario, onVoltar, onSalvo }) => {
   const [enviandoAssinatura, setEnviandoAssinatura] = useState(false);
+  const [enviandoVias, setEnviandoVias] = useState(false);
   const [d, setD] = useState<DocumentoPadronizado>(documento);
   const [alterado, setAlterado] = useState(!documento.id);
   const [salvando, setSalvando] = useState(false);
@@ -267,6 +270,16 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
         {d.id && (
           <button
             type="button"
+            onClick={() => (alterado ? setErro('Salve o documento antes de enviar para os colaboradores.') : setEnviandoVias(true))}
+            title="Cada colaborador escolhido recebe a própria via (com o nome dele) no link pessoal e assina — ex.: termo de adesão"
+            className="px-3 py-2 bg-white border border-[#C48229] text-[#92611F] rounded-lg text-xs font-bold flex items-center gap-1.5 hover:bg-amber-50"
+          >
+            <Users className="w-3.5 h-3.5" /> Enviar para colaboradores
+          </button>
+        )}
+        {d.id && (
+          <button
+            type="button"
             onClick={async () => setHistorico(await getVersoes(d.id).catch(() => []))}
             className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1.5 hover:bg-slate-50"
           >
@@ -294,6 +307,7 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
         </div>
       </div>
 
+      {enviandoVias && <CienciaDocumentoModal documento={d} colaboradores={colaboradores} criadoPor={usuario} onClose={() => setEnviandoVias(false)} />}
       {enviandoAssinatura && <EnviarAssinaturaDocumentoModal documento={d} colaboradores={colaboradores} criadoPor={usuario} onClose={() => setEnviandoAssinatura(false)} />}
       {erro && <div className="mx-4 mt-3 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}
       {mostrarAvisos && (

@@ -3,6 +3,8 @@ import { X, Loader2, Search, FileSignature, CheckCircle2 } from 'lucide-react';
 import { Colaborador } from '../../types';
 import { CampoAssinaturaPdf, CategoriaDocumentoAssinatura, DocumentoAssinatura, criarDocumentoAssinatura, getDocumentosAssinatura } from '../../utils/documentosAssinaturaApi';
 
+type GeradoParaCiencia = { arquivo: File; camposAssinatura: CampoAssinaturaPdf[] };
+
 export interface DocumentoParaCiencia {
   categoria: CategoriaDocumentoAssinatura;
   /** Identifica a versão enviada (ex.: id do POP; id da instrução + versão) — quem já recebeu fica de fora. */
@@ -15,7 +17,7 @@ export interface DocumentoParaCiencia {
   descricao: string;
   prefixoLote: string;
   /** `extra` = o que foi digitado no campoPorColaborador (quando existe). */
-  gerarPdf: (c: Colaborador, extra?: string) => { arquivo: File; camposAssinatura: CampoAssinaturaPdf[] };
+  gerarPdf: (c: Colaborador, extra?: string) => GeradoParaCiencia | Promise<GeradoParaCiencia>;
   /** Campo digitado para cada colaborador marcado (ex.: número do cartão de VA). */
   campoPorColaborador?: { rotulo: string; placeholder?: string; obrigatorio?: boolean };
 }
@@ -77,7 +79,7 @@ export const EnviarCienciaModal: React.FC<{
     setProgresso({ feito: 0, total: escolhidos.length });
     for (const [i, c] of escolhidos.entries()) {
       try {
-        const { arquivo, camposAssinatura } = documento.gerarPdf(c, extras[c.id]?.trim() || undefined);
+        const { arquivo, camposAssinatura } = await documento.gerarPdf(c, extras[c.id]?.trim() || undefined);
         criados.push(
           await criarDocumentoAssinatura({
             categoria: documento.categoria,

@@ -309,7 +309,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
         const href = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
         const a = document.createElement('a');
         a.href = href;
-        a.download = `${ehContracheque ? 'Contracheques' : categoria === 'vale_alimentacao' ? 'Vale_Alimentacao' : categoria === 'pop' ? 'POPs_ciencia' : categoria === 'instrucao' ? 'Instrucoes_ciencia' : categoria === 'termo_cartao_va' ? 'Termos_cartao_VA' : 'Ferias'}_assinados_${sufixo}.zip`;
+        a.download = `${ehContracheque ? 'Contracheques' : categoria === 'vale_alimentacao' ? 'Vale_Alimentacao' : categoria === 'pop' ? 'POPs_ciencia' : categoria === 'instrucao' ? 'Instrucoes_ciencia' : categoria === 'termo_cartao_va' ? 'Termos_cartao_VA' : categoria === 'padronizado' ? 'Documentos_assinados' : 'Ferias'}_assinados_${sufixo}.zip`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -509,7 +509,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
                   <th className="px-4 py-2.5">Colaborador</th>
-                  <th className="px-3 py-2.5">{ehContracheque ? 'Competência / Tipo' : categoria === 'pop' ? 'Procedimento' : categoria === 'instrucao' ? 'Instrução' : categoria === 'termo_cartao_va' ? 'Termo' : 'Documento / Início do gozo'}</th>
+                  <th className="px-3 py-2.5">{ehContracheque ? 'Competência / Tipo' : categoria === 'pop' ? 'Procedimento' : categoria === 'instrucao' ? 'Instrução' : categoria === 'termo_cartao_va' ? 'Termo' : categoria === 'padronizado' ? 'Documento' : 'Documento / Início do gozo'}</th>
                   <th className="px-3 py-2.5">Status</th>
                   <th className="px-3 py-2.5">Visualizado</th>
                   <th className="px-3 py-2.5">Assinado</th>
@@ -529,7 +529,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
                           <>
                             {formatarCompetencia(d.referencia)} <span className="text-slate-400">• {d.tipo}</span>
                           </>
-                        ) : categoria === 'pop' || categoria === 'instrucao' || categoria === 'termo_cartao_va' ? (
+                        ) : categoria === 'pop' || categoria === 'instrucao' || categoria === 'termo_cartao_va' || categoria === 'padronizado' ? (
                           d.titulo
                         ) : (
                           <>
@@ -641,7 +641,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
 
       {isEnvioEmMassaAberto && (
         <EnvioWhatsAppEmMassaModal
-          titulo={`Enviar ${ehContracheque ? 'contracheques' : categoria === 'regulamento' ? 'regulamento interno' : categoria === 'ponto' ? 'espelhos de frequência' : categoria === 'vale_alimentacao' ? 'demonstrativos de vale-alimentação' : categoria === 'pop' ? 'POPs para ciência' : categoria === 'instrucao' ? 'instruções de trabalho para ciência' : categoria === 'termo_cartao_va' ? 'termos do cartão de vale-alimentação' : 'documentos de férias'} pendentes`}
+          titulo={`Enviar ${ehContracheque ? 'contracheques' : categoria === 'regulamento' ? 'regulamento interno' : categoria === 'ponto' ? 'espelhos de frequência' : categoria === 'vale_alimentacao' ? 'demonstrativos de vale-alimentação' : categoria === 'pop' ? 'POPs para ciência' : categoria === 'instrucao' ? 'instruções de trabalho para ciência' : categoria === 'termo_cartao_va' ? 'termos do cartão de vale-alimentação' : categoria === 'padronizado' ? 'documentos para assinatura' : 'documentos de férias'} pendentes`}
           itens={pendentesParaEnviar.map((d) => ({
             id: d.id,
             nome: `${d.colaboradorNome} — ${d.titulo}`,
