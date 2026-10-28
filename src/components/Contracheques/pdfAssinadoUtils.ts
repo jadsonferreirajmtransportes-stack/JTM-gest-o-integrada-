@@ -7,7 +7,7 @@
 // Gerado no navegador (pdf-lib), sob demanda.
 // ============================================================================
 
-import { DocumentoAssinatura } from '../../utils/documentosAssinaturaApi';
+import { DocumentoAssinatura, sha256Hex } from '../../utils/documentosAssinaturaApi';
 import { obterUrlArquivo } from '../../utils/arquivosStorage';
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { STRATEGIC_GUIDELINES } from '../../data/strategicGuidelines';
@@ -85,13 +85,6 @@ async function recortarAssinatura(dataUrl: string): Promise<Uint8Array> {
     recorte.toBlob((b) => (b ? resolve(b) : reject(new Error('Falha ao preparar a assinatura'))), 'image/png')
   );
   return new Uint8Array(await blob.arrayBuffer());
-}
-
-async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
-  const hash = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
 }
 
 /** `doc` precisa ser o registro COMPLETO (com assinaturaImagem) — ver getDocumentoAssinatura. */
@@ -224,10 +217,13 @@ export async function gerarPdfAssinado(doc: DocumentoAssinatura, cpfColaborador?
   };
 
   escrever('DOCUMENTO', doc.titulo);
-  escrever('COLABORADOR', `${doc.colaboradorNome}   —   CPF ${mascararCpf(cpfColaborador)}`);
+  const externo = !doc.colaboradorId;
+  escrever(externo ? 'SIGNATÁRIO' : 'COLABORADOR', `${doc.colaboradorNome}   —   CPF ${mascararCpf(cpfColaborador || doc.signatarioCpf)}`);
   escrever(
     'COMO A IDENTIDADE FOI CONFIRMADA',
-    'Link individual enviado ao colaborador; antes de abrir o documento, o colaborador informou o CPF, que foi conferido com o CPF do cadastro.'
+    externo
+      ? 'Link individual enviado ao signatário; antes de abrir o documento, ele informou o CPF, que foi conferido com o CPF registrado no envio.'
+      : 'Link individual (ou portal pessoal) do colaborador; antes de abrir o documento, o colaborador informou o CPF (no portal, também a data de nascimento), conferido com o cadastro.'
   );
   escrever('VISUALIZADO EM', dataHora(doc.visualizadoEm));
   escrever('ASSINADO EM', dataHora(doc.assinadoEm));
@@ -258,8 +254,17 @@ export async function gerarPdfAssinado(doc: DocumentoAssinatura, cpfColaborador?
   });
   y -= boxAltura + 30;
 
+  if (doc.ip) escrever('ENDEREÇO IP NO MOMENTO DA ASSINATURA', doc.ip, 9);
   if (doc.navegador) escrever('DISPOSITIVO / NAVEGADOR', doc.navegador, 8);
   escrever('CÓDIGO DE VERIFICAÇÃO DO DOCUMENTO ORIGINAL (SHA-256)', hash, 8);
+  if (doc.arquivoHash)
+    escrever(
+      'INTEGRIDADE',
+      doc.arquivoHash === hash
+        ? 'Confere: o documento assinado é idêntico ao enviado (mesmo código SHA-256 registrado no envio).'
+        : 'ATENÇÃO: o código do arquivo atual é diferente do registrado no envio.',
+      9
+    );
   escrever('IDENTIFICADOR DO REGISTRO', doc.id, 8);
 
   // Rodapé institucional.

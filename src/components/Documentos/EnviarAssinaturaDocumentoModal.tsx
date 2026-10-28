@@ -160,7 +160,25 @@ export const EnviarAssinaturaDocumentoModal: React.FC<{
     setOcupado('pdf');
     try {
       const assinaturas = Object.fromEntries(assinados.filter((e) => e.posicao).map((e) => [e.posicao!, { imagem: e.assinaturaImagem!, em: e.assinadoEm! }]));
-      const arquivo = await gerarPdfDocumento(d, { assinaturas });
+      const mascarar = (cpf?: string) => {
+        const n = (cpf || '').replace(/\D/g, '');
+        return n.length === 11 ? `***.${n.slice(3, 6)}.${n.slice(6, 9)}-**` : '—';
+      };
+      const ordem = signatarios.map((s) => s.posicao);
+      const evidencias = [...assinados]
+        .sort((a, b) => ordem.indexOf(a.posicao || '') - ordem.indexOf(b.posicao || ''))
+        .map((e) => ({
+          papel: e.tipo,
+          nome: e.colaboradorNome,
+          cpfMascarado: mascarar(e.colaboradorId ? colaboradorPorId.get(e.colaboradorId)?.cpf : e.signatarioCpf),
+          externo: !e.colaboradorId,
+          assinadoEm: e.assinadoEm!,
+          ip: e.ip,
+          navegador: e.navegador,
+          declaracao: e.declaracao,
+          id: e.id,
+        }));
+      const arquivo = await gerarPdfDocumento(d, { assinaturas, evidencias });
       const nome = arquivo.name.replace(/\.pdf$/i, assinados.length === signatarios.length ? '_assinado.pdf' : '_assinaturas_parciais.pdf');
       baixarBlob(arquivo, nome);
     } catch (e) {

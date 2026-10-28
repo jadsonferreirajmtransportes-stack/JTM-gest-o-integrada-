@@ -21,6 +21,9 @@ export interface DocumentoAssinatura {
   signatarioContato?: string;
   /** Documento padronizado: '<id do bloco>:<índice da pessoa>' no bloco Assinaturas. */
   posicao?: string;
+  /** SHA-256 do PDF calculado no envio e IP de onde assinou (migração 082). */
+  arquivoHash?: string;
+  ip?: string;
   /** Contracheque: competência 'YYYY-MM'. */
   referencia: string;
   tipo: string;
@@ -89,6 +92,8 @@ function rowToDocumento(r: any): DocumentoAssinatura {
     signatarioCpf: u(r.signatario_cpf ?? null),
     signatarioContato: u(r.signatario_contato ?? null),
     posicao: u(r.posicao ?? null),
+    arquivoHash: u(r.arquivo_hash ?? null),
+    ip: u(r.ip ?? null),
     referencia: r.referencia,
     tipo: r.tipo,
     titulo: r.titulo,
@@ -116,6 +121,13 @@ export async function getAssinaturasDaReferencia(categoria: CategoriaDocumentoAs
   const { data, error } = await supabase.from('documentos_assinatura').select('*').eq('categoria', categoria).eq('referencia', referencia).order('criado_em');
   assertNoError(error, 'getAssinaturasDaReferencia');
   return (data ?? []).map(rowToDocumento);
+}
+
+export async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
+  const hash = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 function gerarToken(): string {
@@ -168,6 +180,8 @@ export interface NovoDocumentoAssinatura {
 /** Envia o PDF pro Storage, gera o link assinado (válido pelo prazo do link) e cria o registro. */
 export async function criarDocumentoAssinatura(novo: NovoDocumentoAssinatura): Promise<DocumentoAssinatura> {
   const pasta = novo.categoria === 'contracheque' ? `dp/contracheques/${novo.referencia}` : `dp/${novo.categoria}`;
+  // "Impressão digital" do PDF no envio — o comprovante confere depois que é o mesmo arquivo.
+  const arquivoHash = await sha256Hex(await novo.arquivo.arrayBuffer());
   const arquivoRef = await enviarArquivo(novo.arquivo, pasta);
   const { arquivoLink, expiraEm } = await gerarLinkArquivo(arquivoRef);
 
@@ -185,6 +199,7 @@ export async function criarDocumentoAssinatura(novo: NovoDocumentoAssinatura): P
     titulo: novo.titulo,
     arquivo_ref: arquivoRef,
     arquivo_nome: novo.arquivo.name,
+    arquivo_hash: arquivoHash,
     arquivo_link: arquivoLink,
     token: gerarToken(),
     link_expira_em: expiraEm,

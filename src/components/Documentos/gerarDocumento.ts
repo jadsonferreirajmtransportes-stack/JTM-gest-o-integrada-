@@ -85,6 +85,19 @@ export interface AssinaturaNoDocumento {
 }
 const MM_PARA_PT = 72 / 25.4;
 
+export interface EvidenciaAssinatura {
+  papel: string;
+  nome: string;
+  cpfMascarado: string;
+  externo: boolean;
+  assinadoEm: string;
+  ip?: string;
+  navegador?: string;
+  declaracao?: string;
+  hashConfere?: boolean;
+  id: string;
+}
+
 export async function gerarPdfDocumento(
   d: DocumentoPadronizado,
   opcoes: {
@@ -93,6 +106,8 @@ export async function gerarPdfDocumento(
     /** Recebe a área (em pontos do PDF) de cada espaço de assinatura — usado no envio, para o
      *  comprovante de quem assina mostrar a assinatura no lugar certo. */
     campos?: Record<string, CampoAssinaturaPdf>;
+    /** Página final com o registro de cada assinatura eletrônica (quem, quando, IP, aparelho). */
+    evidencias?: EvidenciaAssinatura[];
   } = {}
 ): Promise<File> {
   const imagens = await carregarImagens(d);
@@ -294,6 +309,57 @@ export async function gerarPdfDocumento(
         y += alturaEspaco;
       }
     }
+  }
+
+  // Registro das assinaturas eletrônicas (evidências) — página própria no fim.
+  if (opcoes.evidencias?.length) {
+    novaPagina();
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...TEXTO);
+    doc.text('REGISTRO DAS ASSINATURAS ELETRÔNICAS', MARGEM, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...CINZA);
+    (doc.splitTextToSize(
+      'Cada pessoa recebeu um link individual e, antes de abrir o documento, informou o CPF, conferido com o cadastro (colaborador) ou com o CPF registrado no envio (pessoa de fora). Assinatura desenhada na tela, com data, hora, IP e aparelho registrados.',
+      larguraTexto
+    ) as string[]).forEach((l) => {
+      doc.text(l, MARGEM, y);
+      y += 4;
+    });
+    y += 4;
+    opcoes.evidencias.forEach((e) => {
+      const linhas: [string, string][] = [
+        [e.papel || 'Assinatura', `${e.nome} — CPF ${e.cpfMascarado}${e.externo ? ' (pessoa de fora da empresa)' : ''}`],
+        ['Assinado em', new Date(e.assinadoEm).toLocaleString('pt-BR')],
+        ...(e.ip ? ([['IP', e.ip]] as [string, string][]) : []),
+        ...(e.navegador ? ([['Aparelho', e.navegador]] as [string, string][]) : []),
+        ...(e.declaracao ? ([['Declaração', `"${e.declaracao}"`]] as [string, string][]) : []),
+        ...(e.hashConfere !== undefined ? ([['Integridade', e.hashConfere ? 'Documento idêntico ao enviado (SHA-256 confere).' : 'ATENÇÃO: código do arquivo diferente do registrado no envio.']] as [string, string][]) : []),
+        ['Registro', e.id],
+      ];
+      const altura = linhas.reduce((s, [, v]) => s + (doc.splitTextToSize(v, larguraTexto - 32) as string[]).length * 3.8 + 1, 0) + 6;
+      espaco(altura);
+      doc.setFillColor(...AREIA);
+      doc.rect(MARGEM, y - 3.5, larguraTexto, altura, 'F');
+      doc.setFillColor(...BRONZE);
+      doc.rect(MARGEM, y - 3.5, 1, altura, 'F');
+      linhas.forEach(([rotulo, valor], i) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(i === 0 ? 8 : 7.5);
+        doc.setTextColor(...(i === 0 ? BRONZE : CINZA));
+        doc.text(rotulo.toUpperCase(), MARGEM + 4, y);
+        doc.setFont('helvetica', i === 0 ? 'bold' : 'normal');
+        doc.setFontSize(i === 0 ? 9 : 8);
+        doc.setTextColor(...TEXTO);
+        const v = doc.splitTextToSize(valor, larguraTexto - 32) as string[];
+        doc.text(v, MARGEM + 30, y);
+        y += v.length * 3.8 + 1;
+      });
+      y += 7;
+    });
   }
 
   // Cabeçalho e rodapé em todas as páginas
