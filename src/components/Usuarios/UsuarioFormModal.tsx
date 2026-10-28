@@ -22,7 +22,8 @@ import {
   NotebookPen,
   UserCog,
 } from 'lucide-react';
-import { UsuarioLogin, GlobalModuleId, UserRole, SecaoDp, SecaoOperacoes, Supervisor, Operacao } from '../../types';
+import { UsuarioLogin, GlobalModuleId, UserRole, SecaoDp, SecaoOperacoes, Supervisor, Operacao, Colaborador } from '../../types';
+import { filtrarColaboradoresDoSupervisor, idsDoMesmoSupervisor } from '../../utils/visibilidadeUtils';
 import { MODULOS_SISTEMA, operacaoParaModuloInfo } from '../../data/initialUsersData';
 
 // Seções de dentro do módulo DP (Departamento Pessoal) que podem ser restringidas
@@ -72,6 +73,8 @@ interface UsuarioFormModalProps {
   usuarioToEdit?: UsuarioLogin | null;
   existingUsers: UsuarioLogin[];
   supervisores: Supervisor[];
+  /** Para mostrar quantos colaboradores ativos têm o supervisor escolhido na ficha. */
+  colaboradores?: Colaborador[];
   /** Operações cadastradas além dos módulos fixos (ex.: Unimed) — cada uma vira um módulo
    *  marcável aqui igual Farma Aéreo/DP/etc. */
   operacoesExtras?: Operacao[];
@@ -84,6 +87,7 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
   usuarioToEdit,
   existingUsers,
   supervisores,
+  colaboradores = [],
   operacoesExtras = [],
 }) => {
   // Módulos fixos + qualquer operação cadastrada dinamicamente que ainda não tenha entrada
@@ -640,6 +644,18 @@ export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
                   Identifica de qual equipe/carteira de clientes este login é responsável — usado
                   pela opção abaixo.
                 </p>
+                {supervisorId && (() => {
+                  const ids = idsDoMesmoSupervisor(supervisores, supervisorId);
+                  const equipe = filtrarColaboradoresDoSupervisor(colaboradores, ids).filter((c) => c.status !== 'Inativo');
+                  return (
+                    <p className={`text-[11px] font-semibold mt-1.5 ${equipe.length ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      {equipe.length
+                        ? `${equipe.length} colaborador(es) ativo(s) têm este supervisor na ficha — é a equipe que este login vai ver.`
+                        : 'Nenhum colaborador ativo tem este supervisor na ficha — com a restrição ligada, este login não verá ninguém. Abra a ficha dos colaboradores da equipe e escolha este supervisor no campo "Supervisor".'}
+                      {ids.length > 1 && <span className="block font-normal text-amber-700">Atenção: existem {ids.length} cadastros de supervisor com este nome — o sistema considera todos.</span>}
+                    </p>
+                  );
+                })()}
 
                 <label
                   className={`mt-2.5 flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-colors ${

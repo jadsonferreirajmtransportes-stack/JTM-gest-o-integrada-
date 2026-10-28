@@ -279,6 +279,7 @@ import {
   podeVerSecaoDp,
   primeiraSecaoDpPermitida,
   filtrarColaboradoresDoSupervisor,
+  idsDoMesmoSupervisor,
   filtrarClientesDoSupervisor,
   temAcessoGeralDp,
 } from './utils/visibilidadeUtils';
@@ -1390,9 +1391,9 @@ export default function App() {
     () =>
       filtrarColaboradoresDoSupervisor(
         colaboradores,
-        currentUser?.escopoApenasProprioSetor ? currentUser.supervisorId : undefined
+        currentUser?.escopoApenasProprioSetor ? idsDoMesmoSupervisor(supervisores, currentUser.supervisorId) : undefined
       ),
-    [colaboradores, currentUser]
+    [colaboradores, currentUser, supervisores]
   );
   const clientesVisiveis = useMemo(
     () =>
@@ -3459,6 +3460,7 @@ export default function App() {
               onToggleUserModuleAccess={handleToggleUserModuleAccess}
               onEnviarConvite={handleEnviarConvite}
               supervisores={supervisores}
+              colaboradores={colaboradores}
               operacoesExtras={operacoesExtrasAtivas}
             />
           )}
@@ -3926,6 +3928,7 @@ export default function App() {
         usuarioToEdit={editingUser}
         existingUsers={users}
         supervisores={supervisores}
+        colaboradores={colaboradores}
         operacoesExtras={operacoesExtrasAtivas}
       />
 

@@ -32,7 +32,7 @@ import {
   Send,
   Loader2,
 } from 'lucide-react';
-import { UsuarioLogin, GlobalModuleId, Supervisor, Operacao } from '../../types';
+import { UsuarioLogin, GlobalModuleId, Supervisor, Operacao, Colaborador } from '../../types';
 import { MODULOS_SISTEMA, operacaoParaModuloInfo } from '../../data/initialUsersData';
 import { resolveOperacaoIcon } from '../../utils/iconResolver';
 import { UsuarioFormModal } from './UsuarioFormModal';
@@ -48,6 +48,8 @@ interface UsuariosViewProps {
   onToggleUserModuleAccess: (userId: string, moduleId: GlobalModuleId) => void;
   onEnviarConvite: (email: string) => Promise<void>;
   supervisores: Supervisor[];
+  /** Para mostrar quantos colaboradores cada supervisor tem (conferência do vínculo). */
+  colaboradores?: Colaborador[];
   /** Operações cadastradas além dos módulos fixos (ex.: Unimed). */
   operacoesExtras?: Operacao[];
 }
@@ -61,6 +63,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
   onToggleUserModuleAccess,
   onEnviarConvite,
   supervisores,
+  colaboradores,
   operacoesExtras = [],
 }) => {
   const modulosDisponiveis = [
@@ -805,6 +808,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
         usuarioToEdit={editingUser}
         existingUsers={users}
         supervisores={supervisores}
+        colaboradores={colaboradores}
         operacoesExtras={operacoesExtras}
       />
 

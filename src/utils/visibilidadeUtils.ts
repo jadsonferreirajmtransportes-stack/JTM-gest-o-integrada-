@@ -58,10 +58,22 @@ export function primeiraSecaoDpPermitida(currentUser: UsuarioLogin | undefined):
  *  a lista inteira sem filtrar. */
 export function filtrarColaboradoresDoSupervisor(
   colaboradores: Colaborador[],
-  supervisorId?: string
+  supervisorId?: string | string[]
 ): Colaborador[] {
-  if (!supervisorId) return colaboradores;
-  return colaboradores.filter((c) => c.supervisorId === supervisorId);
+  if (!supervisorId || (Array.isArray(supervisorId) && !supervisorId.length)) return colaboradores;
+  const ids = new Set(Array.isArray(supervisorId) ? supervisorId : [supervisorId]);
+  return colaboradores.filter((c) => !!c.supervisorId && ids.has(c.supervisorId));
+}
+
+/** O supervisor vinculado ao login + qualquer OUTRO cadastro de supervisor com o mesmo nome
+ *  (acontece quando a pessoa é cadastrada duas vezes — a ficha do colaborador aponta para um
+ *  cadastro e o login para o outro, e a equipe "sumia"). */
+export function idsDoMesmoSupervisor(supervisores: { id: string; nome: string }[], supervisorId?: string): string[] {
+  if (!supervisorId) return [];
+  const chave = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase().replace(/\s+/g, ' ');
+  const vinculado = supervisores.find((s) => s.id === supervisorId);
+  if (!vinculado) return [supervisorId];
+  return Array.from(new Set([supervisorId, ...supervisores.filter((s) => chave(s.nome) === chave(vinculado.nome)).map((s) => s.id)]));
 }
 
 /** Só os clientes sob responsabilidade de um supervisor. Cliente.gerenteContaResponsavel é
