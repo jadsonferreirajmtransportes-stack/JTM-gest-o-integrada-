@@ -17,6 +17,7 @@ const ESTILO: Record<SituacaoDia, string> = {
   Incompleto: 'bg-orange-50 text-orange-700 border-orange-200',
   Justificado: 'bg-sky-50 text-sky-700 border-sky-200',
   Folga: 'bg-slate-50 text-slate-400 border-slate-200',
+  Feriado: 'bg-indigo-50 text-indigo-600 border-indigo-200',
   Extra: 'bg-violet-50 text-violet-700 border-violet-200',
   Futuro: 'bg-white text-slate-300 border-slate-100',
   'Em andamento': 'bg-slate-100 text-slate-600 border-slate-200',

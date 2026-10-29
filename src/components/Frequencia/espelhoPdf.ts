@@ -105,7 +105,7 @@ export function gerarEspelhoPdf(params: {
       if (data.section !== 'body') return;
       const d = espelho[data.row.index];
       if (d.situacao === 'Falta') data.cell.styles.textColor = [190, 30, 45];
-      else if (d.situacao === 'Folga' || d.situacao === 'Fora do período' || d.situacao === 'Futuro') data.cell.styles.textColor = [150, 150, 150];
+      else if (d.situacao === 'Folga' || d.situacao === 'Feriado' || d.situacao === 'Fora do período' || d.situacao === 'Futuro') data.cell.styles.textColor = [150, 150, 150];
     },
   });
   y = (doc as any).lastAutoTable.finalY + 5;

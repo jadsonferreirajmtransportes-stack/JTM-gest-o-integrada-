@@ -64,6 +64,7 @@ export const TIPOS_JUSTIFICATIVA: { tipo: string; abona: boolean }[] = [
   { tipo: 'Atestado médico', abona: true },
   { tipo: 'Falta legal (CLT art. 473)', abona: true },
   { tipo: 'Folga / compensação', abona: true },
+  { tipo: 'Feriado', abona: true },
   { tipo: 'Serviço externo / viagem', abona: true },
   { tipo: 'Férias', abona: true },
   { tipo: 'Afastamento', abona: true },

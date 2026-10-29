@@ -90,7 +90,7 @@ export function diaDeTrabalho(iso: string, j?: JornadaPonto): string {
   return ordenados[0] || data;
 }
 
-export type SituacaoDia = 'OK' | 'Atraso' | 'Falta' | 'Incompleto' | 'Justificado' | 'Folga' | 'Extra' | 'Futuro' | 'Em andamento' | 'Fora do período';
+export type SituacaoDia = 'OK' | 'Atraso' | 'Falta' | 'Incompleto' | 'Justificado' | 'Folga' | 'Feriado' | 'Extra' | 'Futuro' | 'Em andamento' | 'Fora do período';
 
 /** Apuração do dia, em horas COMPUTADAS (hora noturna reduzida: 52min30s = 1h, CLT art. 73).
  *  Sem banco de horas (decisão de 2026-10-05): o que passa da jornada é extra; o que falta é
@@ -117,6 +117,8 @@ export interface DiaEspelho {
   atrasoMin: number;
   saldoMin: number;
   situacao: SituacaoDia;
+  /** Nome do feriado, quando o dia é feriado cadastrado. */
+  feriado?: string;
   /** Alguma batida longe da base (fora do raio). */
   foraDoLocal: boolean;
   apuracao: ApuracaoDia;
@@ -129,6 +131,8 @@ export interface OpcoesEspelho {
   /** Dias depois disto não contam (demissão). */
   fimContagem?: string;
   raioPadraoM?: number;
+  /** Feriados cadastrados (data → descrição): o dia não é previsto; trabalhar nele conta como extra. */
+  feriados?: Map<string, string>;
 }
 
 // ---- Hora noturna (CLT art. 73 e Súmula 60 do TST) ----
@@ -207,7 +211,7 @@ export function montarEspelho(
   justificativas: JustificativaDia[],
   opcoes: OpcoesEspelho
 ): DiaEspelho[] {
-  const { jornada, inicioContagem, fimContagem, raioPadraoM = 300 } = opcoes;
+  const { jornada, inicioContagem, fimContagem, raioPadraoM = 300, feriados } = opcoes;
   const hoje = hojeLocal();
   const porDia = new Map<string, BatidaPonto[]>();
   const adicionar = (d: string, b: BatidaPonto) => porDia.set(d, [...(porDia.get(d) || []), b]);
@@ -245,7 +249,8 @@ export function montarEspelho(
     // Antes do início do controle (ou da admissão) um dia SEM registro não conta — mas um dia
     // com batida (ex.: folha manual lançada) ou justificativa segue a jornada normalmente.
     const temRegistro = batidas.length > 0 || !!justificativa;
-    const previsto = !!jornada && jornada.diasSemana.includes(diaDaSemana(data)) && (!foraDoPeriodo || temRegistro);
+    const feriado = feriados?.get(data);
+    const previsto = !feriado && !!jornada && jornada.diasSemana.includes(diaDaSemana(data)) && (!foraDoPeriodo || temRegistro);
     const previstoMin = previsto && jornada ? minutosPrevistos(jornada) : 0;
 
     let trabalhadoMin = 0;
@@ -265,7 +270,7 @@ export function montarEspelho(
     if (foraDoPeriodo && batidas.length === 0) situacao = 'Fora do período';
     else if (justificativa) situacao = justificativa.abona ? 'Justificado' : 'Falta';
     else if (data > hoje) situacao = 'Futuro';
-    else if (batidas.length === 0) situacao = previsto && data < hoje ? 'Falta' : previsto ? 'Em andamento' : 'Folga';
+    else if (batidas.length === 0) situacao = feriado ? 'Feriado' : previsto && data < hoje ? 'Falta' : previsto ? 'Em andamento' : 'Folga';
     else if (!completo) situacao = data === hoje ? 'Em andamento' : 'Incompleto';
     else if (!previsto) situacao = 'Extra';
     else if (jornada && atrasoMin > jornada.toleranciaMin) situacao = 'Atraso';
@@ -292,7 +297,7 @@ export function montarEspelho(
       noturnoRelogioMin: Math.round(real.noturno),
     };
 
-    return { data, previsto, batidas, anuladas, justificativa, trabalhadoMin, previstoMin, atrasoMin, saldoMin, situacao, foraDoLocal, apuracao };
+    return { data, previsto, batidas, anuladas, justificativa, trabalhadoMin, previstoMin, atrasoMin, saldoMin, situacao, foraDoLocal, apuracao, feriado };
   });
 }
 

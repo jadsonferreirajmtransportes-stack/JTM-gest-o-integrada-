@@ -20,7 +20,7 @@ import {
   Info,
   Sheet,
 } from 'lucide-react';
-import { Colaborador, UsuarioLogin } from '../../types';
+import { Colaborador, FeriadoEmpresa, UsuarioLogin } from '../../types';
 import {
   BatidaPonto,
   JornadaPonto,
@@ -77,6 +77,8 @@ import { gerarEspelhoXlsx, gerarResumoPdf, gerarResumoXlsx } from './relatorioFr
 interface FrequenciaViewProps {
   colaboradores: Colaborador[];
   currentUser?: UsuarioLogin;
+  /** Feriados de Configurações → Feriados: o dia não conta como falta. */
+  feriados?: FeriadoEmpresa[];
 }
 
 type Aba = 'hoje' | 'espelho' | 'resumo' | 'assinaturas' | 'configurar';
@@ -88,6 +90,7 @@ const ESTILO_SITUACAO: Record<SituacaoDia, string> = {
   Incompleto: 'bg-orange-50 text-orange-700 border-orange-200',
   Justificado: 'bg-sky-50 text-sky-700 border-sky-200',
   Folga: 'bg-slate-50 text-slate-400 border-slate-200',
+  Feriado: 'bg-indigo-50 text-indigo-600 border-indigo-200',
   Extra: 'bg-violet-50 text-violet-700 border-violet-200',
   Futuro: 'bg-white text-slate-300 border-slate-100',
   'Em andamento': 'bg-slate-100 text-slate-600 border-slate-200',
@@ -100,7 +103,8 @@ const dataBr = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4
 /** DP → Controle de Frequência (CONTROLE INTERNO — o ponto oficial continua no sistema atual).
  *  Batidas pelo celular (?form=ponto), espelho mensal com ajustes auditáveis, justificativas,
  *  resumo com a regra de atrasos do Regulamento e espelho para assinatura do colaborador. */
-export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, currentUser }) => {
+export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, currentUser, feriados = [] }) => {
+  const mapaFeriados = useMemo(() => new Map(feriados.filter((f) => f.tipo !== 'Ponto Facultativo').map((f) => [f.data, f.descricao] as [string, string])), [feriados]);
   const [aba, setAba] = useState<Aba>('hoje');
   const [mes, setMes] = useState(mesAtual());
   const [importandoFolha, setImportandoFolha] = useState(false);
@@ -176,10 +180,10 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
         batidas.filter((b) => b.colaboradorId === c.id),
         justificativas.filter((j) => j.colaboradorId === c.id),
         // Com base atrelada, o raio é o da base dele; sem base, o maior raio entre as bases.
-        { jornada, inicioContagem: inicio || hojeLocal(), fimContagem: c.dataDemissao, raioPadraoM: locais.find((l) => l.id === baseDe.get(c.id))?.raioM ?? raioPadrao }
+        { jornada, inicioContagem: inicio || hojeLocal(), fimContagem: c.dataDemissao, raioPadraoM: locais.find((l) => l.id === baseDe.get(c.id))?.raioM ?? raioPadrao, feriados: mapaFeriados }
       );
     },
-    [batidas, justificativas, jornadaDe, jornadaPorId, inicioControle, raioPadrao, locais, baseDe]
+    [batidas, justificativas, jornadaDe, jornadaPorId, inicioControle, raioPadrao, locais, baseDe, mapaFeriados]
   );
 
   const resumos: { c: Colaborador; resumo: ResumoFrequencia; jornada?: JornadaPonto }[] = useMemo(
@@ -594,7 +598,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {espelhoSel.map((d) => (
-                      <tr key={d.data} className={d.situacao === 'Folga' || d.situacao === 'Futuro' || d.situacao === 'Fora do período' ? 'text-slate-400' : ''}>
+                      <tr key={d.data} className={d.situacao === 'Folga' || d.situacao === 'Feriado' || d.situacao === 'Futuro' || d.situacao === 'Fora do período' ? 'text-slate-400' : ''}>
                         <td className="p-2.5 font-semibold whitespace-nowrap">
                           {d.data.slice(8, 10)} <span className="text-slate-400 font-normal">{NOMES_DIA[diaDaSemana(d.data)]}</span>
                         </td>
@@ -618,6 +622,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${ESTILO_SITUACAO[d.situacao]}`}>
                             {d.situacao === 'Atraso' ? `Atraso ${d.atrasoMin} min` : d.situacao}
                           </span>
+                          {d.feriado && <span className="block text-[10px] text-indigo-600 mt-0.5">{d.feriado}</span>}
                           {d.justificativa && <span className="block text-[10px] text-slate-500 mt-0.5">{d.justificativa.tipo}{d.justificativa.observacao ? ` — ${d.justificativa.observacao}` : ''}</span>}
                           {d.foraDoLocal && <span className="block text-[10px] text-rose-600 mt-0.5">Batida longe da base</span>}
                         </td>

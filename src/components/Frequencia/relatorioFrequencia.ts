@@ -152,7 +152,7 @@ export async function gerarEspelhoXlsx(params: {
       if (col > titulos.length) return;
       cel.border = bordas;
       if (d.situacao === 'Falta') cel.font = { color: { argb: 'FFBE1E2D' } };
-      else if (['Folga', 'Futuro', 'Fora do período'].includes(d.situacao)) cel.font = { color: { argb: 'FF999999' } };
+      else if (['Folga', 'Feriado', 'Futuro', 'Fora do período'].includes(d.situacao)) cel.font = { color: { argb: 'FF999999' } };
     });
     linha += 1;
   });
