@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { X, Save, Loader2, Download, Send, CheckCircle2, Undo2, Plus, Trash2, ArrowUp, ArrowDown, FileSignature, GitBranch, AlertTriangle, Info } from 'lucide-react';
+import { X, Save, Loader2, Download, Send, CheckCircle2, Undo2, Plus, Trash2, ArrowUp, ArrowDown, FileSignature, GitBranch, AlertTriangle, Info, Upload } from 'lucide-react';
 import { Colaborador, UsuarioLogin } from '../../types';
 import { SETORES_DOCUMENTO, CLASSIFICACOES } from '../../data/setoresDocumento';
 import { Pop, ConteudoPop, EtapaPop, SITUACAO_ESTILO, aprovarPop, excluirPop, novoIdPop, salvarPop, somarAnos, verificarPop } from '../../utils/popsApi';
@@ -7,6 +7,8 @@ import { baixarBlob } from '../../utils/downloadUtils';
 import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
 import { dataBr, gerarPopPdf } from './popPdf';
 import { EnviarPopCienciaModal } from './EnviarPopCienciaModal';
+import { BlocoChecklist } from '../Documentos/BlocoChecklist';
+import { importarPop } from './importarPop';
 
 const hoje = () => new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
 const campo = 'w-full border border-slate-200 rounded-lg px-2.5 py-2 text-xs outline-none focus:ring-2 focus:ring-[#C48229]/30 bg-white disabled:bg-slate-50 disabled:text-slate-600';
@@ -47,6 +49,25 @@ export const PopEditor: React.FC<PopEditorProps> = ({ pop: inicial, todos, colab
   const editavel = p.status === 'Rascunho';
   const ehAdmin = currentUser?.role === 'admin';
   const c = p.conteudo;
+  // Importar de um arquivo (PDF/Word/Excel) — preenche as seções; avisos ficam na tela até fechar.
+  const [importando, setImportando] = useState(false);
+  const [avisosImportacao, setAvisosImportacao] = useState<string[]>([]);
+  const importar = async (arquivo?: File) => {
+    if (!arquivo) return;
+    const temConteudo = !!(c.objetivo.trim() || c.etapas.some((e) => e.descricao.trim()));
+    if (temConteudo && !window.confirm('Importar substitui o conteúdo atual das seções deste POP. Continuar?')) return;
+    setImportando(true);
+    try {
+      const r = await importarPop(arquivo);
+      setP((prev) => ({ ...prev, titulo: prev.titulo.trim() ? prev.titulo : r.titulo, conteudo: r.conteudo }));
+      setAvisosImportacao(r.avisos.length ? r.avisos : ['Arquivo importado — confira cada seção antes de enviar para revisão.']);
+    } catch (err) {
+      console.error(err);
+      setAvisosImportacao([err instanceof Error ? err.message : 'Não foi possível ler o arquivo.']);
+    } finally {
+      setImportando(false);
+    }
+  };
   const historico = useMemo(() => todos.filter((x) => x.codigo && x.codigo === p.codigo), [todos, p.codigo]);
   const pendencias = verificarPop(p);
   const temRascunhoNovo = p.status === 'Vigente' && historico.some((x) => x.versao > p.versao && x.status !== 'Obsoleto');
@@ -334,6 +355,29 @@ export const PopEditor: React.FC<PopEditorProps> = ({ pop: inicial, todos, colab
             </div>
           )}
 
+          {editavel && (
+            <div className="p-3 bg-white border border-dashed border-amber-300 rounded-2xl flex flex-wrap items-center gap-3">
+              <label className="px-3 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg font-bold flex items-center gap-1.5 cursor-pointer normal-case tracking-normal">
+                {importando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Importar arquivo
+                <input type="file" accept=".pdf,.docx,.xlsx,.xls,.csv" className="hidden" disabled={importando} onChange={(e) => { importar(e.target.files?.[0]); e.target.value = ''; }} />
+              </label>
+              <span className="text-slate-500">Já tem o POP em PDF ou Word? Importe e o sistema distribui nas seções (Objetivo, Responsabilidades, Procedimento...) e reconhece os checklists.</span>
+            </div>
+          )}
+          {avisosImportacao.length > 0 && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[#92611F] flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <div className="flex-1 space-y-0.5">
+                {avisosImportacao.map((a) => (
+                  <p key={a}>{a}</p>
+                ))}
+              </div>
+              <button type="button" onClick={() => setAvisosImportacao([])} className="p-1 text-[#92611F]" title="Fechar">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Identificação */}
           <section className="bg-white rounded-2xl border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-6 gap-3">
             <label className="sm:col-span-6 flex flex-col gap-1">
@@ -478,6 +522,24 @@ export const PopEditor: React.FC<PopEditorProps> = ({ pop: inicial, todos, colab
               </div>
             ))}
             {maisUm('Adicionar anexo', () => adicionar('anexos', ''))}
+          </Secao>
+
+          <Secao numero="11" titulo="Listas de verificação (checklists)" opcional dica="Itens para conferir na execução — caixinha simples ou colunas Sim/Não/N/A, C/NC. Saem no PDF com as caixinhas para marcar.">
+            {c.checklists.map((ck, i) => (
+              <div key={ck.id} className="border border-slate-200 rounded-xl p-2.5 space-y-2">
+                <BlocoChecklist
+                  bloco={{ id: ck.id, tipo: 'checklist', titulo: ck.titulo || undefined, itens: ck.itens, opcoes: ck.opcoes, comObservacao: ck.comObservacao }}
+                  somenteLeitura={!editavel}
+                  onChange={(nb) => setLista('checklists', i, { ...ck, titulo: nb.titulo || '', itens: nb.itens, opcoes: nb.opcoes, comObservacao: nb.comObservacao })}
+                />
+                {editavel && (
+                  <button type="button" onClick={() => remover('checklists', i)} className="text-[11px] font-semibold text-slate-400 hover:text-rose-600 flex items-center gap-1">
+                    <Trash2 className="w-3.5 h-3.5" /> Tirar este checklist
+                  </button>
+                )}
+              </div>
+            ))}
+            {maisUm('Adicionar checklist', () => adicionar('checklists', { id: novoIdPop('ck'), titulo: '', itens: [{ texto: '' }] }))}
           </Secao>
 
           {historico.length > 1 && (

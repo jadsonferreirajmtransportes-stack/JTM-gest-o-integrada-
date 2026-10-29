@@ -11,6 +11,15 @@ export interface EtapaPop {
   responsavel?: string;
 }
 
+/** Lista de verificação do POP (mesmo formato do checklist da Padronização). */
+export interface ChecklistPop {
+  id: string;
+  titulo: string;
+  itens: { texto: string; marcado?: boolean; resposta?: string; obs?: string }[];
+  opcoes?: string[];
+  comObservacao?: boolean;
+}
+
 export interface ConteudoPop {
   objetivo: string;
   aplicacao: string;
@@ -22,6 +31,7 @@ export interface ConteudoPop {
   desvios: string;
   registros: { registro: string; responsavel: string; guarda: string }[];
   anexos: string[];
+  checklists: ChecklistPop[];
 }
 
 export interface Pop {
@@ -73,6 +83,7 @@ export function conteudoEmBranco(): ConteudoPop {
     desvios: '',
     registros: [],
     anexos: [],
+    checklists: [],
   };
 }
 
@@ -89,6 +100,7 @@ export function normalizarConteudo(c: any): ConteudoPop {
     desvios: c?.desvios ?? '',
     registros: Array.isArray(c?.registros) ? c.registros : [],
     anexos: Array.isArray(c?.anexos) ? c.anexos : [],
+    checklists: Array.isArray(c?.checklists) ? c.checklists.map((k: any) => ({ ...k, id: k.id || novoIdPop('ck'), itens: Array.isArray(k.itens) ? k.itens : [] })) : [],
   };
 }
 

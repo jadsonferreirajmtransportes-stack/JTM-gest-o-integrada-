@@ -273,6 +273,54 @@ export function gerarPopPdf(
     anexos.forEach((a, i) => paragrafo(`Anexo ${ALINEAS[i % 26].toUpperCase()} — ${a}`, { recuo: false }));
   }
 
+  const checklists = (c.checklists || []).filter((k) => k.itens.some((i) => i.texto.trim()));
+  if (checklists.length) {
+    const nCk = titulo1('Listas de verificação');
+    const caixa = (x: number, yTopo: number, marcada: boolean, lado = 3.6) => {
+      doc.setDrawColor(...CORPO);
+      doc.setLineWidth(0.3);
+      doc.rect(x, yTopo, lado, lado);
+      if (marcada) {
+        doc.setDrawColor(...BRONZE);
+        doc.setLineWidth(0.6);
+        doc.line(x + 0.6, yTopo + lado * 0.55, x + lado * 0.42, yTopo + lado - 0.6);
+        doc.line(x + lado * 0.42, yTopo + lado - 0.6, x + lado - 0.4, yTopo + 0.5);
+      }
+    };
+    checklists.forEach((k, idx) => {
+      if (k.titulo.trim() || checklists.length > 1) titulo2(`${nCk}.${idx + 1}`, k.titulo.trim() || `Lista ${idx + 1}`);
+      const itens = k.itens.filter((i) => i.texto.trim());
+      if (k.opcoes?.length) {
+        const opcoes = k.opcoes;
+        autoTable(doc, {
+          startY: y - ENTRELINHA * 0.4,
+          margin: { left: M_ESQ, right: M_DIR, top: M_SUP + 4, bottom: M_INF + 2 },
+          head: [['Item', ...opcoes, ...(k.comObservacao ? ['Observação'] : [])]],
+          body: itens.map((it) => [it.texto, ...opcoes.map(() => ''), ...(k.comObservacao ? [it.obs || ''] : [])]),
+          theme: 'grid',
+          styles: { font: 'helvetica', fontSize: 10, cellPadding: 1.8, textColor: CORPO, lineColor: [200, 200, 200], lineWidth: 0.15, valign: 'middle' },
+          headStyles: { fillColor: FUNDO, textColor: TEXTO, fontStyle: 'bold', halign: 'center' },
+          columnStyles: Object.fromEntries([[0, { halign: 'left' }], ...opcoes.map((_, i) => [i + 1, { cellWidth: 15 }]), ...(k.comObservacao ? [[opcoes.length + 1, { cellWidth: 40 }]] : [])]),
+          didDrawCell: (h) => {
+            if (h.section !== 'body' || h.column.index < 1 || h.column.index > opcoes.length) return;
+            caixa(h.cell.x + h.cell.width / 2 - 1.8, h.cell.y + h.cell.height / 2 - 1.8, itens[h.row.index]?.resposta === opcoes[h.column.index - 1]);
+          },
+        });
+        y = (doc as any).lastAutoTable.finalY + ENTRELINHA;
+      } else {
+        itens.forEach((it) => {
+          fonte('normal');
+          const linhas = doc.splitTextToSize(it.texto, larguraTexto - RECUO - 7) as string[];
+          espaco(linhas.length * ENTRELINHA);
+          caixa(M_ESQ + RECUO, y - 3.3, !!it.marcado);
+          linhas.forEach((l, i) => doc.text(l, M_ESQ + RECUO + 6.5, y + i * ENTRELINHA));
+          y += linhas.length * ENTRELINHA;
+        });
+        y += ENTRELINHA * 0.4;
+      }
+    });
+  }
+
   titulo1('Histórico de revisões');
   const versoes = [...(opcoes.historico ?? []).filter((v) => v.codigo === p.codigo && v.id !== p.id), p]
     .filter((v) => v.versao <= p.versao)
