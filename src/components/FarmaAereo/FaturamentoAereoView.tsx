@@ -29,6 +29,7 @@ import { formatCurrency, formatDateBR } from '../../utils/formatters';
 import {
   computeResumoFatura,
   computeResumoGeral,
+  mesDaFatura,
   computeValorACobrar,
   explicarValorACobrar,
   exportarFaturaParaExcel,
@@ -533,11 +534,15 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       return !!d && (!dataDe || d >= dataDe) && (!dataAte || d <= dataAte);
     });
   }, [lancamentosDaEmpresa, dataDe, dataAte]);
+  // Faturas do período = pelo mês da PRÓPRIA fatura (ex.: "Setembro 2026"), não pelos CT-es dela —
+  // uma fatura de agosto com um CT-e concluído em setembro não conta como fatura de setembro.
   const faturasNoIntervalo = useMemo(() => {
     if (!dataDe && !dataAte) return faturasDaEmpresa;
-    const ids = new Set(lancamentosNoIntervalo.map((l) => l.faturaId).filter(Boolean));
-    return faturasDaEmpresa.filter((f) => ids.has(f.id));
-  }, [faturasDaEmpresa, lancamentosNoIntervalo, dataDe, dataAte]);
+    return faturasDaEmpresa.filter((f) => {
+      const m = mesDaFatura(f);
+      return !!m && (!dataDe || m >= dataDe.slice(0, 7)) && (!dataAte || m <= dataAte.slice(0, 7));
+    });
+  }, [faturasDaEmpresa, dataDe, dataAte]);
   const resumoGeral = useMemo(
     () => computeResumoGeral(lancamentosNoIntervalo, faturasNoIntervalo, clientes),
     [lancamentosNoIntervalo, faturasNoIntervalo, clientes]
@@ -554,11 +559,16 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
         m.pagos += 1;
       }
       m.ctes += 1;
-      if (l.faturaId) m.faturas.add(l.faturaId);
+      porMes.set(mes, m);
+    });
+    faturasNoIntervalo.forEach((f) => {
+      const mes = mesDaFatura(f) || 'sem-data';
+      const m = porMes.get(mes) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>() };
+      m.faturas.add(f.id);
       porMes.set(mes, m);
     });
     return Array.from(porMes.entries()).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [lancamentosNoIntervalo, clientes]);
+  }, [lancamentosNoIntervalo, faturasNoIntervalo, clientes]);
   const NOMES_MES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   const nomeMes = (m: string) => (m === 'sem-data' ? 'Sem data' : `${NOMES_MES[Number(m.slice(5, 7)) - 1]} ${m.slice(0, 4)}`);
   const filtroRelatorio = () => ({
@@ -1085,7 +1095,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           <button
             type="button"
             onClick={() => {
-              const arquivo = gerarRelatorioFinanceiroPdf(lancamentosNoIntervalo, clientes, filtroRelatorio());
+              const arquivo = gerarRelatorioFinanceiroPdf(lancamentosNoIntervalo, clientes, filtroRelatorio(), faturasNoIntervalo);
               baixarBlob(arquivo, arquivo.name);
             }}
             className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-amber-50 flex items-center gap-1 normal-case tracking-normal"
@@ -1096,7 +1106,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           <button
             type="button"
             onClick={async () => {
-              const arquivo = await gerarRelatorioFinanceiroXlsx(lancamentosNoIntervalo, faturasDaEmpresa, clientes, filtroRelatorio());
+              const arquivo = await gerarRelatorioFinanceiroXlsx(lancamentosNoIntervalo, faturasDaEmpresa, clientes, filtroRelatorio(), faturasNoIntervalo);
               baixarBlob(arquivo, arquivo.name);
             }}
             className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-emerald-50 flex items-center gap-1 normal-case tracking-normal"
@@ -1130,7 +1140,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                 <th className="text-right p-2.5">Em aberto</th>
                 <th className="text-right p-2.5">CT-es</th>
                 <th className="text-right p-2.5">Pagos</th>
-                <th className="text-right p-2.5">Faturas</th>
+                <th className="text-right p-2.5" title="Faturas pelo período da própria fatura">Faturas do mês</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

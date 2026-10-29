@@ -9,7 +9,7 @@ import autoTable from 'jspdf-autotable';
 import type { Cliente, FaturaAereo, LancamentoFaturamentoAereo } from '../../types';
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
-import { computeValorACobrar, findClienteById } from './faturamentoAereoUtils';
+import { computeValorACobrar, findClienteById, mesDaFatura } from './faturamentoAereoUtils';
 
 const BRONZE: [number, number, number] = [196, 130, 41];
 const TEXTO: [number, number, number] = [17, 17, 17];
@@ -28,6 +28,14 @@ export interface FiltroRelatorio {
   ate?: string;
 }
 
+interface Grupo {
+  cobrado: number;
+  pago: number;
+  ctes: number;
+  pagos: number;
+  faturas: Set<string>;
+}
+
 interface Linha {
   l: LancamentoFaturamentoAereo;
   valor: number;
@@ -36,7 +44,9 @@ interface Linha {
   mes: string;
 }
 
-function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[]) {
+/** `faturasPeriodo`: as faturas do período (pelo mês da própria fatura) — são elas que contam
+ *  na coluna "Faturas", não as faturas que só têm algum CT-e no período. */
+function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], faturasPeriodo: FaturaAereo[]) {
   const linhas: Linha[] = lancamentos.map((l) => {
     const c = findClienteById(clientes, l.clienteId, l.clienteNome);
     return {
@@ -48,7 +58,7 @@ function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[]) 
     };
   });
   const agrupar = (chave: (x: Linha) => string) => {
-    const m = new Map<string, { cobrado: number; pago: number; ctes: number; pagos: number; faturas: Set<string> }>();
+    const m = new Map<string, Grupo>();
     linhas.forEach((x) => {
       const k = chave(x);
       const g = m.get(k) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>() };
@@ -56,15 +66,27 @@ function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[]) 
       g.pago += x.pago;
       g.ctes += 1;
       if (x.l.confirmacaoPagamento) g.pagos += 1;
-      if (x.l.faturaId) g.faturas.add(x.l.faturaId);
       m.set(k, g);
     });
     return m;
   };
-  const porMes = Array.from(agrupar((x) => x.mes).entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  const porEmpresa = Array.from(agrupar((x) => x.empresa).entries()).sort((a, b) => b[1].cobrado - a[1].cobrado);
+  const empresaDaFatura = (f: FaturaAereo) => {
+    const c = findClienteById(clientes, f.clienteId, f.clienteNome);
+    return c?.nomeFantasia || c?.razaoSocial || f.clienteNome || '—';
+  };
+  const contarFaturas = (m: Map<string, Grupo>, chave: (f: FaturaAereo) => string) => {
+    faturasPeriodo.forEach((f) => {
+      const k = chave(f);
+      const g = m.get(k) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>() };
+      g.faturas.add(f.id);
+      m.set(k, g);
+    });
+    return m;
+  };
+  const porMes = Array.from(contarFaturas(agrupar((x) => x.mes), (f) => mesDaFatura(f) || 'sem-data').entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  const porEmpresa = Array.from(contarFaturas(agrupar((x) => x.empresa), empresaDaFatura).entries()).sort((a, b) => b[1].cobrado - a[1].cobrado);
   const total = linhas.reduce((s, x) => ({ cobrado: s.cobrado + x.valor, pago: s.pago + x.pago, ctes: s.ctes + 1, pagos: s.pagos + (x.l.confirmacaoPagamento ? 1 : 0) }), { cobrado: 0, pago: 0, ctes: 0, pagos: 0 });
-  const faturas = new Set(linhas.map((x) => x.l.faturaId).filter(Boolean)).size;
+  const faturas = faturasPeriodo.length;
   return { linhas, porMes, porEmpresa, total, faturas };
 }
 
@@ -80,9 +102,10 @@ export async function gerarRelatorioFinanceiroXlsx(
   lancamentos: LancamentoFaturamentoAereo[],
   faturas: FaturaAereo[],
   clientes: Cliente[],
-  filtro: FiltroRelatorio
+  filtro: FiltroRelatorio,
+  faturasPeriodo: FaturaAereo[] = faturas
 ): Promise<File> {
-  const r = montar(lancamentos, clientes);
+  const r = montar(lancamentos, clientes, faturasPeriodo);
   const numeroFatura = new Map(faturas.map((f) => [f.id, f.numeroFatura]));
   const ExcelJS = (await import('exceljs')).default;
   const wb = new ExcelJS.Workbook();
@@ -141,7 +164,7 @@ export async function gerarRelatorioFinanceiroXlsx(
     { titulo: 'Em aberto', largura: 16, moeda: true },
     { titulo: 'CT-es', largura: 9 },
     { titulo: 'CT-es pagos', largura: 11 },
-    { titulo: 'Faturas', largura: 9 },
+    { titulo: 'Faturas do período', largura: 12 },
   ];
   const linhaGrupo = (nome: string, g: { cobrado: number; pago: number; ctes: number; pagos: number; faturas: Set<string> }) => [nome, g.cobrado, g.pago, g.cobrado - g.pago, g.ctes, g.pagos, g.faturas.size];
   const totalGrupo = ['Total', r.total.cobrado, r.total.pago, r.total.cobrado - r.total.pago, r.total.ctes, r.total.pagos, r.faturas];
@@ -208,8 +231,8 @@ export async function gerarRelatorioFinanceiroXlsx(
 // ---------------------------------------------------------------------------
 // PDF
 // ---------------------------------------------------------------------------
-export function gerarRelatorioFinanceiroPdf(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], filtro: FiltroRelatorio): File {
-  const r = montar(lancamentos, clientes);
+export function gerarRelatorioFinanceiroPdf(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], filtro: FiltroRelatorio, faturasPeriodo: FaturaAereo[] = []): File {
+  const r = montar(lancamentos, clientes, faturasPeriodo);
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const L = doc.internal.pageSize.getWidth();
   const A = doc.internal.pageSize.getHeight();
@@ -255,7 +278,7 @@ export function gerarRelatorioFinanceiroPdf(lancamentos: LancamentoFaturamentoAe
     autoTable(doc, {
       startY: startY + 2.5,
       margin: { left: M, right: M, top: 22, bottom: 16 },
-      head: [[primeira, 'Faturado', 'Pago', 'Em aberto', 'CT-es', 'Pagos', 'Faturas']],
+      head: [[primeira, 'Faturado', 'Pago', 'Em aberto', 'CT-es', 'Pagos', 'Faturas do período']],
       body: grupos.map(([n, g]) => [n, moeda(g.cobrado), moeda(g.pago), moeda(g.cobrado - g.pago), g.ctes, g.pagos, g.faturas.size]),
       foot: [['Total', moeda(r.total.cobrado), moeda(r.total.pago), moeda(r.total.cobrado - r.total.pago), r.total.ctes, r.total.pagos, r.faturas]],
       theme: 'grid',
