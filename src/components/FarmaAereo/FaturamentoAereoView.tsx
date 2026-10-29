@@ -40,6 +40,8 @@ import {
   tabelaFreteParaModal,
 } from './faturamentoAereoUtils';
 import { ImportFaturamentoAereoModal } from './ImportFaturamentoAereoModal';
+import { gerarFaturaPdf } from './faturaPdf';
+import { baixarBlob } from '../../utils/downloadUtils';
 
 interface FaturamentoAereoViewProps {
   lancamentos: LancamentoFaturamentoAereo[];
@@ -791,6 +793,11 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     setIsNovaFaturaOpen(true);
   };
 
+  const handleFaturaPdf = (fatura: FaturaAereo) => {
+    const arquivo = gerarFaturaPdf(fatura, lancamentos.filter((l) => l.faturaId === fatura.id), findClienteById(clientes, fatura.clienteId, fatura.clienteNome));
+    baixarBlob(arquivo, arquivo.name);
+  };
+
   const handleExportarFatura = (fatura: FaturaAereo) => {
     const lancamentosDaFatura = lancamentos.filter((l) => l.faturaId === fatura.id);
     void exportarFaturaParaExcel(fatura, lancamentosDaFatura, findClienteById(clientes, fatura.clienteId, fatura.clienteNome));
@@ -1458,6 +1465,17 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                       }
                     >
                       <Receipt className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFaturaPdf(fatura);
+                      }}
+                      className="p-1.5 text-slate-300 hover:text-[#92611F] hover:bg-amber-50 rounded-lg transition-colors shrink-0"
+                      title="Emitir a fatura em PDF (layout padrão JMT)"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
