@@ -42,6 +42,7 @@ import {
 } from './faturamentoAereoUtils';
 import { ImportFaturamentoAereoModal } from './ImportFaturamentoAereoModal';
 import { gerarFaturaPdf } from './faturaPdf';
+import { gerarRelatorioFinanceiroPdf, gerarRelatorioFinanceiroXlsx } from './relatorioFinanceiro';
 import { baixarBlob } from '../../utils/downloadUtils';
 
 interface FaturamentoAereoViewProps {
@@ -560,6 +561,12 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   }, [lancamentosNoIntervalo, clientes]);
   const NOMES_MES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   const nomeMes = (m: string) => (m === 'sem-data' ? 'Sem data' : `${NOMES_MES[Number(m.slice(5, 7)) - 1]} ${m.slice(0, 4)}`);
+  const filtroRelatorio = () => ({
+    setor: tituloSetor || 'Farma Aéreo',
+    empresa: empresaSelecionada ? empresasDisponiveis.find((e) => e.value === empresaSelecionada)?.label : undefined,
+    de: dataDe || undefined,
+    ate: dataAte || undefined,
+  });
   const atalhoPeriodo = (tipo: 'mes' | 'mesPassado' | 'ano' | 'tudo') => {
     const h = new Date();
     const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -1073,10 +1080,35 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
             {rotulo}
           </button>
         ))}
+        <div className="ml-auto flex items-center gap-1.5">
+          <span className="text-[11px] text-slate-400">Relatório:</span>
+          <button
+            type="button"
+            onClick={() => {
+              const arquivo = gerarRelatorioFinanceiroPdf(lancamentosNoIntervalo, clientes, filtroRelatorio());
+              baixarBlob(arquivo, arquivo.name);
+            }}
+            className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-amber-50 flex items-center gap-1 normal-case tracking-normal"
+            title="Relatório em PDF (resumo, mês a mês e por empresa) com os filtros de empresa e data"
+          >
+            <FileText className="w-3.5 h-3.5 text-[#92611F]" /> PDF
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              const arquivo = await gerarRelatorioFinanceiroXlsx(lancamentosNoIntervalo, faturasDaEmpresa, clientes, filtroRelatorio());
+              baixarBlob(arquivo, arquivo.name);
+            }}
+            className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-emerald-50 flex items-center gap-1 normal-case tracking-normal"
+            title="Relatório em Excel (Resumo, Mês a mês, Por empresa e a lista de CT-es) com os filtros de empresa e data"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> Excel
+          </button>
+        </div>
         <button
           type="button"
           onClick={() => setMesAMesAberto((v) => !v)}
-          className={`ml-auto px-3 py-1.5 rounded-lg text-[11px] font-bold border normal-case tracking-normal ${mesAMesAberto ? 'bg-[#C48229] border-[#C48229] text-white' : 'bg-white border-[#C48229] text-[#92611F] hover:bg-amber-50'}`}
+          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border normal-case tracking-normal ${mesAMesAberto ? 'bg-[#C48229] border-[#C48229] text-white' : 'bg-white border-[#C48229] text-[#92611F] hover:bg-amber-50'}`}
         >
           {mesAMesAberto ? 'Esconder mês a mês' : 'Ver mês a mês'}
         </button>
