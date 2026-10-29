@@ -280,7 +280,6 @@ import {
   primeiraSecaoDpPermitida,
   filtrarColaboradoresDoSupervisor,
   idsDoMesmoSupervisor,
-  filtrarClientesDoSupervisor,
   temAcessoGeralDp,
 } from './utils/visibilidadeUtils';
 import { NotasView } from './components/Notas/NotasView';
@@ -1381,12 +1380,8 @@ export default function App() {
 
   // Dynamic calculation of System Alerts
   // Escopo "própria equipe/carteira" (currentUser.escopoApenasProprioSetor) — usado só nos
-  // pontos de DP e Clientes que um supervisor de campo pode ver (ver visibilidadeUtils.ts).
-  // Sem essa flag ligada, as 3 listas abaixo são idênticas às originais.
-  const supervisorVinculado = useMemo(
-    () => supervisores.find((s) => s.id === currentUser?.supervisorId),
-    [supervisores, currentUser]
-  );
+  // pontos de DP que um supervisor de campo pode ver (ver visibilidadeUtils.ts).
+  // Sem essa flag ligada, as listas abaixo são idênticas às originais.
   const colaboradoresEquipeVisiveis = useMemo(
     () =>
       filtrarColaboradoresDoSupervisor(
@@ -1395,14 +1390,9 @@ export default function App() {
       ),
     [colaboradores, currentUser, supervisores]
   );
-  const clientesVisiveis = useMemo(
-    () =>
-      filtrarClientesDoSupervisor(
-        clientes,
-        currentUser?.escopoApenasProprioSetor ? supervisorVinculado?.nome : undefined
-      ),
-    [clientes, currentUser, supervisorVinculado]
-  );
+  // A restrição "própria equipe/carteira" vale só no DP (decisão de 2026-10-29): Clientes e a
+  // calculadora de frete mostram todos os clientes para quem tem acesso ao módulo Clientes.
+  const clientesVisiveis = clientes;
   // Supervisor com "só a própria equipe": as demais listas do DP também ficam só da equipe.
   const apenasEquipe = !!(currentUser?.escopoApenasProprioSetor && currentUser?.supervisorId);
   const idsEquipe = useMemo(() => new Set(colaboradoresEquipeVisiveis.map((c) => c.id)), [colaboradoresEquipeVisiveis]);
