@@ -25,8 +25,8 @@ import {
   ProjetoGerencial,
   InstrucaoTrabalho,
 } from '../../types';
-import { getMensagens, getAnexoMensagem, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem } from '../../utils/chatApi';
-import { AcoesMensagemChat, BarraRespondendo, CitacaoMensagem, EditorMensagemChat, MensagemApagada } from './MensagemChatAcoes';
+import { getMensagens, getAnexoMensagem, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem, reagirMensagem } from '../../utils/chatApi';
+import { AcoesMensagemChat, BarraRespondendo, CitacaoMensagem, EditorMensagemChat, MensagemApagada, ReacoesMensagem } from './MensagemChatAcoes';
 import { AudioDaMensagem, GravadorAudio, nomeAudio } from './AudioChat';
 import { enviarArquivo } from '../../utils/arquivosStorage';
 import { podeVerRegistroCompartilhado } from '../../utils/visibilidadeUtils';
@@ -349,6 +349,22 @@ export const ChatView: React.FC<ChatViewProps> = ({
     } catch (err) {
       console.error('Erro ao editar mensagem:', err);
       alert('Não foi possível editar a mensagem. Tente de novo.');
+    }
+  };
+
+  // Reação: muda na tela na hora e confirma com o banco (o realtime atualiza os outros).
+  const handleReagir = async (m: MensagemChat, emoji: string) => {
+    const atual = { ...(m.reacoes || {}) };
+    const ids = atual[emoji] || [];
+    atual[emoji] = ids.includes(currentUserId) ? ids.filter((i) => i !== currentUserId) : [...ids, currentUserId];
+    if (!atual[emoji].length) delete atual[emoji];
+    setMensagens((prev) => prev.map((x) => (x.id === m.id ? { ...x, reacoes: atual } : x)));
+    try {
+      const salvas = await reagirMensagem(m.id, currentUserId, emoji);
+      setMensagens((prev) => prev.map((x) => (x.id === m.id ? { ...x, reacoes: salvas } : x)));
+    } catch (err) {
+      console.error('Erro ao reagir:', err);
+      setMensagens((prev) => prev.map((x) => (x.id === m.id ? { ...x, reacoes: m.reacoes } : x)));
     }
   };
 
@@ -752,6 +768,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                         onEditar={() => setEditandoId(m.id)}
                         onApagar={() => handleApagarMensagem(m)}
                         onResponder={() => setRespondendo(m)}
+                        onReagir={(e) => handleReagir(m, e)}
                       />
                     )}
                     <div className={`${editando ? 'w-[70%]' : 'max-w-[70%]'} rounded-2xl px-3.5 py-2 text-xs ${
@@ -793,12 +810,15 @@ export const ChatView: React.FC<ChatViewProps> = ({
                           </p>
                         )
                       )}
+                      {!m.apagada && (
+                        <ReacoesMensagem reacoes={m.reacoes} currentUserId={currentUserId} usuarios={usuarios} propria={propria} onReagir={(e) => handleReagir(m, e)} />
+                      )}
                       <p className={`text-[9px] mt-1 text-right ${propria ? 'text-white/70' : 'text-slate-400'}`}>
                         {m.editadoEm && !m.apagada && <span className="italic mr-1">editada ·</span>}
                         {formatHora(m.criadoEm)}
                       </p>
                     </div>
-                    {!propria && !m.apagada && <AcoesMensagemChat onResponder={() => setRespondendo(m)} />}
+                    {!propria && !m.apagada && <AcoesMensagemChat onResponder={() => setRespondendo(m)} onReagir={(e) => handleReagir(m, e)} />}
                   </div>
                 );
               })}

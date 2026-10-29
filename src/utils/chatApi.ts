@@ -29,6 +29,7 @@ function rowToMensagem(r: any): MensagemChat {
     editadoEm: r.editado_em ?? undefined,
     apagada: !!r.apagada,
     respostaA: r.resposta_a ?? undefined,
+    reacoes: r.reacoes && typeof r.reacoes === 'object' ? r.reacoes : undefined,
   };
 }
 
@@ -201,7 +202,7 @@ export async function criarConversaGrupo(
 export async function getMensagens(conversaId: string): Promise<MensagemChat[]> {
   const { data, error } = await supabase
     .from('chat_mensagens')
-    .select('id, conversa_id, autor_id, texto, criado_em, anexo_nome, anexo_tipo, editado_em, apagada, resposta_a')
+    .select('id, conversa_id, autor_id, texto, criado_em, anexo_nome, anexo_tipo, editado_em, apagada, resposta_a, reacoes')
     .eq('conversa_id', conversaId)
     .order('criado_em', { ascending: true });
   assertNoError(error, 'getMensagens');
@@ -283,6 +284,13 @@ export async function apagarMensagem(mensagemId: string): Promise<void> {
     .eq('id', mensagemId);
   assertNoError(error, 'apagarMensagem');
   cacheAnexos.delete(mensagemId);
+}
+
+/** Liga/desliga a reação (emoji) do usuário na mensagem — devolve as reações atualizadas. */
+export async function reagirMensagem(mensagemId: string, usuarioId: string, emoji: string): Promise<Record<string, string[]>> {
+  const { data, error } = await supabase.rpc('chat_reagir', { p_mensagem: mensagemId, p_usuario: usuarioId, p_emoji: emoji });
+  assertNoError(error, 'reagirMensagem');
+  return (data as Record<string, string[]>) || {};
 }
 
 /** Assina mensagens novas em TEMPO REAL (Supabase Realtime) — chama `onNovaMensagem` pra toda

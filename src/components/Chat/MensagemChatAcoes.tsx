@@ -1,22 +1,55 @@
 // Peças das ações na mensagem do chat (ChatView e FloatingChatWidget): responder (citação),
 // editar e apagar a própria mensagem.
 import React, { useEffect, useRef, useState } from 'react';
-import { Pencil, Trash2, Ban, Reply, X } from 'lucide-react';
+import { Pencil, Trash2, Ban, Reply, X, SmilePlus } from 'lucide-react';
 import type { MensagemChat } from '../../types';
 
 /** Botões que aparecem ao passar o mouse na mensagem (no celular ficam sempre visíveis).
  *  Responder vale pra qualquer mensagem; editar/apagar só pra própria. */
+export const EMOJIS_REACAO = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
 export const AcoesMensagemChat: React.FC<{
   podeEditar?: boolean;
   onEditar?: () => void;
   onApagar?: () => void;
   onResponder?: () => void;
+  onReagir?: (emoji: string) => void;
   compacto?: boolean;
-}> = ({ podeEditar, onEditar, onApagar, onResponder, compacto }) => {
+}> = ({ podeEditar, onEditar, onApagar, onResponder, onReagir, compacto }) => {
   const tam = compacto ? 11 : 13;
   const botao = `${compacto ? 'p-0.5' : 'p-1'} rounded-md text-slate-400 hover:bg-slate-100`;
+  const [escolhendo, setEscolhendo] = useState(false);
+  const caixaRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!escolhendo) return;
+    const fora = (e: MouseEvent) => !caixaRef.current?.contains(e.target as Node) && setEscolhendo(false);
+    document.addEventListener('mousedown', fora);
+    return () => document.removeEventListener('mousedown', fora);
+  }, [escolhendo]);
   return (
-    <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+    <div className={`relative flex items-center gap-0.5 transition-opacity ${escolhendo ? 'opacity-100' : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100'}`} ref={caixaRef}>
+      {onReagir && (
+        <button type="button" onClick={() => setEscolhendo((v) => !v)} title="Reagir" className={`${botao} hover:text-[#C48229]`}>
+          <SmilePlus size={tam} />
+        </button>
+      )}
+      {escolhendo && onReagir && (
+        <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-20 flex gap-0.5 bg-white border border-slate-200 rounded-full shadow-lg px-1.5 py-1">
+          {EMOJIS_REACAO.map((e) => (
+            <button
+              key={e}
+              type="button"
+              onClick={() => {
+                onReagir(e);
+                setEscolhendo(false);
+              }}
+              className={`${compacto ? 'text-base' : 'text-lg'} leading-none px-0.5 hover:scale-125 transition-transform`}
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+      )}
       {onResponder && (
         <button type="button" onClick={onResponder} title="Responder" className={`${botao} hover:text-[#C48229]`}>
           <Reply size={tam} />
@@ -32,6 +65,48 @@ export const AcoesMensagemChat: React.FC<{
           <Trash2 size={tam} />
         </button>
       )}
+    </div>
+  );
+};
+
+/** Reações embaixo do texto: emoji + quantos reagiram; a sua fica destacada. Clicar liga/desliga
+ *  a sua; passar o mouse mostra quem reagiu. */
+export const ReacoesMensagem: React.FC<{
+  reacoes?: Record<string, string[]>;
+  currentUserId: string;
+  usuarios: { id: string; nome: string }[];
+  propria: boolean;
+  onReagir: (emoji: string) => void;
+  compacto?: boolean;
+}> = ({ reacoes, currentUserId, usuarios, propria, onReagir, compacto }) => {
+  const itens = (Object.entries(reacoes || {}) as [string, string[]][]).filter(([, ids]) => ids.length);
+  if (!itens.length) return null;
+  const nomes = (ids: string[]) => ids.map((id) => (id === currentUserId ? 'Você' : usuarios.find((u) => u.id === id)?.nome || 'Alguém')).join(', ');
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {itens.map(([emoji, ids]) => {
+        const minha = ids.includes(currentUserId);
+        return (
+          <button
+            key={emoji}
+            type="button"
+            onClick={() => onReagir(emoji)}
+            title={nomes(ids)}
+            className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 ${compacto ? 'py-0 text-[10px]' : 'py-0.5 text-[11px]'} font-bold normal-case tracking-normal ${
+              minha
+                ? propria
+                  ? 'bg-white/30 border-white text-white'
+                  : 'bg-amber-50 border-[#C48229] text-[#92611F]'
+                : propria
+                  ? 'bg-white/10 border-white/40 text-white'
+                  : 'bg-slate-50 border-slate-200 text-slate-600'
+            }`}
+          >
+            <span className={compacto ? 'text-xs' : 'text-sm'}>{emoji}</span>
+            {ids.length > 1 && <span>{ids.length}</span>}
+          </button>
+        );
+      })}
     </div>
   );
 };

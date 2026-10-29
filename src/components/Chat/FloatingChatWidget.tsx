@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MessageSquare, X, Send, ArrowLeft, Maximize2, Users, User } from 'lucide-react';
 import { ConversaChat, MensagemChat, UsuarioLogin } from '../../types';
-import { getMensagens, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem } from '../../utils/chatApi';
-import { AcoesMensagemChat, BarraRespondendo, CitacaoMensagem, EditorMensagemChat, MensagemApagada } from './MensagemChatAcoes';
+import { getMensagens, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem, reagirMensagem } from '../../utils/chatApi';
+import { AcoesMensagemChat, BarraRespondendo, CitacaoMensagem, EditorMensagemChat, MensagemApagada, ReacoesMensagem } from './MensagemChatAcoes';
 import { AudioDaMensagem, GravadorAudio, nomeAudio } from './AudioChat';
 import { enviarArquivo } from '../../utils/arquivosStorage';
 
@@ -131,6 +131,21 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
     } catch (err) {
       console.error('Erro ao editar mensagem:', err);
       alert('Não foi possível editar a mensagem. Tente de novo.');
+    }
+  };
+
+  const handleReagir = async (m: MensagemChat, emoji: string) => {
+    const atual = { ...(m.reacoes || {}) };
+    const ids = atual[emoji] || [];
+    atual[emoji] = ids.includes(currentUserId) ? ids.filter((i) => i !== currentUserId) : [...ids, currentUserId];
+    if (!atual[emoji].length) delete atual[emoji];
+    setMensagens((prev) => prev.map((x) => (x.id === m.id ? { ...x, reacoes: atual } : x)));
+    try {
+      const salvas = await reagirMensagem(m.id, currentUserId, emoji);
+      setMensagens((prev) => prev.map((x) => (x.id === m.id ? { ...x, reacoes: salvas } : x)));
+    } catch (err) {
+      console.error('Erro ao reagir:', err);
+      setMensagens((prev) => prev.map((x) => (x.id === m.id ? { ...x, reacoes: m.reacoes } : x)));
     }
   };
 
@@ -291,6 +306,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                       onEditar={() => setEditandoId(m.id)}
                       onApagar={() => handleApagarMensagem(m)}
                       onResponder={() => setRespondendo(m)}
+                      onReagir={(e) => handleReagir(m, e)}
                     />
                   )}
                   <div
@@ -318,12 +334,15 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                     {!m.apagada && !m.anexoTipo?.startsWith('audio/') && (m.anexoUrl || m.temAnexo) && !m.texto && (
                       <p className="italic opacity-80">📎 {m.anexoNome || 'Anexo'}</p>
                     )}
+                    {!m.apagada && (
+                      <ReacoesMensagem compacto reacoes={m.reacoes} currentUserId={currentUserId} usuarios={usuarios} propria={propria} onReagir={(e) => handleReagir(m, e)} />
+                    )}
                     <p className={`text-[8px] mt-0.5 text-right ${propria ? 'text-white/70' : 'text-slate-400'}`}>
                       {m.editadoEm && !m.apagada && <span className="italic mr-1">editada ·</span>}
                       {formatHora(m.criadoEm)}
                     </p>
                   </div>
-                  {!propria && !m.apagada && <AcoesMensagemChat compacto onResponder={() => setRespondendo(m)} />}
+                  {!propria && !m.apagada && <AcoesMensagemChat compacto onResponder={() => setRespondendo(m)} onReagir={(e) => handleReagir(m, e)} />}
                 </div>
               );
             })}
