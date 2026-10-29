@@ -15,7 +15,9 @@ import {
   ListFilter,
   Kanban,
   FileSpreadsheet,
+  CalendarRange,
 } from 'lucide-react';
+import { CronogramaAgendaModal } from './CronogramaAgendaModal';
 import {
   AtividadeGestao,
   CategoriaAtividadeGestao,
@@ -68,6 +70,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
   onGerarComunicado,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('mes');
+  const [cronogramaAberto, setCronogramaAberto] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedCategoria, setSelectedCategoria] = useState<string>('todas');
 
@@ -197,6 +200,15 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setCronogramaAberto(true)}
+            className="hidden sm:flex px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-[#92611F] border border-[#C48229] text-xs font-semibold items-center gap-1.5 transition-colors shadow-xs"
+            title="Gerar cronograma do período em PDF ou Excel"
+          >
+            <CalendarRange className="w-4 h-4" />
+            <span>Cronograma</span>
+          </button>
           <button
             type="button"
             onClick={() => exportAtividadesToCSV(atividades)}
@@ -508,6 +520,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
         colaboradores={colaboradores}
         onRecordAlerta={handleRecordAlerta}
       />
+      {cronogramaAberto && <CronogramaAgendaModal atividades={atividades} onClose={() => setCronogramaAberto(false)} />}
     </div>
   );
 };
