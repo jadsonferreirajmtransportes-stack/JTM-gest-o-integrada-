@@ -22,6 +22,7 @@ import {
   Check,
   Pencil,
   RotateCcw,
+  CalendarRange,
 } from 'lucide-react';
 import { Cliente, LancamentoFaturamentoAereo, FaturaAereo } from '../../types';
 import { formatCurrency, formatDateBR } from '../../utils/formatters';
@@ -518,10 +519,56 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     [faturas, empresaSelecionada]
   );
 
+  // Filtro por data do CT-e (emissão; sem emissão, a data de conclusão) — vale para os cartões
+  // de resumo e para o quadro "Mês a mês". Vazio = tudo.
+  const [dataDe, setDataDe] = useState('');
+  const [dataAte, setDataAte] = useState('');
+  const [mesAMesAberto, setMesAMesAberto] = useState(false);
+  const dataDoCte = (l: LancamentoFaturamentoAereo) => l.dataEmissao || l.dataConclusao || '';
+  const lancamentosNoIntervalo = useMemo(() => {
+    if (!dataDe && !dataAte) return lancamentosDaEmpresa;
+    return lancamentosDaEmpresa.filter((l) => {
+      const d = dataDoCte(l);
+      return !!d && (!dataDe || d >= dataDe) && (!dataAte || d <= dataAte);
+    });
+  }, [lancamentosDaEmpresa, dataDe, dataAte]);
+  const faturasNoIntervalo = useMemo(() => {
+    if (!dataDe && !dataAte) return faturasDaEmpresa;
+    const ids = new Set(lancamentosNoIntervalo.map((l) => l.faturaId).filter(Boolean));
+    return faturasDaEmpresa.filter((f) => ids.has(f.id));
+  }, [faturasDaEmpresa, lancamentosNoIntervalo, dataDe, dataAte]);
   const resumoGeral = useMemo(
-    () => computeResumoGeral(lancamentosDaEmpresa, faturasDaEmpresa, clientes),
-    [lancamentosDaEmpresa, faturasDaEmpresa, clientes]
+    () => computeResumoGeral(lancamentosNoIntervalo, faturasNoIntervalo, clientes),
+    [lancamentosNoIntervalo, faturasNoIntervalo, clientes]
   );
+  // Quadro mês a mês (pela data do CT-e), do mais recente para o mais antigo.
+  const mesAMes = useMemo(() => {
+    const porMes = new Map<string, { cobrado: number; pago: number; ctes: number; pagos: number; faturas: Set<string> }>();
+    lancamentosNoIntervalo.forEach((l) => {
+      const mes = dataDoCte(l).slice(0, 7) || 'sem-data';
+      const m = porMes.get(mes) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>() };
+      m.cobrado += computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome));
+      if (l.confirmacaoPagamento) {
+        m.pago += l.valorRecebido || 0;
+        m.pagos += 1;
+      }
+      m.ctes += 1;
+      if (l.faturaId) m.faturas.add(l.faturaId);
+      porMes.set(mes, m);
+    });
+    return Array.from(porMes.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [lancamentosNoIntervalo, clientes]);
+  const NOMES_MES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const nomeMes = (m: string) => (m === 'sem-data' ? 'Sem data' : `${NOMES_MES[Number(m.slice(5, 7)) - 1]} ${m.slice(0, 4)}`);
+  const atalhoPeriodo = (tipo: 'mes' | 'mesPassado' | 'ano' | 'tudo') => {
+    const h = new Date();
+    const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (tipo === 'tudo') return (setDataDe(''), setDataAte(''));
+    if (tipo === 'mes') return (setDataDe(iso(new Date(h.getFullYear(), h.getMonth(), 1))), setDataAte(iso(new Date(h.getFullYear(), h.getMonth() + 1, 0))));
+    if (tipo === 'mesPassado') return (setDataDe(iso(new Date(h.getFullYear(), h.getMonth() - 1, 1))), setDataAte(iso(new Date(h.getFullYear(), h.getMonth(), 0))));
+    setDataDe(`${h.getFullYear()}-01-01`);
+    setDataAte(`${h.getFullYear()}-12-31`);
+  };
 
   const duplicados = useMemo(() => findLancamentosDuplicados(lancamentosDaEmpresa), [lancamentosDaEmpresa]);
   const totalLancamentosDuplicados = useMemo(
@@ -1006,6 +1053,102 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           {resumoGeral.totalCtes} CT-e(s) • {resumoGeral.totalFaturas} fatura(s)
         </span>
       </div>
+
+      {/* Filtro por data do CT-e — muda os cartões e o quadro mês a mês */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-3 flex flex-wrap items-center gap-2">
+        <CalendarRange className="w-4 h-4 text-[#C48229] shrink-0" />
+        <span className="text-xs font-semibold text-slate-600">Data do CT-e</span>
+        <input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs" title="De" />
+        <span className="text-xs text-slate-400">até</span>
+        <input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs" title="Até" />
+        {(
+          [
+            ['mes', 'Este mês'],
+            ['mesPassado', 'Mês passado'],
+            ['ano', 'Este ano'],
+            ['tudo', 'Tudo'],
+          ] as const
+        ).map(([k, rotulo]) => (
+          <button key={k} type="button" onClick={() => atalhoPeriodo(k)} className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 hover:bg-amber-50 hover:border-amber-300 normal-case tracking-normal">
+            {rotulo}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setMesAMesAberto((v) => !v)}
+          className={`ml-auto px-3 py-1.5 rounded-lg text-[11px] font-bold border normal-case tracking-normal ${mesAMesAberto ? 'bg-[#C48229] border-[#C48229] text-white' : 'bg-white border-[#C48229] text-[#92611F] hover:bg-amber-50'}`}
+        >
+          {mesAMesAberto ? 'Esconder mês a mês' : 'Ver mês a mês'}
+        </button>
+        {(dataDe || dataAte) && (
+          <p className="w-full text-[11px] text-slate-500">
+            Os cartões abaixo mostram só os CT-es emitidos {dataDe ? `de ${formatDateBR(dataDe)} ` : ''}{dataAte ? `até ${formatDateBR(dataAte)}` : ''} (e as faturas que têm esses CT-es).
+          </p>
+        )}
+      </div>
+
+      {mesAMesAberto && (
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-slate-50 text-slate-500">
+              <tr>
+                <th className="text-left p-2.5">Mês (data do CT-e)</th>
+                <th className="text-right p-2.5">Faturado</th>
+                <th className="text-right p-2.5">Pago</th>
+                <th className="text-right p-2.5">Em aberto</th>
+                <th className="text-right p-2.5">CT-es</th>
+                <th className="text-right p-2.5">Pagos</th>
+                <th className="text-right p-2.5">Faturas</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {mesAMes.map(([mes, m]) => (
+                <tr key={mes} className="hover:bg-amber-50/40">
+                  <td className="p-2.5 font-semibold text-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (mes === 'sem-data') return;
+                        const [a, mm] = mes.split('-').map(Number);
+                        setDataDe(`${mes}-01`);
+                        setDataAte(`${mes}-${String(new Date(a, mm, 0).getDate()).padStart(2, '0')}`);
+                      }}
+                      className="hover:underline text-left normal-case tracking-normal"
+                      title="Filtrar os cartões por este mês"
+                    >
+                      {nomeMes(mes)}
+                    </button>
+                  </td>
+                  <td className="p-2.5 text-right tabular-nums font-semibold">{formatCurrency(m.cobrado)}</td>
+                  <td className="p-2.5 text-right tabular-nums text-emerald-700">{formatCurrency(m.pago)}</td>
+                  <td className="p-2.5 text-right tabular-nums text-rose-700">{formatCurrency(m.cobrado - m.pago)}</td>
+                  <td className="p-2.5 text-right tabular-nums">{m.ctes}</td>
+                  <td className="p-2.5 text-right tabular-nums">{m.pagos}</td>
+                  <td className="p-2.5 text-right tabular-nums">{m.faturas.size}</td>
+                </tr>
+              ))}
+              {mesAMes.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="p-4 text-center text-slate-400">Nenhum CT-e no período.</td>
+                </tr>
+              )}
+            </tbody>
+            {mesAMes.length > 1 && (
+              <tfoot className="bg-slate-50 font-bold">
+                <tr>
+                  <td className="p-2.5">Total</td>
+                  <td className="p-2.5 text-right tabular-nums">{formatCurrency(resumoGeral.totalFaturado)}</td>
+                  <td className="p-2.5 text-right tabular-nums text-emerald-700">{formatCurrency(resumoGeral.totalPago)}</td>
+                  <td className="p-2.5 text-right tabular-nums text-rose-700">{formatCurrency(resumoGeral.totalEmAberto)}</td>
+                  <td className="p-2.5 text-right tabular-nums">{resumoGeral.totalCtes}</td>
+                  <td className="p-2.5 text-right tabular-nums">{resumoGeral.ctesPagos}</td>
+                  <td className="p-2.5 text-right tabular-nums">{resumoGeral.totalFaturas}</td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
