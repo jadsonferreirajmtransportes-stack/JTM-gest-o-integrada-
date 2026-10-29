@@ -254,7 +254,7 @@ export async function getInicioControle(): Promise<string | null> {
 }
 
 /** Ajuste do DP: inclui uma batida (horário local do dia informado) com motivo. */
-export async function incluirBatidaAjuste(colaboradorId: string, dataHoraLocal: string, motivo: string, criadoPor?: string): Promise<BatidaPonto> {
+export async function incluirBatidaAjuste(colaboradorId: string, dataHoraLocal: string, motivo: string, criadoPor?: string, diaTrabalho?: string): Promise<BatidaPonto> {
   const registro = {
     id: novoId('bat-aj'),
     colaborador_id: colaboradorId,
@@ -262,6 +262,8 @@ export async function incluirBatidaAjuste(colaboradorId: string, dataHoraLocal: 
     origem: 'ajuste',
     motivo,
     criado_por: criadoPor ?? null,
+    // Dia de trabalho em que conta (ex.: batida movida para depois da meia-noite continua na linha do turno).
+    ...(diaTrabalho ? { dia_trabalho: diaTrabalho } : {}),
   };
   const { error } = await supabase.from('ponto_registros').insert(registro);
   assertNoError(error, 'incluirBatidaAjuste');

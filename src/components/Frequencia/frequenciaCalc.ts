@@ -32,7 +32,7 @@ export function hojeLocal(): string {
 function minutosDoDia(data: string, hora: string): number {
   return Math.floor(Date.parse(`${data}T${hora}:00Z`) / 60000);
 }
-function somarDias(data: string, dias: number): string {
+export function somarDias(data: string, dias: number): string {
   const d = new Date(`${data}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + dias);
   return d.toISOString().slice(0, 10);

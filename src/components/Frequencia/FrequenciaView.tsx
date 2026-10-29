@@ -66,6 +66,7 @@ import {
   hojeLocal,
   dataLocal,
   horaLocal,
+  somarDias,
   montarEspelho,
   resumir, somarResumos,
 } from './frequenciaCalc';
@@ -964,6 +965,17 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
             await anularBatida(anulando.id, motivo, currentUser?.nome);
             setBatidas((prev) => prev.map((b) => (b.id === anulando.id ? { ...b, anulado: true, anuladoMotivo: motivo, anuladoPor: currentUser?.nome } : b)));
           }}
+          onMover={async (dias, motivo) => {
+            // Mesma hora em outra data, e continua na linha (dia de trabalho) em que estava —
+            // ex.: entrada 19:59 e as batidas de 00:00, 01:02 e 07:50 são da madrugada seguinte.
+            const linha = espelhoSel.find((d) => d.batidas.some((x) => x.id === anulando.id))?.data || anulando.diaTrabalho || dataLocal(anulando.registradoEm);
+            const novaData = somarDias(dataLocal(anulando.registradoEm), dias);
+            const rotulo = dias > 0 ? 'dia seguinte' : 'dia anterior';
+            const nova = await incluirBatidaAjuste(anulando.colaboradorId, `${novaData}T${horaLocal(anulando.registradoEm)}`, `Horário corrigido para o ${rotulo}: ${motivo}`, currentUser?.nome, linha);
+            const motivoAnulacao = `Substituída — data corrigida para ${dataBr(novaData)}: ${motivo}`;
+            await anularBatida(anulando.id, motivoAnulacao, currentUser?.nome);
+            setBatidas((prev) => [...prev.map((b) => (b.id === anulando.id ? { ...b, anulado: true, anuladoMotivo: motivoAnulacao, anuladoPor: currentUser?.nome } : b)), nova]);
+          }}
         />
       )}
 
@@ -1167,20 +1179,40 @@ const AcaoDiaModal: React.FC<{
 
 /** Detalhes da batida: onde foi (mapa no ponto exato do GPS), distância da base e precisão; e
  *  a opção de anular (com motivo). */
-const AnularModal: React.FC<{ batida: BatidaPonto; nome: string; raioPadrao?: number; onClose: () => void; onAnular: (motivo: string) => Promise<void> }> = ({ batida, nome, raioPadrao = 300, onClose, onAnular }) => {
+const AnularModal: React.FC<{
+  batida: BatidaPonto;
+  nome: string;
+  raioPadrao?: number;
+  onClose: () => void;
+  onAnular: (motivo: string) => Promise<void>;
+  onMover?: (dias: 1 | -1, motivo: string) => Promise<void>;
+}> = ({ batida, nome, raioPadrao = 300, onClose, onAnular, onMover }) => {
   const [motivo, setMotivo] = useState('');
   const [anular, setAnular] = useState(false);
+  const [mover, setMover] = useState<1 | -1 | null>(null);
   const { salvando, erro, executar } = useAcao();
   const temGps = batida.latitude !== undefined && batida.longitude !== undefined;
   const longe = batida.distanciaM !== undefined && batida.distanciaM > raioPadrao;
   const distancia = (m: number) => (m >= 1000 ? `${(m / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km` : `${Math.round(m)} m`);
   return (
     <Moldura
-      titulo={anular ? 'Anular batida' : 'Detalhes da batida'}
+      titulo={anular ? 'Anular batida' : mover ? `Mover para o ${mover > 0 ? 'dia seguinte' : 'dia anterior'}` : 'Detalhes da batida'}
       subtitulo={`${nome} — ${dataBr(dataLocal(batida.registradoEm))} às ${horaLocal(batida.registradoEm)}`}
       onClose={onClose}
       rodape={
-        anular ? (
+        mover ? (
+          <>
+            <button type="button" onClick={() => setMover(null)} className={botaoSecundario}>Voltar</button>
+            <button
+              type="button"
+              disabled={salvando || motivo.trim().length < 5}
+              onClick={() => executar(() => onMover!(mover, motivo.trim()), onClose)}
+              className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl font-bold flex items-center gap-2 disabled:opacity-50"
+            >
+              {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Mover
+            </button>
+          </>
+        ) : anular ? (
           <>
             <button type="button" onClick={() => setAnular(false)} className={botaoSecundario}>Voltar</button>
             <button type="button" disabled={salvando || motivo.trim().length < 5} onClick={() => executar(() => onAnular(motivo.trim()), onClose)} className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold flex items-center gap-2 disabled:opacity-50">
@@ -1190,6 +1222,16 @@ const AnularModal: React.FC<{ batida: BatidaPonto; nome: string; raioPadrao?: nu
         ) : (
           <>
             <button type="button" onClick={onClose} className={botaoSecundario}>Fechar</button>
+            {!batida.anulado && onMover && (
+              <>
+                <button type="button" onClick={() => { setMover(-1); setMotivo(''); }} className={botaoSecundario} title="A batida é do dia anterior (mesma hora)">
+                  ← Dia anterior
+                </button>
+                <button type="button" onClick={() => { setMover(1); setMotivo('Batida da madrugada seguinte (virada do turno)'); }} className={botaoSecundario} title="A batida é do dia seguinte (mesma hora) — ex.: madrugada de um turno que começou à noite">
+                  Dia seguinte →
+                </button>
+              </>
+            )}
             {!batida.anulado && (
               <button type="button" onClick={() => setAnular(true)} className="px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl font-bold flex items-center gap-2">
                 <Ban className="w-4 h-4" /> Anular esta batida
@@ -1221,7 +1263,7 @@ const AnularModal: React.FC<{ batida: BatidaPonto; nome: string; raioPadrao?: nu
           batida.origem !== 'ajuste' && <p className="text-[#92611F]">Sem localização: o celular não liberou o GPS na hora da batida.</p>
         )}
       </div>
-      {temGps && !anular && (
+      {temGps && !anular && !mover && (
         <div className="space-y-1.5">
           <iframe
             title="Local da batida"
@@ -1234,6 +1276,16 @@ const AnularModal: React.FC<{ batida: BatidaPonto; nome: string; raioPadrao?: nu
             Abrir no Google Maps (rota, Street View, endereço)
           </a>
           <p className="text-[10px] text-slate-400">Localização registrada só no momento da batida — dado pessoal (LGPD): use apenas para conferência do ponto.</p>
+        </div>
+      )}
+      {mover && !batida.anulado && (
+        <div className="space-y-2">
+          <p className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[#92611F]">
+            A batida de <b>{horaLocal(batida.registradoEm)}</b> passa para <b>{dataBr(somarDias(dataLocal(batida.registradoEm), mover))}</b>, no mesmo horário, e continua na
+            linha deste dia de trabalho (ex.: entrada às 19:59 e saídas na madrugada seguinte). A original fica riscada no histórico.
+          </p>
+          <label className="font-bold text-slate-600 block">Motivo (fica registrado)</label>
+          <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={2} className={campo} placeholder="Ex.: batida da madrugada seguinte (virada do turno)" />
         </div>
       )}
       {batida.anulado ? (
