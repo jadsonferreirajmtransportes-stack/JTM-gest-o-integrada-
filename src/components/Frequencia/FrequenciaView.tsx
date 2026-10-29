@@ -29,6 +29,8 @@ import {
   TIPOS_JUSTIFICATIVA,
   anularBatida,
   definirJornadaColaboradores,
+  definirLocalColaboradores,
+  getLocaisColaboradores,
   deleteJornada,
   deleteLocal,
   desconectarAparelhos,
@@ -103,6 +105,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
   const [importandoFolha, setImportandoFolha] = useState(false);
   const [jornadas, setJornadas] = useState<JornadaPonto[]>([]);
   const [jornadaDe, setJornadaDe] = useState<Map<string, string>>(new Map());
+  const [baseDe, setBaseDe] = useState<Map<string, string>>(new Map());
   const [locais, setLocais] = useState<LocalPonto[]>([]);
   const [tokens, setTokens] = useState<Map<string, string>>(new Map());
   const [inicioControle, setInicioControle] = useState<string | null>(null);
@@ -128,10 +131,11 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
   const raioPadrao = locais.length ? Math.max(...locais.map((l) => l.raioM)) : 300;
 
   useEffect(() => {
-    Promise.all([getJornadas(), getJornadasColaboradores(), getLocais(), getTokensPortal(), getInicioControle()])
-      .then(([js, jc, ls, tk, ini]) => {
+    Promise.all([getJornadas(), getJornadasColaboradores(), getLocais(), getTokensPortal(), getInicioControle(), getLocaisColaboradores()])
+      .then(([js, jc, ls, tk, ini, bc]) => {
         setJornadas(js);
         setJornadaDe(jc);
+        setBaseDe(bc);
         setLocais(ls);
         setTokens(tk);
         setInicioControle(ini);
@@ -170,10 +174,11 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
         dias,
         batidas.filter((b) => b.colaboradorId === c.id),
         justificativas.filter((j) => j.colaboradorId === c.id),
-        { jornada, inicioContagem: inicio || hojeLocal(), fimContagem: c.dataDemissao, raioPadraoM: raioPadrao }
+        // Com base atrelada, o raio é o da base dele; sem base, o maior raio entre as bases.
+        { jornada, inicioContagem: inicio || hojeLocal(), fimContagem: c.dataDemissao, raioPadraoM: locais.find((l) => l.id === baseDe.get(c.id))?.raioM ?? raioPadrao }
       );
     },
-    [batidas, justificativas, jornadaDe, jornadaPorId, inicioControle, raioPadrao]
+    [batidas, justificativas, jornadaDe, jornadaPorId, inicioControle, raioPadrao, locais, baseDe]
   );
 
   const resumos: { c: Colaborador; resumo: ResumoFrequencia; jornada?: JornadaPonto }[] = useMemo(
@@ -820,7 +825,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
           <section className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h2 className="text-sm font-black text-slate-900">Colaboradores: jornada e link pessoal</h2>
+                <h2 className="text-sm font-black text-slate-900">Colaboradores: jornada, base e link pessoal</h2>
                 <p className="text-[11px] text-slate-500">O link é o mesmo do Portal de Educação. Gerar link novo lá também desconecta os celulares.</p>
               </div>
               <button
@@ -869,6 +874,35 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                       </option>
                     ))}
                   </select>
+                  {locais.length > 0 && (
+                    <select
+                      value={baseDe.get(c.id) || ''}
+                      title="Base do colaborador — a batida é medida até ela"
+                      onChange={async (e) => {
+                        const valor = e.target.value || null;
+                        try {
+                          await definirLocalColaboradores([c.id], valor);
+                          setBaseDe((prev) => {
+                            const novo = new Map(prev);
+                            if (valor) novo.set(c.id, valor);
+                            else novo.delete(c.id);
+                            return novo;
+                          });
+                        } catch (err) {
+                          console.error(err);
+                          alert('Não foi possível salvar a base. Confira se a migração 083 foi rodada no Supabase.');
+                        }
+                      }}
+                      className="p-1.5 border border-slate-200 rounded-lg bg-white text-xs sm:w-48"
+                    >
+                      <option value="">Base mais próxima</option>
+                      {locais.filter((l) => l.ativo || l.id === baseDe.get(c.id)).map((l) => (
+                        <option key={l.id} value={l.id}>
+                          Base: {l.nome}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <div className="flex gap-1">
                     <button type="button" onClick={() => handleWhatsAppPonto(c)} className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg" title="Enviar o link pessoal (abre no ponto) pelo WhatsApp">
                       <MessageCircle className="w-3.5 h-3.5" />

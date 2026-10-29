@@ -139,6 +139,28 @@ export async function definirJornadaColaboradores(colaboradorIds: string[], jorn
   assertNoError(error, 'definirJornadaColaboradores');
 }
 
+/** colaboradorId → localId (base do colaborador — migração 083). Sem a tabela, volta vazio. */
+export async function getLocaisColaboradores(): Promise<Map<string, string>> {
+  const { data, error } = await supabase.from('ponto_colaborador_local').select('colaborador_id, local_id');
+  if (error) {
+    console.warn('Base por colaborador indisponível (migração 083 rodada?):', error.message);
+    return new Map();
+  }
+  return new Map((data ?? []).map((r: any) => [r.colaborador_id, r.local_id]));
+}
+export async function definirLocalColaboradores(colaboradorIds: string[], localId: string | null): Promise<void> {
+  if (colaboradorIds.length === 0) return;
+  if (!localId) {
+    const { error } = await supabase.from('ponto_colaborador_local').delete().in('colaborador_id', colaboradorIds);
+    assertNoError(error, 'definirLocalColaboradores');
+    return;
+  }
+  const { error } = await supabase
+    .from('ponto_colaborador_local')
+    .upsert(colaboradorIds.map((id) => ({ colaborador_id: id, local_id: localId, atualizado_em: new Date().toISOString() })));
+  assertNoError(error, 'definirLocalColaboradores');
+}
+
 // ---- Locais ----
 function rowToLocal(r: any): LocalPonto {
   return { id: r.id, nome: r.nome, latitude: Number(r.latitude), longitude: Number(r.longitude), raioM: Number(r.raio_m ?? 300), ativo: r.ativo !== false };
