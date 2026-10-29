@@ -406,19 +406,28 @@ const MESES_FATURA: Record<string, number> = {
   janeiro: 1, fevereiro: 2, marco: 3, abril: 4, maio: 5, junho: 6, julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
   jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6, jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12,
 };
-/** Mês de referência da FATURA ('YYYY-MM'): pelo período escrito nela ("Setembro 2026",
- *  "1ª quinzena de outubro/2026", "09/2026"); sem período legível, pela data de envio ou de
- *  criação. É o que conta como "faturas do período" nos resumos e relatórios. */
-export function mesDaFatura(f: Pick<FaturaAereo, 'periodo' | 'dataEnvio' | 'criadoEm'>): string {
+/** Mês de referência da FATURA ('YYYY-MM'), nesta ordem:
+ *  1) o período escrito nela — "Setembro 2026", "SETEMBRO DE 2026", "AGO/26", "1ºQ-SET/26",
+ *     "09/2026", "092026"; intervalo ("01/26 A 05/26") vale o ÚLTIMO mês;
+ *  2) o mês do último CT-e concluído da fatura (`mesUltimoCte`) — para período que é só um
+ *     número (ex.: "38589");
+ *  3) a data de envio ou de criação.
+ *  É o que conta como "faturas do período" nos resumos e relatórios. */
+export function mesDaFatura(f: Pick<FaturaAereo, 'periodo' | 'dataEnvio' | 'criadoEm'>, mesUltimoCte?: string): string {
   const t = (f.periodo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const ano = t.match(/\b(20\d{2})\b/)?.[1];
-  const nome = t.match(/\b(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro|jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b/)?.[1];
-  if (ano && nome) return `${ano}-${String(MESES_FATURA[nome]).padStart(2, '0')}`;
-  const numerico = t.match(/\b(0?[1-9]|1[0-2])\s*[/-]\s*(20\d{2})\b/);
-  if (numerico) return `${numerico[2]}-${numerico[1].padStart(2, '0')}`;
-  const colado = t.match(/(?:^|\D)(0[1-9]|1[0-2])(20\d{2})(?:\D|$)/); // ex.: "092026"
-  if (colado) return `${colado[2]}-${colado[1]}`;
-  return (f.dataEnvio || f.criadoEm || '').slice(0, 7);
+  const anoBase = t.match(/\b(20\d{2})\b/)?.[1] || (f.dataEnvio || f.criadoEm || '').slice(0, 4);
+  const ano = (a?: string) => (!a ? anoBase : a.length === 2 ? `20${a}` : a);
+  const achados: { pos: number; mes: string }[] = [];
+  const porNome = /\b(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro|jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b(?:\s*(?:de\s*)?[/\-.\s]?\s*(\d{4}|\d{2})(?!\d))?/g;
+  for (const m of t.matchAll(porNome)) {
+    const a = ano(m[2]);
+    if (a) achados.push({ pos: m.index ?? 0, mes: `${a}-${String(MESES_FATURA[m[1]]).padStart(2, '0')}` });
+  }
+  for (const m of t.matchAll(/(?:^|[^\d])(0?[1-9]|1[0-2])\s*[/-]\s*(\d{4}|\d{2})(?!\d)/g)) achados.push({ pos: m.index ?? 0, mes: `${ano(m[2])}-${m[1].padStart(2, '0')}` });
+  for (const m of t.matchAll(/(?:^|\D)(0[1-9]|1[0-2])(20\d{2})(?:\D|$)/g)) achados.push({ pos: m.index ?? 0, mes: `${m[2]}-${m[1]}` }); // ex.: "092026"
+  const validos = achados.filter((a) => /^20\d{2}-(0[1-9]|1[0-2])$/.test(a.mes)).sort((a, b) => a.pos - b.pos);
+  if (validos.length) return validos[validos.length - 1].mes;
+  return mesUltimoCte || (f.dataEnvio || f.criadoEm || '').slice(0, 7);
 }
 
 export function computeResumoGeral(

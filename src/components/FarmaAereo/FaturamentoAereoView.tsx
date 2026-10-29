@@ -536,13 +536,22 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   }, [lancamentosDaEmpresa, dataDe, dataAte]);
   // Faturas do período = pelo mês da PRÓPRIA fatura (ex.: "Setembro 2026"), não pelos CT-es dela —
   // uma fatura de agosto com um CT-e concluído em setembro não conta como fatura de setembro.
+  // Mês do último CT-e concluído de cada fatura (reserva para período sem mês, ex.: "38589").
+  const mesUltimoCteDe = useMemo(() => {
+    const m = new Map<string, string>();
+    lancamentosDaEmpresa.forEach((l) => {
+      const d = dataDoCte(l).slice(0, 7);
+      if (l.faturaId && d && d > (m.get(l.faturaId) || '')) m.set(l.faturaId, d);
+    });
+    return m;
+  }, [lancamentosDaEmpresa]);
   const faturasNoIntervalo = useMemo(() => {
     if (!dataDe && !dataAte) return faturasDaEmpresa;
     return faturasDaEmpresa.filter((f) => {
-      const m = mesDaFatura(f);
+      const m = mesDaFatura(f, mesUltimoCteDe.get(f.id));
       return !!m && (!dataDe || m >= dataDe.slice(0, 7)) && (!dataAte || m <= dataAte.slice(0, 7));
     });
-  }, [faturasDaEmpresa, dataDe, dataAte]);
+  }, [faturasDaEmpresa, dataDe, dataAte, mesUltimoCteDe]);
   const resumoGeral = useMemo(
     () => computeResumoGeral(lancamentosNoIntervalo, faturasNoIntervalo, clientes),
     [lancamentosNoIntervalo, faturasNoIntervalo, clientes]
@@ -562,13 +571,13 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       porMes.set(mes, m);
     });
     faturasNoIntervalo.forEach((f) => {
-      const mes = mesDaFatura(f) || 'sem-data';
+      const mes = mesDaFatura(f, mesUltimoCteDe.get(f.id)) || 'sem-data';
       const m = porMes.get(mes) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>() };
       m.faturas.add(f.id);
       porMes.set(mes, m);
     });
     return Array.from(porMes.entries()).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [lancamentosNoIntervalo, faturasNoIntervalo, clientes]);
+  }, [lancamentosNoIntervalo, faturasNoIntervalo, clientes, mesUltimoCteDe]);
   const NOMES_MES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   const nomeMes = (m: string) => (m === 'sem-data' ? 'Sem data' : `${NOMES_MES[Number(m.slice(5, 7)) - 1]} ${m.slice(0, 4)}`);
   const filtroRelatorio = () => ({
@@ -1095,7 +1104,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           <button
             type="button"
             onClick={() => {
-              const arquivo = gerarRelatorioFinanceiroPdf(lancamentosNoIntervalo, clientes, filtroRelatorio(), faturasNoIntervalo);
+              const arquivo = gerarRelatorioFinanceiroPdf(lancamentosNoIntervalo, clientes, filtroRelatorio(), faturasNoIntervalo, mesUltimoCteDe);
               baixarBlob(arquivo, arquivo.name);
             }}
             className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-amber-50 flex items-center gap-1 normal-case tracking-normal"
@@ -1106,7 +1115,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           <button
             type="button"
             onClick={async () => {
-              const arquivo = await gerarRelatorioFinanceiroXlsx(lancamentosNoIntervalo, faturasDaEmpresa, clientes, filtroRelatorio(), faturasNoIntervalo);
+              const arquivo = await gerarRelatorioFinanceiroXlsx(lancamentosNoIntervalo, faturasDaEmpresa, clientes, filtroRelatorio(), faturasNoIntervalo, mesUltimoCteDe);
               baixarBlob(arquivo, arquivo.name);
             }}
             className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-emerald-50 flex items-center gap-1 normal-case tracking-normal"

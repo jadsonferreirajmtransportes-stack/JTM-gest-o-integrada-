@@ -46,7 +46,7 @@ interface Linha {
 
 /** `faturasPeriodo`: as faturas do período (pelo mês da própria fatura) — são elas que contam
  *  na coluna "Faturas", não as faturas que só têm algum CT-e no período. */
-function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], faturasPeriodo: FaturaAereo[]) {
+function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], faturasPeriodo: FaturaAereo[], mesUltimoCte: Map<string, string> = new Map()) {
   const linhas: Linha[] = lancamentos.map((l) => {
     const c = findClienteById(clientes, l.clienteId, l.clienteNome);
     return {
@@ -83,7 +83,7 @@ function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], 
     });
     return m;
   };
-  const porMes = Array.from(contarFaturas(agrupar((x) => x.mes), (f) => mesDaFatura(f) || 'sem-data').entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  const porMes = Array.from(contarFaturas(agrupar((x) => x.mes), (f) => mesDaFatura(f, mesUltimoCte.get(f.id)) || 'sem-data').entries()).sort((a, b) => a[0].localeCompare(b[0]));
   const porEmpresa = Array.from(contarFaturas(agrupar((x) => x.empresa), empresaDaFatura).entries()).sort((a, b) => b[1].cobrado - a[1].cobrado);
   const total = linhas.reduce((s, x) => ({ cobrado: s.cobrado + x.valor, pago: s.pago + x.pago, ctes: s.ctes + 1, pagos: s.pagos + (x.l.confirmacaoPagamento ? 1 : 0) }), { cobrado: 0, pago: 0, ctes: 0, pagos: 0 });
   const faturas = faturasPeriodo.length;
@@ -103,9 +103,10 @@ export async function gerarRelatorioFinanceiroXlsx(
   faturas: FaturaAereo[],
   clientes: Cliente[],
   filtro: FiltroRelatorio,
-  faturasPeriodo: FaturaAereo[] = faturas
+  faturasPeriodo: FaturaAereo[] = faturas,
+  mesUltimoCte: Map<string, string> = new Map()
 ): Promise<File> {
-  const r = montar(lancamentos, clientes, faturasPeriodo);
+  const r = montar(lancamentos, clientes, faturasPeriodo, mesUltimoCte);
   const numeroFatura = new Map(faturas.map((f) => [f.id, f.numeroFatura]));
   const ExcelJS = (await import('exceljs')).default;
   const wb = new ExcelJS.Workbook();
@@ -231,8 +232,8 @@ export async function gerarRelatorioFinanceiroXlsx(
 // ---------------------------------------------------------------------------
 // PDF
 // ---------------------------------------------------------------------------
-export function gerarRelatorioFinanceiroPdf(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], filtro: FiltroRelatorio, faturasPeriodo: FaturaAereo[] = []): File {
-  const r = montar(lancamentos, clientes, faturasPeriodo);
+export function gerarRelatorioFinanceiroPdf(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], filtro: FiltroRelatorio, faturasPeriodo: FaturaAereo[] = [], mesUltimoCte: Map<string, string> = new Map()): File {
+  const r = montar(lancamentos, clientes, faturasPeriodo, mesUltimoCte);
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const L = doc.internal.pageSize.getWidth();
   const A = doc.internal.pageSize.getHeight();
