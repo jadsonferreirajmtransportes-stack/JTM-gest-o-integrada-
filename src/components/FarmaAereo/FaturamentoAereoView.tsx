@@ -519,12 +519,12 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     [faturas, empresaSelecionada]
   );
 
-  // Filtro por data do CT-e (emissão; sem emissão, a data de conclusão) — vale para os cartões
+  // Filtro pela data de CONCLUSÃO da entrega (decisão do usuário; sem conclusão, a emissão) — vale para os cartões
   // de resumo e para o quadro "Mês a mês". Vazio = tudo.
   const [dataDe, setDataDe] = useState('');
   const [dataAte, setDataAte] = useState('');
   const [mesAMesAberto, setMesAMesAberto] = useState(false);
-  const dataDoCte = (l: LancamentoFaturamentoAereo) => l.dataEmissao || l.dataConclusao || '';
+  const dataDoCte = (l: LancamentoFaturamentoAereo) => l.dataConclusao || l.dataEmissao || '';
   const lancamentosNoIntervalo = useMemo(() => {
     if (!dataDe && !dataAte) return lancamentosDaEmpresa;
     return lancamentosDaEmpresa.filter((l) => {
@@ -1057,7 +1057,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       {/* Filtro por data do CT-e — muda os cartões e o quadro mês a mês */}
       <div className="bg-white rounded-2xl border border-slate-200 p-3 flex flex-wrap items-center gap-2">
         <CalendarRange className="w-4 h-4 text-[#C48229] shrink-0" />
-        <span className="text-xs font-semibold text-slate-600">Data do CT-e</span>
+        <span className="text-xs font-semibold text-slate-600">Conclusão da entrega</span>
         <input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs" title="De" />
         <span className="text-xs text-slate-400">até</span>
         <input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs" title="Até" />
@@ -1082,7 +1082,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
         </button>
         {(dataDe || dataAte) && (
           <p className="w-full text-[11px] text-slate-500">
-            Os cartões abaixo mostram só os CT-es emitidos {dataDe ? `de ${formatDateBR(dataDe)} ` : ''}{dataAte ? `até ${formatDateBR(dataAte)}` : ''} (e as faturas que têm esses CT-es).
+            Os cartões abaixo mostram só os CT-es com entrega concluída {dataDe ? `de ${formatDateBR(dataDe)} ` : ''}{dataAte ? `até ${formatDateBR(dataAte)}` : ''} (e as faturas que têm esses CT-es).
           </p>
         )}
       </div>
@@ -1092,7 +1092,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           <table className="w-full text-xs">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
-                <th className="text-left p-2.5">Mês (data do CT-e)</th>
+                <th className="text-left p-2.5">Mês (conclusão da entrega)</th>
                 <th className="text-right p-2.5">Faturado</th>
                 <th className="text-right p-2.5">Pago</th>
                 <th className="text-right p-2.5">Em aberto</th>
