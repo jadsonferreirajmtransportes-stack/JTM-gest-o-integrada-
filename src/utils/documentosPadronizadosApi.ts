@@ -13,7 +13,17 @@ export type BlocoDocumento =
   /** Imagem (arquivo no Storage "anexos" — ref "storage:<caminho>"); largura em % da página. */
   | { id: string; tipo: 'imagem'; ref: string; legenda?: string; largura?: 50 | 75 | 100 }
   /** Espaços para assinatura (linha, nome, cargo e data opcional). Nome/data em branco = preencher à mão. */
-  | { id: string; tipo: 'assinaturas'; pessoas: { papel: string; nome: string; cargo?: string; data?: string }[]; comData?: boolean };
+  | { id: string; tipo: 'assinaturas'; pessoas: { papel: string; nome: string; cargo?: string; data?: string }[]; comData?: boolean }
+  /** Lista de verificação. Sem `opcoes`: uma caixinha por item. Com `opcoes` (ex.: Sim/Não/N/A,
+   *  C/NC): uma caixinha por opção, em colunas; `resposta` guarda a opção marcada. */
+  | { id: string; tipo: 'checklist'; titulo?: string; itens: ItemChecklist[]; opcoes?: string[]; comObservacao?: boolean };
+
+export interface ItemChecklist {
+  texto: string;
+  marcado?: boolean;
+  resposta?: string;
+  obs?: string;
+}
 
 export type StatusDocumento = 'Rascunho' | 'Vigente' | 'Obsoleto';
 

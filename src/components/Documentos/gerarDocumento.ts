@@ -217,6 +217,54 @@ export async function gerarPdfDocumento(
         alternateRowStyles: { fillColor: [252, 250, 247] },
       });
       y = (doc as any).lastAutoTable.finalY + 6;
+    } else if (b.tipo === 'checklist' && b.itens.length) {
+      if (b.titulo) {
+        espaco(10);
+        texto(b.titulo, 10, 'bold', TEXTO);
+        y += 1;
+      }
+      const caixa = (x: number, yTopo: number, marcada: boolean, lado = 3.4) => {
+        doc.setDrawColor(...CORPO);
+        doc.setLineWidth(0.3);
+        doc.rect(x, yTopo, lado, lado);
+        if (marcada) {
+          doc.setDrawColor(...BRONZE);
+          doc.setLineWidth(0.6);
+          doc.line(x + 0.6, yTopo + lado * 0.55, x + lado * 0.42, yTopo + lado - 0.6);
+          doc.line(x + lado * 0.42, yTopo + lado - 0.6, x + lado - 0.4, yTopo + 0.5);
+        }
+      };
+      if (b.opcoes?.length) {
+        const opcoes = b.opcoes;
+        autoTable(doc, {
+          startY: y - 3,
+          margin: { left: MARGEM, right: MARGEM, top: TOPO, bottom: 26 },
+          head: [['Item', ...opcoes, ...(b.comObservacao ? ['Observação'] : [])]],
+          body: b.itens.map((it) => [it.texto, ...opcoes.map(() => ''), ...(b.comObservacao ? [it.obs || ''] : [])]),
+          theme: 'grid',
+          styles: { fontSize: 8.5, cellPadding: 1.8, textColor: CORPO, lineColor: [225, 225, 225], lineWidth: 0.15, valign: 'middle' },
+          headStyles: { fillColor: FUNDO_CABECALHO, textColor: TEXTO, fontStyle: 'bold', halign: 'center' },
+          columnStyles: Object.fromEntries([[0, { halign: 'left' }], ...opcoes.map((_, i) => [i + 1, { cellWidth: 14 }]), ...(b.comObservacao ? [[opcoes.length + 1, { cellWidth: 45 }]] : [])]),
+          didDrawCell: (h) => {
+            if (h.section !== 'body' || h.column.index < 1 || h.column.index > opcoes.length) return;
+            const it = b.itens[h.row.index];
+            caixa(h.cell.x + h.cell.width / 2 - 1.7, h.cell.y + h.cell.height / 2 - 1.7, it?.resposta === opcoes[h.column.index - 1]);
+          },
+        });
+        y = (doc as any).lastAutoTable.finalY + 6;
+      } else {
+        b.itens.forEach((it) => {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          const linhas = doc.splitTextToSize(it.texto, larguraTexto - 8) as string[];
+          espaco(linhas.length * 4.6 + 1.5);
+          caixa(MARGEM + 1, y - 3.1, !!it.marcado);
+          doc.setTextColor(...CORPO);
+          linhas.forEach((l, k) => doc.text(l, MARGEM + 7, y + k * 4.6));
+          y += linhas.length * 4.6 + 1.8;
+        });
+        y += 2;
+      }
     } else if (b.tipo === 'imagem') {
       const img = imagens.get(b.ref);
       if (!img) continue;
@@ -541,6 +589,30 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
         })
       );
       filhos.push(new Paragraph({ text: '', spacing: { after: 160 } }));
+    } else if (b.tipo === 'checklist' && b.itens.length) {
+      if (b.titulo) filhos.push(new Paragraph({ spacing: { before: 120, after: 80 }, children: [new TextRun({ text: b.titulo, bold: true, font: FONTE, size: 21, color: '111111' })] }));
+      if (b.opcoes?.length) {
+        const opcoes = b.opcoes;
+        filhos.push(
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({ tableHeader: true, children: ['Item', ...opcoes, ...(b.comObservacao ? ['Observação'] : [])].map((c) => celula(c, true)) }),
+              ...b.itens.map(
+                (it) =>
+                  new TableRow({
+                    children: [celula(it.texto), ...opcoes.map((o) => celula(it.resposta === o ? '☒' : '☐')), ...(b.comObservacao ? [celula(it.obs || '')] : [])],
+                  })
+              ),
+            ],
+          })
+        );
+      } else {
+        b.itens.forEach((it) =>
+          filhos.push(new Paragraph({ spacing: { after: 60 }, indent: { left: 240 }, children: [new TextRun({ text: `${it.marcado ? '☒' : '☐'}  ${it.texto}`, font: FONTE, size: 21, color: '333333' })] }))
+        );
+      }
+      filhos.push(new Paragraph({ text: '', spacing: { after: 160 } }));
     } else if (b.tipo === 'imagem') {
       const img = imagens.get(b.ref);
       if (!img) continue;
@@ -724,7 +796,12 @@ export async function gerarXlsxDocumento(d: DocumentoPadronizado): Promise<File>
           ws.addRow([]);
           ws.addRow([`${p.papel ? `${p.papel}: ` : ''}______________________________   ${[p.nome, p.cargo].filter(Boolean).join(' — ')}${b.comData ? `   Data: ${p.data || '____/____/________'}` : ''}`]);
         });
-      else if (b.tipo === 'imagem') ws.addRow([`[Imagem${b.legenda ? `: ${b.legenda}` : ''} — veja no PDF ou Word]`]).getCell(1).font = { italic: true, size: 9, color: { argb: 'FF777777' } };
+      else if (b.tipo === 'checklist') {
+        if (b.titulo) ws.addRow([b.titulo]).getCell(1).font = { bold: true, size: 11 };
+        b.itens.forEach((it) =>
+          ws.addRow([b.opcoes?.length ? `${it.texto}   ${b.opcoes.map((o) => `${it.resposta === o ? '☒' : '☐'} ${o}`).join('   ')}${it.obs ? `   Obs.: ${it.obs}` : ''}` : `${it.marcado ? '☒' : '☐'} ${it.texto}`]).getCell(1).alignment = { wrapText: true }
+        );
+      } else if (b.tipo === 'imagem') ws.addRow([`[Imagem${b.legenda ? `: ${b.legenda}` : ''} — veja no PDF ou Word]`]).getCell(1).font = { italic: true, size: 9, color: { argb: 'FF777777' } };
     });
   }
   tabelas.forEach((t, i) => {

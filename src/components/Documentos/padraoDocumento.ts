@@ -49,6 +49,9 @@ export function verificarPadrao(d: DocumentoPadronizado): ProblemaPadrao[] {
       if (b.cabecalho.length > 8) p.push({ nivel: 'aviso', mensagem: `Tabela com ${b.cabecalho.length} colunas — no PDF/Word ela fica apertada; considere gerar em Excel.`, blocoId: b.id });
     } else if (b.tipo === 'imagem') {
       if (!b.ref) p.push({ nivel: 'aviso', mensagem: 'Há um bloco de imagem sem imagem — envie a imagem ou remova o bloco.', blocoId: b.id });
+    } else if (b.tipo === 'checklist') {
+      if (!b.itens.length) p.push({ nivel: 'aviso', mensagem: 'Checklist sem itens.', blocoId: b.id });
+      else if (b.itens.some((i) => !i.texto.trim())) p.push({ nivel: 'aviso', mensagem: 'Checklist com item vazio.', blocoId: b.id, corrigivel: true });
     } else if (b.tipo === 'assinaturas') {
       if (b.pessoas.length === 0) p.push({ nivel: 'aviso', mensagem: 'Bloco de assinaturas sem nenhuma pessoa.', blocoId: b.id });
       if (b.pessoas.some((x) => !x.papel.trim() && !x.nome.trim())) p.push({ nivel: 'aviso', mensagem: 'Há assinatura sem papel e sem nome — diga quem assina (ex.: Aprovado por).', blocoId: b.id });
@@ -84,6 +87,10 @@ export function corrigirAutomaticamente(blocos: BlocoDocumento[]): BlocoDocument
       }
       if (b.tipo === 'lista') {
         const itens = b.itens.map((i) => datasPadrao(frase(i))).filter(Boolean);
+        return itens.length ? { ...b, itens } : null;
+      }
+      if (b.tipo === 'checklist') {
+        const itens = b.itens.map((i) => ({ ...i, texto: frase(i.texto) })).filter((i) => i.texto);
         return itens.length ? { ...b, itens } : null;
       }
       if (b.tipo === 'tabela') {

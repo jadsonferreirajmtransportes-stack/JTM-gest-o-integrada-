@@ -9,7 +9,7 @@
 //     rodapé que se repetem em todas as páginas são descartados.
 // ============================================================================
 
-import type { BlocoDocumento } from '../../utils/documentosPadronizadosApi';
+import type { ItemChecklist, BlocoDocumento } from '../../utils/documentosPadronizadosApi';
 import { novoIdBloco } from '../../utils/documentosPadronizadosApi';
 import { carregarPdfJs } from '../Contracheques/contrachequePdfUtils';
 import { enviarArquivo } from '../../utils/arquivosStorage';
@@ -569,10 +569,97 @@ async function gradesDaPagina(pagina: any, pdfjs: any, itens: ItemPdf[]): Promis
 /** Acabamento comum: tira a numeração manual dos títulos ("1. OBJETIVO" → "OBJETIVO" — o
  *  padrão JMT numera as seções sozinho) e descarta blocos vazios. */
 function finalizar(r: DocumentoImportado): DocumentoImportado {
-  const blocos = r.blocos
-    .map((b) => (b.tipo === 'titulo' ? { ...b, texto: b.texto.replace(/^\d+(?:\.\d+)*[.)]\s+(?=\p{L})/u, '').trim() } : b.tipo === 'tabela' ? tabelaDeAssinaturas(b) || b : b))
-    .filter((b) => (b.tipo === 'lista' ? b.itens.length > 0 : 'texto' in b ? b.texto.trim().length > 0 : true));
-  return { ...r, blocos };
+  const blocos = extrairChecklists(
+    r.blocos.map((b) =>
+      b.tipo === 'titulo'
+        ? { ...b, texto: b.texto.replace(/^\d+(?:\.\d+)*[.)]\s+(?=\p{L})/u, '').trim() }
+        : b.tipo === 'tabela'
+          ? tabelaDeAssinaturas(b) || tabelaDeChecklist(b) || b
+          : b
+    )
+  ).filter((b) => (b.tipo === 'lista' || b.tipo === 'checklist' ? b.itens.length > 0 : 'texto' in b ? b.texto.trim().length > 0 : true));
+  const checklists = blocos.filter((b) => b.tipo === 'checklist').length;
+  return { ...r, blocos, avisos: checklists ? [...r.avisos, `${checklists} checklist(s) reconhecido(s) — confira os itens no editor.`] : r.avisos };
+}
+
+// ---------------------------------------------------------------------------
+// Checklists: linhas que começam com caixinha (☐ □ ☑ ☒ [ ] [x] ( ) (x), inclusive os
+// símbolos do Wingdings que o PDF/Word trazem) e tabelas de verificação (Item | Sim | Não…).
+// ---------------------------------------------------------------------------
+const CAIXA = '\\[\\s?[xX✓✔]?\\s?\\]|\\(\\s?[xX✓✔]?\\s?\\)|[☐□❑▢◻⬜☑☒✅\\uF0A8\\uF06F\\uF071\\uF0A1\\uF0FE]';
+const RE_INICIO_CAIXA = new RegExp(`^\\s*(?:${CAIXA})`);
+const RE_CAIXAS = new RegExp(`(?:^|\\s)(${CAIXA})\\s*`, 'g');
+const caixaMarcada = (c: string) => /[xX✓✔☑☒✅\uF0FE]/.test(c);
+
+/** "☐ Item 1 ☐ Item 2" → itens. Só quando o texto COMEÇA com caixinha. */
+function itensDeCaixas(texto: string): ItemChecklist[] | null {
+  if (!RE_INICIO_CAIXA.test(texto)) return null;
+  const partes: ItemChecklist[] = [];
+  const marcas = Array.from(texto.matchAll(RE_CAIXAS));
+  marcas.forEach((m, i) => {
+    const inicio = (m.index ?? 0) + m[0].length;
+    const fim = i + 1 < marcas.length ? marcas[i + 1].index ?? texto.length : texto.length;
+    const t = limpar(texto.slice(inicio, fim));
+    if (t) partes.push({ texto: t, marcado: caixaMarcada(m[1]) || undefined });
+  });
+  return partes.length ? partes : null;
+}
+
+function extrairChecklists(blocos: BlocoDocumento[]): BlocoDocumento[] {
+  const saida: BlocoDocumento[] = [];
+  for (const b of blocos) {
+    const itens =
+      b.tipo === 'paragrafo' || b.tipo === 'destaque'
+        ? itensDeCaixas(b.texto)
+        : b.tipo === 'lista' && b.itens.every((i) => RE_INICIO_CAIXA.test(i))
+          ? b.itens.flatMap((i) => itensDeCaixas(i) || [])
+          : null;
+    if (!itens) {
+      saida.push(b);
+      continue;
+    }
+    const anterior = saida[saida.length - 1];
+    if (anterior?.tipo === 'checklist' && !anterior.opcoes) anterior.itens.push(...itens);
+    else saida.push({ id: novoIdBloco(), tipo: 'checklist', itens });
+  }
+  return saida;
+}
+
+const COLUNA_VERIFICACAO = /^(sim|n[ãa]o|n\/?a|ok|c|nc|conforme|n[ãa]o conforme|feito|realizado|verificado|check|✓|✔|x|s|n|bom|regular|ruim|atende|n[ãa]o atende)$/i;
+const COLUNA_OBS = /^(obs|observa[çc][ãa]o|observa[çc][õo]es|coment[áa]rio|coment[áa]rios)/i;
+const CELULA_DE_MARCA = /^(|x|✓|✔|☑|☒|☐|□|sim|n[ãa]o|ok)$/i;
+
+/** Tabela "Item | Sim | Não | N/A | Observação" (ou "Item | OK") vira checklist. */
+function tabelaDeChecklist(b: Extract<BlocoDocumento, { tipo: 'tabela' }>): BlocoDocumento | null {
+  const cab = b.cabecalho.map((c) => limpar(c));
+  if (cab.length < 2 || !b.linhas.length) return null;
+  const colsMarca = cab.map((c, i) => (i > 0 && COLUNA_VERIFICACAO.test(c) ? i : -1)).filter((i) => i > 0);
+  const colObs = cab.findIndex((c, i) => i > 0 && COLUNA_OBS.test(c));
+  if (!colsMarca.length) return null;
+  // Toda coluna além do item tem que ser de marcação ou a de observação.
+  if (cab.some((_, i) => i > 0 && !colsMarca.includes(i) && i !== colObs)) return null;
+  if (!b.linhas.every((l) => colsMarca.every((i) => CELULA_DE_MARCA.test(limpar(l[i] || ''))))) return null;
+  const marcada = (v: string) => !!limpar(v) && !/^[☐□]$/.test(limpar(v));
+  const itens: ItemChecklist[] = b.linhas
+    .filter((l) => limpar(l[0] || ''))
+    .map((l) => {
+      const resposta = colsMarca.length > 1 ? cab[colsMarca.find((i) => marcada(l[i] || '')) ?? -1] : undefined;
+      return {
+        texto: limpar(l[0]),
+        marcado: colsMarca.length === 1 ? marcada(l[colsMarca[0]] || '') || undefined : undefined,
+        resposta: resposta || undefined,
+        obs: colObs > 0 ? limpar(l[colObs] || '') || undefined : undefined,
+      };
+    });
+  if (!itens.length) return null;
+  return {
+    id: b.id,
+    tipo: 'checklist',
+    titulo: cab[0] && !/^(item|itens|descri[çc][ãa]o|verifica[çc][ãa]o|atividade)$/i.test(cab[0]) ? cab[0] : undefined,
+    itens,
+    opcoes: colsMarca.length > 1 ? colsMarca.map((i) => cab[i]) : undefined,
+    comObservacao: colObs > 0 || undefined,
+  };
 }
 
 /** Tabela que é, na verdade, o quadro de assinaturas ("Elaborado | Revisado | Aprovado" com

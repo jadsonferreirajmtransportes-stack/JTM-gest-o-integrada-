@@ -30,6 +30,10 @@ const LIMITE_PARTE = 3500; // caracteres por conteúdo de texto
 
 function blocoParaLinhas(b: BlocoDocumento): string[] {
   if (b.tipo === 'imagem' || b.tipo === 'assinaturas') return [];
+  if (b.tipo === 'checklist') {
+    const linhas = b.itens.map((i) => (b.opcoes ? `☐ ${i.texto} — (${b.opcoes.join(' / ')})` : `${i.marcado ? '☑' : '☐'} ${i.texto}`));
+    return [[b.titulo ? `CHECKLIST — ${b.titulo.toUpperCase()}` : 'CHECKLIST', ...linhas].join('\n')];
+  }
   if (b.tipo === 'paragrafo') return [b.texto];
   if (b.tipo === 'destaque') return [`Atenção: ${b.texto}`];
   if (b.tipo === 'titulo') return [b.texto.toUpperCase()];
