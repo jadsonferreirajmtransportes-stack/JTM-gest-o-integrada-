@@ -105,8 +105,8 @@ export const ImportarTarifarioModal: React.FC<{
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {aba.faixas.map((f) => (
-                      <tr key={f.raio}>
-                        <td className="p-2 text-slate-700">{f.raio}</td>
+                      <tr key={`${f.raio}|${f.valorAte10Kg}|${f.valorKgExcedente}`}>
+                        <td className="p-2 text-slate-700">{f.raio || 'Sem faixa (preço por cidade)'}</td>
                         <td className="p-2 text-right">{f.cidades}</td>
                         <td className="p-2 text-right font-semibold">{brl(f.valorAte10Kg)}</td>
                         <td className="p-2 text-right font-semibold">{brl(f.valorKgExcedente)}</td>
@@ -165,7 +165,7 @@ export const ImportarTarifarioModal: React.FC<{
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input type="checkbox" checked={trocarPadrao} onChange={(e) => setTrocarPadrao(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#C48229]" />
                   <span>
-                    <b>Tarifa padrão</b> (cidade que não está na tabela) = valores de {aba.faixas[0].raio.toLowerCase()}: {brl(aba.faixas[0].valorAte10Kg)} até 10 kg + {brl(aba.faixas[0].valorKgExcedente)}/kg
+                    <b>Tarifa padrão</b> (cidade que não está na tabela) = valores {aba.faixas[0].raio ? `de ${aba.faixas[0].raio.toLowerCase()}` : 'da primeira cidade da tabela'}: {brl(aba.faixas[0].valorAte10Kg)} até 10 kg + {brl(aba.faixas[0].valorKgExcedente)}/kg
                   </span>
                 </label>
               )}

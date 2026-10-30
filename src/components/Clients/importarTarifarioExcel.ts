@@ -6,6 +6,8 @@ import { CustoExtraTarifa, FaixaTarifaCidade } from '../../types';
 // o raio e os valores aparecem só na primeira cidade de cada faixa (células mescladas). As
 // linhas de cima (veículo dedicado, km rodado) viram custos extras; as linhas "OBS" viram
 // observações. Uma aba de premissas com "GENERALIDADES" (TDE, ajudante...) também é lida.
+// Também lê a planilha que o próprio sistema exporta ("Tabela de frete (Excel)"): blocos com um
+// título de faixa ("ATÉ 50 KM — 18 cidade(s)") e o cabeçalho Cidade | Km | Até 10 kg... repetido.
 
 export interface AbaTarifario {
   nome: string;
@@ -137,6 +139,17 @@ function lerPremissas(linhas: unknown[][]): BlocoPremissas[] {
   return blocos.filter((b) => b.custosExtras.length || b.observacoes.length);
 }
 
+/** Linha de título de faixa da planilha exportada ("ATÉ 50 KM  —  18 cidade(s)"): devolve o
+ *  raio. As faixas por km ("Até 50 km", "De 51 a 100 km"...) a exportação calcula sozinha pela
+ *  distância, então voltam vazias (como no cadastro original). Não é título: undefined. */
+function tituloDeFaixa(l: unknown[] | undefined): string | undefined {
+  if (!l) return undefined;
+  const m = String(l[0] ?? '').match(/^(.+?)\s+[—-]\s+\d+\s+CIDADE\(S\)\s*$/i);
+  if (!m || !l.slice(1).every((x) => x === '' || x === null || x === undefined)) return undefined;
+  const nome = m[1].trim();
+  return /^(ATE \d+ KM|DE \d+ A \d+ KM|ACIMA DE \d+ KM|SEM (DISTANCIA|FAIXA))/.test(norm(nome)) ? '' : nome;
+}
+
 function lerAbaTabela(nome: string, linhas: unknown[][], iCab: number): AbaTarifario {
   const cab = linhas[iCab].map(norm);
   const col = (...nomes: string[]) => cab.findIndex((c) => nomes.some((n) => c.startsWith(n)));
@@ -175,16 +188,32 @@ function lerAbaTabela(nome: string, linhas: unknown[][], iCab: number): AbaTarif
   }
 
   const tarifas: FaixaTarifaCidade[] = [];
-  let raio = '';
+  const semUf = c.uf < 0;
+  // Na planilha exportada o título da primeira faixa fica logo acima do cabeçalho.
+  let raio = (iCab > 0 && tituloDeFaixa(linhas[iCab - 1])) || '';
   let ate10: number | undefined;
   let exc: number | undefined;
   for (const l of linhas.slice(iCab + 1)) {
     const primeira = norm(l[0]);
     if (primeira.startsWith('OBS')) {
-      observacoes.push(String(l[0]).replace(/^OBS\s*:?\s*/i, '').trim());
+      // "OBS:", "Observações:" (e o "ervações:" que um import antigo deixou grudado no texto).
+      const prefixo = /^(OBS(ERVA[CÇ][OÕ]ES)?|ERVA[CÇ][OÕ]ES)\s*:?\s*/i;
+      let texto = String(l[0]).trim();
+      while (prefixo.test(texto)) texto = texto.replace(prefixo, '');
+      if (texto.trim()) observacoes.push(texto.trim());
+      continue;
+    }
+    // Título de faixa da planilha exportada pelo sistema: "ATÉ 50 KM  —  18 cidade(s)".
+    const nomeFaixa = tituloDeFaixa(l);
+    if (nomeFaixa !== undefined) {
+      raio = nomeFaixa;
+      ate10 = undefined;
+      exc = undefined;
       continue;
     }
     const cidade = String(l[c.cidade] ?? '').trim();
+    // Cabeçalho repetido a cada faixa e lixo de importações antigas (rodapé, títulos de raio).
+    if (norm(cidade) === 'CIDADE' || /\s[—|]\s|^RAIO\s*\d/i.test(cidade) || cidade.length > 60) continue;
     const uf = c.uf >= 0 ? String(l[c.uf] ?? '').trim() : '';
     // Linha de cidade de verdade: tem cidade e UF de 2 letras (pula avisos no meio da tabela).
     if (!cidade || (c.uf >= 0 && !/^[A-Za-z]{2}$/.test(uf))) continue;
@@ -194,7 +223,8 @@ function lerAbaTabela(nome: string, linhas: unknown[][], iCab: number): AbaTarif
     const vExc = numero(l[c.exc]);
     if (v10 !== undefined) ate10 = v10;
     if (vExc !== undefined) exc = vExc;
-    if (ate10 === undefined) continue;
+    // Sem coluna UF (planilha exportada): cada linha traz o próprio valor, não herda da de cima.
+    if (ate10 === undefined || (semUf && v10 === undefined)) continue;
     const km = c.km >= 0 ? numero(l[c.km]) : undefined;
     tarifas.push({
       id: novoId('tar'),
@@ -226,7 +256,8 @@ function lerAbaTabela(nome: string, linhas: unknown[][], iCab: number): AbaTarif
 
   const faixas: AbaTarifario['faixas'] = [];
   tarifas.forEach((t) => {
-    const f = faixas.find((x) => x.raio === t.raio);
+    // Mesma faixa com preços diferentes (faixas por km) aparece em linhas separadas na prévia.
+    const f = faixas.find((x) => x.raio === t.raio && x.valorAte10Kg === t.valorAte10Kg && x.valorKgExcedente === t.valorKgExcedente);
     if (f) f.cidades += 1;
     else faixas.push({ raio: t.raio, cidades: 1, valorAte10Kg: t.valorAte10Kg, valorKgExcedente: t.valorKgExcedente });
   });
