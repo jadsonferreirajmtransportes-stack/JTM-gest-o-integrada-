@@ -23,6 +23,7 @@ import {
   Pencil,
   RotateCcw,
   CalendarRange,
+  Landmark,
 } from 'lucide-react';
 import { Cliente, LancamentoFaturamentoAereo, FaturaAereo } from '../../types';
 import { formatCurrency, formatDateBR } from '../../utils/formatters';
@@ -43,6 +44,8 @@ import {
 } from './faturamentoAereoUtils';
 import { ImportFaturamentoAereoModal } from './ImportFaturamentoAereoModal';
 import { gerarFaturaPdf } from './faturaPdf';
+import { AliquotasTributosModal } from './AliquotasTributosModal';
+import { AliquotaTributo, aliquotaEm, getAliquotas, tributosDoValor } from '../../utils/tributosApi';
 import { gerarRelatorioFinanceiroPdf, gerarRelatorioFinanceiroXlsx } from './relatorioFinanceiro';
 import { baixarBlob } from '../../utils/downloadUtils';
 
@@ -557,12 +560,31 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     [lancamentosNoIntervalo, faturasNoIntervalo, clientes]
   );
   // Quadro mês a mês (pela data do CT-e), do mais recente para o mais antigo.
+  // Reforma tributária: CBS/IBS contidos no Valor a Cobrar (alíquota da data de EMISSÃO do CT-e).
+  const [aliquotas, setAliquotas] = useState<AliquotaTributo[]>([]);
+  const [aliquotasAberto, setAliquotasAberto] = useState(false);
+  useEffect(() => {
+    getAliquotas().then(setAliquotas);
+  }, []);
+  const impostoDe = (l: LancamentoFaturamentoAereo, valor: number) => tributosDoValor(valor, aliquotaEm(aliquotas, l.dataEmissao || l.dataConclusao)).total;
+  const impostoNoIntervalo = useMemo(
+    () => (aliquotas.length ? lancamentosNoIntervalo.reduce((s, l) => s + impostoDe(l, computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome))), 0) : 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lancamentosNoIntervalo, clientes, aliquotas]
+  );
+  const impostoDaFatura = (faturaId: string) =>
+    aliquotas.length
+      ? lancamentos.filter((l) => l.faturaId === faturaId).reduce((s, l) => s + impostoDe(l, computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome))), 0)
+      : 0;
+
   const mesAMes = useMemo(() => {
-    const porMes = new Map<string, { cobrado: number; pago: number; ctes: number; pagos: number; faturas: Set<string> }>();
+    const porMes = new Map<string, { cobrado: number; pago: number; ctes: number; pagos: number; faturas: Set<string>; imposto: number }>();
     lancamentosNoIntervalo.forEach((l) => {
       const mes = dataDoCte(l).slice(0, 7) || 'sem-data';
-      const m = porMes.get(mes) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>() };
-      m.cobrado += computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome));
+      const m = porMes.get(mes) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>(), imposto: 0 };
+      const valor = computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome));
+      m.cobrado += valor;
+      m.imposto += impostoDe(l, valor);
       if (l.confirmacaoPagamento) {
         m.pago += l.valorRecebido || 0;
         m.pagos += 1;
@@ -572,12 +594,13 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     });
     faturasNoIntervalo.forEach((f) => {
       const mes = mesDaFatura(f, mesUltimoCteDe.get(f.id)) || 'sem-data';
-      const m = porMes.get(mes) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>() };
+      const m = porMes.get(mes) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>(), imposto: 0 };
       m.faturas.add(f.id);
       porMes.set(mes, m);
     });
     return Array.from(porMes.entries()).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [lancamentosNoIntervalo, faturasNoIntervalo, clientes, mesUltimoCteDe]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lancamentosNoIntervalo, faturasNoIntervalo, clientes, mesUltimoCteDe, aliquotas]);
   const NOMES_MES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   const nomeMes = (m: string) => (m === 'sem-data' ? 'Sem data' : `${NOMES_MES[Number(m.slice(5, 7)) - 1]} ${m.slice(0, 4)}`);
   const filtroRelatorio = () => ({
@@ -867,7 +890,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   };
 
   const handleFaturaPdf = (fatura: FaturaAereo) => {
-    const arquivo = gerarFaturaPdf(fatura, lancamentos.filter((l) => l.faturaId === fatura.id), findClienteById(clientes, fatura.clienteId, fatura.clienteNome));
+    const arquivo = gerarFaturaPdf(fatura, lancamentos.filter((l) => l.faturaId === fatura.id), findClienteById(clientes, fatura.clienteId, fatura.clienteNome), aliquotas);
     baixarBlob(arquivo, arquivo.name);
   };
 
@@ -1104,7 +1127,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           <button
             type="button"
             onClick={() => {
-              const arquivo = gerarRelatorioFinanceiroPdf(lancamentosNoIntervalo, clientes, filtroRelatorio(), faturasNoIntervalo, mesUltimoCteDe);
+              const arquivo = gerarRelatorioFinanceiroPdf(lancamentosNoIntervalo, clientes, filtroRelatorio(), faturasNoIntervalo, mesUltimoCteDe, aliquotas);
               baixarBlob(arquivo, arquivo.name);
             }}
             className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-amber-50 flex items-center gap-1 normal-case tracking-normal"
@@ -1115,7 +1138,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
           <button
             type="button"
             onClick={async () => {
-              const arquivo = await gerarRelatorioFinanceiroXlsx(lancamentosNoIntervalo, faturasDaEmpresa, clientes, filtroRelatorio(), faturasNoIntervalo, mesUltimoCteDe);
+              const arquivo = await gerarRelatorioFinanceiroXlsx(lancamentosNoIntervalo, faturasDaEmpresa, clientes, filtroRelatorio(), faturasNoIntervalo, mesUltimoCteDe, aliquotas);
               baixarBlob(arquivo, arquivo.name);
             }}
             className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-emerald-50 flex items-center gap-1 normal-case tracking-normal"
@@ -1147,6 +1170,8 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                 <th className="text-right p-2.5">Faturado</th>
                 <th className="text-right p-2.5">Pago</th>
                 <th className="text-right p-2.5">Em aberto</th>
+                {aliquotas.length > 0 && <th className="text-right p-2.5">CBS/IBS</th>}
+                {aliquotas.length > 0 && <th className="text-right p-2.5">Líquido JMT</th>}
                 <th className="text-right p-2.5">CT-es</th>
                 <th className="text-right p-2.5">Pagos</th>
                 <th className="text-right p-2.5" title="Faturas pelo período da própria fatura">Faturas do mês</th>
@@ -1173,6 +1198,8 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                   <td className="p-2.5 text-right tabular-nums font-semibold">{formatCurrency(m.cobrado)}</td>
                   <td className="p-2.5 text-right tabular-nums text-emerald-700">{formatCurrency(m.pago)}</td>
                   <td className="p-2.5 text-right tabular-nums text-rose-700">{formatCurrency(m.cobrado - m.pago)}</td>
+                  {aliquotas.length > 0 && <td className="p-2.5 text-right tabular-nums text-[#92611F]">{formatCurrency(m.imposto)}</td>}
+                  {aliquotas.length > 0 && <td className="p-2.5 text-right tabular-nums font-semibold">{formatCurrency(m.cobrado - m.imposto)}</td>}
                   <td className="p-2.5 text-right tabular-nums">{m.ctes}</td>
                   <td className="p-2.5 text-right tabular-nums">{m.pagos}</td>
                   <td className="p-2.5 text-right tabular-nums">{m.faturas.size}</td>
@@ -1180,7 +1207,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
               ))}
               {mesAMes.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-4 text-center text-slate-400">Nenhum CT-e no período.</td>
+                  <td colSpan={9} className="p-4 text-center text-slate-400">Nenhum CT-e no período.</td>
                 </tr>
               )}
             </tbody>
@@ -1191,6 +1218,8 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                   <td className="p-2.5 text-right tabular-nums">{formatCurrency(resumoGeral.totalFaturado)}</td>
                   <td className="p-2.5 text-right tabular-nums text-emerald-700">{formatCurrency(resumoGeral.totalPago)}</td>
                   <td className="p-2.5 text-right tabular-nums text-rose-700">{formatCurrency(resumoGeral.totalEmAberto)}</td>
+                  {aliquotas.length > 0 && <td className="p-2.5 text-right tabular-nums text-[#92611F]">{formatCurrency(impostoNoIntervalo)}</td>}
+                  {aliquotas.length > 0 && <td className="p-2.5 text-right tabular-nums">{formatCurrency(resumoGeral.totalFaturado - impostoNoIntervalo)}</td>}
                   <td className="p-2.5 text-right tabular-nums">{resumoGeral.totalCtes}</td>
                   <td className="p-2.5 text-right tabular-nums">{resumoGeral.ctesPagos}</td>
                   <td className="p-2.5 text-right tabular-nums">{resumoGeral.totalFaturas}</td>
@@ -1210,6 +1239,25 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
         <KpiCard label="Total de CT-Es" value={String(resumoGeral.totalCtes)} icon={Package} tone="default" />
         <KpiCard label="CT-Es Pagos" value={String(resumoGeral.ctesPagos)} icon={CheckCircle2} tone="success" />
         <KpiCard label="CT-Es em Aberto" value={String(resumoGeral.ctesEmAberto)} icon={AlertCircle} tone="danger" />
+        {aliquotas.length > 0 ? (
+          <div className="p-4 rounded-xl border bg-amber-50/60 border-amber-200 text-slate-800">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#92611F]">CBS/IBS no faturado</span>
+              <button type="button" onClick={() => setAliquotasAberto(true)} className="text-[#92611F]" title="Alíquotas CBS/IBS">
+                <Landmark className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-lg font-bold mt-1">{formatCurrency(impostoNoIntervalo)}</p>
+            <p className="text-[11px] text-slate-600">Líquido JMT: <b>{formatCurrency(resumoGeral.totalFaturado - impostoNoIntervalo)}</b></p>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setAliquotasAberto(true)} className="p-4 rounded-xl border border-dashed border-amber-300 text-left text-[#92611F] hover:bg-amber-50 normal-case tracking-normal">
+            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide">
+              <Landmark className="w-4 h-4" /> CBS / IBS
+            </span>
+            <span className="block text-xs mt-1">Cadastrar as alíquotas da reforma tributária para calcular o imposto e o líquido.</span>
+          </button>
+        )}
       </div>
 
       {/* Busca global por NF/CT-e — encontra o lançamento em qualquer fatura (ou sem fatura
@@ -1643,6 +1691,14 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                       <div className="text-[10px] text-slate-500">
                         {resumo.qtdCtesPagos}/{resumo.qtdCtes} CT-Es pagos
                       </div>
+                      {aliquotas.length > 0 && (() => {
+                        const imp = impostoDaFatura(fatura.id);
+                        return imp ? (
+                          <div className="text-[10px] text-[#92611F]" title="CBS/IBS contidos no valor da fatura e o líquido da JMT">
+                            CBS/IBS {formatCurrency(imp)} · líquido {formatCurrency(resumo.valorTotalCobrado - imp)}
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                     <button
                       type="button"
@@ -2252,6 +2308,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
         </div>
       )}
 
+      {aliquotasAberto && <AliquotasTributosModal aliquotas={aliquotas} onClose={() => setAliquotasAberto(false)} onMudou={setAliquotas} />}
       <ImportFaturamentoAereoModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}

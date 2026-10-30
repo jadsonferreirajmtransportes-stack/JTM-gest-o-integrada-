@@ -10,6 +10,7 @@ import type { Cliente, FaturaAereo, LancamentoFaturamentoAereo } from '../../typ
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 import { computeValorACobrar, findClienteById, mesDaFatura } from './faturamentoAereoUtils';
+import { AliquotaTributo, aliquotaEm, tributosDoValor } from '../../utils/tributosApi';
 
 const BRONZE: [number, number, number] = [196, 130, 41];
 const TEXTO: [number, number, number] = [17, 17, 17];
@@ -34,11 +35,13 @@ interface Grupo {
   ctes: number;
   pagos: number;
   faturas: Set<string>;
+  imposto: number; // CBS/IBS contidos no faturado
 }
 
 interface Linha {
   l: LancamentoFaturamentoAereo;
   valor: number;
+  imposto: number;
   pago: number;
   empresa: string;
   mes: string;
@@ -46,12 +49,14 @@ interface Linha {
 
 /** `faturasPeriodo`: as faturas do período (pelo mês da própria fatura) — são elas que contam
  *  na coluna "Faturas", não as faturas que só têm algum CT-e no período. */
-function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], faturasPeriodo: FaturaAereo[], mesUltimoCte: Map<string, string> = new Map()) {
+function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], faturasPeriodo: FaturaAereo[], mesUltimoCte: Map<string, string> = new Map(), aliquotas: AliquotaTributo[] = []) {
   const linhas: Linha[] = lancamentos.map((l) => {
     const c = findClienteById(clientes, l.clienteId, l.clienteNome);
+    const valor = computeValorACobrar(l, c);
     return {
       l,
-      valor: computeValorACobrar(l, c),
+      valor,
+      imposto: tributosDoValor(valor, aliquotaEm(aliquotas, l.dataEmissao || l.dataConclusao)).total,
       pago: l.confirmacaoPagamento ? l.valorRecebido || 0 : 0,
       empresa: c?.nomeFantasia || c?.razaoSocial || l.clienteNome || '—',
       mes: dataReferencia(l).slice(0, 7) || 'sem-data',
@@ -61,8 +66,9 @@ function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], 
     const m = new Map<string, Grupo>();
     linhas.forEach((x) => {
       const k = chave(x);
-      const g = m.get(k) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>() };
+      const g = m.get(k) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>(), imposto: 0 };
       g.cobrado += x.valor;
+      g.imposto += x.imposto;
       g.pago += x.pago;
       g.ctes += 1;
       if (x.l.confirmacaoPagamento) g.pagos += 1;
@@ -77,7 +83,7 @@ function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], 
   const contarFaturas = (m: Map<string, Grupo>, chave: (f: FaturaAereo) => string) => {
     faturasPeriodo.forEach((f) => {
       const k = chave(f);
-      const g = m.get(k) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>() };
+      const g = m.get(k) || { cobrado: 0, pago: 0, ctes: 0, pagos: 0, faturas: new Set<string>(), imposto: 0 };
       g.faturas.add(f.id);
       m.set(k, g);
     });
@@ -85,7 +91,10 @@ function montar(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], 
   };
   const porMes = Array.from(contarFaturas(agrupar((x) => x.mes), (f) => mesDaFatura(f, mesUltimoCte.get(f.id)) || 'sem-data').entries()).sort((a, b) => a[0].localeCompare(b[0]));
   const porEmpresa = Array.from(contarFaturas(agrupar((x) => x.empresa), empresaDaFatura).entries()).sort((a, b) => b[1].cobrado - a[1].cobrado);
-  const total = linhas.reduce((s, x) => ({ cobrado: s.cobrado + x.valor, pago: s.pago + x.pago, ctes: s.ctes + 1, pagos: s.pagos + (x.l.confirmacaoPagamento ? 1 : 0) }), { cobrado: 0, pago: 0, ctes: 0, pagos: 0 });
+  const total = linhas.reduce(
+    (s, x) => ({ cobrado: s.cobrado + x.valor, pago: s.pago + x.pago, ctes: s.ctes + 1, pagos: s.pagos + (x.l.confirmacaoPagamento ? 1 : 0), imposto: s.imposto + x.imposto }),
+    { cobrado: 0, pago: 0, ctes: 0, pagos: 0, imposto: 0 }
+  );
   const faturas = faturasPeriodo.length;
   return { linhas, porMes, porEmpresa, total, faturas };
 }
@@ -104,9 +113,11 @@ export async function gerarRelatorioFinanceiroXlsx(
   clientes: Cliente[],
   filtro: FiltroRelatorio,
   faturasPeriodo: FaturaAereo[] = faturas,
-  mesUltimoCte: Map<string, string> = new Map()
+  mesUltimoCte: Map<string, string> = new Map(),
+  aliquotas: AliquotaTributo[] = []
 ): Promise<File> {
-  const r = montar(lancamentos, clientes, faturasPeriodo, mesUltimoCte);
+  const r = montar(lancamentos, clientes, faturasPeriodo, mesUltimoCte, aliquotas);
+  const comImposto = aliquotas.length > 0;
   const numeroFatura = new Map(faturas.map((f) => [f.id, f.numeroFatura]));
   const ExcelJS = (await import('exceljs')).default;
   const wb = new ExcelJS.Workbook();
@@ -166,9 +177,33 @@ export async function gerarRelatorioFinanceiroXlsx(
     { titulo: 'CT-es', largura: 9 },
     { titulo: 'CT-es pagos', largura: 11 },
     { titulo: 'Faturas do período', largura: 12 },
+    ...(comImposto
+      ? [
+          { titulo: 'CBS/IBS', largura: 14, moeda: true },
+          { titulo: 'Líquido JMT', largura: 16, moeda: true },
+        ]
+      : []),
   ];
-  const linhaGrupo = (nome: string, g: { cobrado: number; pago: number; ctes: number; pagos: number; faturas: Set<string> }) => [nome, g.cobrado, g.pago, g.cobrado - g.pago, g.ctes, g.pagos, g.faturas.size];
-  const totalGrupo = ['Total', r.total.cobrado, r.total.pago, r.total.cobrado - r.total.pago, r.total.ctes, r.total.pagos, r.faturas];
+  const linhaGrupo = (nome: string, g: Grupo) => [
+    nome,
+    g.cobrado,
+    g.pago,
+    g.cobrado - g.pago,
+    g.ctes,
+    g.pagos,
+    g.faturas.size,
+    ...(comImposto ? [g.imposto, g.cobrado - g.imposto] : []),
+  ];
+  const totalGrupo = [
+    'Total',
+    r.total.cobrado,
+    r.total.pago,
+    r.total.cobrado - r.total.pago,
+    r.total.ctes,
+    r.total.pagos,
+    r.faturas,
+    ...(comImposto ? [r.total.imposto, r.total.cobrado - r.total.imposto] : []),
+  ];
 
   // Resumo primeiro (primeira aba)
   const resumo = aba(
@@ -185,9 +220,15 @@ export async function gerarRelatorioFinanceiroXlsx(
       ['CT-es pagos', r.total.pagos],
       ['CT-es em aberto', r.total.ctes - r.total.pagos],
       ['Faturas', r.faturas],
+      ...(comImposto
+        ? [
+            ['CBS/IBS no faturado', r.total.imposto] as [string, number],
+            ['Líquido JMT (faturado − CBS/IBS)', r.total.cobrado - r.total.imposto] as [string, number],
+          ]
+        : []),
     ]
   );
-  [6, 7, 8].forEach((row) => (resumo.getCell(row, 2).numFmt = fmtMoeda));
+  [6, 7, 8, ...(comImposto ? [13, 14] : [])].forEach((row) => (resumo.getCell(row, 2).numFmt = fmtMoeda));
   aba('Mês a mês', colGrupo('Mês (conclusão da entrega)'), r.porMes.map(([m, g]) => linhaGrupo(nomeMes(m), g)), totalGrupo);
   aba('Por empresa', colGrupo('Empresa'), r.porEmpresa.map(([e, g]) => linhaGrupo(e, g)), totalGrupo);
   aba(
@@ -202,6 +243,12 @@ export async function gerarRelatorioFinanceiroXlsx(
       { titulo: 'Cidade', largura: 18 },
       { titulo: 'Peso (kg)', largura: 10 },
       { titulo: 'Valor a cobrar', largura: 15, moeda: true },
+      ...(comImposto
+        ? [
+            { titulo: 'CBS/IBS', largura: 12, moeda: true },
+            { titulo: 'Líquido JMT', largura: 15, moeda: true },
+          ]
+        : []),
       { titulo: 'Pago', largura: 7 },
       { titulo: 'Valor recebido', largura: 15, moeda: true },
       { titulo: 'Fatura', largura: 20 },
@@ -218,11 +265,12 @@ export async function gerarRelatorioFinanceiroXlsx(
         x.l.cidadeDestino || '',
         x.l.pesoKg ?? '',
         x.valor,
+        ...(comImposto ? [x.imposto, x.valor - x.imposto] : []),
         x.l.confirmacaoPagamento ? 'Sim' : 'Não',
         x.pago || '',
         x.l.faturaId ? numeroFatura.get(x.l.faturaId) || '' : 'Sem fatura',
       ]),
-    ['', '', 'Total', '', '', '', '', '', r.total.cobrado, '', r.total.pago, '']
+    ['', '', 'Total', '', '', '', '', '', r.total.cobrado, ...(comImposto ? [r.total.imposto, r.total.cobrado - r.total.imposto] : []), '', r.total.pago, '']
   );
 
   const buffer = await wb.xlsx.writeBuffer();
@@ -232,8 +280,9 @@ export async function gerarRelatorioFinanceiroXlsx(
 // ---------------------------------------------------------------------------
 // PDF
 // ---------------------------------------------------------------------------
-export function gerarRelatorioFinanceiroPdf(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], filtro: FiltroRelatorio, faturasPeriodo: FaturaAereo[] = [], mesUltimoCte: Map<string, string> = new Map()): File {
-  const r = montar(lancamentos, clientes, faturasPeriodo, mesUltimoCte);
+export function gerarRelatorioFinanceiroPdf(lancamentos: LancamentoFaturamentoAereo[], clientes: Cliente[], filtro: FiltroRelatorio, faturasPeriodo: FaturaAereo[] = [], mesUltimoCte: Map<string, string> = new Map(), aliquotas: AliquotaTributo[] = []): File {
+  const r = montar(lancamentos, clientes, faturasPeriodo, mesUltimoCte, aliquotas);
+  const comImposto = aliquotas.length > 0;
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const L = doc.internal.pageSize.getWidth();
   const A = doc.internal.pageSize.getHeight();
@@ -270,8 +319,18 @@ export function gerarRelatorioFinanceiroPdf(lancamentos: LancamentoFaturamentoAe
     doc.setTextColor(...cor);
     doc.text(val, x + 3.5, 55.5);
   });
+  if (comImposto) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...TEXTO);
+    doc.text(
+      `CBS/IBS contidos no faturado: ${moeda(r.total.imposto)}  ·  Líquido JMT: ${moeda(r.total.cobrado - r.total.imposto)}  (alíquota pela emissão do CT-e)`,
+      M,
+      64
+    );
+  }
 
-  const tabela = (titulo: string, primeira: string, grupos: [string, { cobrado: number; pago: number; ctes: number; pagos: number; faturas: Set<string> }][], startY: number) => {
+  const tabela = (titulo: string, primeira: string, grupos: [string, Grupo][], startY: number) => {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(...TEXTO);
@@ -279,18 +338,38 @@ export function gerarRelatorioFinanceiroPdf(lancamentos: LancamentoFaturamentoAe
     autoTable(doc, {
       startY: startY + 2.5,
       margin: { left: M, right: M, top: 22, bottom: 16 },
-      head: [[primeira, 'Faturado', 'Pago', 'Em aberto', 'CT-es', 'Pagos', 'Faturas do período']],
-      body: grupos.map(([n, g]) => [n, moeda(g.cobrado), moeda(g.pago), moeda(g.cobrado - g.pago), g.ctes, g.pagos, g.faturas.size]),
-      foot: [['Total', moeda(r.total.cobrado), moeda(r.total.pago), moeda(r.total.cobrado - r.total.pago), r.total.ctes, r.total.pagos, r.faturas]],
+      head: [[primeira, 'Faturado', 'Pago', 'Em aberto', 'CT-es', 'Pagos', 'Faturas do período', ...(comImposto ? ['CBS/IBS', 'Líquido JMT'] : [])]],
+      body: grupos.map(([n, g]) => [
+        n,
+        moeda(g.cobrado),
+        moeda(g.pago),
+        moeda(g.cobrado - g.pago),
+        g.ctes,
+        g.pagos,
+        g.faturas.size,
+        ...(comImposto ? [moeda(g.imposto), moeda(g.cobrado - g.imposto)] : []),
+      ]),
+      foot: [
+        [
+          'Total',
+          moeda(r.total.cobrado),
+          moeda(r.total.pago),
+          moeda(r.total.cobrado - r.total.pago),
+          r.total.ctes,
+          r.total.pagos,
+          r.faturas,
+          ...(comImposto ? [moeda(r.total.imposto), moeda(r.total.cobrado - r.total.imposto)] : []),
+        ],
+      ],
       theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 1.6, textColor: [51, 51, 51], lineColor: [225, 225, 225], lineWidth: 0.15 },
+      styles: { fontSize: comImposto ? 7 : 8, cellPadding: 1.6, textColor: [51, 51, 51], lineColor: [225, 225, 225], lineWidth: 0.15 },
       headStyles: { fillColor: [248, 240, 228], textColor: TEXTO, fontStyle: 'bold' },
       footStyles: { fillColor: [248, 240, 228], textColor: TEXTO, fontStyle: 'bold' },
-      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' } },
+      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' }, 7: { halign: 'right' }, 8: { halign: 'right' } },
     });
     return (doc as any).lastAutoTable.finalY + 9;
   };
-  let y = tabela('Mês a mês (conclusão da entrega)', 'Mês', r.porMes.map(([m, g]) => [nomeMes(m), g]), 68);
+  let y = tabela('Mês a mês (conclusão da entrega)', 'Mês', r.porMes.map(([m, g]) => [nomeMes(m), g] as [string, Grupo]), comImposto ? 74 : 68);
   if (y > A - 50) {
     doc.addPage();
     y = 30;

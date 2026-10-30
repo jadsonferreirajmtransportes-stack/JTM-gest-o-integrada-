@@ -10,6 +10,7 @@ import type { Cliente, FaturaAereo, LancamentoFaturamentoAereo } from '../../typ
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 import { computeValorACobrar, ehModalRodoviario } from './faturamentoAereoUtils';
+import { AliquotaTributo, aliquotaEm, tributosDoValor } from '../../utils/tributosApi';
 
 const BRONZE: [number, number, number] = [196, 130, 41];
 const TEXTO: [number, number, number] = [17, 17, 17];
@@ -21,7 +22,7 @@ const moeda = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curr
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—');
 const num = (v?: number, casas = 2) => (v === undefined || v === null ? '' : v.toLocaleString('pt-BR', { maximumFractionDigits: casas }));
 
-export function gerarFaturaPdf(fatura: FaturaAereo, lancamentos: LancamentoFaturamentoAereo[], cliente?: Cliente): File {
+export function gerarFaturaPdf(fatura: FaturaAereo, lancamentos: LancamentoFaturamentoAereo[], cliente?: Cliente, aliquotas: AliquotaTributo[] = []): File {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const L = doc.internal.pageSize.getWidth();
   const A = doc.internal.pageSize.getHeight();
@@ -33,6 +34,14 @@ export function gerarFaturaPdf(fatura: FaturaAereo, lancamentos: LancamentoFatur
   );
   const valores = linhas.map((l) => computeValorACobrar(l, cliente));
   const total = valores.reduce((s, v) => s + v, 0);
+  // Reforma tributária: CBS/IBS contidos no valor (alíquota da data de emissão de cada CT-e).
+  const tributos = linhas.reduce(
+    (s, l, i) => {
+      const t = tributosDoValor(valores[i], aliquotaEm(aliquotas, l.dataEmissao || l.dataConclusao));
+      return { cbs: s.cbs + t.cbs, ibs: s.ibs + t.ibs };
+    },
+    { cbs: 0, ibs: 0 }
+  );
   const recebido = linhas.reduce((s, l) => s + (l.confirmacaoPagamento ? l.valorRecebido || 0 : 0), 0);
   const pesoTotal = linhas.reduce((s, l) => s + (l.pesoKg || 0), 0);
   const modal = ehModalRodoviario(fatura.modal) ? 'Rodoviário' : 'Aéreo';
@@ -147,6 +156,12 @@ export function gerarFaturaPdf(fatura: FaturaAereo, lancamentos: LancamentoFatur
   const emAberto = Math.max(0, total - recebido);
   const resumo: [string, string, boolean][] = [
     ['Total da fatura', moeda(total), true],
+    ...(tributos.cbs + tributos.ibs > 0
+      ? ([
+          ['CBS inclusa no valor', moeda(tributos.cbs), false],
+          ['IBS incluso no valor', moeda(tributos.ibs), false],
+        ] as [string, string, boolean][])
+      : []),
     ...(recebido ? ([['Já recebido', moeda(recebido), false], ['Em aberto', moeda(emAberto), true]] as [string, string, boolean][]) : []),
   ];
   const alturaResumo = resumo.length * 7 + 4;
