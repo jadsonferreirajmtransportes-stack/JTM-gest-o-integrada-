@@ -5,6 +5,7 @@ import { supabase, supabaseConfigurado } from '../../utils/supabaseClient';
 import { isRotaPublica } from '../../utils/publicRoutes';
 import { LoginScreen } from './LoginScreen';
 import { DefinirSenhaScreen } from './DefinirSenhaScreen';
+import { definirSessaoAtual } from '../../utils/sessaoAtual';
 
 /** Link de convite/redefinição de senha vem com `#...&type=invite` (ou `type=recovery`) na URL
  *  — o Supabase já consome esse hash e cria a sessão sozinho antes daqui, então só precisamos
@@ -71,6 +72,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }
 
   if (!session) {
+    definirSessaoAtual(undefined);
     return <LoginScreen />;
   }
 
@@ -88,6 +90,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
     );
   }
 
+  definirSessaoAtual({ id: session.user.id, email: (session.user.email || '').trim().toLowerCase() });
   return (
     <div className="relative">
       <button

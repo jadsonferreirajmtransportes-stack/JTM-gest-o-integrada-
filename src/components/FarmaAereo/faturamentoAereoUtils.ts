@@ -1,5 +1,6 @@
-import * as XLSX from 'xlsx';
-import ExcelJS from 'exceljs';
+// xlsx/exceljs (~1,8 MB) só são baixados quando alguém exporta/importa planilha — este arquivo é
+// usado no carregamento inicial do sistema (cálculo do Valor a Cobrar etc.).
+import type ExcelJS from 'exceljs';
 import {
   LancamentoFaturamentoAereo,
   FaturaAereo,
@@ -1146,7 +1147,7 @@ async function exportarFaturaCargoBrasilParaExcel(
   const capital = lancamentosDaFatura.filter((l) => ehCidadeCapitalCargoBrasil(cliente, l.cidadeDestino, l.modal));
   const interior = lancamentosDaFatura.filter((l) => !ehCidadeCapitalCargoBrasil(cliente, l.cidadeDestino, l.modal));
 
-  const workbook = new ExcelJS.Workbook();
+  const workbook = new (await import('exceljs')).default.Workbook();
   workbook.creator = STRATEGIC_GUIDELINES.empresa;
   workbook.created = new Date();
 
@@ -1268,7 +1269,7 @@ export async function exportarFaturaParaExcel(
   const template = getTemplateParaFatura(fatura, cliente);
   const colunas = template.colunas;
 
-  const workbook = new ExcelJS.Workbook();
+  const workbook = new (await import('exceljs')).default.Workbook();
   workbook.creator = STRATEGIC_GUIDELINES.empresa;
   workbook.created = new Date();
 
@@ -1485,12 +1486,9 @@ function parseDateish(value: any): string | undefined {
   if (value instanceof Date) return value.toISOString().split('T')[0];
   if (typeof value === 'number') {
     // Data serial do Excel
-    const parsed = XLSX.SSF.parse_date_code(value);
-    if (parsed) {
-      const mm = String(parsed.m).padStart(2, '0');
-      const dd = String(parsed.d).padStart(2, '0');
-      return `${parsed.y}-${mm}-${dd}`;
-    }
+    // Data serial do Excel: dias desde 30/12/1899.
+    const data = new Date(Date.UTC(1899, 11, 30) + Math.floor(value) * 86400000);
+    if (!isNaN(data.getTime())) return data.toISOString().slice(0, 10);
   }
   const text = String(value).trim();
   // dd/mm/yyyy (tolera hora anexada depois, ex.: "26/08/2026 15:00")
@@ -1537,9 +1535,10 @@ export function readSpreadsheetFile(file: File): Promise<Record<string, any>[]> 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Não foi possível ler o arquivo.'));
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = e.target?.result;
+        const XLSX = await import('xlsx');
         const workbook = XLSX.read(data, { type: 'array', cellDates: true });
         const firstSheetName = workbook.SheetNames[0];
         if (!firstSheetName) {

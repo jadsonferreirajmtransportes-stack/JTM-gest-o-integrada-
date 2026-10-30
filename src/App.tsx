@@ -203,77 +203,94 @@ import {
   SetorModuloId,
 } from './utils/sectorUtils';
 import { computeValorACobrar, ehModalRodoviario, findClienteById } from './components/FarmaAereo/faturamentoAereoUtils';
-import { SectorLinkModal } from './components/Common/SectorLinkModal';
+const SectorLinkModal = sobDemanda(() => import('./components/Common/SectorLinkModal'), 'SectorLinkModal', true);
 
 // Layout & Core Navigation
 import { Sidebar, NavSection } from './components/Sidebar';
+import { sobDemanda, preCarregarTelas } from './utils/sobDemanda';
+import { CHAVE_MEU_CADASTRO, getSessaoAtual } from './utils/sessaoAtual';
+
+/** Perfil provisório (sem nenhum acesso) enquanto o sistema confirma quem entrou — nunca o de
+ *  administrador. Com ele na tela o App mostra só "carregando". */
+const ID_PERFIL_PROVISORIO = '__confirmando_login__';
+const perfilProvisorio = (email = ''): UsuarioLogin => ({
+  id: ID_PERFIL_PROVISORIO,
+  nome: '',
+  login: '',
+  email,
+  cargo: '',
+  status: 'Ativo',
+  dataCriacao: '',
+  modulosPermitidos: [],
+  role: 'colaborador',
+});
 import { Header } from './components/Header';
-import { Dashboard } from './components/Dashboard';
+const Dashboard = sobDemanda(() => import('./components/Dashboard'), 'Dashboard');
 
 // Module 1: Clientes
-import { ClientsView } from './components/Clients/ClientsView';
+const ClientsView = sobDemanda(() => import('./components/Clients/ClientsView'), 'ClientsView');
 // Ficha cadastral do cliente, usada de forma independente do módulo Carteira de Clientes —
 // ver "abrir ficha" em Empresas Atreladas (Farma Aéreo/Rodoviário) e no Dashboard Geral, pra
 // quem tem acesso a essas telas mas não ao módulo inteiro de Clientes.
-import { ClientDetailModal } from './components/Clients/ClientDetailModal';
-import { ClientFormModal } from './components/Clients/ClientFormModal';
-import { ClientInteractionModal } from './components/Clients/ClientInteractionModal';
-import { PropostaComercialModal } from './components/Clients/PropostaComercialModal';
+const ClientDetailModal = sobDemanda(() => import('./components/Clients/ClientDetailModal'), 'ClientDetailModal', true);
+const ClientFormModal = sobDemanda(() => import('./components/Clients/ClientFormModal'), 'ClientFormModal', true);
+const ClientInteractionModal = sobDemanda(() => import('./components/Clients/ClientInteractionModal'), 'ClientInteractionModal', true);
+const PropostaComercialModal = sobDemanda(() => import('./components/Clients/PropostaComercialModal'), 'PropostaComercialModal', true);
 
 // Module 2: Farma Aéreo
-import { FarmaAereoView } from './components/FarmaAereo/FarmaAereoView';
+const FarmaAereoView = sobDemanda(() => import('./components/FarmaAereo/FarmaAereoView'), 'FarmaAereoView');
 
 // Module 3: Farma Rodoviário
-import { FarmaRodoviarioView } from './components/FarmaRodoviario/FarmaRodoviarioView';
-import { OperacaoView } from './components/Common/OperacaoView';
+const FarmaRodoviarioView = sobDemanda(() => import('./components/FarmaRodoviario/FarmaRodoviarioView'), 'FarmaRodoviarioView');
+const OperacaoView = sobDemanda(() => import('./components/Common/OperacaoView'), 'OperacaoView');
 
 // Module 5: Projetos Gerenciais
-import { ProjetosView } from './components/Projetos/ProjetosView';
-import { ControladoriaView } from './components/Controladoria/ControladoriaView';
+const ProjetosView = sobDemanda(() => import('./components/Projetos/ProjetosView'), 'ProjetosView');
+const ControladoriaView = sobDemanda(() => import('./components/Controladoria/ControladoriaView'), 'ControladoriaView');
 
 // Module 4: Departamento Pessoal
-import { EmployeeList } from './components/Employees/EmployeeList';
-import { EmployeeFormModal } from './components/Employees/EmployeeFormModal';
-import { AvisoAberturaModal } from './components/Common/AvisoAberturaModal';
-import { EmployeeDetailModal } from './components/Employees/EmployeeDetailModal';
-import { DismissalModal } from './components/Employees/DismissalModal';
-import { MonthlyCostView } from './components/Cost/MonthlyCostView';
-import { VacationView } from './components/Vacation/VacationView';
-import { EpiView } from './components/Epi/EpiView';
-import { EpiPublicView } from './components/Epi/EpiPublicView';
-import { ContrachequePublicView } from './components/Contracheques/ContrachequePublicView';
-import { DocumentosAssinaturaView } from './components/Contracheques/DocumentosAssinaturaView';
-import { DisciplinarView } from './components/Disciplinar/DisciplinarView';
-import { EducacaoView } from './components/Educacao/EducacaoView';
-import { PortalEducacaoView } from './components/Educacao/PortalEducacaoView';
-import { FrequenciaView } from './components/Frequencia/FrequenciaView';
-import { PontoPublicView } from './components/Frequencia/PontoPublicView';
-import { ComunicadosView } from './components/Comunicados/ComunicadosView';
-import { JornalView } from './components/Jornal/JornalView';
-import { PopsView } from './components/Pops/PopsView';
+const EmployeeList = sobDemanda(() => import('./components/Employees/EmployeeList'), 'EmployeeList');
+const EmployeeFormModal = sobDemanda(() => import('./components/Employees/EmployeeFormModal'), 'EmployeeFormModal', true);
+const AvisoAberturaModal = sobDemanda(() => import('./components/Common/AvisoAberturaModal'), 'AvisoAberturaModal', true);
+const EmployeeDetailModal = sobDemanda(() => import('./components/Employees/EmployeeDetailModal'), 'EmployeeDetailModal', true);
+const DismissalModal = sobDemanda(() => import('./components/Employees/DismissalModal'), 'DismissalModal', true);
+const MonthlyCostView = sobDemanda(() => import('./components/Cost/MonthlyCostView'), 'MonthlyCostView');
+const VacationView = sobDemanda(() => import('./components/Vacation/VacationView'), 'VacationView');
+const EpiView = sobDemanda(() => import('./components/Epi/EpiView'), 'EpiView');
+const EpiPublicView = sobDemanda(() => import('./components/Epi/EpiPublicView'), 'EpiPublicView');
+const ContrachequePublicView = sobDemanda(() => import('./components/Contracheques/ContrachequePublicView'), 'ContrachequePublicView');
+const DocumentosAssinaturaView = sobDemanda(() => import('./components/Contracheques/DocumentosAssinaturaView'), 'DocumentosAssinaturaView');
+const DisciplinarView = sobDemanda(() => import('./components/Disciplinar/DisciplinarView'), 'DisciplinarView');
+const EducacaoView = sobDemanda(() => import('./components/Educacao/EducacaoView'), 'EducacaoView');
+const PortalEducacaoView = sobDemanda(() => import('./components/Educacao/PortalEducacaoView'), 'PortalEducacaoView');
+const FrequenciaView = sobDemanda(() => import('./components/Frequencia/FrequenciaView'), 'FrequenciaView');
+const PontoPublicView = sobDemanda(() => import('./components/Frequencia/PontoPublicView'), 'PontoPublicView');
+const ComunicadosView = sobDemanda(() => import('./components/Comunicados/ComunicadosView'), 'ComunicadosView');
+const JornalView = sobDemanda(() => import('./components/Jornal/JornalView'), 'JornalView');
+const PopsView = sobDemanda(() => import('./components/Pops/PopsView'), 'PopsView');
 import { tokenPortal } from './utils/appInstalavel';
-import { SolicitacoesDpView } from './components/Solicitacoes/SolicitacoesDpView';
-import { GamificacaoView } from './components/Gamificacao/GamificacaoView';
-import { DocumentosView } from './components/Documentos/DocumentosView';
-import { ComunicadoPublicView } from './components/Comunicados/ComunicadoPublicView';
-import { PublicEpiEntregaView } from './components/Epi/PublicEpiEntregaView';
-import { EpiFormularioLinkModal } from './components/Epi/EpiFormularioLinkModal';
-import { ValeAlimentacaoView } from './components/Vacation/ValeAlimentacaoView';
-import { OccurrencesView } from './components/Occurrences/OccurrencesView';
-import { PublicOccurrenceForm } from './components/Occurrences/PublicOccurrenceForm';
-import { PublicOccurrencePortal } from './components/Occurrences/PublicOccurrencePortal';
-import { PublicInstrucaoForm } from './components/Instrucoes/PublicInstrucaoForm';
-import { FichaCadastralPublicView } from './components/Employees/FichaCadastralPublicView';
-import { NotaPublicView } from './components/Notas/NotaPublicView';
-import { OccurrenceLinkModal } from './components/Occurrences/OccurrenceLinkModal';
-import { AnvisaExamsView } from './components/Health/AnvisaExamsView';
-import { OnboardingView } from './components/Onboarding/OnboardingView';
-import { SettingsView } from './components/Settings/SettingsView';
-import { BirthdaysView } from './components/Birthdays/BirthdaysView';
-import { CandidateAdmissionPortal } from './components/Admission/CandidateAdmissionPortal';
-import { AdmissionLinkModal } from './components/Admission/AdmissionLinkModal';
-import { PreAdmissionsManagerView } from './components/Admission/PreAdmissionsManagerView';
-import { AgendaGestaoView } from './components/Agenda/AgendaGestaoView';
+const SolicitacoesDpView = sobDemanda(() => import('./components/Solicitacoes/SolicitacoesDpView'), 'SolicitacoesDpView');
+const GamificacaoView = sobDemanda(() => import('./components/Gamificacao/GamificacaoView'), 'GamificacaoView');
+const DocumentosView = sobDemanda(() => import('./components/Documentos/DocumentosView'), 'DocumentosView');
+const ComunicadoPublicView = sobDemanda(() => import('./components/Comunicados/ComunicadoPublicView'), 'ComunicadoPublicView');
+const PublicEpiEntregaView = sobDemanda(() => import('./components/Epi/PublicEpiEntregaView'), 'PublicEpiEntregaView');
+const EpiFormularioLinkModal = sobDemanda(() => import('./components/Epi/EpiFormularioLinkModal'), 'EpiFormularioLinkModal', true);
+const ValeAlimentacaoView = sobDemanda(() => import('./components/Vacation/ValeAlimentacaoView'), 'ValeAlimentacaoView');
+const OccurrencesView = sobDemanda(() => import('./components/Occurrences/OccurrencesView'), 'OccurrencesView');
+const PublicOccurrenceForm = sobDemanda(() => import('./components/Occurrences/PublicOccurrenceForm'), 'PublicOccurrenceForm');
+const PublicOccurrencePortal = sobDemanda(() => import('./components/Occurrences/PublicOccurrencePortal'), 'PublicOccurrencePortal');
+const PublicInstrucaoForm = sobDemanda(() => import('./components/Instrucoes/PublicInstrucaoForm'), 'PublicInstrucaoForm');
+const FichaCadastralPublicView = sobDemanda(() => import('./components/Employees/FichaCadastralPublicView'), 'FichaCadastralPublicView');
+const NotaPublicView = sobDemanda(() => import('./components/Notas/NotaPublicView'), 'NotaPublicView');
+const OccurrenceLinkModal = sobDemanda(() => import('./components/Occurrences/OccurrenceLinkModal'), 'OccurrenceLinkModal', true);
+const AnvisaExamsView = sobDemanda(() => import('./components/Health/AnvisaExamsView'), 'AnvisaExamsView');
+const OnboardingView = sobDemanda(() => import('./components/Onboarding/OnboardingView'), 'OnboardingView');
+const SettingsView = sobDemanda(() => import('./components/Settings/SettingsView'), 'SettingsView');
+const BirthdaysView = sobDemanda(() => import('./components/Birthdays/BirthdaysView'), 'BirthdaysView');
+const CandidateAdmissionPortal = sobDemanda(() => import('./components/Admission/CandidateAdmissionPortal'), 'CandidateAdmissionPortal');
+const AdmissionLinkModal = sobDemanda(() => import('./components/Admission/AdmissionLinkModal'), 'AdmissionLinkModal', true);
+const PreAdmissionsManagerView = sobDemanda(() => import('./components/Admission/PreAdmissionsManagerView'), 'PreAdmissionsManagerView');
+const AgendaGestaoView = sobDemanda(() => import('./components/Agenda/AgendaGestaoView'), 'AgendaGestaoView');
 import { atividadeOcorreEm, podeVerAtividade } from './components/Agenda/agendaUtils';
 import {
   podeVerRegistroCompartilhado,
@@ -283,18 +300,18 @@ import {
   idsDoMesmoSupervisor,
   temAcessoGeralDp,
 } from './utils/visibilidadeUtils';
-import { NotasView } from './components/Notas/NotasView';
-import { InstrucoesTrabalhoView } from './components/Instrucoes/InstrucoesTrabalhoView';
-import { ComprasView } from './components/Compras/ComprasView';
-import { PublicPurchaseRequestPortal } from './components/Compras/PublicPurchaseRequestPortal';
-import { PurchaseLinkModal } from './components/Compras/PurchaseLinkModal';
-import { GeneralDashboard } from './components/DashboardGeral/GeneralDashboard';
-import { CustoOperacionalFormModal } from './components/Cost/CustoOperacionalFormModal';
+const NotasView = sobDemanda(() => import('./components/Notas/NotasView'), 'NotasView');
+const InstrucoesTrabalhoView = sobDemanda(() => import('./components/Instrucoes/InstrucoesTrabalhoView'), 'InstrucoesTrabalhoView');
+const ComprasView = sobDemanda(() => import('./components/Compras/ComprasView'), 'ComprasView');
+const PublicPurchaseRequestPortal = sobDemanda(() => import('./components/Compras/PublicPurchaseRequestPortal'), 'PublicPurchaseRequestPortal');
+const PurchaseLinkModal = sobDemanda(() => import('./components/Compras/PurchaseLinkModal'), 'PurchaseLinkModal', true);
+const GeneralDashboard = sobDemanda(() => import('./components/DashboardGeral/GeneralDashboard'), 'GeneralDashboard');
+const CustoOperacionalFormModal = sobDemanda(() => import('./components/Cost/CustoOperacionalFormModal'), 'CustoOperacionalFormModal', true);
 
 // Module 6: Logins & Acessos
-import { UsuariosView } from './components/Usuarios/UsuariosView';
-import { SwitchUserModal } from './components/Usuarios/SwitchUserModal';
-import { UsuarioFormModal } from './components/Usuarios/UsuarioFormModal';
+const UsuariosView = sobDemanda(() => import('./components/Usuarios/UsuariosView'), 'UsuariosView');
+const SwitchUserModal = sobDemanda(() => import('./components/Usuarios/SwitchUserModal'), 'SwitchUserModal', true);
+const UsuarioFormModal = sobDemanda(() => import('./components/Usuarios/UsuarioFormModal'), 'UsuarioFormModal', true);
 import { INITIAL_USERS_DATA } from './data/initialUsersData';
 import {
   getUsuarios,
@@ -303,12 +320,12 @@ import {
   vincularContaAutenticadaSeNecessario,
   convidarUsuarioPorEmail,
 } from './utils/usuariosApi';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Loader2 } from 'lucide-react';
 import { supabase } from './utils/supabaseClient';
 
 // Module: Chat Interno (conversas diretas e em grupo entre Logins & Acessos)
-import { ChatView } from './components/Chat/ChatView';
-import { FloatingChatWidget } from './components/Chat/FloatingChatWidget';
+const ChatView = sobDemanda(() => import('./components/Chat/ChatView'), 'ChatView');
+const FloatingChatWidget = sobDemanda(() => import('./components/Chat/FloatingChatWidget'), 'FloatingChatWidget', true);
 import { BarraInferiorMobile } from './components/App/BarraInferiorMobile';
 import { useDemandasDp } from './utils/useDemandasDp';
 import type { RascunhoComunicado } from './components/Comunicados/NovoComunicadoModal';
@@ -426,6 +443,19 @@ export default function App() {
   });
 
   const [currentUser, setCurrentUser] = useState<UsuarioLogin>(() => {
+    // Com login (Supabase Auth): abre direto com o cadastro DESTA conta, se este aparelho já o
+    // guardou; senão, com o perfil provisório sem acesso até loadUsuarios confirmar. Nunca com
+    // um perfil "lembrado" de outra pessoa nem com o administrador dos dados de fábrica.
+    const sessao = getSessaoAtual();
+    if (sessao) {
+      try {
+        const salvo = JSON.parse(localStorage.getItem(CHAVE_MEU_CADASTRO) || 'null') as UsuarioLogin | null;
+        if (salvo && salvo.authUserId === sessao.id) return salvo;
+      } catch {
+        // ignora
+      }
+      return perfilProvisorio(sessao.email);
+    }
     try {
       const savedId = localStorage.getItem('jmt_current_user_id');
       const storedUsers = (() => {
@@ -453,6 +483,8 @@ export default function App() {
   // nesse momento — os controles de "quem pode trocar" (ver onOpenSwitchUserModal abaixo)
   // checam ESTE valor, não o currentUser simulado. Preenchido só dentro de loadUsuarios.
   const [usuarioAutenticadoReal, setUsuarioAutenticadoReal] = useState<UsuarioLogin | undefined>(undefined);
+  const [loginSemCadastro, setLoginSemCadastro] = useState(false);
+  const [erroAoConfirmarLogin, setErroAoConfirmarLogin] = useState(false);
 
   // Espelha currentUser pra loadUsuarios() poder ler o valor MAIS RECENTE de forma síncrona,
   // sem depender de quando o React decide rodar o updater de setCurrentUser(prev => ...) — essa
@@ -518,15 +550,24 @@ export default function App() {
       } catch {
         // ignora
       }
-      const usuarioEscolhido: UsuarioLogin =
-        usuarioReal ||
-        lista.find((u) => u.id === (savedId || currentUserRef.current?.id)) ||
-        lista[0] ||
-        (currentUserRef.current as UsuarioLogin);
+      // Logado mas sem cadastro que bata com a conta: fica sem acesso (antes caía no primeiro da
+      // lista — o administrador).
+      const usuarioEscolhido: UsuarioLogin = authUserIdReal
+        ? usuarioReal || perfilProvisorio(emailReal)
+        : lista.find((u) => u.id === (savedId || currentUserRef.current?.id)) || lista[0] || (currentUserRef.current as UsuarioLogin);
       setCurrentUser(usuarioEscolhido);
+      setLoginSemCadastro(!!authUserIdReal && !usuarioReal);
+      if (usuarioReal) {
+        try {
+          localStorage.setItem(CHAVE_MEU_CADASTRO, JSON.stringify({ ...usuarioReal, senha: undefined }));
+        } catch {
+          // ignora
+        }
+      }
       return usuarioEscolhido;
     } catch (err) {
       console.error('Erro ao carregar Logins & Acessos (Supabase):', err);
+      if (currentUserRef.current?.id === ID_PERFIL_PROVISORIO) setErroAoConfirmarLogin(true);
       showToast('Não foi possível carregar os logins do Supabase — usando os dados salvos neste navegador.', 'info');
       return null;
     }
@@ -1271,6 +1312,8 @@ export default function App() {
     Promise.all([loadDpData(), loadFarmaAereoData(), loadGestaoData(), loadUsuarios()]).then(
       ([, , , usuarioAtual]) => {
         setDadosIniciaisCarregados(true);
+        // Com os dados na tela, as outras telas vêm em segundo plano (navegação instantânea depois).
+        preCarregarTelas();
         // Só depois de saber quem é o usuário de verdade (loadUsuarios já resolveu o vínculo
         // salvo/local) — currentUser do state ainda não teria atualizado a tempo aqui.
         if (usuarioAtual) loadChatData(usuarioAtual.id);
@@ -2974,6 +3017,31 @@ export default function App() {
   // IF Public Entrega de EPI filling form is active (link genérico, ?form=epi_entrega)
   if (isEpiFormularioPublicoView) {
     return <PublicEpiEntregaView colaboradores={colaboradoresPublico} onSuccessSubmit={handleSalvarEntregaEpiPublica} />;
+  }
+
+  // Ainda confirmando quem entrou (ou login sem cadastro): não mostra menu nem tela nenhuma.
+  if (currentUser.id === ID_PERFIL_PROVISORIO) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
+        {loginSemCadastro ? (
+          <div className="max-w-sm bg-white border border-amber-200 rounded-xl p-5 text-sm text-slate-700 text-center">
+            <ShieldAlert className="w-6 h-6 text-amber-600 mx-auto mb-2" />
+            <p className="font-bold text-slate-900 mb-1">Login sem cadastro de acesso</p>
+            <p>Este e-mail ({currentUser.email}) ainda não está vinculado a um cadastro em Logins &amp; Acessos. Peça ao administrador para liberar o seu acesso.</p>
+          </div>
+        ) : erroAoConfirmarLogin ? (
+          <div className="max-w-sm bg-white border border-rose-200 rounded-xl p-5 text-sm text-slate-700 text-center">
+            <p className="font-bold text-slate-900 mb-1">Não foi possível confirmar o seu acesso</p>
+            <p className="mb-3">Verifique a internet e tente de novo.</p>
+            <button type="button" onClick={() => window.location.reload()} className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg font-bold text-xs">
+              Tentar de novo
+            </button>
+          </div>
+        ) : (
+          <Loader2 className="w-6 h-6 text-[#C48229] animate-spin" />
+        )}
+      </div>
+    );
   }
 
   return (
