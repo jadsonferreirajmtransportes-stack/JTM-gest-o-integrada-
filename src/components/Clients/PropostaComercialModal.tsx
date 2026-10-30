@@ -359,7 +359,7 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
 
         {/* Documento — visual idêntico em tela e impressão */}
         <div className="jmt-print-doc jmt-print-styled flex-1 overflow-y-auto custom-scrollbar">
-          <div className="max-w-[750px] mx-auto p-8 text-[13px] leading-relaxed text-slate-800">
+          <div className="max-w-[750px] mx-auto p-8 text-[13px] leading-relaxed text-slate-800 [&_p]:text-justify [&_li]:text-justify">
             {/* Cabeçalho */}
             <div className="flex items-start gap-4 pb-3 mb-4 border-b-2 border-[#C48229]">
               <JmtLogo variant="full" theme="light" iconSize={30} />
