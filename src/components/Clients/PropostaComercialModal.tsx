@@ -5,6 +5,7 @@ import { agruparPorFaixa } from './tabelaFreteExcel';
 import { formatCurrency } from '../../utils/formatters';
 import { JmtLogo } from '../Brand/JmtLogo';
 import { STRATEGIC_GUIDELINES } from '../../data/strategicGuidelines';
+import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 
 interface PropostaComercialModalProps {
   isOpen: boolean;
@@ -237,7 +238,16 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
     : temPreco(tf)
       ? [{ tabela: tf }]
       : [];
-  const uf = extrairUF(cliente.cidadeUF || '');
+  // Estado onde a JMT faz as entregas (não o endereço do cliente, que pode ser de outro estado):
+  // a UF mais comum nas cidades do tarifário; sem UF nelas, o estado da própria JMT.
+  const contagemUf = new Map<string, number>();
+  tarifarios.forEach(({ tabela }) =>
+    (tabela.tarifasPorCidade || []).forEach((t) => {
+      const u = (t.uf || '').trim().toUpperCase();
+      if (NOMES_ESTADOS[u]) contagemUf.set(u, (contagemUf.get(u) || 0) + 1);
+    })
+  );
+  const uf = Array.from(contagemUf.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || extrairUF(EMPRESA_REGULAMENTO.cidadeUF);
   const nomeEstado = uf ? NOMES_ESTADOS[uf] : undefined;
   // Forma sem preposição, para uso em rótulos/parênteses (ex.: "(Rio Grande do Norte)").
   const nomeEstadoPlano = nomeEstado?.replace(/^(do|da|de)\s+/, '');
