@@ -1533,14 +1533,18 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                 .map((t) => t.trim().toLowerCase())
                 .filter(Boolean);
               const dataFatura = buscaDataPorFatura[fatura.id] || '';
-              const lancamentosDaFaturaFiltrados = lancamentosDaFatura.filter((l) => {
-                if (dataFatura && (l.dataConclusao || l.dataEmissao) !== dataFatura) return false;
+              const casaTermo = (l: LancamentoFaturamentoAereo) => {
                 if (termosFatura.length === 0) return true;
                 const campos = [l.clienteNome, l.destinatario, l.notaFiscal, l.numeroCte, l.cidadeDestino]
                   .filter(Boolean)
                   .map((campo) => String(campo).toLowerCase());
                 return termosFatura.some((termo) => campos.some((campo) => campo.includes(termo)));
-              });
+              };
+              const lancamentosDaFaturaFiltrados = lancamentosDaFatura.filter(
+                (l) => (!dataFatura || (l.dataConclusao || l.dataEmissao) === dataFatura) && casaTermo(l)
+              );
+              // Notas que batem com a busca mas ficaram escondidas só pelo filtro de data.
+              const escondidasPelaData = dataFatura && termosFatura.length ? lancamentosDaFatura.filter(casaTermo).length - lancamentosDaFaturaFiltrados.length : 0;
 
               return (
                 <div key={fatura.id} id={`fatura-aerea-${fatura.id}`}>
@@ -1918,7 +1922,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                                     setBuscaDataPorFatura((prev) => ({ ...prev, [fatura.id]: e.target.value }))
                                   }
                                   title="Filtrar lançamentos desta fatura por data (Data de Conclusão, ou Emissão quando não tem conclusão)"
-                                  className="pl-2 pr-7 py-1.5 border border-slate-200 rounded-lg text-[11px] bg-white focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                                  className={`pl-2 pr-7 py-1.5 border rounded-lg text-[11px] focus:outline-hidden focus:ring-1 focus:ring-emerald-500 ${dataFatura ? 'border-amber-400 bg-amber-50 font-semibold text-amber-800' : 'border-slate-200 bg-white'}`}
                                 />
                                 {dataFatura && (
                                   <button
@@ -1939,7 +1943,22 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                               <p className="text-[10px] text-slate-400 mt-1">
                                 {lancamentosDaFaturaFiltrados.length} de {lancamentosDaFatura.length} nota(s)
                                 encontrada(s)
+                                {dataFatura && <span className="text-amber-700 font-semibold"> · mostrando só o dia {formatDateBR(dataFatura)}</span>}
                               </p>
+                            )}
+                            {(escondidasPelaData > 0 || (dataFatura && !termoFatura)) && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setBuscaDataPorFatura((prev) => ({ ...prev, [fatura.id]: '' }));
+                                }}
+                                className="mt-1 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-300 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 normal-case tracking-normal"
+                              >
+                                {escondidasPelaData > 0
+                                  ? `${escondidasPelaData} nota(s) com "${termoFatura}" em outras datas — mostrar todas as datas`
+                                  : `Mostrar as ${lancamentosDaFatura.length} notas (tirar o filtro de data)`}
+                              </button>
                             )}
                           </div>
 
