@@ -748,3 +748,22 @@ Departamento Pessoal & Recursos Humanos
 ${params.razaoSocial}
 Setor de Logística Farmacêutica e Distribuição (ANVISA / RDC 430)`;
 }
+
+/**
+ * Status que as férias deveriam ter hoje, pelas datas: Programada → Em gozo no 1º dia → Concluída
+ * depois do último dia. Fracionada: em gozo só dentro de uma etapa; entre etapas volta a
+ * Programada; concluída depois da última. Só mexe em Programada/Em gozo — A programar,
+ * Contemplada, Vencida e Concluída (marcadas à mão) ficam como estão. Sem mudança: undefined.
+ */
+export function statusFeriasPelaData(f: ProgramacaoFerias, hoje: string): StatusFerias | undefined {
+  if (f.status !== 'Programada' && f.status !== 'Em gozo') return undefined;
+  const etapas: { dataInicio: string; dataFim: string }[] = f.fracionamento?.length
+    ? f.fracionamento.filter((e) => e.dataInicio && e.dataFim)
+    : f.dataInicio && f.dataFim
+      ? [{ dataInicio: f.dataInicio, dataFim: f.dataFim }]
+      : [];
+  if (!etapas.length) return undefined;
+  const ultimoDia = etapas.reduce<string>((m, e) => (e.dataFim > m ? e.dataFim : m), '');
+  const novo: StatusFerias = hoje > ultimoDia ? 'Concluída' : etapas.some((e) => e.dataInicio <= hoje && hoje <= e.dataFim) ? 'Em gozo' : 'Programada';
+  return novo !== f.status ? novo : undefined;
+}

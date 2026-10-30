@@ -187,6 +187,7 @@ import {
   calcValorDisponibilizadoVA,
   calcFaltasEmPeriodo,
   calcDiasFeriasEmPeriodo,
+  statusFeriasPelaData,
 } from './utils/formatters';
 import {
   isClienteFarmaAereo,
@@ -2063,6 +2064,29 @@ export default function App() {
     await recarregarDp('ferias');
     showToast(`Status das férias alterado para ${novoStatus}!`);
   };
+
+  // Status das férias pelas datas (Programada → Em gozo → Concluída), sem precisar trocar à mão.
+  // Roda para quem vê a seção Férias, sempre que a lista é carregada; uma vez por férias/status.
+  const feriasJaAtualizadas = useRef(new Set<string>());
+  useEffect(() => {
+    if (!currentUser || !podeVerSecaoDp(currentUser, 'ferias') || !feriasList.length) return;
+    const d = new Date();
+    const hoje = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const mudancas = feriasList
+      .map((f) => ({ f, novo: statusFeriasPelaData(f, hoje) }))
+      .filter((x): x is { f: ProgramacaoFerias; novo: StatusFerias } => !!x.novo && !feriasJaAtualizadas.current.has(`${x.f.id}:${x.novo}`));
+    if (!mudancas.length) return;
+    mudancas.forEach(({ f, novo }) => feriasJaAtualizadas.current.add(`${f.id}:${novo}`));
+    (async () => {
+      try {
+        for (const { f, novo } of mudancas) await updateStatusFerias(f.id, novo);
+        await recarregarDp('ferias');
+      } catch (e) {
+        console.error('Atualização automática do status das férias falhou:', e);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feriasList, currentUser]);
 
   const handleSaveEntregaEpi = async (entrega: EntregaEpi) => {
     await saveEntregaEpi(entrega);
