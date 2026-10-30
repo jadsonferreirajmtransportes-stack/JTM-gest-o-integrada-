@@ -270,6 +270,29 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
   const faixasAnexo = agruparPorFaixa(tabelaCidades.filter((t) => t.cidade));
   const cidadesAnexo = tabelaCidades.map((t) => t.cidade).filter(Boolean);
 
+  // Rotas e prazos: as praças cadastradas + o interior pelos prazos da tabela de frete (cidades
+  // com prazo diferente do das praças), para a proposta não falar só da capital.
+  const prazoLegivel = (p: string) => {
+    const m = p.trim().match(/^(\d+)\s*(H|HS|HR|HRS|HORAS?)$/i);
+    return m ? `${m[1]} horas` : p.trim();
+  };
+  const chavePrazo = (p?: string) => prazoLegivel(p || '').toLowerCase().replace(/\s+/g, '');
+  const regioes = cliente.regioesAtendidas || [];
+  const prazosDasPracas = new Set(regioes.map((r) => chavePrazo(r.prazoLeadTime)));
+  const temInteriorCadastrado = regioes.some((r) => /interior/i.test(r.cidadeUF || ''));
+  const interiorPorPrazo = new Map<string, { prazo: string; cidades: number }>();
+  if (!temInteriorCadastrado)
+    tabelaCidades.forEach((t) => {
+      if (!t.cidade || !t.prazo?.trim()) return;
+      const k = chavePrazo(t.prazo);
+      if (regioes.length && prazosDasPracas.has(k)) return;
+      const g = interiorPorPrazo.get(k) || { prazo: prazoLegivel(t.prazo), cidades: 0 };
+      g.cidades += 1;
+      interiorPorPrazo.set(k, g);
+    });
+  const linhasInterior = Array.from(interiorPorPrazo.values()).sort((a, b) => (parseInt(a.prazo) || 999) - (parseInt(b.prazo) || 999));
+  const ufRotulo = uf ? ` / ${uf}` : '';
+
   const handlePrint = () => window.print();
 
   return (
@@ -457,6 +480,16 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
                     {r.frequencia}).
                   </li>
                 ))}
+                {linhasInterior.map((g) => (
+                  <li key={g.prazo}>
+                    <strong>Interior{ufRotulo}</strong> — entregas realizadas em até {g.prazo} ({g.cidades} cidade{g.cidades === 1 ? '' : 's'}, conforme o Anexo I).
+                  </li>
+                ))}
+                {!temInteriorCadastrado && linhasInterior.length === 0 && cidadesAnexo.length > 0 && (
+                  <li>
+                    <strong>Interior{ufRotulo}</strong> — entregas realizadas conforme o prazo de cada cidade (Anexo I).
+                  </li>
+                )}
               </ul>
             ) : (
               <ul className="list-disc pl-5 space-y-1">
