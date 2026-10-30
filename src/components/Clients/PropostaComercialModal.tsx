@@ -510,7 +510,7 @@ export const PropostaComercialModal: React.FC<PropostaComercialModalProps> = ({
             {/* 4. Comprovações */}
             <SectionHead n={4}>Comprovações e Documentação</SectionHead>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Comprovações realizadas via aplicativo de TMS (Azapfy) no ato da entrega.</li>
+              <li>Comprovações realizadas via aplicativo de TMS no ato da entrega.</li>
               <li>Equipe de escritório à disposição para fornecer status de entregas e demais tratativas operacionais.</li>
               <li>Comprovantes físicos enviados ao cliente até a 1ª quinzena do mês subsequente.</li>
             </ul>
