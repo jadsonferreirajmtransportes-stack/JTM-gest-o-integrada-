@@ -409,7 +409,6 @@ export default function App() {
     }
     return 'dashboard';
   });
-  const [userRole, setUserRole] = useState<UserRole>('admin');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   // Menu lateral retrátil (só afeta telas grandes) — preferência de cada navegador/dispositivo,
@@ -484,6 +483,9 @@ export default function App() {
   // checam ESTE valor, não o currentUser simulado. Preenchido só dentro de loadUsuarios.
   const [usuarioAutenticadoReal, setUsuarioAutenticadoReal] = useState<UsuarioLogin | undefined>(undefined);
   const [loginSemCadastro, setLoginSemCadastro] = useState(false);
+  // Papel que as telas usam para mostrar botões de admin (Editar, Excluir, aprovar...): o papel
+  // REAL do login ativo. Antes era um state fixo em 'admin' para todo mundo.
+  const userRole: UserRole = currentUser.role || 'colaborador';
   const [erroAoConfirmarLogin, setErroAoConfirmarLogin] = useState(false);
 
   // Espelha currentUser pra loadUsuarios() poder ler o valor MAIS RECENTE de forma síncrona,
@@ -3079,7 +3081,6 @@ export default function App() {
         // que currentUser.role deixaria de ser 'admin' enquanto a simulação estivesse ativa.
         onOpenSwitchUserModal={usuarioAutenticadoReal?.role === 'admin' ? () => setIsSwitchUserModalOpen(true) : undefined}
         userRole={userRole}
-        onChangeRole={setUserRole}
         counts={contagensMenu}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
