@@ -164,6 +164,32 @@
     background: #ffffff !important;
   }
 
+  /* Documento dentro de modal (fixed + max-h + overflow): o navegador imprimia só a 1ª
+     página. Os "pais" do documento viram blocos comuns, sem altura/rolagem, e o resto da
+     tela sai do fluxo (sem páginas em branco) — assim o documento quebra em várias páginas. */
+  body:has(.jmt-print-doc) *:not(:has(.jmt-print-doc)):not(.jmt-print-doc):not(.jmt-print-doc *) {
+    display: none !important;
+  }
+  body:has(.jmt-print-doc) *:has(.jmt-print-doc) {
+    display: block !important;
+    position: static !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    transform: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    animation: none !important;
+  }
+  body:has(.jmt-print-doc) .jmt-print-doc {
+    position: static !important;
+  }
+
   .print\:hidden {
     display: none !important;
   }
