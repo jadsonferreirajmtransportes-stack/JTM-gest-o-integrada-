@@ -28,6 +28,8 @@ export const CronogramaAgendaModal: React.FC<{ atividades: AtividadeGestao[]; on
   const [responsavel, setResponsavel] = useState('');
   const [semCanceladas, setSemCanceladas] = useState(true);
   const [gerando, setGerando] = useState<'pdf' | 'xlsx' | null>(null);
+  // Compromissos desmarcados à mão (o padrão é entrar tudo o que bate com o período e os filtros).
+  const [desmarcadas, setDesmarcadas] = useState<Set<string>>(new Set());
 
   const responsaveis = useMemo(() => Array.from(new Set(atividades.map((a) => a.responsavel).filter(Boolean))).sort(), [atividades]);
   const filtradas = useMemo(
@@ -40,14 +42,24 @@ export const CronogramaAgendaModal: React.FC<{ atividades: AtividadeGestao[]; on
       ),
     [atividades, categorias, responsavel, semCanceladas]
   );
-  const noPeriodo = inicio && fim && inicio <= fim ? atividadesDoPeriodo(filtradas, { inicio, fim }).length : 0;
+  const listaPeriodo = useMemo(() => (inicio && fim && inicio <= fim ? atividadesDoPeriodo(filtradas, { inicio, fim }) : []), [filtradas, inicio, fim]);
+  const escolhidas = useMemo(() => listaPeriodo.filter((a) => !desmarcadas.has(a.id)), [listaPeriodo, desmarcadas]);
+  const noPeriodo = escolhidas.length;
+  const alternar = (id: string) =>
+    setDesmarcadas((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const dataCurta = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`;
 
   const gerar = async (formato: 'pdf' | 'xlsx') => {
     if (!inicio || !fim || inicio > fim) return;
     setGerando(formato);
     try {
       const opcoes = { inicio, fim, titulo };
-      const arquivo = formato === 'pdf' ? gerarCronogramaPdf(filtradas, opcoes) : await gerarCronogramaXlsx(filtradas, opcoes);
+      const arquivo = formato === 'pdf' ? gerarCronogramaPdf(escolhidas, opcoes) : await gerarCronogramaXlsx(escolhidas, opcoes);
       baixarBlob(arquivo, arquivo.name);
     } catch (e) {
       console.error(e);
@@ -131,8 +143,45 @@ export const CronogramaAgendaModal: React.FC<{ atividades: AtividadeGestao[]; on
               <input type="checkbox" checked={semCanceladas} onChange={(e) => setSemCanceladas(e.target.checked)} /> Sem as canceladas
             </label>
           </div>
+          {listaPeriodo.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="font-semibold text-slate-600">Compromissos que entram no cronograma</p>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setDesmarcadas(new Set())} className="text-[11px] font-semibold text-[#92611F] hover:underline normal-case tracking-normal">
+                    Marcar todos
+                  </button>
+                  <button type="button" onClick={() => setDesmarcadas(new Set(listaPeriodo.map((a) => a.id)))} className="text-[11px] font-semibold text-slate-500 hover:underline normal-case tracking-normal">
+                    Desmarcar todos
+                  </button>
+                </div>
+              </div>
+              <div className="border border-slate-200 rounded-xl max-h-64 overflow-y-auto divide-y divide-slate-100">
+                {listaPeriodo.map((a) => {
+                  const marcado = !desmarcadas.has(a.id);
+                  return (
+                    <label key={a.id} className={`flex items-start gap-2.5 px-3 py-2 cursor-pointer hover:bg-amber-50/50 ${marcado ? '' : 'opacity-50'}`}>
+                      <input type="checkbox" checked={marcado} onChange={() => alternar(a.id)} className="mt-0.5 w-4 h-4 accent-[#C48229] shrink-0" />
+                      <span className="w-11 shrink-0 font-bold text-slate-700 tabular-nums">{dataCurta(a.data)}</span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block font-semibold text-slate-800 truncate">{a.titulo}</span>
+                        <span className="block text-[10.5px] text-slate-500 truncate">
+                          {a.diaInteiro ? 'Dia inteiro' : `${a.horaInicio}–${a.horaFim}`} · {CATEGORIA_CONFIG[a.categoria]?.label || a.categoria}
+                          {a.responsavel ? ` · ${a.responsavel}` : ''}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <p className={`font-semibold ${noPeriodo ? 'text-emerald-700' : 'text-amber-700'}`}>
-            {inicio > fim ? 'A data final está antes da inicial.' : `${noPeriodo} atividade(s) no período com esses filtros.`}
+            {inicio > fim
+              ? 'A data final está antes da inicial.'
+              : listaPeriodo.length
+                ? `${noPeriodo} de ${listaPeriodo.length} compromisso(s) selecionado(s).`
+                : 'Nenhum compromisso no período com esses filtros.'}
           </p>
         </div>
         <div className="p-4 border-t border-slate-200 flex justify-end gap-2 shrink-0">

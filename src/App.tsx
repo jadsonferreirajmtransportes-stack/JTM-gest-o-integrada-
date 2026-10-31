@@ -486,7 +486,7 @@ export default function App() {
   // Papel que as telas usam para mostrar botões de admin (Editar, Excluir, aprovar...): o papel
   // REAL do login ativo. Antes era um state fixo em 'admin' para todo mundo.
   const userRole: UserRole = currentUser.role || 'colaborador';
-  const [erroAoConfirmarLogin, setErroAoConfirmarLogin] = useState(false);
+  const [erroAoConfirmarLogin, setErroAoConfirmarLogin] = useState('');
 
   // Espelha currentUser pra loadUsuarios() poder ler o valor MAIS RECENTE de forma síncrona,
   // sem depender de quando o React decide rodar o updater de setCurrentUser(prev => ...) — essa
@@ -505,7 +505,18 @@ export default function App() {
   // busca terminar; loadUsuarios() abaixo substitui esse valor pelo dado real assim que chega.
   const loadUsuarios = useCallback(async (): Promise<UsuarioLogin | null> => {
     try {
-      let lista = await getUsuarios();
+      // Falha passageira (internet do celular, sessão renovando) não pode travar a entrada: tenta
+      // de novo até 3 vezes antes de desistir.
+      let lista: UsuarioLogin[] = [];
+      for (let tentativa = 1; ; tentativa++) {
+        try {
+          lista = await getUsuarios();
+          break;
+        } catch (e) {
+          if (tentativa >= 3) throw e;
+          await new Promise((ok) => setTimeout(ok, 1200 * tentativa));
+        }
+      }
       if (lista.length === 0) {
         // Primeira vez usando o Supabase pra isso — migra o que já existir neste navegador (ou
         // os dados de fábrica) uma única vez, pra não perder configuração já feita por aqui.
@@ -569,7 +580,7 @@ export default function App() {
       return usuarioEscolhido;
     } catch (err) {
       console.error('Erro ao carregar Logins & Acessos (Supabase):', err);
-      if (currentUserRef.current?.id === ID_PERFIL_PROVISORIO) setErroAoConfirmarLogin(true);
+      if (currentUserRef.current?.id === ID_PERFIL_PROVISORIO) setErroAoConfirmarLogin(err instanceof Error ? err.message : String(err));
       showToast('Não foi possível carregar os logins do Supabase — usando os dados salvos neste navegador.', 'info');
       return null;
     }
@@ -3035,6 +3046,7 @@ export default function App() {
           <div className="max-w-sm bg-white border border-rose-200 rounded-xl p-5 text-sm text-slate-700 text-center">
             <p className="font-bold text-slate-900 mb-1">Não foi possível confirmar o seu acesso</p>
             <p className="mb-3">Verifique a internet e tente de novo.</p>
+            <p className="mb-3 text-[10px] text-slate-400 break-words">{erroAoConfirmarLogin}</p>
             <button type="button" onClick={() => window.location.reload()} className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg font-bold text-xs">
               Tentar de novo
             </button>
