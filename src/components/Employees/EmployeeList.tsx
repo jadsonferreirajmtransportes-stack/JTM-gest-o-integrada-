@@ -278,9 +278,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
 
       {/* Table View */}
       {viewMode === 'table' ? (
-        <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+        <div className="envelope-cartoes bg-white rounded-3xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto envelope-cartoes">
+            <table className="tabela-cartoes w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Colaborador</th>
@@ -321,7 +321,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         className="hover:bg-slate-50/80 transition-colors group"
                       >
                         {/* Colaborador */}
-                        <td className="py-3 px-4">
+                        <td className="cartao-titulo py-3 px-4">
                           <div className="font-semibold text-slate-900 text-sm flex items-center gap-1.5">
                             <span>{colab.nomeCompleto}</span>
                           </div>
@@ -334,13 +334,13 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         </td>
 
                         {/* Cargo / Setor */}
-                        <td className="py-3 px-3">
+                        <td data-label="Cargo / setor" className="py-3 px-3">
                           <div className="font-medium text-slate-800">{colab.funcaoCargo}</div>
                           <div className="text-[11px] text-slate-500">{colab.setor}</div>
                         </td>
 
                         {/* Status */}
-                        <td className="py-3 px-3">
+                        <td data-label="Status" className="py-3 px-3">
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
                               colab.status === 'Ativo'
@@ -362,7 +362,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         </td>
 
                         {/* Remuneração */}
-                        <td className="py-3 px-3 font-semibold text-slate-800">
+                        <td data-label="Remuneração base" className="py-3 px-3 font-semibold text-slate-800">
                           {formatMoney(colab.remuneracao)}
                           {colab.gratificacao > 0 && (
                             <div className="text-[10px] text-slate-400 font-normal">
@@ -372,7 +372,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         </td>
 
                         {/* Custo Total Mês */}
-                        <td className="py-3 px-3 font-extrabold text-amber-900">
+                        <td data-label="Custo total mês" className="py-3 px-3 font-extrabold text-amber-900">
                           {colab.status === 'Inativo' ? '-' : formatMoney(custoTotal)}
                           {colab.status !== 'Inativo' && (
                             <div className="text-[10px] text-slate-400 font-normal">
@@ -382,7 +382,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         </td>
 
                         {/* Exame ASO RDC 430 */}
-                        <td className="py-3 px-3">
+                        <td data-label="Exame ASO" className="py-3 px-3">
                           <div className="text-[11px] font-medium text-slate-700">
                             {formatDate(colab.dataVencimentoExame)}
                           </div>
@@ -394,7 +394,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         </td>
 
                         {/* Documentação */}
-                        <td className="py-3 px-3">
+                        <td data-label="Documentos" className="py-3 px-3">
                           {docsPendentes === 0 ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                               <CheckCircle2 className="w-3 h-3" />
@@ -409,7 +409,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         </td>
 
                         {/* Actions */}
-                        <td className="py-3 px-4 text-right">
+                        <td className="cartao-acoes py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-1">
                             {/* View Profile */}
                             <button

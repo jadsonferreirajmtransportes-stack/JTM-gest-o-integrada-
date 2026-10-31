@@ -214,13 +214,14 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
       {/* Header Info */}
       <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-bold uppercase">
+          <span className="hidden sm:inline text-[10px] font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-bold uppercase">
             Registro & Supervisão Disciplinar
           </span>
-          <h2 className="text-lg font-bold text-slate-900 mt-1">
-            Registro Centralizado de Ocorrências
+          <h2 className="text-lg font-bold text-slate-900 sm:mt-1">
+            <span className="sm:hidden">Ocorrências</span>
+            <span className="hidden sm:inline">Registro Centralizado de Ocorrências</span>
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="hidden sm:block text-xs text-slate-500">
             Atestados médicos (RDC 430), faltas, atrasos, advertências, suspensões e CAT com rastreabilidade de anexos.
           </p>
         </div>
@@ -277,7 +278,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1 max-w-md">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -312,9 +313,9 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
       </div>
 
       {/* Occurrences List */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+      <div className="envelope-cartoes bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto envelope-cartoes">
+          <table className="tabela-cartoes w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
               <tr>
                 <th className="py-3 px-4">Data</th>
@@ -340,18 +341,18 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
 
                   return (
                     <tr key={item.id} className="group hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">
+                      <td data-label="Data" className="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">
                         {formatDate(item.dataOcorrencia)}
                       </td>
 
-                      <td className="py-3 px-3">
+                      <td className="cartao-titulo py-3 px-3">
                         <div className="font-semibold text-slate-900">{colab?.nomeCompleto || '-'}</div>
                         <div className="text-[11px] text-slate-500 font-mono">
                           {colab?.codigoMatricula} • {colab?.setor}
                         </div>
                       </td>
 
-                      <td className="py-3 px-3">
+                      <td data-label="Tipo" className="py-3 px-3">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             item.tipo === 'Atestado médico'
@@ -369,7 +370,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                         </span>
                       </td>
 
-                      <td className="py-3 px-3">
+                      <td data-label="Afastamento" className="py-3 px-3">
                         {item.diasAfastamento ? (
                           <span className="font-bold text-slate-800">
                             {item.diasAfastamento} dia{item.diasAfastamento > 1 ? 's' : ''}
@@ -383,11 +384,11 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                         )}
                       </td>
 
-                      <td className="py-3 px-3 max-w-xs text-slate-700 truncate" title={item.descricao}>
+                      <td data-label="Descrição" className="py-3 px-3 max-w-xs text-slate-700 truncate" title={item.descricao}>
                         {item.descricao}
                       </td>
 
-                      <td className="py-3 px-3">
+                      <td data-label="Anexo" className="py-3 px-3">
                         {item.comprovanteAnexo ? (
                           item.comprovanteArquivoUrl ? (
                             <a
@@ -414,11 +415,11 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
                         )}
                       </td>
 
-                      <td className="py-3 px-4 text-slate-600 text-[11px]">
+                      <td data-label="Registrado por" className="py-3 px-4 text-slate-600 text-[11px]">
                         {item.registradoPor || 'Departamento Pessoal'}
                       </td>
 
-                      <td className="py-3 px-4 text-right sticky right-0 bg-white group-hover:bg-slate-50/80 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)]">
+                      <td className="cartao-acoes py-3 px-4 text-right sticky right-0 bg-white group-hover:bg-slate-50/80 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)]">
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"

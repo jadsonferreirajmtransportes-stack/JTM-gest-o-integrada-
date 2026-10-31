@@ -404,18 +404,19 @@ export const VacationView: React.FC<VacationViewProps> = ({
       {/* Header Info */}
       <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-bold uppercase">
+          <span className="hidden sm:inline text-[10px] font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-bold uppercase">
             Gestão CLT & Auditoria JMT
           </span>
-          <h2 className="text-lg font-bold text-slate-900 mt-1">
-            Programação e Controle de Férias CLT
+          <h2 className="text-lg font-bold text-slate-900 sm:mt-1">
+            <span className="sm:hidden">Férias</span>
+            <span className="hidden sm:inline">Programação e Controle de Férias CLT</span>
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="hidden sm:block text-xs text-slate-500">
             Acompanhamento de períodos aquisitivos, prazos limites de gozo (para evitar pagamento em dobro), fracionamentos e abonos pecuniários.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => exportFeriasReport(feriasList, colaboradores, 'xlsx')}
@@ -431,7 +432,8 @@ export const VacationView: React.FC<VacationViewProps> = ({
             className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
             <Printer className="w-4 h-4 text-slate-500" />
-            <span>Relatório PDF por Período</span>
+            <span className="sm:hidden">Relatório PDF</span>
+            <span className="hidden sm:inline">Relatório PDF por Período</span>
           </button>
 
           {userRole === 'admin' && (
@@ -445,7 +447,8 @@ export const VacationView: React.FC<VacationViewProps> = ({
               }`}
             >
               <FileSignature className="w-4 h-4 text-[#C48229]" />
-              <span>Aviso & Recibo p/ Assinatura</span>
+              <span className="sm:hidden">Aviso & Recibo</span>
+              <span className="hidden sm:inline">Aviso & Recibo p/ Assinatura</span>
             </button>
           )}
 
@@ -474,7 +477,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
 
       {/* Control Bar: Search & Status Filter */}
       <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1 max-w-md">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -553,9 +556,9 @@ export const VacationView: React.FC<VacationViewProps> = ({
       )}
 
       {/* Vacation Records Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+      <div className="envelope-cartoes bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto envelope-cartoes">
+          <table className="tabela-cartoes w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
               <tr>
                 <th className="py-3 px-4">Colaborador</th>
@@ -590,7 +593,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
                       }`}
                     >
                       {/* Colaborador */}
-                      <td className="py-3 px-4">
+                      <td className="cartao-titulo py-3 px-4">
                         <div className="font-semibold text-slate-900">
                           {colab?.nomeCompleto || 'Colaborador não encontrado'}
                         </div>
@@ -600,7 +603,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
                       </td>
 
                       {/* Período Aquisitivo */}
-                      <td className="py-3 px-3">
+                      <td data-label="Período aquisitivo" className="py-3 px-3">
                         <div className="font-medium text-slate-800">
                           {formatDate(item.periodoAquisitivoInicio)} até{' '}
                           {formatDate(item.periodoAquisitivoFim)}
@@ -609,7 +612,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
                       </td>
 
                       {/* Prazo Limite */}
-                      <td className="py-3 px-3">
+                      <td data-label="Prazo limite (CLT)" className="py-3 px-3">
                         <div className="font-bold text-slate-800">
                           {formatDate(item.prazoLimiteGozo)}
                         </div>
@@ -621,7 +624,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
                       </td>
 
                       {/* Período Marcado */}
-                      <td className="py-3 px-3">
+                      <td data-label="Período marcado" className="py-3 px-3">
                         {item.dataInicio && item.dataFim ? (
                           <div>
                             <div className="font-semibold text-blue-950">
@@ -677,7 +680,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
                       </td>
 
                       {/* Dias / Abono */}
-                      <td className="py-3 px-3">
+                      <td data-label="Dias / abono" className="py-3 px-3">
                         <div className="font-medium text-slate-800">{item.diasGozados} dias</div>
                         {item.abonoPecuniario && (
                           <div className="text-[10px] text-amber-700 font-semibold">
@@ -687,7 +690,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
                       </td>
 
                       {/* Status */}
-                      <td className="py-3 px-3">
+                      <td data-label="Status" className="py-3 px-3">
                         <select
                           value={item.status}
                           disabled={userRole === 'colaborador'}
@@ -712,7 +715,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
                       </td>
 
                       {/* Comunicar */}
-                      <td className="py-3 px-3">
+                      <td data-label="Comunicar" className="py-3 px-3">
                         <div className="flex items-center justify-center gap-1">
                           <button
                             type="button"
@@ -761,7 +764,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="cartao-acoes py-3 px-4 text-right">
                         {userRole === 'admin' && etapasDaProgramacao(item).length > 0 && (
                           <button
                             type="button"

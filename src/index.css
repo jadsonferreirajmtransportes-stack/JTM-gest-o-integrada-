@@ -410,3 +410,97 @@
 .sem-barra::-webkit-scrollbar {
   display: none;
 }
+
+/* Tabela que vira cartões no celular: cada linha é um cartão, cada coluna uma linha "rótulo:
+   valor" (o rótulo vem de data-label no <td>). Mantém todas as ações da tabela sem duplicar
+   código. Uso: <table className="tabela-cartoes"> dentro de um envelope "envelope-cartoes";
+   1ª célula com "cartao-titulo" (sem rótulo, largura toda) e a de botões com "cartao-acoes". */
+@media (max-width: 639px) {
+  .envelope-cartoes {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  .tabela-cartoes {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .tabela-cartoes thead {
+    display: none;
+  }
+  .tabela-cartoes tbody {
+    display: block;
+  }
+  .tabela-cartoes tbody > tr {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 1rem;
+    padding: 0.7rem 0.9rem;
+    margin-bottom: 0.6rem;
+  }
+  /* Rótulo à esquerda; o conteúdo da célula (um ou mais blocos) empilhado à direita. */
+  .tabela-cartoes tbody > tr > td {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.75rem;
+    align-items: start;
+    justify-items: end;
+    padding: 0.3rem 0 !important;
+    border: 0 !important;
+    text-align: right;
+    width: auto !important;
+    max-width: none !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    position: static !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  .tabela-cartoes tbody > tr > td > * {
+    grid-column: 2;
+  }
+  .tabela-cartoes tbody > tr > td[data-label]::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1 / span 20;
+    justify-self: start;
+    max-width: 9rem;
+    padding-top: 2px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #94a3b8;
+  }
+  /* O título (ex.: nome do colaborador) sobe para o topo do cartão mesmo não sendo a 1ª coluna. */
+  .tabela-cartoes tbody > tr > td.cartao-titulo {
+    order: -1;
+    display: block;
+    justify-items: start;
+    text-align: left;
+    padding-bottom: 0.45rem !important;
+  }
+  .tabela-cartoes tbody > tr > td.cartao-acoes {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    border-top: 1px solid #f1f5f9 !important;
+    margin-top: 0.3rem;
+    padding-top: 0.55rem !important;
+  }
+  .tabela-cartoes tbody > tr > td.cartao-acoes > * {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  /* Linha de "nenhum registro" (colSpan) continua centralizada. */
+  .tabela-cartoes tbody > tr > td[colspan] {
+    display: block;
+    text-align: center;
+  }
+}
