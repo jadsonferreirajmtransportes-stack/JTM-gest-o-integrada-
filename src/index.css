@@ -430,10 +430,20 @@
   .tabela-cartoes thead {
     display: none;
   }
-  .tabela-cartoes tbody {
+  .tabela-cartoes tbody,
+  .tabela-cartoes tfoot {
     display: block;
   }
-  .tabela-cartoes tbody > tr {
+  /* Totais (tfoot) num cartão destacado; célula vazia não vira linha sem valor. */
+  .tabela-cartoes tfoot > tr {
+    background: #faf6ee !important;
+    border-color: #ead9bd !important;
+  }
+  .tabela-cartoes :is(tbody, tfoot) > tr > td[data-label]:empty,
+  .tabela-cartoes :is(tbody, tfoot) > tr > td:not([data-label]):not(.cartao-titulo):not(.cartao-acoes):empty {
+    display: none;
+  }
+  .tabela-cartoes :is(tbody, tfoot) > tr {
     display: flex;
     flex-direction: column;
     background: #ffffff;
@@ -443,7 +453,7 @@
     margin-bottom: 0.6rem;
   }
   /* Rótulo à esquerda; o conteúdo da célula (um ou mais blocos) empilhado à direita. */
-  .tabela-cartoes tbody > tr > td {
+  .tabela-cartoes :is(tbody, tfoot) > tr > td {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     column-gap: 0.75rem;
@@ -460,10 +470,10 @@
     box-shadow: none !important;
     background: transparent !important;
   }
-  .tabela-cartoes tbody > tr > td > * {
+  .tabela-cartoes :is(tbody, tfoot) > tr > td > * {
     grid-column: 2;
   }
-  .tabela-cartoes tbody > tr > td[data-label]::before {
+  .tabela-cartoes :is(tbody, tfoot) > tr > td[data-label]::before {
     content: attr(data-label);
     grid-column: 1;
     grid-row: 1 / span 20;
@@ -478,14 +488,14 @@
     color: #94a3b8;
   }
   /* O título (ex.: nome do colaborador) sobe para o topo do cartão mesmo não sendo a 1ª coluna. */
-  .tabela-cartoes tbody > tr > td.cartao-titulo {
+  .tabela-cartoes :is(tbody, tfoot) > tr > td.cartao-titulo {
     order: -1;
     display: block;
     justify-items: start;
     text-align: left;
     padding-bottom: 0.45rem !important;
   }
-  .tabela-cartoes tbody > tr > td.cartao-acoes {
+  .tabela-cartoes :is(tbody, tfoot) > tr > td.cartao-acoes {
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -494,12 +504,12 @@
     margin-top: 0.3rem;
     padding-top: 0.55rem !important;
   }
-  .tabela-cartoes tbody > tr > td.cartao-acoes > * {
+  .tabela-cartoes :is(tbody, tfoot) > tr > td.cartao-acoes > * {
     flex-wrap: wrap;
     justify-content: flex-end;
   }
   /* Linha de "nenhum registro" (colSpan) continua centralizada. */
-  .tabela-cartoes tbody > tr > td[colspan] {
+  .tabela-cartoes :is(tbody, tfoot) > tr > td[colspan] {
     display: block;
     text-align: center;
   }

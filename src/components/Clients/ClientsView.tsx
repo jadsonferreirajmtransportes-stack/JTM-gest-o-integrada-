@@ -265,21 +265,22 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Executive Header Banner */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+      <div className="bg-white rounded-3xl p-4 sm:p-8 shadow-sm relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 opacity-[0.04] pointer-events-none flex items-center pr-8">
           <Building2 className="w-80 h-80 text-blue-900" />
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-[#92611F] border border-amber-200 text-xs font-bold uppercase tracking-wider">
+            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-[#92611F] border border-amber-200 text-xs font-bold uppercase tracking-wider">
               <Building2 className="w-3.5 h-3.5 text-[#C48229]" />
               <span>Gestão Comercial & Operações Farmacêuticas</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-              Carteira de Clientes & Contratos
+            <h1 className="text-lg sm:text-3xl font-bold tracking-tight text-slate-900">
+              <span className="sm:hidden">Clientes</span>
+              <span className="hidden sm:inline">Carteira de Clientes & Contratos</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl font-normal leading-relaxed">
+            <p className="hidden sm:block text-xs sm:text-sm text-slate-500 max-w-2xl font-normal leading-relaxed">
               Gestão de contratos de frete, distribuição farmacêutica RDC 430, tabelas de tarifas e histórico de atendimento.
             </p>
           </div>
@@ -321,63 +322,63 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span className="font-semibold uppercase tracking-wider">Carteira de Clientes</span>
+            <span className="font-semibold uppercase tracking-wider text-[10px] sm:text-xs leading-tight">Carteira de Clientes</span>
             <Building2 className="w-4 h-4 text-[#C48229]" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-2xl font-bold text-slate-900">{metrics.total}</span>
+            <span className="font-display text-xl sm:text-2xl font-bold text-slate-900">{metrics.total}</span>
             <span className="text-xs text-emerald-600 font-semibold font-mono">
               ({metrics.ativos} Ativos)
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Parceiros contratados JMT</p>
+          <p className="hidden sm:block text-[11px] text-slate-500 mt-1">Parceiros contratados JMT</p>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span className="font-semibold uppercase tracking-wider">Faturamento / Mês Estimado</span>
+            <span className="font-semibold uppercase tracking-wider text-[10px] sm:text-xs leading-tight">Faturamento / Mês Estimado</span>
             <DollarSign className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="mt-2">
-            <span className="font-display text-xl sm:text-2xl font-bold text-emerald-600">
+            <span className="font-display text-base sm:text-2xl font-bold text-emerald-600">
               {formatCurrency(metrics.faturamentoTotal)}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Receita estimada da carteira ativa</p>
+          <p className="hidden sm:block text-[11px] text-slate-500 mt-1">Receita estimada da carteira ativa</p>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span className="font-semibold uppercase tracking-wider">Volume de Entregas / Mês</span>
+            <span className="font-semibold uppercase tracking-wider text-[10px] sm:text-xs leading-tight">Volume de Entregas / Mês</span>
             <Truck className="w-4 h-4 text-cyan-600" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-2xl font-bold text-slate-900">{metrics.volumeTotal}</span>
+            <span className="font-display text-xl sm:text-2xl font-bold text-slate-900">{metrics.volumeTotal}</span>
             <span className="text-xs text-cyan-600 font-semibold font-mono">pontos/mês</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Last mile e transferências</p>
+          <p className="hidden sm:block text-[11px] text-slate-500 mt-1">Last mile e transferências</p>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span className="font-semibold uppercase tracking-wider">Cadeia Fria & RDC 430</span>
+            <span className="font-semibold uppercase tracking-wider text-[10px] sm:text-xs leading-tight">Cadeia Fria & RDC 430</span>
             <ShieldCheck className="w-4 h-4 text-amber-600" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-2xl font-bold text-amber-600">{metrics.rdc430Count}</span>
+            <span className="font-display text-xl sm:text-2xl font-bold text-amber-600">{metrics.rdc430Count}</span>
             <span className="text-xs text-slate-500">
               ({metrics.total > 0 ? Math.round((metrics.rdc430Count / metrics.total) * 100) : 0}%)
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Exigem qualificação térmica ANVISA</p>
+          <p className="hidden sm:block text-[11px] text-slate-500 mt-1">Exigem qualificação térmica ANVISA</p>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-white rounded-3xl p-6 space-y-3 shadow-sm">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 space-y-3 shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
           {/* Search Box */}
           <div className="sm:col-span-3 relative">

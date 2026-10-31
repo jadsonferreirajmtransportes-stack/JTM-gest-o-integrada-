@@ -386,19 +386,22 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
   );
 
   return (
-    <div className="space-y-5">
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-5">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0">
+          <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] items-center justify-center text-white shrink-0">
             <Clock className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">Controle de Frequência</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Ponto pelo celular com localização, espelho mensal, justificativas e assinatura do colaborador.</p>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              <span className="sm:hidden">Frequência</span>
+              <span className="hidden sm:inline">Controle de Frequência</span>
+            </h1>
+            <p className="hidden sm:block text-xs text-slate-500 mt-0.5">Ponto pelo celular com localização, espelho mensal, justificativas e assinatura do colaborador.</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 shrink-0">
-          <input type="month" value={mes} max={mesAtual()} onChange={(e) => e.target.value && setMes(e.target.value)} className="p-2 border border-slate-200 rounded-xl text-xs font-semibold" />
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 shrink-0">
+          <input type="month" value={mes} max={mesAtual()} onChange={(e) => e.target.value && setMes(e.target.value)} className="col-span-2 sm:col-span-1 p-2 border border-slate-200 rounded-xl text-xs font-semibold" />
           <button type="button" onClick={carregarMes} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-50">
             <RefreshCw className={`w-3.5 h-3.5 ${carregandoMes ? 'animate-spin' : ''}`} /> Atualizar
           </button>
@@ -424,7 +427,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
 
       {erro && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}
 
-      <div className="flex gap-1 border-b border-slate-200 overflow-x-auto">
+      <div className="flex gap-1 border-b border-slate-200 overflow-x-auto sem-barra">
         {(
           [
             ['hoje', 'Hoje'],
@@ -478,8 +481,8 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
               </div>
             ))}
           </div>
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
-            <table className="w-full text-xs">
+          <div className="envelope-cartoes bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+            <table className="tabela-cartoes w-full text-xs">
               <thead className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide">
                 <tr>
                   <th className="text-left p-3">Colaborador</th>
@@ -494,17 +497,17 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                   .sort((a, b) => Number(b.atrasadoSemBatida) - Number(a.atrasadoSemBatida))
                   .map(({ c, jornada, dia, atrasadoSemBatida }) => (
                     <tr key={c.id} className="hover:bg-slate-50/60">
-                      <td className="p-3">
+                      <td className="cartao-titulo p-3">
                         <button type="button" onClick={() => { setColaboradorId(c.id); setAba('espelho'); }} className="font-semibold text-slate-800 hover:text-[#92611F] text-left">
                           {c.nomeCompleto}
                         </button>
                         <p className="text-[10px] text-slate-400">{c.funcaoCargo}</p>
                       </td>
-                      <td className="p-3 text-slate-600">{jornada && dia.previsto ? `${jornada.entrada}–${jornada.saida}` : 'Folga'}</td>
-                      <td className="p-3">
+                      <td data-label="Jornada hoje" className="p-3 text-slate-600">{jornada && dia.previsto ? `${jornada.entrada}–${jornada.saida}` : 'Folga'}</td>
+                      <td data-label="Batidas" className="p-3">
                         <div className="flex flex-wrap gap-1">{dia.batidas.map(chipBatida)}</div>
                       </td>
-                      <td className="p-3">
+                      <td data-label="Situação" className="p-3">
                         {atrasadoSemBatida ? (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-rose-50 text-rose-700 border-rose-200">Não bateu</span>
                         ) : (
@@ -580,8 +583,8 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
           {colaboradorSel && (
             <>
               <ResumoCartoes resumo={resumir(espelhoSel)} />
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
-                <table className="w-full text-xs">
+              <div className="envelope-cartoes bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+                <table className="tabela-cartoes w-full text-xs">
                   <thead className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide">
                     <tr>
                       <th className="text-left p-2.5">Dia</th>
@@ -599,10 +602,10 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                   <tbody className="divide-y divide-slate-100">
                     {espelhoSel.map((d) => (
                       <tr key={d.data} className={d.situacao === 'Folga' || d.situacao === 'Feriado' || d.situacao === 'Futuro' || d.situacao === 'Fora do período' ? 'text-slate-400' : ''}>
-                        <td className="p-2.5 font-semibold whitespace-nowrap">
+                        <td className="cartao-titulo p-2.5 font-semibold whitespace-nowrap">
                           {d.data.slice(8, 10)} <span className="text-slate-400 font-normal">{NOMES_DIA[diaDaSemana(d.data)]}</span>
                         </td>
-                        <td className="p-2.5">
+                        <td data-label="Batidas" className="p-2.5">
                           <div className="flex flex-wrap gap-1 items-center">
                             {d.batidas.map(chipBatida)}
                             {d.anuladas.map((b) => (
@@ -612,13 +615,13 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                             ))}
                           </div>
                         </td>
-                        <td className="p-2.5 tabular-nums text-right ">{d.apuracao.normaisDiurnasMin ? formatarMinutos(d.apuracao.normaisDiurnasMin) : ''}</td>
-                        <td className="p-2.5 tabular-nums text-right text-indigo-700">{d.apuracao.normaisNoturnasMin ? formatarMinutos(d.apuracao.normaisNoturnasMin) : ''}</td>
-                        <td className="p-2.5 tabular-nums text-right text-emerald-700">{d.apuracao.extraDiurnaMin ? formatarMinutos(d.apuracao.extraDiurnaMin) : ''}</td>
-                        <td className="p-2.5 tabular-nums text-right text-emerald-700">{d.apuracao.extraNoturnaMin ? formatarMinutos(d.apuracao.extraNoturnaMin) : ''}</td>
-                        <td className="p-2.5 tabular-nums text-right text-rose-600">{d.apuracao.faltaAtrasoMin ? formatarMinutos(d.apuracao.faltaAtrasoMin) : ''}</td>
-                        <td className="p-2.5 tabular-nums text-right text-sky-700">{d.apuracao.abonoMin ? formatarMinutos(d.apuracao.abonoMin) : ''}</td>
-                        <td className="p-2.5">
+                        <td data-label="Normais" className="p-2.5 tabular-nums text-right ">{d.apuracao.normaisDiurnasMin ? formatarMinutos(d.apuracao.normaisDiurnasMin) : ''}</td>
+                        <td data-label="Noturnas" className="p-2.5 tabular-nums text-right text-indigo-700">{d.apuracao.normaisNoturnasMin ? formatarMinutos(d.apuracao.normaisNoturnasMin) : ''}</td>
+                        <td data-label="Extra diurna" className="p-2.5 tabular-nums text-right text-emerald-700">{d.apuracao.extraDiurnaMin ? formatarMinutos(d.apuracao.extraDiurnaMin) : ''}</td>
+                        <td data-label="Extra noturna" className="p-2.5 tabular-nums text-right text-emerald-700">{d.apuracao.extraNoturnaMin ? formatarMinutos(d.apuracao.extraNoturnaMin) : ''}</td>
+                        <td data-label="Falta / atraso" className="p-2.5 tabular-nums text-right text-rose-600">{d.apuracao.faltaAtrasoMin ? formatarMinutos(d.apuracao.faltaAtrasoMin) : ''}</td>
+                        <td data-label="Abono" className="p-2.5 tabular-nums text-right text-sky-700">{d.apuracao.abonoMin ? formatarMinutos(d.apuracao.abonoMin) : ''}</td>
+                        <td data-label="Situação" className="p-2.5">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${ESTILO_SITUACAO[d.situacao]}`}>
                             {d.situacao === 'Atraso' ? `Atraso ${d.atrasoMin} min` : d.situacao}
                           </span>
@@ -626,7 +629,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                           {d.justificativa && <span className="block text-[10px] text-slate-500 mt-0.5">{d.justificativa.tipo}{d.justificativa.observacao ? ` — ${d.justificativa.observacao}` : ''}</span>}
                           {d.foraDoLocal && <span className="block text-[10px] text-rose-600 mt-0.5">Batida longe da base</span>}
                         </td>
-                        <td className="p-2.5">
+                        <td className="cartao-acoes p-2.5">
                           {d.data <= hoje && (
                             <div className="flex justify-end gap-1">
                               <button type="button" onClick={() => setAcaoDia({ tipo: 'batida', data: d.data })} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg" title="Incluir batida (ajuste)">
@@ -643,19 +646,23 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                   </tbody>
                   {(() => {
                     const t = resumir(espelhoSel);
-                    const tot = (v: number, cls = '') => <td className={`p-2.5 tabular-nums text-right ${cls}`}>{formatarMinutos(v)}</td>;
+                    const tot = (v: number, cls = '', rotulo = '') => (
+                      <td data-label={rotulo} className={`p-2.5 tabular-nums text-right ${cls}`}>
+                        {formatarMinutos(v)}
+                      </td>
+                    );
                     return (
                       <tfoot className="bg-slate-50 font-black text-slate-800 border-t-2 border-slate-200">
                         <tr>
-                          <td className="p-2.5" colSpan={2}>
+                          <td className="cartao-titulo p-2.5" colSpan={2}>
                             Total do mês
                           </td>
-                          {tot(t.normaisDiurnasMin)}
-                          {tot(t.normaisNoturnasMin, 'text-indigo-700')}
-                          {tot(t.extraDiurnaMin, 'text-emerald-700')}
-                          {tot(t.extraNoturnaMin, 'text-emerald-700')}
-                          {tot(t.faltaAtrasoMin, 'text-rose-600')}
-                          {tot(t.abonoMin, 'text-sky-700')}
+                          {tot(t.normaisDiurnasMin, '', 'Normais')}
+                          {tot(t.normaisNoturnasMin, 'text-indigo-700', 'Noturnas')}
+                          {tot(t.extraDiurnaMin, 'text-emerald-700', 'Extra diurna')}
+                          {tot(t.extraNoturnaMin, 'text-emerald-700', 'Extra noturna')}
+                          {tot(t.faltaAtrasoMin, 'text-rose-600', 'Falta / atraso')}
+                          {tot(t.abonoMin, 'text-sky-700', 'Abono')}
                           <td colSpan={2} />
                         </tr>
                       </tfoot>
@@ -701,8 +708,8 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
               Gerar espelhos de {nomeMes(mes)} para assinatura
             </button>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
-            <table className="w-full text-xs">
+          <div className="envelope-cartoes bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+            <table className="tabela-cartoes w-full text-xs">
               <thead className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide">
                 <tr>
                   <th className="text-left p-3">Colaborador</th>
@@ -722,7 +729,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
               <tbody className="divide-y divide-slate-100">
                 {resumos.map(({ c, resumo: r, jornada }) => (
                   <tr key={c.id} className="hover:bg-slate-50/60">
-                    <td className="p-3">
+                    <td className="cartao-titulo p-3">
                       <button type="button" onClick={() => { setColaboradorId(c.id); setAba('espelho'); }} className="font-semibold text-slate-800 hover:text-[#92611F] text-left">
                         {c.nomeCompleto}
                       </button>
@@ -731,17 +738,17 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                         <p className="text-[10px] font-bold text-rose-600">Mais de {LIMITE_ATRASOS_MES} atrasos no mês — prevê advertência (Regulamento, item 2)</p>
                       )}
                     </td>
-                    <td className="p-3 text-right tabular-nums">{r.diasPrevistos}</td>
-                    <td className="p-3 text-right tabular-nums">{r.diasTrabalhados}</td>
-                    <td className={`p-3 text-right tabular-nums ${r.faltas ? 'text-rose-600 font-bold' : ''}`}>{r.faltas}</td>
-                    <td className={`p-3 text-right tabular-nums ${r.atrasos > LIMITE_ATRASOS_MES ? 'text-rose-600 font-bold' : r.atrasos ? 'text-[#92611F] font-bold' : ''}`}>{r.atrasos}</td>
-                    <td className={`p-3 text-right tabular-nums ${r.incompletos ? 'text-orange-600 font-bold' : ''}`}>{r.incompletos}</td>
-                    <td className="p-3 text-right tabular-nums">{formatarMinutos(r.normaisDiurnasMin)}</td>
-                    <td className="p-3 text-right tabular-nums text-indigo-700">{formatarMinutos(r.normaisNoturnasMin)}</td>
-                    <td className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(r.extraDiurnaMin)}</td>
-                    <td className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(r.extraNoturnaMin)}</td>
-                    <td className={`p-3 text-right tabular-nums ${r.faltaAtrasoMin ? 'text-rose-600 font-bold' : ''}`}>{formatarMinutos(r.faltaAtrasoMin)}</td>
-                    <td className="p-3 text-right tabular-nums text-sky-700">{formatarMinutos(r.abonoMin)}</td>
+                    <td data-label="Dias previstos" className="p-3 text-right tabular-nums">{r.diasPrevistos}</td>
+                    <td data-label="Com batida" className="p-3 text-right tabular-nums">{r.diasTrabalhados}</td>
+                    <td data-label="Faltas" className={`p-3 text-right tabular-nums ${r.faltas ? 'text-rose-600 font-bold' : ''}`}>{r.faltas}</td>
+                    <td data-label="Atrasos" className={`p-3 text-right tabular-nums ${r.atrasos > LIMITE_ATRASOS_MES ? 'text-rose-600 font-bold' : r.atrasos ? 'text-[#92611F] font-bold' : ''}`}>{r.atrasos}</td>
+                    <td data-label="Incompletos" className={`p-3 text-right tabular-nums ${r.incompletos ? 'text-orange-600 font-bold' : ''}`}>{r.incompletos}</td>
+                    <td data-label="Normais" className="p-3 text-right tabular-nums">{formatarMinutos(r.normaisDiurnasMin)}</td>
+                    <td data-label="Noturnas" className="p-3 text-right tabular-nums text-indigo-700">{formatarMinutos(r.normaisNoturnasMin)}</td>
+                    <td data-label="Extra diurna" className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(r.extraDiurnaMin)}</td>
+                    <td data-label="Extra noturna" className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(r.extraNoturnaMin)}</td>
+                    <td data-label="Falta / atraso" className={`p-3 text-right tabular-nums ${r.faltaAtrasoMin ? 'text-rose-600 font-bold' : ''}`}>{formatarMinutos(r.faltaAtrasoMin)}</td>
+                    <td data-label="Abono" className="p-3 text-right tabular-nums text-sky-700">{formatarMinutos(r.abonoMin)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -751,18 +758,18 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                   return (
                     <tfoot className="bg-slate-50 font-black text-slate-800 border-t-2 border-slate-200">
                       <tr>
-                        <td className="p-3">Total ({resumos.length} colaborador{resumos.length === 1 ? '' : 'es'})</td>
-                        <td className="p-3 text-right tabular-nums">{t.diasPrevistos}</td>
-                        <td className="p-3 text-right tabular-nums">{t.diasTrabalhados}</td>
-                        <td className={`p-3 text-right tabular-nums ${t.faltas ? 'text-rose-600' : ''}`}>{t.faltas}</td>
-                        <td className="p-3 text-right tabular-nums">{t.atrasos}</td>
-                        <td className="p-3 text-right tabular-nums">{t.incompletos}</td>
-                        <td className="p-3 text-right tabular-nums">{formatarMinutos(t.normaisDiurnasMin)}</td>
-                        <td className="p-3 text-right tabular-nums text-indigo-700">{formatarMinutos(t.normaisNoturnasMin)}</td>
-                        <td className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(t.extraDiurnaMin)}</td>
-                        <td className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(t.extraNoturnaMin)}</td>
-                        <td className={`p-3 text-right tabular-nums ${t.faltaAtrasoMin ? 'text-rose-600' : ''}`}>{formatarMinutos(t.faltaAtrasoMin)}</td>
-                        <td className="p-3 text-right tabular-nums text-sky-700">{formatarMinutos(t.abonoMin)}</td>
+                        <td className="cartao-titulo p-3">Total ({resumos.length} colaborador{resumos.length === 1 ? '' : 'es'})</td>
+                        <td data-label="Dias previstos" className="p-3 text-right tabular-nums">{t.diasPrevistos}</td>
+                        <td data-label="Com batida" className="p-3 text-right tabular-nums">{t.diasTrabalhados}</td>
+                        <td data-label="Faltas" className={`p-3 text-right tabular-nums ${t.faltas ? 'text-rose-600' : ''}`}>{t.faltas}</td>
+                        <td data-label="Atrasos" className="p-3 text-right tabular-nums">{t.atrasos}</td>
+                        <td data-label="Incompletos" className="p-3 text-right tabular-nums">{t.incompletos}</td>
+                        <td data-label="Normais" className="p-3 text-right tabular-nums">{formatarMinutos(t.normaisDiurnasMin)}</td>
+                        <td data-label="Noturnas" className="p-3 text-right tabular-nums text-indigo-700">{formatarMinutos(t.normaisNoturnasMin)}</td>
+                        <td data-label="Extra diurna" className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(t.extraDiurnaMin)}</td>
+                        <td data-label="Extra noturna" className="p-3 text-right tabular-nums text-emerald-700">{formatarMinutos(t.extraNoturnaMin)}</td>
+                        <td data-label="Falta / atraso" className={`p-3 text-right tabular-nums ${t.faltaAtrasoMin ? 'text-rose-600' : ''}`}>{formatarMinutos(t.faltaAtrasoMin)}</td>
+                        <td data-label="Abono" className="p-3 text-right tabular-nums text-sky-700">{formatarMinutos(t.abonoMin)}</td>
                       </tr>
                     </tfoot>
                   );

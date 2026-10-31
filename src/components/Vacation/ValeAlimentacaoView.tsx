@@ -315,14 +315,15 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             <Utensils className="w-5 h-5 text-amber-600" />
-            Programação do Vale Alimentação
+            <span className="sm:hidden">Vale Alimentação</span>
+            <span className="hidden sm:inline">Programação do Vale Alimentação</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="hidden sm:block text-xs text-slate-500 mt-0.5">
             Réplica do painel do Coda: quinzenas fixas do ano e um lançamento por colaborador,
             calculado a partir dos dias úteis do período menos as faltas e os dias de férias.
           </p>
@@ -354,7 +355,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
         <select
           value={quinzenaAtual?.id || ''}
           onChange={(e) => setQuinzenaSelecionadaId(e.target.value)}
-          className={inputCls + ' min-w-[240px]'}
+          className={inputCls + ' w-full sm:w-auto sm:min-w-[240px]'}
         >
           {quinzenasOrdenadas.length === 0 && <option value="">Nenhuma quinzena cadastrada</option>}
           {quinzenasOrdenadas.map((q) => (
@@ -374,7 +375,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                 Quinzena vigente
               </span>
             )}
-            <div className="ml-auto flex items-center gap-2">
+            <div className="w-full sm:w-auto sm:ml-auto flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => onGerarLancamentos(quinzenaAtual.id)}
@@ -542,8 +543,8 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
       )}
 
       {/* Tabela de lançamentos */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="w-full text-xs">
+      <div className="envelope-cartoes bg-white rounded-xl border border-slate-200 overflow-x-auto">
+        <table className="tabela-cartoes w-full text-xs">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
               <th className="px-3 py-2">Colaborador</th>
@@ -595,9 +596,9 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                 const colaborador = colaboradoresPorId.get(l.colaboradorId);
                 return (
                 <tr key={l.id} className="align-middle">
-                  <td className="px-3 py-1.5 font-medium text-slate-700">{l.colaboradorNome}</td>
-                  <td className="px-3 py-1.5 text-right text-slate-600">{formatMoney(l.valorDiaria)}</td>
-                  <td className="px-3 py-1.5 text-right">
+                  <td className="cartao-titulo px-3 py-1.5 font-medium text-slate-700">{l.colaboradorNome}</td>
+                  <td data-label="Valor da diária" className="px-3 py-1.5 text-right text-slate-600">{formatMoney(l.valorDiaria)}</td>
+                  <td data-label="Faltas" className="px-3 py-1.5 text-right">
                     <div className="flex items-center justify-end gap-1">
                       {divergeDeOcorrencias && (
                         <AlertTriangle
@@ -614,7 +615,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                       />
                     </div>
                   </td>
-                  <td className="px-3 py-1.5 text-right">
+                  <td data-label="Dias de férias" className="px-3 py-1.5 text-right">
                     <div className="flex items-center justify-end gap-1">
                       {divergeDeFerias && (
                         <AlertTriangle
@@ -633,7 +634,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                       />
                     </div>
                   </td>
-                  <td className="px-3 py-1.5 text-right">
+                  <td data-label="Extras" className="px-3 py-1.5 text-right">
                     <input
                       type="number"
                       min={0}
@@ -645,13 +646,13 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                       className={inputCls + ' w-16 text-right'}
                     />
                   </td>
-                  <td className="px-3 py-1.5 text-right font-semibold text-slate-700">
+                  <td data-label="Diárias" className="px-3 py-1.5 text-right font-semibold text-slate-700">
                     {l.quantidadeDiarias}
                   </td>
-                  <td className="px-3 py-1.5 text-right font-bold text-emerald-700">
+                  <td data-label="Valor a disponibilizar" className="px-3 py-1.5 text-right font-bold text-emerald-700">
                     {formatMoney(l.valorDisponibilizado)}
                   </td>
-                  <td className="px-3 py-1.5">
+                  <td data-label="Observações" className="px-3 py-1.5">
                     <input
                       type="text"
                       value={l.observacoes || ''}
@@ -660,7 +661,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                       className={inputCls + ' w-full'}
                     />
                   </td>
-                  <td className="px-3 py-1.5">
+                  <td data-label="Comunicar" className="px-3 py-1.5">
                     <div className="flex items-center justify-center gap-1">
                       <button
                         type="button"
@@ -702,7 +703,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                       </button>
                     </div>
                   </td>
-                  <td className="px-3 py-1.5 text-center">
+                  <td className="cartao-acoes px-3 py-1.5 text-center">
                     <button
                       type="button"
                       onClick={() => onDeleteLancamento(l.id)}
@@ -719,11 +720,11 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
           {lancamentosDaQuinzena.length > 0 && (
             <tfoot className="bg-slate-50 font-bold text-slate-700">
               <tr>
-                <td className="px-3 py-2" colSpan={4}>
+                <td className="cartao-titulo px-3 py-2" colSpan={5}>
                   Total
                 </td>
-                <td className="px-3 py-2 text-right">{totalDiarias}</td>
-                <td className="px-3 py-2 text-right text-emerald-700">
+                <td data-label="Diárias" className="px-3 py-2 text-right">{totalDiarias}</td>
+                <td data-label="Valor a disponibilizar" className="px-3 py-2 text-right text-emerald-700">
                   {formatMoney(totalDisponibilizado)}
                 </td>
                 <td colSpan={3} />

@@ -211,7 +211,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
       className={`align-middle transition-colors ${destacado ? 'bg-amber-100 outline outline-2 -outline-offset-2 outline-amber-400' : showSelecao && selecionado ? 'bg-emerald-50' : ''}`}
     >
       {showSelecao && (
-        <td className="px-2 py-1.5">
+        <td data-label="Selecionar" className="px-2 py-1.5">
           <input
             type="checkbox"
             checked={!!selecionado}
@@ -221,9 +221,9 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
         </td>
       )}
       {showCliente && (
-        <td className="px-2 py-1.5 font-medium text-slate-700 max-w-[130px] truncate">{l.clienteNome}</td>
+        <td data-label="Cliente" className="px-2 py-1.5 font-medium text-slate-700 max-w-[130px] truncate">{l.clienteNome}</td>
       )}
-      <td className="px-2 py-1.5 whitespace-nowrap">
+      <td className="cartao-titulo px-2 py-1.5 whitespace-nowrap">
         <button
           type="button"
           onClick={() => setDetalheAberto(true)}
@@ -236,8 +236,8 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
           <DetalheLancamentoModal lancamento={l} cliente={cliente} onClose={() => setDetalheAberto(false)} onSalvar={(patch) => onFieldChange(patch)} />
         )}
       </td>
-      <td className="px-2 py-1.5 text-slate-600 max-w-[120px] truncate">{l.destinatario || '—'}</td>
-      <td className="px-2 py-1.5">
+      <td data-label="Destinatário" className="px-2 py-1.5 text-slate-600 max-w-[120px] truncate">{l.destinatario || '—'}</td>
+      <td data-label="Modal" className="px-2 py-1.5">
         <select
           value={ehModalRodoviario(l.modal) ? 'Rodoviário' : 'Aéreo'}
           onChange={(e) => onFieldChange({ modal: e.target.value })}
@@ -252,7 +252,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
           <option value="Rodoviário">Rodoviário</option>
         </select>
       </td>
-      <td className="px-2 py-1.5">
+      <td data-label="Cidade" className="px-2 py-1.5">
         {usaTarifaPorCidade ? (
           // <input list> + <datalist> em vez de <select>: dá pra digitar (filtra a lista
           // conforme digita) ou rolar/clicar as opções — um <select> nativo com centenas de
@@ -282,7 +282,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
           />
         )}
       </td>
-      <td className="px-2 py-1.5">
+      <td data-label="Peso" className="px-2 py-1.5">
         <input
           type="number"
           step="0.1"
@@ -292,7 +292,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
           className={inputCls + ' w-16 text-right'}
         />
       </td>
-      <td className="px-2 py-1.5">
+      <td data-label="Tipo custo extra" className="px-2 py-1.5">
         <select
           value={l.tipoCustoExtra || ''}
           onChange={(e) =>
@@ -309,7 +309,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
           ))}
         </select>
       </td>
-      <td className="px-2 py-1.5">
+      <td data-label="Custo extra" className="px-2 py-1.5">
         <input
           type="number"
           step="0.01"
@@ -319,7 +319,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
           className={inputCls + ' w-20 text-right'}
         />
       </td>
-      <td className="px-2 py-1.5">
+      <td data-label="Data" className="px-2 py-1.5">
         <input
           type="date"
           value={l.dataConclusao || l.dataEmissao || ''}
@@ -332,7 +332,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
           className={inputCls + ' w-[124px]'}
         />
       </td>
-      <td className="px-2 py-1.5 text-right font-bold text-slate-800 whitespace-nowrap">
+      <td data-label="Valor a cobrar" className="px-2 py-1.5 text-right font-bold text-slate-800 whitespace-nowrap">
         {l.valorACobrarManual !== undefined ? (
           <div className="inline-flex items-center gap-1 justify-end">
             <input
@@ -367,7 +367,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
           </button>
         )}
       </td>
-      <td className="px-2 py-1.5">
+      <td data-label="Valor recebido" className="px-2 py-1.5">
         <input
           type="number"
           step="0.01"
@@ -379,7 +379,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
           className={inputCls + ' w-20 text-right'}
         />
       </td>
-      <td className="px-2 py-1.5 text-center">
+      <td data-label="Pago" className="px-2 py-1.5 text-center">
         <input
           type="checkbox"
           checked={l.confirmacaoPagamento}
@@ -399,7 +399,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
         />
       </td>
       {showRemoverDaFatura && (
-        <td className="px-2 py-1.5 text-center">
+        <td data-label="Tirar da fatura" className="px-2 py-1.5 text-center">
           <button
             type="button"
             onClick={() => onFieldChange({ faturaId: undefined })}
@@ -410,7 +410,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
           </button>
         </td>
       )}
-      <td className="px-2 py-1.5 text-center">
+      <td className="cartao-acoes px-2 py-1.5 text-center">
         <button
           type="button"
           onClick={onDelete}
@@ -1162,8 +1162,8 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
       </div>
 
       {mesAMesAberto && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
-          <table className="w-full text-xs">
+        <div className="envelope-cartoes bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+          <table className="tabela-cartoes w-full text-xs">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 <th className="text-left p-2.5">Mês (conclusão da entrega)</th>
@@ -1180,7 +1180,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
             <tbody className="divide-y divide-slate-100">
               {mesAMes.map(([mes, m]) => (
                 <tr key={mes} className="hover:bg-amber-50/40">
-                  <td className="p-2.5 font-semibold text-slate-800">
+                  <td className="cartao-titulo p-2.5 font-semibold text-slate-800">
                     <button
                       type="button"
                       onClick={() => {
@@ -1195,14 +1195,14 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                       {nomeMes(mes)}
                     </button>
                   </td>
-                  <td className="p-2.5 text-right tabular-nums font-semibold">{formatCurrency(m.cobrado)}</td>
-                  <td className="p-2.5 text-right tabular-nums text-emerald-700">{formatCurrency(m.pago)}</td>
-                  <td className="p-2.5 text-right tabular-nums text-rose-700">{formatCurrency(m.cobrado - m.pago)}</td>
-                  {aliquotas.length > 0 && <td className="p-2.5 text-right tabular-nums text-[#92611F]">{formatCurrency(m.imposto)}</td>}
-                  {aliquotas.length > 0 && <td className="p-2.5 text-right tabular-nums font-semibold">{formatCurrency(m.cobrado - m.imposto)}</td>}
-                  <td className="p-2.5 text-right tabular-nums">{m.ctes}</td>
-                  <td className="p-2.5 text-right tabular-nums">{m.pagos}</td>
-                  <td className="p-2.5 text-right tabular-nums">{m.faturas.size}</td>
+                  <td data-label="Faturado" className="p-2.5 text-right tabular-nums font-semibold">{formatCurrency(m.cobrado)}</td>
+                  <td data-label="Pago" className="p-2.5 text-right tabular-nums text-emerald-700">{formatCurrency(m.pago)}</td>
+                  <td data-label="Em aberto" className="p-2.5 text-right tabular-nums text-rose-700">{formatCurrency(m.cobrado - m.pago)}</td>
+                  {aliquotas.length > 0 && <td data-label="CBS/IBS" className="p-2.5 text-right tabular-nums text-[#92611F]">{formatCurrency(m.imposto)}</td>}
+                  {aliquotas.length > 0 && <td data-label="Líquido JMT" className="p-2.5 text-right tabular-nums font-semibold">{formatCurrency(m.cobrado - m.imposto)}</td>}
+                  <td data-label="CT-es" className="p-2.5 text-right tabular-nums">{m.ctes}</td>
+                  <td data-label="Pagos" className="p-2.5 text-right tabular-nums">{m.pagos}</td>
+                  <td data-label="Faturas do mês" className="p-2.5 text-right tabular-nums">{m.faturas.size}</td>
                 </tr>
               ))}
               {mesAMes.length === 0 && (
@@ -1214,15 +1214,15 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
             {mesAMes.length > 1 && (
               <tfoot className="bg-slate-50 font-bold">
                 <tr>
-                  <td className="p-2.5">Total</td>
-                  <td className="p-2.5 text-right tabular-nums">{formatCurrency(resumoGeral.totalFaturado)}</td>
-                  <td className="p-2.5 text-right tabular-nums text-emerald-700">{formatCurrency(resumoGeral.totalPago)}</td>
-                  <td className="p-2.5 text-right tabular-nums text-rose-700">{formatCurrency(resumoGeral.totalEmAberto)}</td>
-                  {aliquotas.length > 0 && <td className="p-2.5 text-right tabular-nums text-[#92611F]">{formatCurrency(impostoNoIntervalo)}</td>}
-                  {aliquotas.length > 0 && <td className="p-2.5 text-right tabular-nums">{formatCurrency(resumoGeral.totalFaturado - impostoNoIntervalo)}</td>}
-                  <td className="p-2.5 text-right tabular-nums">{resumoGeral.totalCtes}</td>
-                  <td className="p-2.5 text-right tabular-nums">{resumoGeral.ctesPagos}</td>
-                  <td className="p-2.5 text-right tabular-nums">{resumoGeral.totalFaturas}</td>
+                  <td className="cartao-titulo p-2.5">Total</td>
+                  <td data-label="Faturado" className="p-2.5 text-right tabular-nums">{formatCurrency(resumoGeral.totalFaturado)}</td>
+                  <td data-label="Pago" className="p-2.5 text-right tabular-nums text-emerald-700">{formatCurrency(resumoGeral.totalPago)}</td>
+                  <td data-label="Em aberto" className="p-2.5 text-right tabular-nums text-rose-700">{formatCurrency(resumoGeral.totalEmAberto)}</td>
+                  {aliquotas.length > 0 && <td data-label="CBS/IBS" className="p-2.5 text-right tabular-nums text-[#92611F]">{formatCurrency(impostoNoIntervalo)}</td>}
+                  {aliquotas.length > 0 && <td data-label="Líquido JMT" className="p-2.5 text-right tabular-nums">{formatCurrency(resumoGeral.totalFaturado - impostoNoIntervalo)}</td>}
+                  <td data-label="CT-es" className="p-2.5 text-right tabular-nums">{resumoGeral.totalCtes}</td>
+                  <td data-label="Pagos" className="p-2.5 text-right tabular-nums">{resumoGeral.ctesPagos}</td>
+                  <td data-label="Faturas do mês" className="p-2.5 text-right tabular-nums">{resumoGeral.totalFaturas}</td>
                 </tr>
               </tfoot>
             )}
@@ -1971,8 +1971,8 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                                 : `Nenhuma nota encontrada em ${formatDateBR(dataFatura)} nesta fatura.`}
                             </p>
                           ) : (
-                            <div className="border border-slate-200 rounded-xl overflow-x-auto bg-white">
-                              <table className="w-full text-[11px]">
+                            <div className="envelope-cartoes border border-slate-200 rounded-xl overflow-x-auto bg-white">
+                              <table className="tabela-cartoes w-full text-[11px]">
                                 <thead className="bg-slate-50">
                                   <tr className="text-left text-slate-500">
                                     <th className="px-2 py-2">NF / CT-e</th>
@@ -2127,8 +2127,8 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
             </div>
           )}
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-[11px]">
+          <div className="envelope-cartoes overflow-x-auto">
+            <table className="tabela-cartoes w-full text-[11px]">
               <thead className="bg-slate-50">
                 <tr className="text-left text-slate-500">
                   <th className="px-2 py-2">
