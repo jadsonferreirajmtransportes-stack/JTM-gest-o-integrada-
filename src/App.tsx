@@ -75,6 +75,7 @@ import {
   getFerias,
   saveFerias,
   updateStatusFerias,
+  deleteFerias as deleteFeriasSupabase,
   getEntregasEpi,
   saveEntregaEpi,
   salvarEntregaEpiPublica,
@@ -2144,6 +2145,17 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feriasList, currentUser]);
 
+  const handleDeleteFerias = async (feriasId: string) => {
+    try {
+      await deleteFeriasSupabase(feriasId);
+      await recarregarDp('ferias');
+      showToast('Programação de férias excluída.');
+    } catch (e) {
+      console.error(e);
+      showToast('Não foi possível excluir a programação de férias.', 'info');
+    }
+  };
+
   const handleSaveEntregaEpi = async (entrega: EntregaEpi) => {
     await saveEntregaEpi(entrega);
     await recarregarDp('entregasEpi');
@@ -3703,6 +3715,7 @@ export default function App() {
               currentUser={currentUser}
               onSaveFerias={handleSaveFerias}
               onUpdateStatusFerias={handleUpdateStatusFerias}
+              onDeleteFerias={handleDeleteFerias}
             />
           )}
 

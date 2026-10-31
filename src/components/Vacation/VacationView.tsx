@@ -23,6 +23,7 @@ import {
   FileSignature,
   Loader2,
   Send,
+  Trash2,
 } from 'lucide-react';
 import {
   Colaborador,
@@ -95,6 +96,8 @@ interface VacationViewProps {
   currentUser?: UsuarioLogin;
   onSaveFerias: (ferias: ProgramacaoFerias) => void;
   onUpdateStatusFerias: (id: string, newStatus: StatusFerias) => void;
+  /** Excluir uma programação (ex.: linha duplicada) — só administrador. */
+  onDeleteFerias?: (id: string) => void | Promise<void>;
 }
 
 export const VacationView: React.FC<VacationViewProps> = ({
@@ -104,6 +107,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
   currentUser,
   onSaveFerias,
   onUpdateStatusFerias,
+  onDeleteFerias,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   // Aviso/Recibo de férias pra assinatura por link — só admin (o recibo tem valores de salário,
@@ -836,6 +840,24 @@ export const VacationView: React.FC<VacationViewProps> = ({
                         >
                           Editar
                         </button>
+                        {userRole === 'admin' && onDeleteFerias && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const periodo = item.periodoAquisitivoInicio
+                                ? `período aquisitivo ${formatDate(item.periodoAquisitivoInicio)} a ${formatDate(item.periodoAquisitivoFim)}`
+                                : 'sem período aquisitivo';
+                              if (window.confirm(`Excluir esta programação de férias de ${colab?.nomeCompleto || 'colaborador'} (${periodo})?
+
+Use para tirar uma linha duplicada. Não dá para desfazer.`))
+                                onDeleteFerias(item.id);
+                            }}
+                            title="Excluir esta programação (ex.: linha duplicada)"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
