@@ -39,6 +39,7 @@ import {
   buildAssuntoEmailAgendamentoAso,
   buildCorpoEmailAgendamentoAso,
 } from '../../utils/asoComunicacaoUtils';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface AnvisaExamsViewProps {
   colaboradores: Colaborador[];
@@ -350,7 +351,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs hidden lg:flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold uppercase">
@@ -366,7 +367,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <AcoesTela className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => exportExamesReport(filtered, 'xlsx')}
@@ -375,7 +376,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             <span>Exportar Relatório ANVISA</span>
           </button>
-        </div>
+        </AcoesTela>
       </div>
 
       {/* KPI Cards */}

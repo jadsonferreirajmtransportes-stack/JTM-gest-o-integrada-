@@ -6,6 +6,7 @@ import { EpiFormModal } from './EpiFormModal';
 import { EpiPrintModal } from './EpiPrintModal';
 import { CompartilharEpiModal } from './CompartilharEpiModal';
 import { EpiComprovanteUploader } from './EpiComprovanteUploader';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface EpiViewProps {
   colaboradores: Colaborador[];
@@ -90,7 +91,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="hidden lg:flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <HardHat className="w-5 h-5 text-[#C48229]" />
@@ -100,7 +101,16 @@ export const EpiView: React.FC<EpiViewProps> = ({
             Registro escrito de entrega/troca de Equipamento de Proteção Individual, exigido pela NR-6.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <AcoesTela className="flex items-center gap-2" principal={
+            <button
+            type="button"
+            onClick={handleNovaEntrega}
+            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nova Entrega</span>
+          </button>
+          }>
           {onOpenEpiLinkModal && (
             <button
               type="button"
@@ -112,15 +122,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
               <span>Link do Formulário</span>
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleNovaEntrega}
-            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Nova Entrega</span>
-          </button>
-        </div>
+        </AcoesTela>
       </div>
 
       {/* Busca */}

@@ -20,6 +20,7 @@ import { formatCurrency, formatDate } from '../../utils/formatters';
 import { ComprasListaPdfModal } from './ComprasListaPdfModal';
 import { getAnexoSolicitacaoCompra } from '../../utils/comprasApi';
 import { baixarArquivo } from '../../utils/downloadUtils';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface ComprasViewProps {
   solicitacoes: SolicitacaoCompra[];
@@ -233,7 +234,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-3xl p-4 sm:p-8 shadow-sm relative overflow-hidden">
+      <div className="hidden lg:block bg-white rounded-3xl p-4 sm:p-8 shadow-sm relative overflow-hidden">
         <div className="hidden sm:flex absolute right-0 top-0 bottom-0 opacity-100 pointer-events-none items-center pr-8">
           <ShoppingCart className="w-56 h-56 text-orange-50" />
         </div>
@@ -267,7 +268,19 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
+          <AcoesTela className="flex items-center gap-2" principal={
+              <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+              className="px-3 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Nova Solicitação</span>
+            </button>
+            }>
             <button
               type="button"
               onClick={() => setShowPdfModal(true)}
@@ -286,18 +299,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
               <Link2 className="w-3.5 h-3.5" />
               <span>Link Público</span>
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                resetForm();
-                setShowForm(true);
-              }}
-              className="px-3 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Nova Solicitação</span>
-            </button>
-          </div>
+          </AcoesTela>
         </div>
 
         {filtradas.length === 0 ? (

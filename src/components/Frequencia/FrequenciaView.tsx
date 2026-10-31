@@ -73,6 +73,7 @@ import {
 import { gerarEspelhoPdf, nomeMes } from './espelhoPdf';
 import { ImportarFolhaManualModal } from './ImportarFolhaManualModal';
 import { gerarEspelhoXlsx, gerarResumoPdf, gerarResumoXlsx } from './relatorioFrequencia';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface FrequenciaViewProps {
   colaboradores: Colaborador[];
@@ -387,8 +388,8 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
+      <div className="lg:bg-white lg:p-5 lg:rounded-2xl lg:border lg:border-slate-200 lg:shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="hidden lg:flex items-center gap-3.5">
           <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] items-center justify-center text-white shrink-0">
             <Clock className="w-6 h-6" />
           </div>
@@ -400,8 +401,9 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
             <p className="hidden sm:block text-xs text-slate-500 mt-0.5">Ponto pelo celular com localização, espelho mensal, justificativas e assinatura do colaborador.</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 shrink-0">
-          <input type="month" value={mes} max={mesAtual()} onChange={(e) => e.target.value && setMes(e.target.value)} className="col-span-2 sm:col-span-1 p-2 border border-slate-200 rounded-xl text-xs font-semibold" />
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <input type="month" value={mes} max={mesAtual()} onChange={(e) => e.target.value && setMes(e.target.value)} className="w-full lg:w-auto p-2 border border-slate-200 rounded-xl text-xs font-semibold bg-white" />
+          <AcoesTela className="flex flex-wrap gap-2">
           <button type="button" onClick={carregarMes} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-50">
             <RefreshCw className={`w-3.5 h-3.5 ${carregandoMes ? 'animate-spin' : ''}`} /> Atualizar
           </button>
@@ -415,6 +417,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
               <FileUp className="w-3.5 h-3.5 text-[#92611F]" /> Importar folha manual
             </button>
           )}
+          </AcoesTela>
         </div>
       </div>
 

@@ -19,6 +19,7 @@ import { EnvioWhatsAppEmMassaModal, ItemEnvioWhatsApp } from '../Common/EnvioWha
 import { CapaNoticia, ResumoReacoes, dataNoticia } from './jornalVisual';
 import { NoticiaEditorModal, noticiaEmBranco } from './NoticiaEditorModal';
 import { EngajamentoPainel, InteracoesModal } from './JornalEngajamento';
+import { AcoesTela } from '../Common/AcoesTela';
 
 type Aba = 'publicadas' | 'aprovar' | 'rascunhos' | 'arquivadas' | 'comentarios' | 'engajamento';
 
@@ -174,7 +175,7 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
 
   return (
     <div className="space-y-5">
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs hidden lg:flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="hidden sm:flex w-12 h-12 rounded-xl bg-gradient-to-br from-[#C48229] to-[#7A4F17] text-white flex items-center justify-center">
             <Newspaper className="w-6 h-6" />
@@ -187,13 +188,17 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setEditando(noticiaEmBranco(eu))}
-          className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold uppercase flex items-center gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" /> {ehAdmin ? 'Nova notícia' : 'Sugerir notícia'}
-        </button>
+        <AcoesTela
+          principal={
+            <button
+            type="button"
+            onClick={() => setEditando(noticiaEmBranco(eu))}
+            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl text-xs font-bold uppercase flex items-center gap-2 shrink-0"
+          >
+            <Plus className="w-4 h-4" /> {ehAdmin ? 'Nova notícia' : 'Sugerir notícia'}
+          </button>
+          }
+        />
       </div>
 
       {ehAdmin && (porAba.aprovar.length > 0 || pendentes.length > 0) && (

@@ -7,6 +7,7 @@ import { ESCADA_DISCIPLINAR, MESES_REINCIDENCIA, situacaoDisciplinar } from './d
 import { tituloMedida } from './disciplinarPdf';
 import { NovaMedidaModal } from './NovaMedidaModal';
 import { MedidaDetalheModal } from './MedidaDetalheModal';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface DisciplinarViewProps {
   colaboradores: Colaborador[];
@@ -107,7 +108,7 @@ export const DisciplinarView: React.FC<DisciplinarViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hidden lg:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0">
             <Gavel className="w-6 h-6" />
@@ -120,14 +121,18 @@ export const DisciplinarView: React.FC<DisciplinarViewProps> = ({
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setNovaPara('')}
-          className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          {ehAdmin ? 'Nova medida' : 'Propor medida'}
-        </button>
+        <AcoesTela
+          principal={
+            <button
+            type="button"
+            onClick={() => setNovaPara('')}
+            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            {ehAdmin ? 'Nova medida' : 'Propor medida'}
+          </button>
+          }
+        />
       </div>
 
       {erro && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}

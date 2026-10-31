@@ -27,6 +27,7 @@ import {
 } from '../../types';
 import { formatDate } from '../../utils/formatters';
 import { exportOcorrenciasReport } from '../../utils/exportUtils';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface OccurrencesViewProps {
   colaboradores: Colaborador[];
@@ -212,7 +213,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Header Info */}
-      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs hidden lg:flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <span className="hidden sm:inline text-[10px] font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-bold uppercase">
             Registro & Supervisão Disciplinar
@@ -226,7 +227,16 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <AcoesTela className="flex flex-wrap items-center gap-2 shrink-0" principal={userRole !== 'colaborador' ? (
+            <button
+                type="button"
+                onClick={() => handleOpenNew()}
+                className="px-3.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Nova Ocorrência</span>
+              </button>
+          ) : undefined}>
           {/* Links de compartilhamento (QR Code/WhatsApp, Formulário de Campo) — só pra quem tem
               acesso GERAL ao DP, não pra quem só tem a seção de Ocorrências liberada. */}
           {temAcessoGeralDp && onOpenOccurrenceLinkModal && (
@@ -263,17 +273,7 @@ export const OccurrencesView: React.FC<OccurrencesViewProps> = ({
               <span>Excel</span>
             </button>
 
-            {userRole !== 'colaborador' && (
-              <button
-                type="button"
-                onClick={() => handleOpenNew()}
-                className="px-3.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Nova Ocorrência</span>
-              </button>
-            )}
-        </div>
+        </AcoesTela>
       </div>
 
       {/* Filter and Search Bar */}

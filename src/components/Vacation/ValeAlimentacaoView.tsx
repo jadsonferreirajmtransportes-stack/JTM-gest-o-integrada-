@@ -49,6 +49,7 @@ import {
   buildCorpoEmailVA,
 } from '../../utils/valeAlimentacaoUtils';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface ValeAlimentacaoViewProps {
   colaboradores: Colaborador[];
@@ -316,7 +317,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <div className="flex items-start justify-between flex-wrap gap-3">
+      <div className="hidden lg:flex items-start justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             <Utensils className="w-5 h-5 text-amber-600" />
@@ -328,7 +329,16 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
             calculado a partir dos dias úteis do período menos as faltas e os dias de férias.
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <AcoesTela className="flex items-center gap-2 flex-wrap" principal={
+            <button
+          type="button"
+          onClick={() => setIsNovaQuinzenaOpen(true)}
+          className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Nova Quinzena
+        </button>
+          }>
         <button
           type="button"
           onClick={() => setTermoCartaoAberto(true)}
@@ -338,15 +348,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
           <CreditCard className="w-3.5 h-3.5" />
           Termo de entrega do cartão
         </button>
-        <button
-          type="button"
-          onClick={() => setIsNovaQuinzenaOpen(true)}
-          className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Nova Quinzena
-        </button>
-        </div>
+        </AcoesTela>
       </div>
 
       {/* Seletor de quinzena */}

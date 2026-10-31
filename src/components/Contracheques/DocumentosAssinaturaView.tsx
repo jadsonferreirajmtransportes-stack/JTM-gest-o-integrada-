@@ -37,6 +37,7 @@ import { ImportarFolhaExtraModal } from './ImportarFolhaExtraModal';
 import { ImportarDocumentosFeriasModal } from './ImportarDocumentosFeriasModal';
 import { EnviarRegulamentoModal } from '../Regulamento/EnviarRegulamentoModal';
 import { formatarCompetencia, formatarDataBr } from './contrachequePdfUtils';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface DocumentosAssinaturaViewProps {
   categoria: CategoriaDocumentoAssinatura;
@@ -383,8 +384,8 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
   return (
     <div className={compacto ? 'space-y-4' : 'space-y-6'}>
       <div
-        className={`bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-          compacto ? 'p-4' : 'p-5'
+        className={`bg-white rounded-2xl border border-slate-200 shadow-xs flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+          compacto ? 'p-4 flex' : 'p-5 hidden lg:flex'
         }`}
       >
         <div className="flex items-center gap-3.5">
@@ -400,7 +401,16 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
             <p className="text-xs text-slate-500 mt-0.5">{textos.descricao}</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 shrink-0">
+        <AcoesTela noLugar={compacto} className="flex flex-wrap gap-2 shrink-0" principal={textos.importar ? (
+            <button
+            type="button"
+            onClick={() => setShowImportar(true)}
+            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0"
+          >
+            <Upload className="w-4 h-4" />
+            {textos.importar}
+          </button>
+          ) : undefined}>
           {ehContracheque && (
             <button
               type="button"
@@ -411,15 +421,7 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
               Importar folha extra
             </button>
           )}
-          {textos.importar && (<button
-            type="button"
-            onClick={() => setShowImportar(true)}
-            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0"
-          >
-            <Upload className="w-4 h-4" />
-            {textos.importar}
-          </button>)}
-        </div>
+        </AcoesTela>
       </div>
 
       {erro && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}

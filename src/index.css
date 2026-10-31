@@ -543,3 +543,31 @@
     color: #ffffff !important;
   }
 }
+
+/* Ação principal da tela no celular: botão dourado flutuante acima da barra de baixo (ver
+   AcoesTela). E o menu "⋯" (folha que sobe de baixo) com as demais ações em lista. */
+.fab-principal {
+  position: fixed;
+  right: 16px;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  z-index: 35;
+}
+.fab-principal > button,
+.fab-principal > label {
+  border-radius: 9999px !important;
+  padding: 0.85rem 1.15rem !important;
+  font-size: 0.8rem !important;
+  box-shadow: 0 12px 28px -8px rgba(146, 97, 31, 0.6) !important;
+}
+.folha-acoes > button,
+.folha-acoes > label,
+.folha-acoes > a,
+.folha-acoes > div > button {
+  width: 100%;
+  display: flex !important;
+  justify-content: flex-start !important;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem !important;
+  border-radius: 1rem !important;
+  font-size: 0.85rem !important;
+}

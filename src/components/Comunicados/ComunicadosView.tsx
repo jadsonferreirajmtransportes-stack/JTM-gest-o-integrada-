@@ -38,6 +38,7 @@ import { NovoComunicadoModal, RascunhoComunicado } from './NovoComunicadoModal';
 import { EditarComunicadoModal } from './EditarComunicadoModal';
 import { gerarPdfComunicado } from './comunicadoPdf';
 import { gerarImagemComunicado, textoParaImagem } from './comunicadoImagem';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface ComunicadosViewProps {
   colaboradores: Colaborador[];
@@ -113,7 +114,7 @@ export const ComunicadosView: React.FC<ComunicadosViewProps> = ({ colaboradores,
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-row items-center justify-between gap-3 sm:gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs hidden lg:flex flex-row items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3.5 min-w-0">
           <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0">
             <Megaphone className="w-6 h-6" />
@@ -123,9 +124,13 @@ export const ComunicadosView: React.FC<ComunicadosViewProps> = ({ colaboradores,
             <p className="hidden sm:block text-xs text-slate-500 mt-0.5">Um comunicado, três formatos no padrão JMT: texto (WhatsApp/e-mail), imagem e PDF — com histórico e ciência.</p>
           </div>
         </div>
-        <button type="button" onClick={() => setNovo(true)} className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0">
-          <Plus className="w-4 h-4" /> <span className="sm:hidden">Novo</span><span className="hidden sm:inline">Novo comunicado</span>
-        </button>
+        <AcoesTela
+          principal={
+            <button type="button" onClick={() => setNovo(true)} className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0">
+            <Plus className="w-4 h-4" /> <span className="sm:hidden">Novo</span><span className="hidden sm:inline">Novo comunicado</span>
+          </button>
+          }
+        />
       </div>
 
       {erro && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}

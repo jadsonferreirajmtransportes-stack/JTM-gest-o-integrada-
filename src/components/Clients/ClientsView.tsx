@@ -33,6 +33,7 @@ import { ClientDetailModal } from './ClientDetailModal';
 import { ClientInteractionModal } from './ClientInteractionModal';
 import { PropostaComercialModal } from './PropostaComercialModal';
 import { CalculadoraFreteModal } from './CalculadoraFreteModal';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface ClientsViewProps {
   clientes: Cliente[];
@@ -265,7 +266,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Executive Header Banner */}
-      <div className="bg-white rounded-3xl p-4 sm:p-8 shadow-sm relative overflow-hidden">
+      <div className="hidden lg:block bg-white rounded-3xl p-4 sm:p-8 shadow-sm relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 opacity-[0.04] pointer-events-none flex items-center pr-8">
           <Building2 className="w-80 h-80 text-blue-900" />
         </div>
@@ -285,7 +286,17 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          <AcoesTela className="flex items-center gap-2.5 flex-wrap shrink-0" principal={userRole === 'admin' ? (
+              <button
+                id="btn-add-new-client"
+                type="button"
+                onClick={handleOpenNew}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-slate-950 font-bold text-xs transition-all shadow-md active:scale-98"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Novo Cliente</span>
+              </button>
+            ) : undefined}>
             <button
               type="button"
               onClick={() => setCalculadoraAberta(true)}
@@ -305,19 +316,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               <Download className="w-4 h-4 text-emerald-600" />
               <span>Exportar CSV</span>
             </button>
-
-            {userRole === 'admin' && (
-              <button
-                id="btn-add-new-client"
-                type="button"
-                onClick={handleOpenNew}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-slate-950 font-bold text-xs transition-all shadow-md active:scale-98"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Novo Cliente</span>
-              </button>
-            )}
-          </div>
+          </AcoesTela>
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import {
 } from '../../utils/documentosPadronizadosApi';
 import { importarArquivo } from './importarDocumento';
 import { DocumentoEditor } from './DocumentoEditor';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface DocumentosViewProps {
   currentUser?: UsuarioLogin;
@@ -172,7 +173,7 @@ export const DocumentosView: React.FC<DocumentosViewProps> = ({ currentUser, col
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs hidden lg:flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3.5">
           <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] items-center justify-center text-white shrink-0">
             <FileStack className="w-6 h-6" />
@@ -182,15 +183,16 @@ export const DocumentosView: React.FC<DocumentosViewProps> = ({ currentUser, col
             <p className="hidden sm:block text-xs text-slate-500 mt-0.5">Importe PDF, Word ou Excel, revise com o crivo do padrão JMT e gere o documento na identidade da empresa.</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:flex gap-2 shrink-0">
+        <AcoesTela className="grid grid-cols-2 sm:flex gap-2 shrink-0" principal={
+            <button type="button" onClick={() => inputArquivo.current?.click()} disabled={importando} className="justify-center px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 disabled:opacity-60">
+            {importando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} {importando ? 'Lendo o arquivo...' : 'Importar arquivo'}
+          </button>
+          }>
           <button type="button" onClick={() => setAberto({ doc: documentoNovo(currentUser?.nome), avisos: [] })} className="justify-center px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-50">
             <Plus className="w-4 h-4" /> Em branco
           </button>
-          <button type="button" onClick={() => inputArquivo.current?.click()} disabled={importando} className="justify-center px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 disabled:opacity-60">
-            {importando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} {importando ? 'Lendo o arquivo...' : 'Importar arquivo'}
-          </button>
           <input ref={inputArquivo} type="file" accept=".pdf,.docx,.xlsx,.xls,.csv" className="hidden" onChange={(e) => handleImportar(e.target.files?.[0])} />
-        </div>
+        </AcoesTela>
       </div>
 
       {erro && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}

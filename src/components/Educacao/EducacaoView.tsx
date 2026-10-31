@@ -49,6 +49,7 @@ import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { EnvioWhatsAppEmMassaModal, ItemEnvioWhatsApp } from '../Common/EnvioWhatsAppEmMassaModal';
 import { montarLinkUnico } from '../../utils/linkUnico';
 import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface EducacaoViewProps {
   colaboradores: Colaborador[];
@@ -328,7 +329,7 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs hidden lg:flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3.5">
           <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] items-center justify-center text-white shrink-0">
             <GraduationCap className="w-6 h-6" />
@@ -340,7 +341,15 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 shrink-0">
+        <AcoesTela className="flex flex-wrap gap-2 shrink-0" principal={
+            <button
+            type="button"
+            onClick={() => setEditando('novo')}
+            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> Novo treinamento
+          </button>
+          }>
           <button
             type="button"
             onClick={handleEnviarTodos}
@@ -367,14 +376,7 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
           >
             <MonitorSmartphone className="w-4 h-4 text-[#92611F]" /> Treinamentos do sistema
           </button>
-          <button
-            type="button"
-            onClick={() => setEditando('novo')}
-            className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> Novo treinamento
-          </button>
-        </div>
+        </AcoesTela>
       </div>
 
       <div className="flex gap-1 border-b border-slate-200 overflow-x-auto sem-barra">

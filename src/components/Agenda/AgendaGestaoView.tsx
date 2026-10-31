@@ -38,6 +38,7 @@ import { AgendaFormModal } from './AgendaFormModal';
 import { AgendaDetailModal } from './AgendaDetailModal';
 import { AgendaAlertaModal } from './AgendaAlertaModal';
 import { exportAtividadesToCSV, atividadeOcorreEm } from './agendaUtils';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface AgendaGestaoViewProps {
   atividades: AtividadeGestao[];
@@ -190,7 +191,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Top Banner / Hero */}
-      <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-100 flex flex-row items-center justify-between gap-3 sm:gap-4">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-100 hidden lg:flex flex-row items-center justify-between gap-3 sm:gap-4">
         <div className="space-y-1">
           <div className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
             <CalendarDays className="w-3.5 h-3.5" />
@@ -206,11 +207,21 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+        <AcoesTela className="flex items-center gap-2.5 shrink-0 flex-wrap" principal={
+            <button
+            type="button"
+            onClick={handleOpenNewAtividade}
+            className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="sm:hidden">Nova</span>
+            <span className="hidden sm:inline">Nova Atividade</span>
+          </button>
+          }>
           <button
             type="button"
             onClick={() => setCronogramaAberto(true)}
-            className="hidden sm:flex px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-[#92611F] border border-[#C48229] text-xs font-semibold items-center gap-1.5 transition-colors shadow-xs"
+            className="flex px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-[#92611F] border border-[#C48229] text-xs font-semibold items-center gap-1.5 transition-colors shadow-xs"
             title="Gerar cronograma do período em PDF ou Excel"
           >
             <CalendarRange className="w-4 h-4" />
@@ -220,7 +231,7 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
             <button
               type="button"
               onClick={() => setImportarAberto(true)}
-              className="hidden sm:flex px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-[#92611F] border border-[#C48229] text-xs font-semibold items-center gap-1.5 transition-colors shadow-xs"
+              className="flex px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-[#92611F] border border-[#C48229] text-xs font-semibold items-center gap-1.5 transition-colors shadow-xs"
               title="Importar compromissos de um cronograma em Excel"
             >
               <FileUp className="w-4 h-4" />
@@ -230,23 +241,14 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
           <button
             type="button"
             onClick={() => exportAtividadesToCSV(atividades)}
-            className="hidden sm:flex px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold items-center gap-1.5 transition-colors shadow-xs"
+            className="flex px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold items-center gap-1.5 transition-colors shadow-xs"
             title="Exportar todas as atividades em planilha CSV"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             <span>Exportar CSV</span>
           </button>
 
-          <button
-            type="button"
-            onClick={handleOpenNewAtividade}
-            className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="sm:hidden">Nova</span>
-            <span className="hidden sm:inline">Nova Atividade</span>
-          </button>
-        </div>
+        </AcoesTela>
       </div>
 
       {/* KPI Cards Row */}

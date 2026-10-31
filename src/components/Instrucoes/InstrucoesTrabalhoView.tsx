@@ -20,6 +20,7 @@ import { InstrucaoLinkModal } from './InstrucaoLinkModal';
 import { CienciaInstrucaoModal } from './CienciaInstrucaoModal';
 import { VincularModuloModal } from '../Notas/VincularModuloModal';
 import { formatDateBR } from '../../utils/formatters';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface InstrucoesTrabalhoViewProps {
   instrucoes: InstrucaoTrabalho[];
@@ -140,7 +141,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Hero */}
-      <div className={`bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-100 flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 ${detalheNoCelular ? 'hidden lg:flex' : 'flex'}`}>
+      <div className={`bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-100 flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 hidden lg:flex`}>
         <div className="space-y-1">
           <div className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
             <FileCheck2 className="w-3.5 h-3.5" />
@@ -157,14 +158,18 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
             (SIPOC, 5W2H e checklist de revisão).
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsNovaOpen(true)}
-          className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nova Instrução</span>
-        </button>
+        <AcoesTela flutuante={!detalheNoCelular}
+          principal={
+            <button
+            type="button"
+            onClick={() => setIsNovaOpen(true)}
+            className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nova Instrução</span>
+          </button>
+          }
+        />
       </div>
 
       {/* Workspace */}

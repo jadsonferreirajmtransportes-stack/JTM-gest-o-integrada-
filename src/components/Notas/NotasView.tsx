@@ -26,6 +26,7 @@ import {
 import { criarPaginaVazia } from './notasUtils';
 import { NotaEditor } from './NotaEditor';
 import { VincularModuloModal } from './VincularModuloModal';
+import { AcoesTela } from '../Common/AcoesTela';
 
 interface NotasViewProps {
   paginas: NotaPagina[];
@@ -202,7 +203,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Hero */}
-      <div className={`bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-100 flex-row items-center justify-between gap-3 sm:gap-4 ${detalheNoCelular ? 'hidden lg:flex' : 'flex'}`}>
+      <div className={`bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-100 flex-row items-center justify-between gap-3 sm:gap-4 hidden lg:flex`}>
         <div className="space-y-1 min-w-0">
           <div className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
             <NotebookPen className="w-3.5 h-3.5" />
@@ -217,15 +218,19 @@ export const NotasView: React.FC<NotasViewProps> = ({
             Cliente, Projeto, Colaborador ou operação existente.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => handleNovaPagina()}
-          className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="sm:hidden">Nova</span>
-          <span className="hidden sm:inline">Nova Página</span>
-        </button>
+        <AcoesTela flutuante={!detalheNoCelular}
+          principal={
+            <button
+            type="button"
+            onClick={() => handleNovaPagina()}
+            className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="sm:hidden">Nova</span>
+            <span className="hidden sm:inline">Nova Página</span>
+          </button>
+          }
+        />
       </div>
 
       {/* Workspace */}

@@ -77,6 +77,7 @@ import {
   buildCorpoEmailFerias,
 } from '../../utils/feriasComunicacaoUtils';
 import { PrintDocumentHeader, PrintDocumentFooter } from '../Common/PrintDocumentChrome';
+import { AcoesTela } from '../Common/AcoesTela';
 
 // Períodos considerados para o relatório: dataInicio/dataFim da férias (ou cada etapa do
 // fracionamento) precisam se sobrepor ao intervalo [periodoInicio, periodoFim] escolhido.
@@ -410,7 +411,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Header Info */}
-      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs hidden lg:flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <span className="hidden sm:inline text-[10px] font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-bold uppercase">
             Gestão CLT & Auditoria JMT
@@ -424,7 +425,16 @@ export const VacationView: React.FC<VacationViewProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <AcoesTela className="flex flex-wrap items-center gap-2 shrink-0" principal={userRole !== 'colaborador' ? (
+            <button
+              type="button"
+              onClick={() => handleOpenNew()}
+              className="px-3.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Programar Férias</span>
+            </button>
+          ) : undefined}>
           <button
             type="button"
             onClick={() => exportFeriasReport(feriasList, colaboradores, 'xlsx')}
@@ -460,17 +470,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
             </button>
           )}
 
-          {userRole !== 'colaborador' && (
-            <button
-              type="button"
-              onClick={() => handleOpenNew()}
-              className="px-3.5 py-1.5 bg-[#C48229] hover:bg-[#92611F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Programar Férias</span>
-            </button>
-          )}
-        </div>
+        </AcoesTela>
       </div>
 
       {isDocumentosAssinaturaAberto && userRole === 'admin' && (

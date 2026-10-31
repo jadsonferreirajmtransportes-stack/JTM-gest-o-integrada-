@@ -38,6 +38,47 @@ interface HeaderProps {
   atividadesHojeCount?: number;
 }
 
+/** Título curto de cada tela no topo escuro do celular (como no app do colaborador). */
+const TITULO_CURTO: Record<string, string> = {
+  visao_geral: 'Visão geral',
+  dashboard: 'Painel do DP',
+  colaboradores: 'Colaboradores',
+  clientes: 'Clientes',
+  farma_aereo: 'Farma Aéreo',
+  farma_rodoviario: 'Farma Rodoviário',
+  projetos: 'Projetos',
+  usuarios: 'Logins & Acessos',
+  agenda_gestao: 'Agenda',
+  controladoria: 'Controladoria',
+  chat: 'Chat',
+  notas: 'Notas',
+  instrucoes: 'Instruções de Trabalho',
+  preadmissoes: 'Pré-admissões',
+  custos: 'Custo mensal',
+  ferias: 'Férias',
+  beneficios: 'Benefícios',
+  vale_alimentacao: 'Vale Alimentação',
+  saude: 'Saúde (ASO)',
+  epis: 'Entrega de EPI',
+  contracheques: 'Contracheques',
+  ocorrencias: 'Ocorrências',
+  disciplinar: 'Disciplinar',
+  educacao: 'Educação',
+  frequencia: 'Frequência',
+  gamificacao: 'Gamificação',
+  solicitacoes: 'Fale com o DP',
+  onboarding: 'Onboarding',
+  arquivo: 'Arquivo morto',
+  aniversariantes: 'Aniversariantes',
+  cargos: 'Configurações',
+  supervisores: 'Supervisores',
+  compras: 'Compras',
+  comunicados: 'Comunicados',
+  documentos: 'Padronização',
+  jornal: 'Jornal JMT',
+  pops: 'POPs',
+};
+
 const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = {
   visao_geral: {
     title: 'Torre de Controle — Dashboard Geral Integrado',
@@ -242,7 +283,8 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="truncate">
           <h1 className="text-base sm:text-lg font-bold text-[#111111] leading-tight truncate tracking-tight">
-            {currentInfo.title}
+            <span className="lg:hidden">{TITULO_CURTO[currentSection as string] || currentInfo.title}</span>
+            <span className="hidden lg:inline">{currentInfo.title}</span>
           </h1>
           <p className="hidden md:block text-[11px] text-[#6E6A62] truncate">
             {currentInfo.subtitle}
@@ -251,7 +293,9 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Center/Right Section: Search & Actions */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Celular: o menu "⋯" com as ações da tela aberta entra aqui (ver AcoesTela). */}
+        <div id="acoes-tela-topo" className="lg:hidden flex items-center" />
         {/* Quick Search */}
         <div className="relative hidden md:flex items-center bg-slate-100 rounded-lg px-3 py-1.5 border border-slate-200 w-56 lg:w-72">
           <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
@@ -270,7 +314,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Database Actions Dropdown */}
-        <div className="relative" ref={dbMenuRef}>
+        <div className="relative hidden lg:block" ref={dbMenuRef}>
           <button
             id="database-menu-btn"
             type="button"

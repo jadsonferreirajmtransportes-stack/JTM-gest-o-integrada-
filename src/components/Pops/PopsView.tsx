@@ -6,6 +6,7 @@ import { Pop, StatusPop, SITUACAO_ESTILO, conteudoEmBranco, getPops } from '../.
 import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
 import { PopEditor } from './PopEditor';
 import { dataBr, nomeSetorPop } from './popPdf';
+import { AcoesTela } from '../Common/AcoesTela';
 
 // ============================================================================
 // POPs — Procedimento Operacional Padrão no modelo ABNT (migração 073).
@@ -71,7 +72,7 @@ export const PopsView: React.FC<{ colaboradores: Colaborador[]; currentUser?: Us
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 hidden lg:flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3.5">
           <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] items-center justify-center text-white shrink-0">
             <ClipboardList className="w-6 h-6" />
@@ -83,9 +84,13 @@ export const PopsView: React.FC<{ colaboradores: Colaborador[]; currentUser?: Us
             <p className="hidden sm:block text-xs text-slate-500 mt-0.5">Modelo ABNT (NBR 6024, 6023 e 14724) com controle de versão, aprovação e ciência dos colaboradores.</p>
           </div>
         </div>
-        <button type="button" onClick={novo} className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Novo POP
-        </button>
+        <AcoesTela
+          principal={
+            <button type="button" onClick={novo} className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Novo POP
+          </button>
+          }
+        />
       </div>
 
       <div className="flex gap-1 border-b border-slate-200">
