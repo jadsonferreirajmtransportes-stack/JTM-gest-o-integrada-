@@ -163,6 +163,9 @@ export const VacationView: React.FC<VacationViewProps> = ({
       .catch((err) => console.error('Erro ao carregar documentos de férias para assinatura:', err));
   }, [userRole]);
   const [selectedStatus, setSelectedStatus] = useState('todos');
+  // Busca por período: férias com algum dia de gozo (qualquer etapa, se fracionada) entre as datas.
+  const [filtroDe, setFiltroDe] = useState('');
+  const [filtroAte, setFiltroAte] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFerias, setEditingFerias] = useState<ProgramacaoFerias | null>(null);
 
@@ -197,6 +200,11 @@ export const VacationView: React.FC<VacationViewProps> = ({
   const filteredFerias = useMemo(() => {
     return feriasList.filter((f) => {
       if (selectedStatus !== 'todos' && f.status !== selectedStatus) return false;
+      if (filtroDe || filtroAte) {
+        const de = filtroDe || '0000-01-01';
+        const ate = filtroAte || '9999-12-31';
+        if (!etapasDaProgramacao(f).some((e) => e.inicio <= ate && e.fim >= de)) return false;
+      }
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();
         const colab = colaboradores.find((c) => c.id === f.colaboradorId);
@@ -206,7 +214,7 @@ export const VacationView: React.FC<VacationViewProps> = ({
       }
       return true;
     });
-  }, [feriasList, colaboradores, selectedStatus, searchQuery]);
+  }, [feriasList, colaboradores, selectedStatus, searchQuery, filtroDe, filtroAte]);
 
   // Open Modal for New Vacation
   const handleOpenNew = (presetColabId?: string) => {
@@ -500,6 +508,60 @@ export const VacationView: React.FC<VacationViewProps> = ({
             <option value="Em gozo">Em Gozo</option>
             <option value="Concluída">Concluída</option>
           </select>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs font-semibold text-slate-600">Férias entre</span>
+          <input
+            type="date"
+            value={filtroDe}
+            onChange={(e) => setFiltroDe(e.target.value)}
+            title="Mostra as férias com algum dia de gozo neste período"
+            className={`px-2 py-1.5 border rounded-lg text-xs ${filtroDe ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}`}
+          />
+          <span className="text-xs text-slate-500">e</span>
+          <input
+            type="date"
+            value={filtroAte}
+            min={filtroDe || undefined}
+            onChange={(e) => setFiltroAte(e.target.value)}
+            className={`px-2 py-1.5 border rounded-lg text-xs ${filtroAte ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}`}
+          />
+          {(
+            [
+              ['Este mês', 0],
+              ['Próximo mês', 1],
+            ] as const
+          ).map(([rotulo, desloc]) => (
+            <button
+              key={rotulo}
+              type="button"
+              onClick={() => {
+                const h = new Date();
+                const ini = new Date(h.getFullYear(), h.getMonth() + desloc, 1);
+                const fim = new Date(h.getFullYear(), h.getMonth() + desloc + 1, 0);
+                const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                setFiltroDe(iso(ini));
+                setFiltroAte(iso(fim));
+              }}
+              className="px-2 py-1.5 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 hover:bg-amber-50 normal-case tracking-normal"
+            >
+              {rotulo}
+            </button>
+          ))}
+          {(filtroDe || filtroAte) && (
+            <button
+              type="button"
+              onClick={() => {
+                setFiltroDe('');
+                setFiltroAte('');
+              }}
+              className="p-1.5 text-slate-400 hover:text-slate-700"
+              title="Limpar o período"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         <div className="text-xs text-slate-500">
