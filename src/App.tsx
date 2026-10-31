@@ -382,6 +382,13 @@ export default function App() {
   // Navigation Sub-Section State
   const [activeSection, setActiveSection] = useState<NavSection>(() => {
     const initialMod = getStoredGlobalModule();
+    // Recarregou a página: volta para a mesma seção (ex.: DP > Férias), não para a 1ª do módulo.
+    try {
+      const [modSalvo, secSalva] = (sessionStorage.getItem('jmt_secao_atual') || '').split('|');
+      if (secSalva && modSalvo === initialMod) return secSalva as NavSection;
+    } catch {
+      // ignora
+    }
     if (initialMod === 'visao_geral') return 'visao_geral';
     if (initialMod === 'clientes') return 'clientes';
     if (initialMod === 'farma_aereo') return 'farma_aereo';
@@ -415,13 +422,35 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   // Celular: tela "Início" (como no app do colaborador). Abre nela, a não ser que o link já
   // aponte para um módulo; qualquer navegação para um módulo sai dela.
+  // Recarregar a página (F5 / puxar para atualizar) volta para a MESMA tela: o estado fica na
+  // sessão da aba; só ao abrir o app de novo é que ele começa no Início.
+  // Guarda o módulo (também quando aberto pela barra de baixo ou por um atalho) e a seção, para
+  // um recarregar da página voltar exatamente para a mesma tela.
+  useEffect(() => {
+    saveStoredGlobalModule(activeGlobalModule);
+    try {
+      sessionStorage.setItem('jmt_secao_atual', `${activeGlobalModule}|${activeSection}`);
+    } catch {
+      // ignora
+    }
+  }, [activeGlobalModule, activeSection]);
+
   const [inicioMobile, setInicioMobile] = useState<boolean>(() => {
     try {
+      const salvo = sessionStorage.getItem('jmt_inicio_mobile');
+      if (salvo !== null) return salvo === '1' && window.innerWidth < 1024;
       return window.innerWidth < 1024 && !new URLSearchParams(window.location.search).get('mod');
     } catch {
       return false;
     }
   });
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('jmt_inicio_mobile', inicioMobile ? '1' : '0');
+    } catch {
+      // ignora
+    }
+  }, [inicioMobile]);
   // Menu lateral retrátil (só afeta telas grandes) — preferência de cada navegador/dispositivo,
   // não precisa ir pro banco: só quem usa aquele computador vê a barra recolhida ou não.
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
