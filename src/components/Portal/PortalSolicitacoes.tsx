@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, ChevronLeft, Plus, Send, Paperclip, X, MessageSquareText, CheckCircle2, Clock, FileText, Download } from 'lucide-react';
+import { Loader2, ChevronLeft, Plus, Send, Paperclip, X, MessageSquareText, CheckCircle2, Clock, FileText, Download, SmilePlus } from 'lucide-react';
 import type { CredenciaisPortal } from '../../utils/educacaoApi';
 import {
   AnexoSolicitacao,
@@ -16,7 +16,10 @@ import {
   portalSolicitacoes,
   tituloTipo,
   ehAudio,
+  portalReagir,
 } from '../../utils/solicitacoesApi';
+
+const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 import { DocumentoPortal, portalDocumentos } from '../../utils/portalColaboradorApi';
 
 const dataHora = (iso: string) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -368,6 +371,17 @@ const SolicitacaoAberta: React.FC<{ credenciais: CredenciaisPortal; id: string; 
   const [texto, setTexto] = useState('');
   const [anexos, setAnexos] = useState<AnexoSolicitacao[]>([]);
   const [enviando, setEnviando] = useState(false);
+  const [escolhendoEmoji, setEscolhendoEmoji] = useState<string | null>(null);
+
+  const reagir = async (mensagemId: string, emoji: string) => {
+    setEscolhendoEmoji(null);
+    try {
+      await portalReagir(credenciais, mensagemId, emoji);
+      await carregar();
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Não foi possível reagir.');
+    }
+  };
 
   const carregar = () =>
     portalSolicitacao(credenciais, id)
@@ -431,7 +445,7 @@ const SolicitacaoAberta: React.FC<{ credenciais: CredenciaisPortal; id: string; 
             {s.mensagens.map((m) => {
               const doDp = m.autor === 'dp';
               return (
-                <div key={m.id} className={`flex ${doDp ? 'justify-start' : 'justify-end'}`}>
+                <div key={m.id} className={`flex items-center gap-1 ${doDp ? 'justify-start' : 'justify-end'}`}>
                   <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm shadow-xs ${doDp ? 'bg-white border border-slate-200 rounded-tl-sm' : 'bg-amber-50 border border-amber-200 rounded-tr-sm'}`}>
                     <p className="text-[10px] font-bold text-slate-500 mb-0.5">
                       {doDp ? 'Departamento Pessoal' : 'Você'} · {dataHora(m.criadoEm)}
@@ -456,7 +470,42 @@ const SolicitacaoAberta: React.FC<{ credenciais: CredenciaisPortal; id: string; 
                         )}
                       </div>
                     )}
+                    {/* Reações (como no Chat): toque para tirar/pôr a sua. */}
+                    {Object.keys(m.reacoesContagem || {}).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {(Object.entries(m.reacoesContagem || {}) as [string, number][]).map(([emoji, qtd]) => {
+                          const minha = (m.minhasReacoes || []).includes(emoji);
+                          return (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => reagir(m.id, emoji)}
+                              className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[11px] font-bold ${minha ? 'bg-amber-50 border-[#C48229] text-[#92611F]' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
+                            >
+                              <span className="text-sm">{emoji}</span>
+                              {qtd > 1 && <span>{qtd}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
+                  {!m.apagada && (
+                    <div className={`relative ${doDp ? '' : 'order-first'}`}>
+                      <button type="button" onClick={() => setEscolhendoEmoji(escolhendoEmoji === m.id ? null : m.id)} className="p-1.5 rounded-full text-slate-400 hover:text-[#C48229]" title="Reagir">
+                        <SmilePlus className="w-4 h-4" />
+                      </button>
+                      {escolhendoEmoji === m.id && (
+                        <div className={`absolute bottom-full mb-1 z-20 flex gap-0.5 bg-white border border-slate-200 rounded-full shadow-lg px-1.5 py-1 ${doDp ? 'left-0' : 'right-0'}`}>
+                          {EMOJIS.map((e) => (
+                            <button key={e} type="button" onClick={() => reagir(m.id, e)} className="text-xl leading-none px-0.5">
+                              {e}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

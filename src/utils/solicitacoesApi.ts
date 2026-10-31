@@ -82,6 +82,11 @@ export interface MensagemSolicitacao {
   editadoEm?: string;
   /** Mensagem do DP apagada: não mostra mais texto nem anexos (086). */
   apagada?: boolean;
+  /** Lado do DP: emoji → quem reagiu (id do login, ou "colab:<id>" para o colaborador) (087). */
+  reacoes?: Record<string, string[]>;
+  /** Lado do portal: emoji → quantos reagiram, e quais emojis são do próprio colaborador (087). */
+  reacoesContagem?: Record<string, number>;
+  minhasReacoes?: string[];
 }
 
 /** Anexo de áudio (gravado no Chat)? */
@@ -215,7 +220,22 @@ export async function getMensagensSolicitacao(id: string): Promise<MensagemSolic
     criadoEm: m.criado_em,
     editadoEm: m.editado_em || undefined,
     apagada: !!m.apagada,
+    reacoes: m.reacoes && typeof m.reacoes === 'object' ? m.reacoes : undefined,
   }));
+}
+
+/** O DP (login) liga/desliga uma reação com emoji numa mensagem. */
+export async function reagirComoDp(mensagemId: string, usuarioId: string, emoji: string): Promise<Record<string, string[]>> {
+  const { data, error } = await supabase.rpc('solicitacao_reagir', { p_mensagem: mensagemId, p_usuario: usuarioId, p_emoji: emoji });
+  falhou(error, 'reagirComoDp');
+  return (data as Record<string, string[]>) || {};
+}
+
+/** O colaborador (portal) liga/desliga uma reação com emoji numa mensagem da conversa dele. */
+export async function portalReagir(c: CredenciaisPortal, mensagemId: string, emoji: string): Promise<void> {
+  const { data, error } = await supabase.rpc('portal_solicitacao_reagir', { ...args(c), p_mensagem: mensagemId, p_emoji: emoji });
+  falhou(error, 'portalReagir');
+  if (data?.erro) throw new Error(MENSAGENS[data.erro] || 'Não foi possível reagir.');
 }
 
 /** O DP corrige o texto de uma mensagem que mandou (o colaborador vê "(editada)"). */

@@ -20,9 +20,9 @@ import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { calcPeriodoAquisitivo, calcPrazoLimiteGozo } from '../../utils/formatters';
 import { estiloStatus, resumoDados } from '../Portal/PortalSolicitacoes';
 import { AudioAnexo } from '../Chat/ConversaDemanda';
-import { AcoesMensagemChat } from '../Chat/MensagemChatAcoes';
+import { AcoesMensagemChat, ReacoesMensagem } from '../Chat/MensagemChatAcoes';
 import { GravadorAudio, nomeAudio } from '../Chat/AudioChat';
-import { apagarMensagemDp, editarMensagemDp, ehAudio } from '../../utils/solicitacoesApi';
+import { apagarMensagemDp, editarMensagemDp, ehAudio, reagirComoDp } from '../../utils/solicitacoesApi';
 
 type Filtro = 'pendentes' | 'respondidas' | 'encerradas' | 'todas';
 
@@ -167,6 +167,7 @@ export const SolicitacoesDpView: React.FC<{
           s={aberta}
           colaborador={colaboradores.find((c) => c.id === aberta.colaboradorId)}
           atendente={currentUser?.nome}
+          usuarioId={currentUser?.id}
           onSaveFerias={onSaveFerias}
           onClose={() => setAbertaId(null)}
           onMudou={(parcial) => setLista((prev) => (prev || []).map((x) => (x.id === aberta.id ? { ...x, ...parcial } : x)))}
@@ -180,10 +181,25 @@ const SolicitacaoDpModal: React.FC<{
   s: SolicitacaoDp;
   colaborador?: Colaborador;
   atendente?: string;
+  usuarioId?: string;
   onSaveFerias?: (f: ProgramacaoFerias) => Promise<void> | void;
   onClose: () => void;
   onMudou: (p: Partial<SolicitacaoDp>) => void;
-}> = ({ s, colaborador, atendente, onSaveFerias, onClose, onMudou }) => {
+}> = ({ s, colaborador, atendente, usuarioId, onSaveFerias, onClose, onMudou }) => {
+  const pessoasReacao = [
+    ...(usuarioId ? [{ id: usuarioId, nome: atendente || 'Você' }] : []),
+    { id: `colab:${s.colaboradorId}`, nome: nomeBonito(s.colaboradorNome) },
+  ];
+  const reagir = async (m: MensagemSolicitacao, emoji: string) => {
+    if (!usuarioId) return;
+    try {
+      const reacoes = await reagirComoDp(m.id, usuarioId, emoji);
+      setMensagens((p) => (p || []).map((x) => (x.id === m.id ? { ...x, reacoes } : x)));
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível reagir. Rode a migração 087 no Supabase, se ainda não rodou.');
+    }
+  };
   const [mensagens, setMensagens] = useState<MensagemSolicitacao[] | null>(null);
   const [texto, setTexto] = useState('');
   const [arquivos, setArquivos] = useState<File[]>([]);
@@ -389,6 +405,7 @@ const SolicitacaoDpModal: React.FC<{
                         setTextoEdicao(m.texto);
                       }}
                       onApagar={() => apagar(m)}
+                      onReagir={usuarioId ? (e) => reagir(m, e) : undefined}
                     />
                   )}
                   <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 shadow-xs ${doDp ? 'bg-amber-50 border border-amber-200 rounded-tr-sm' : 'bg-white border border-slate-200 rounded-tl-sm'}`}>
@@ -418,6 +435,9 @@ const SolicitacaoDpModal: React.FC<{
                       </div>
                     ) : (
                       m.texto && <p className="text-sm text-slate-800 whitespace-pre-line break-words">{m.texto}</p>
+                    )}
+                    {usuarioId && !m.apagada && (
+                      <ReacoesMensagem reacoes={m.reacoes} currentUserId={usuarioId} usuarios={pessoasReacao} propria={false} onReagir={(e) => reagir(m, e)} compacto />
                     )}
                     {m.anexos.map((a, i) => ehAudio(a) ? (
                       <AudioAnexo key={i} anexo={a} />

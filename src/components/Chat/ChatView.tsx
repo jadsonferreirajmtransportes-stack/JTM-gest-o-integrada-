@@ -718,6 +718,8 @@ export const ChatView: React.FC<ChatViewProps> = ({
             onMudou={() => onDemandasMudaram?.()}
             onAbrirNoDp={onAbrirDemandaNoDp ? () => onAbrirDemandaNoDp(demandaAberta.id) : undefined}
             colaborador={colaboradores?.find((c) => c.id === demandaAberta.colaboradorId)}
+            usuarioId={currentUserId}
+            usuarios={usuarios.map((u) => ({ id: u.id, nome: u.nome }))}
           />
         ) : !conversaAberta ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2">

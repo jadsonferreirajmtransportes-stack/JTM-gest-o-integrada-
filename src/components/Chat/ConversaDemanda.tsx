@@ -10,6 +10,7 @@ import {
   apagarMensagemDp,
   editarMensagemDp,
   ehAudio,
+  reagirComoDp,
   SolicitacaoDp,
   StatusSolicitacao,
   atualizarStatusSolicitacao,
@@ -20,7 +21,7 @@ import {
   tituloTipo,
 } from '../../utils/solicitacoesApi';
 import { estiloStatus, resumoDados } from '../Portal/PortalSolicitacoes';
-import { AcoesMensagemChat } from './MensagemChatAcoes';
+import { AcoesMensagemChat, ReacoesMensagem } from './MensagemChatAcoes';
 import { GravadorAudio, nomeAudio } from './AudioChat';
 
 /** Áudio anexado: player que busca o link na hora (o espaço dos anexos é privado). */
@@ -54,7 +55,11 @@ export const ConversaDemanda: React.FC<{
   onAbrirNoDp?: () => void;
   /** Cadastro do colaborador (para avisar pelo WhatsApp com o link pessoal). */
   colaborador?: Colaborador;
-}> = ({ demanda: s, atendente, sinalNovaMensagem, onVoltar, onMudou, onAbrirNoDp, colaborador }) => {
+  /** Login de quem está atendendo (para reagir com emoji) e os nomes dos logins (para mostrar quem reagiu). */
+  usuarioId?: string;
+  usuarios?: { id: string; nome: string }[];
+}> = ({ demanda: s, atendente, sinalNovaMensagem, onVoltar, onMudou, onAbrirNoDp, colaborador, usuarioId, usuarios = [] }) => {
+  const pessoasReacao = [...usuarios, { id: `colab:${s.colaboradorId}`, nome: nomeBonito(s.colaboradorNome) }];
   const avisarWhatsApp = async () => {
     if (!colaborador?.telefoneWhatsapp) return alert('Colaborador sem WhatsApp no cadastro.');
     const janela = window.open('', 'jmt-whatsapp');
@@ -152,6 +157,28 @@ export const ConversaDemanda: React.FC<{
     }
   };
 
+  const reagir = async (m: MensagemSolicitacao, emoji: string) => {
+    if (!usuarioId) return;
+    // Mostra na hora; o banco confirma (e o realtime atualiza quem estiver vendo).
+    setMensagens((p) =>
+      p.map((x) => {
+        if (x.id !== m.id) return x;
+        const atual = { ...(x.reacoes || {}) };
+        const ids = atual[emoji] || [];
+        atual[emoji] = ids.includes(usuarioId) ? ids.filter((i) => i !== usuarioId) : [...ids, usuarioId];
+        if (!atual[emoji].length) delete atual[emoji];
+        return { ...x, reacoes: atual };
+      })
+    );
+    try {
+      const reacoes = await reagirComoDp(m.id, usuarioId, emoji);
+      setMensagens((p) => p.map((x) => (x.id === m.id ? { ...x, reacoes } : x)));
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível reagir. Rode a migração 087 no Supabase, se ainda não rodou.');
+    }
+  };
+
   const enviarAudio = async (arquivo: File, duracaoSeg: number) => {
     const ext = arquivo.name.split('.').pop() || 'webm';
     const comNome = new File([arquivo], `${nomeAudio(duracaoSeg)}.${ext}`, { type: arquivo.type });
@@ -237,6 +264,7 @@ export const ConversaDemanda: React.FC<{
                     setTextoEdicao(m.texto);
                   }}
                   onApagar={() => apagar(m)}
+                  onReagir={usuarioId ? (e) => reagir(m, e) : undefined}
                 />
               )}
               <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs shadow-2xs ${doDp ? 'bg-[#C48229] text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'}`}>
@@ -286,11 +314,15 @@ export const ConversaDemanda: React.FC<{
                     <span className="truncate max-w-[180px]">{a.nome}</span>
                   </button>
                 ))}
+                {usuarioId && !m.apagada && (
+                  <ReacoesMensagem reacoes={m.reacoes} currentUserId={usuarioId} usuarios={pessoasReacao} propria={doDp} onReagir={(e) => reagir(m, e)} compacto />
+                )}
                 <p className={`text-[9px] mt-1 text-right ${doDp ? 'text-white/70' : 'text-slate-400'}`}>
                   {m.editadoEm && !m.apagada ? 'editada · ' : ''}
                   {hora(m.criadoEm)}
                 </p>
               </div>
+              {!doDp && !m.apagada && usuarioId && <AcoesMensagemChat onReagir={(e) => reagir(m, e)} />}
             </div>
           );
         })}
