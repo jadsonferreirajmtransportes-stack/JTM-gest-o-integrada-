@@ -394,4 +394,19 @@
   textarea {
     font-size: 16px;
   }
+  /* Com letra de 16px, caixa alta corta o texto do seletor ("TODOS OS SETO...") no celular:
+     ali ele aparece como escrito (ex.: "Todos os setores"). */
+  select,
+  select option {
+    text-transform: none;
+  }
+}
+
+/* Faixas que rolam para o lado no celular (abas, filtros em "pílula"): sem a barra de rolagem
+   aparecendo embaixo — o conteúdo cortado na borda já mostra que dá para arrastar. */
+.sem-barra {
+  scrollbar-width: none;
+}
+.sem-barra::-webkit-scrollbar {
+  display: none;
 }

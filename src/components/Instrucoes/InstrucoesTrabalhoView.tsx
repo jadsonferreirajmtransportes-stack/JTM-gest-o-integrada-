@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FileCheck2, Plus, Search, Star, X, FileText, Layers, Sparkles, Share2 } from 'lucide-react';
+import { FileCheck2, Plus, Search, Star, X, FileText, Layers, Sparkles, Share2, ArrowLeft } from 'lucide-react';
 import {
   InstrucaoTrabalho,
   VinculoNotaModulo,
@@ -68,6 +68,8 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
   const [isCienciaOpen, setIsCienciaOpen] = useState(false);
   const [isNovaOpen, setIsNovaOpen] = useState(false);
   const [categoriaEscolhida, setCategoriaEscolhida] = useState<CategoriaInstrucaoTrabalho | null>(null);
+  // Celular: mostra OU a lista OU a instrução aberta (com "Voltar"), como num app.
+  const [detalheNoCelular, setDetalheNoCelular] = useState(false);
 
   const instrucaoSelecionada = instrucoesAtivas.find((i) => i.id === selectedId) || null;
 
@@ -75,6 +77,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
   useEffect(() => {
     if (!abrirInstrucaoId) return;
     setSelectedId(abrirInstrucaoId);
+    setDetalheNoCelular(true);
     setSearchTerm('');
     setFiltroCategoria('todas');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,6 +113,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
     const nova = criarInstrucaoVazia(categoriaEscolhida, instrucoesAtivas, currentUserName, preenchimento);
     onSaveInstrucao(nova);
     setSelectedId(nova.id);
+    setDetalheNoCelular(true);
     setIsNovaOpen(false);
     setCategoriaEscolhida(null);
   };
@@ -119,6 +123,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
     if (selectedId === id) {
       const proxima = instrucoesAtivas.find((i) => i.id !== id);
       setSelectedId(proxima?.id || null);
+      setDetalheNoCelular(false);
     }
   };
 
@@ -135,14 +140,17 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Hero */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-100 flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 ${detalheNoCelular ? 'hidden lg:flex' : 'flex'}`}>
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
+          <div className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
             <FileCheck2 className="w-3.5 h-3.5" />
             <span>Instruções de Trabalho (IT)</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Procedimentos Operacionais Padronizados</h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900">
+            <span className="sm:hidden">Instruções de Trabalho</span>
+            <span className="hidden sm:inline">Procedimentos Operacionais Padronizados</span>
+          </h1>
+          <p className="hidden sm:block text-sm text-slate-500 max-w-2xl leading-relaxed">
             Construa checklists, fluxogramas e procedimentos de referência para o Farma Aéreo, Farma Rodoviário e demais
             operações — com código, dono do processo, versão e status de vigência — e vincule cada instrução a um
             cliente, embarque ou viagem específica. Inclui os modelos do método interno de gestão por processos
@@ -162,7 +170,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
       {/* Workspace */}
       <div className="flex flex-col lg:flex-row gap-4 items-start">
         {/* Lista de instruções */}
-        <div className="w-full lg:w-80 shrink-0 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className={`w-full lg:w-80 shrink-0 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden ${detalheNoCelular ? 'hidden lg:block' : ''}`}>
           <div className="p-3 border-b border-slate-100 space-y-2">
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -188,7 +196,7 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
             </select>
           </div>
 
-          <div className="p-2 max-h-[60vh] overflow-y-auto space-y-0.5">
+          <div className="p-2 lg:max-h-[60vh] lg:overflow-y-auto space-y-0.5">
             {listaFiltrada.length === 0 && (
               <p className="text-xs text-slate-400 italic text-center py-6 px-2">
                 Nenhuma instrução encontrada. Clique em "Nova Instrução" para começar.
@@ -203,7 +211,10 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
                 <button
                   key={i.id}
                   type="button"
-                  onClick={() => setSelectedId(i.id)}
+                  onClick={() => {
+                    setSelectedId(i.id);
+                    setDetalheNoCelular(true);
+                  }}
                   className={`w-full text-left p-2.5 rounded-xl border transition-colors ${
                     selecionado ? 'bg-amber-50 border-[#C48229]/50' : 'border-transparent hover:bg-slate-50'
                   }`}
@@ -232,7 +243,14 @@ export const InstrucoesTrabalhoView: React.FC<InstrucoesTrabalhoViewProps> = ({
         </div>
 
         {/* Editor */}
-        <div className="flex-1 min-w-0 w-full bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-8 min-h-[60vh]">
+        <div className={`flex-1 min-w-0 w-full bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-8 lg:min-h-[60vh] ${detalheNoCelular ? '' : 'hidden lg:block'}`}>
+          <button
+            type="button"
+            onClick={() => setDetalheNoCelular(false)}
+            className="lg:hidden -mt-1 mb-3 flex items-center gap-1.5 text-xs font-bold text-[#92611F] normal-case tracking-normal"
+          >
+            <ArrowLeft className="w-4 h-4" /> Voltar à lista
+          </button>
           {instrucaoSelecionada ? (
             <InstrucaoEditor
               key={instrucaoSelecionada.id}

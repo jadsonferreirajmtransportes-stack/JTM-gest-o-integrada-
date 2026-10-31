@@ -71,14 +71,16 @@ export const PopsView: React.FC<{ colaboradores: Colaborador[]; currentUser?: Us
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0">
+          <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] items-center justify-center text-white shrink-0">
             <ClipboardList className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">POPs — Procedimentos Operacionais Padrão</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Modelo ABNT (NBR 6024, 6023 e 14724) com controle de versão, aprovação e ciência dos colaboradores.</p>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              POPs<span className="hidden sm:inline"> — Procedimentos Operacionais Padrão</span>
+            </h1>
+            <p className="hidden sm:block text-xs text-slate-500 mt-0.5">Modelo ABNT (NBR 6024, 6023 e 14724) com controle de versão, aprovação e ciência dos colaboradores.</p>
           </div>
         </div>
         <button type="button" onClick={novo} className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2">
@@ -108,31 +110,33 @@ export const PopsView: React.FC<{ colaboradores: Colaborador[]; currentUser?: Us
 
       {aba === 'pops' && (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 gap-2 sm:gap-3">
             {[
               { rotulo: 'Vigentes', valor: vigentes.length, classe: 'text-emerald-700' },
               { rotulo: 'Em revisão / aprovação', valor: andamento.length, classe: 'text-[#92611F]' },
               { rotulo: 'Rascunhos', valor: rascunhos.length, classe: 'text-slate-700' },
               { rotulo: 'Revisão vencida', valor: vencidos.length, classe: vencidos.length ? 'text-rose-600' : 'text-slate-700' },
             ].map((t) => (
-              <div key={t.rotulo} className="bg-white p-3.5 rounded-xl border border-slate-200">
-                <p className="text-[11px] text-slate-500 font-semibold">{t.rotulo}</p>
-                <p className={`text-2xl font-black ${t.classe}`}>{t.valor}</p>
+              <div key={t.rotulo} className="bg-white p-2 sm:p-3.5 rounded-xl border border-slate-200">
+                <p className="text-[9.5px] sm:text-[11px] leading-tight text-slate-500 font-semibold">{t.rotulo}</p>
+                <p className={`text-lg sm:text-2xl font-black ${t.classe}`}>{t.valor}</p>
               </div>
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto sem-barra -mx-3 px-3 sm:mx-0 sm:px-0">
             {FILTROS.map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setFiltro(f)}
-                className={`px-3 py-1.5 rounded-full text-[11px] font-bold border ${filtro === f ? 'bg-[#C48229] text-white border-[#C48229]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-bold border ${filtro === f ? 'bg-[#C48229] text-white border-[#C48229]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
               >
                 {f === 'Todos' ? 'Todos (sem obsoletos)' : f}
               </button>
             ))}
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <select value={setor} onChange={(e) => setSetor(e.target.value)} className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white">
               <option value="">Todos os setores</option>
               {SETORES_DOCUMENTO.map((s) => (
@@ -141,13 +145,43 @@ export const PopsView: React.FC<{ colaboradores: Colaborador[]; currentUser?: Us
                 </option>
               ))}
             </select>
-            <div className="relative ml-auto">
+            <div className="relative sm:ml-auto">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" />
-              <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por título ou código" className="border border-slate-200 rounded-lg pl-7 pr-2 py-1.5 text-xs w-60" />
+              <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por título ou código" className="border border-slate-200 rounded-lg pl-7 pr-2 py-1.5 text-xs w-full sm:w-60" />
             </div>
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+            {!carregando && visiveis.length > 0 && (
+              /* Celular: um cartão por POP */
+              <div className="sm:hidden divide-y divide-slate-100">
+                {visiveis.map((p) => {
+                  const vencido = p.status === 'Vigente' && p.proximaRevisao && p.proximaRevisao < hoje();
+                  return (
+                    <button key={p.id} type="button" onClick={() => setAberto(p)} className="w-full text-left p-3.5 normal-case tracking-normal active:bg-amber-50/60">
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-[#92611F]">
+                          {p.codigo} · v{String(p.versao).padStart(2, '0')}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${SITUACAO_ESTILO[p.status]}`}>{p.status}</span>
+                      </span>
+                      <span className="block text-sm font-semibold text-slate-800 mt-1 leading-snug">{p.titulo}</span>
+                      <span className="block text-[11px] text-slate-500 mt-1">
+                        {nomeSetorPop(p.setor)}
+                        {p.vigenciaInicio ? ` · vigente desde ${dataBr(p.vigenciaInicio)}` : ''}
+                        {p.proximaRevisao && (
+                          <span className={vencido ? 'text-rose-600 font-bold' : ''}>
+                            {' '}
+                            · revisão {dataBr(p.proximaRevisao)}
+                            {vencido ? ' (vencida)' : ''}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {carregando ? (
               <p className="p-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-[#C48229]" /> Carregando...
@@ -157,7 +191,7 @@ export const PopsView: React.FC<{ colaboradores: Colaborador[]; currentUser?: Us
                 {pops.length === 0 ? 'Nenhum POP ainda. Clique em "Novo POP" para criar o primeiro.' : 'Nenhum POP com estes filtros.'}
               </p>
             ) : (
-              <table className="w-full text-xs min-w-[760px]">
+              <table className="hidden sm:table w-full text-xs min-w-[760px]">
                 <thead className="bg-slate-50 text-left text-slate-500">
                   <tr>
                     <th className="px-4 py-2.5">Código</th>

@@ -74,7 +74,8 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
   onGerarComunicado,
   onImportarAtividades,
 }) => {
-  const [viewMode, setViewMode] = useState<ViewMode>('mes');
+  // No celular o calendário do mês fica apertado: abre na lista (dá para trocar nas abas).
+  const [viewMode, setViewMode] = useState<ViewMode>(() => (typeof window !== 'undefined' && window.innerWidth < 640 ? 'lista' : 'mes'));
   const [cronogramaAberto, setCronogramaAberto] = useState(false);
   const [importarAberto, setImportarAberto] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());

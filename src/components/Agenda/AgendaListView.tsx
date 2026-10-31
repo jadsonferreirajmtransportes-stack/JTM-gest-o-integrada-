@@ -252,9 +252,10 @@ export const AgendaListView: React.FC<AgendaListViewProps> = ({
       {/* Activities List / Table */}
       <div className="divide-y divide-slate-100">
         {filteredAtividades.map((atv) => {
-          const catConfig = CATEGORIA_CONFIG[atv.categoria];
-          const statConfig = STATUS_CONFIG[atv.status];
-          const prioConfig = PRIORIDADE_CONFIG[atv.prioridade];
+          // Valor fora da lista (registro antigo/importado) não pode derrubar a tela inteira.
+          const catConfig = CATEGORIA_CONFIG[atv.categoria] || CATEGORIA_CONFIG['Reunião & Governança'];
+          const statConfig = STATUS_CONFIG[atv.status] || STATUS_CONFIG.Agendada;
+          const prioConfig = PRIORIDADE_CONFIG[atv.prioridade] || PRIORIDADE_CONFIG['Média'];
           const isConcluida = atv.status === 'Concluída';
           const isToday = atividadeOcorreEm(atv, todayStr);
           const multiDia = isAtividadeMultiDia(atv);

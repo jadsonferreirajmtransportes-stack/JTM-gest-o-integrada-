@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   Plus,
   Trash2,
@@ -40,6 +40,31 @@ import { CompartilharNotaModal } from './CompartilharNotaModal';
 import { ImageViewerModal } from '../Common/ImageViewerModal';
 import { FluxogramaBlock } from './FluxogramaBlock';
 import { TabelaBlock } from './TabelaBlock';
+
+
+/** Campo de texto que quebra linha e cresce com o conteúdo — no celular um <input> de uma linha
+ *  cortava o texto do bloco no meio. */
+const CampoQueCresce: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = ({ className = '', value, ...props }) => {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const ajustar = () => {
+    const el = ref.current;
+    // Escondido (ex.: lista aberta no celular) mede 0: não fixa altura, espera aparecer.
+    if (!el || !el.offsetParent) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
+  useLayoutEffect(ajustar, [value]);
+  useEffect(() => {
+    // Recalcula quando a largura muda ou quando o campo passa a aparecer na tela.
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const obs = new ResizeObserver(() => ajustar());
+    obs.observe(el);
+    return () => obs.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <textarea ref={ref} rows={1} value={value} {...props} className={`${className} resize-none overflow-hidden block`} />;
+};
 
 interface NotaEditorProps {
   pagina: NotaPagina;
@@ -176,8 +201,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
         const sizeClass =
           bloco.tipo === 'titulo1' ? 'text-xl font-extrabold' : bloco.tipo === 'titulo2' ? 'text-lg font-bold' : 'text-base font-bold';
         return (
-          <input
-            type="text"
+          <CampoQueCresce
             value={bloco.texto}
             onChange={(e) => handleUpdateBloco(idx, 'texto', e.target.value)}
             onBlur={commonBlur}
@@ -190,22 +214,21 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
       case 'lista':
       case 'lista_numerada':
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
             <span className="text-sm text-slate-400 shrink-0 w-4 text-right">{bloco.tipo === 'lista' ? '•' : `${idx + 1}.`}</span>
-            <input
-              type="text"
+            <CampoQueCresce
               value={bloco.texto}
               onChange={(e) => handleUpdateBloco(idx, 'texto', e.target.value)}
               onBlur={commonBlur}
               placeholder={cfg.placeholder}
-              className="flex-1 bg-transparent border-none outline-hidden text-sm text-slate-700 placeholder-slate-300"
+              className="flex-1 min-w-0 bg-transparent border-none outline-hidden text-sm text-slate-700 placeholder-slate-300"
             />
           </div>
         );
 
       case 'checklist':
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
             <input
               type="checkbox"
               checked={!!bloco.concluido}
@@ -218,15 +241,14 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
                   blocos: blocos.map((b, i) => (i === idx ? { ...b, concluido: e.target.checked } : b)),
                 });
               }}
-              className="w-4 h-4 rounded border-slate-300 text-[#C48229] focus:ring-[#C48229] shrink-0"
+              className="w-4 h-4 mt-0.5 rounded border-slate-300 text-[#C48229] focus:ring-[#C48229] shrink-0"
             />
-            <input
-              type="text"
+            <CampoQueCresce
               value={bloco.texto}
               onChange={(e) => handleUpdateBloco(idx, 'texto', e.target.value)}
               onBlur={commonBlur}
               placeholder={cfg.placeholder}
-              className={`flex-1 bg-transparent border-none outline-hidden text-sm placeholder-slate-300 ${
+              className={`flex-1 min-w-0 bg-transparent border-none outline-hidden text-sm placeholder-slate-300 ${
                 bloco.concluido ? 'line-through text-slate-400' : 'text-slate-700'
               }`}
             />
@@ -236,8 +258,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
       case 'citacao':
         return (
           <div className="border-l-[3px] border-slate-300 pl-3">
-            <input
-              type="text"
+            <CampoQueCresce
               value={bloco.texto}
               onChange={(e) => handleUpdateBloco(idx, 'texto', e.target.value)}
               onBlur={commonBlur}
@@ -251,13 +272,12 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
         return (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
             <span className="text-base shrink-0">💡</span>
-            <textarea
+            <CampoQueCresce
               value={bloco.texto}
               onChange={(e) => handleUpdateBloco(idx, 'texto', e.target.value)}
               onBlur={commonBlur}
               placeholder={cfg.placeholder}
-              rows={2}
-              className="flex-1 bg-transparent border-none outline-hidden text-sm text-[#5c4526] placeholder-amber-400/60 resize-y"
+              className="flex-1 min-w-0 bg-transparent border-none outline-hidden text-sm text-[#5c4526] placeholder-amber-400/60"
             />
           </div>
         );
@@ -417,13 +437,12 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
       case 'texto':
       default:
         return (
-          <textarea
+          <CampoQueCresce
             value={bloco.texto}
             onChange={(e) => handleUpdateBloco(idx, 'texto', e.target.value)}
             onBlur={commonBlur}
             placeholder={cfg.placeholder}
-            rows={2}
-            className="w-full bg-transparent border-none outline-hidden text-sm text-slate-700 placeholder-slate-300 resize-y"
+            className="w-full bg-transparent border-none outline-hidden text-sm text-slate-700 placeholder-slate-300 min-h-[2.5rem]"
           />
         );
     }
@@ -465,13 +484,19 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
               </div>
             )}
           </div>
-          <input
-            type="text"
+          <CampoQueCresce
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
+            onKeyDown={(e) => {
+              // Título é uma linha só: Enter sai do campo em vez de quebrar linha.
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.currentTarget.blur();
+              }
+            }}
             onBlur={() => persist({})}
             placeholder="Página sem título"
-            className="flex-1 min-w-0 bg-transparent border-none outline-hidden text-2xl font-extrabold text-slate-900 placeholder-slate-300 pt-1.5"
+            className="flex-1 min-w-0 bg-transparent border-none outline-hidden text-xl sm:text-2xl font-extrabold text-slate-900 placeholder-slate-300 pt-1.5"
           />
         </div>
 
@@ -603,7 +628,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
         {blocos.map((bloco, idx) => (
           <div key={bloco.id}>
             <div className="group relative flex items-start gap-1">
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 pt-1 -ml-1">
+              <div className="hidden lg:flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 pt-1 -ml-1">
                 <button
                   type="button"
                   onClick={() => handleMoverBloco(idx, -1)}
@@ -627,7 +652,7 @@ export const NotaEditor: React.FC<NotaEditorProps> = ({ pagina, onSave, onDelete
               <button
                 type="button"
                 onClick={() => handleRemoverBloco(idx)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-slate-300 hover:text-rose-500 shrink-0"
+                className="opacity-40 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity p-1 text-slate-300 hover:text-rose-500 shrink-0"
                 title="Remover bloco"
               >
                 <Trash2 className="w-3.5 h-3.5" />

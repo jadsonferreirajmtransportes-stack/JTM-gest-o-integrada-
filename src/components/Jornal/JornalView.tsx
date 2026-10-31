@@ -212,13 +212,13 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
       )}
 
       <div className="flex flex-wrap items-center gap-2 justify-between">
-        <div className="flex flex-wrap gap-1 border-b border-slate-200">
+        <div className="flex flex-nowrap sm:flex-wrap gap-1 border-b border-slate-200 overflow-x-auto sem-barra -mx-3 px-3 sm:mx-0 sm:px-0">
           {abas.map(([id, rotulo, qtd]) => (
             <button
               key={id}
               type="button"
               onClick={() => setAba(id)}
-              className={`px-3 py-2 text-xs font-bold uppercase border-b-2 -mb-px ${aba === id ? 'border-[#C48229] text-[#92611F]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+              className={`shrink-0 whitespace-nowrap px-3 py-2 text-xs font-bold uppercase border-b-2 -mb-px ${aba === id ? 'border-[#C48229] text-[#92611F]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
             >
               {rotulo}
               {qtd ? <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px]">{qtd}</span> : null}
@@ -228,7 +228,7 @@ export const JornalView: React.FC<{ colaboradores: Colaborador[]; currentUser?: 
         {aba !== 'comentarios' && aba !== 'engajamento' && (
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar notícia..." className="pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-xs w-56" />
+            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar notícia..." className="pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-xs w-full sm:w-56" />
           </div>
         )}
       </div>

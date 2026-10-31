@@ -137,23 +137,56 @@ export const DocumentosView: React.FC<DocumentosViewProps> = ({ currentUser, col
     );
   }
 
+  const acoes = (d: (typeof visiveis)[number]) => (
+        <div className="flex justify-end gap-1">
+          {d.status === 'Vigente' && (
+            <button
+              type="button"
+              title="Marcar como obsoleto"
+              onClick={async () => {
+                if (!window.confirm(`Marcar ${d.codigo} como obsoleto? Ele continua na biblioteca para consulta.`)) return;
+                const completo = await getDocumento(d.id);
+                if (completo) atualizarNaLista(await marcarObsoleto(completo));
+              }}
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
+            >
+              <Ban className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {d.status === 'Rascunho' && d.versao === 1 && (
+            <button
+              type="button"
+              title="Excluir rascunho"
+              onClick={async () => {
+                if (!window.confirm(`Excluir o rascunho ${d.codigo}?`)) return;
+                await excluirDocumento(d.id);
+                setDocumentos((prev) => prev.filter((x) => x.id !== d.id));
+              }}
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0">
+          <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] items-center justify-center text-white shrink-0">
             <FileStack className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">Padronização de Documentos</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Importe PDF, Word ou Excel, revise com o crivo do padrão JMT e gere o documento na identidade da empresa.</p>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Padronização de Documentos</h1>
+            <p className="hidden sm:block text-xs text-slate-500 mt-0.5">Importe PDF, Word ou Excel, revise com o crivo do padrão JMT e gere o documento na identidade da empresa.</p>
           </div>
         </div>
-        <div className="flex gap-2 shrink-0">
-          <button type="button" onClick={() => setAberto({ doc: documentoNovo(currentUser?.nome), avisos: [] })} className="px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-50">
+        <div className="grid grid-cols-2 sm:flex gap-2 shrink-0">
+          <button type="button" onClick={() => setAberto({ doc: documentoNovo(currentUser?.nome), avisos: [] })} className="justify-center px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-slate-50">
             <Plus className="w-4 h-4" /> Em branco
           </button>
-          <button type="button" onClick={() => inputArquivo.current?.click()} disabled={importando} className="px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 disabled:opacity-60">
+          <button type="button" onClick={() => inputArquivo.current?.click()} disabled={importando} className="justify-center px-4 py-2.5 bg-[#C48229] hover:bg-[#92611F] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 disabled:opacity-60">
             {importando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} {importando ? 'Lendo o arquivo...' : 'Importar arquivo'}
           </button>
           <input ref={inputArquivo} type="file" accept=".pdf,.docx,.xlsx,.xls,.csv" className="hidden" onChange={(e) => handleImportar(e.target.files?.[0])} />
@@ -162,8 +195,8 @@ export const DocumentosView: React.FC<DocumentosViewProps> = ({ currentUser, col
 
       {erro && <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:gap-3">
+        <div className="relative flex-1 col-span-2">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por código, título, tipo ou responsável" className="w-full pl-8 p-2 border border-slate-200 rounded-lg text-xs bg-white" />
         </div>
@@ -192,7 +225,26 @@ export const DocumentosView: React.FC<DocumentosViewProps> = ({ currentUser, col
           Nenhum documento ainda. Clique em <strong>Importar arquivo</strong> para padronizar um documento existente (PDF, Word ou Excel), ou em <strong>Em branco</strong>.
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+        <>
+        {/* Celular: um cartão por documento */}
+        <div className="sm:hidden space-y-2">
+          {visiveis.map((d) => (
+            <div key={d.id} role="button" tabIndex={0} onClick={() => handleAbrir(d)} className="bg-white rounded-2xl border border-slate-200 p-3.5 active:bg-amber-50/60">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-[#92611F]">{abrindo === d.id ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" /> : d.codigo}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${STATUS_ESTILO[d.status]}`}>{d.status}</span>
+              </div>
+              <p className="text-sm font-semibold text-slate-800 mt-1 leading-snug">{d.titulo}</p>
+              <div className="flex items-end justify-between gap-2 mt-1.5">
+                <p className="text-[11px] text-slate-500">
+                  {[d.tipo, `v${d.versao}`, d.responsavel, new Date(d.atualizadoEm || d.criadoEm).toLocaleDateString('pt-BR')].filter(Boolean).join(' · ')}
+                </p>
+                <div onClick={(e) => e.stopPropagation()}>{acoes(d)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="hidden sm:block bg-white rounded-2xl border border-slate-200 overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide">
               <tr>
@@ -228,42 +280,14 @@ export const DocumentosView: React.FC<DocumentosViewProps> = ({ currentUser, col
                   <td className="p-3 text-slate-600">{d.responsavel || '—'}</td>
                   <td className="p-3 text-slate-500 whitespace-nowrap">{new Date(d.atualizadoEm || d.criadoEm).toLocaleDateString('pt-BR')}</td>
                   <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-end gap-1">
-                      {d.status === 'Vigente' && (
-                        <button
-                          type="button"
-                          title="Marcar como obsoleto"
-                          onClick={async () => {
-                            if (!window.confirm(`Marcar ${d.codigo} como obsoleto? Ele continua na biblioteca para consulta.`)) return;
-                            const completo = await getDocumento(d.id);
-                            if (completo) atualizarNaLista(await marcarObsoleto(completo));
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
-                        >
-                          <Ban className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      {d.status === 'Rascunho' && d.versao === 1 && (
-                        <button
-                          type="button"
-                          title="Excluir rascunho"
-                          onClick={async () => {
-                            if (!window.confirm(`Excluir o rascunho ${d.codigo}?`)) return;
-                            await excluirDocumento(d.id);
-                            setDocumentos((prev) => prev.filter((x) => x.id !== d.id));
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
+                    {acoes(d)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

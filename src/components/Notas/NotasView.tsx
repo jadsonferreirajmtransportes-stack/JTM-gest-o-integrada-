@@ -8,6 +8,7 @@ import {
   ChevronDown,
   FileText,
   Sparkles,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   NotaPagina,
@@ -69,11 +70,17 @@ export const NotasView: React.FC<NotasViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [isVincularOpen, setIsVincularOpen] = useState(false);
+  // Celular: mostra OU a lista de páginas OU a página aberta (com "Voltar"), como num app.
+  const [detalheNoCelular, setDetalheNoCelular] = useState(false);
+  const abrir = (id: string) => {
+    setSelectedId(id);
+    setDetalheNoCelular(true);
+  };
 
   // Chegou uma menção do Chat pedindo pra abrir uma página específica.
   useEffect(() => {
     if (!abrirPaginaId) return;
-    setSelectedId(abrirPaginaId);
+    abrir(abrirPaginaId);
     setSearchTerm('');
     // Expande a cadeia de páginas-pai pra a selecionada ficar visível na árvore lateral.
     setExpandedIds((prev) => {
@@ -121,7 +128,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
   const handleNovaPagina = (paginaPaiId?: string) => {
     const nova = criarPaginaVazia(currentUserName, paginaPaiId);
     onSavePagina(nova);
-    setSelectedId(nova.id);
+    abrir(nova.id);
     if (paginaPaiId) setExpandedIds((prev) => new Set(prev).add(paginaPaiId));
   };
 
@@ -130,6 +137,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
     if (selectedId === id) {
       const proxima = paginasAtivas.find((p) => p.id !== id);
       setSelectedId(proxima?.id || null);
+      setDetalheNoCelular(false);
     }
   };
 
@@ -154,7 +162,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
             selecionado ? 'bg-amber-50 text-[#92611F]' : 'text-slate-600 hover:bg-slate-100'
           }`}
           style={{ paddingLeft: `${6 + depth * 14}px` }}
-          onClick={() => setSelectedId(p.id)}
+          onClick={() => abrir(p.id)}
         >
           {filhos.length > 0 ? (
             <button
@@ -180,7 +188,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
               e.stopPropagation();
               handleNovaPagina(p.id);
             }}
-            className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-[#C48229] shrink-0 transition-opacity"
+            className="lg:opacity-0 lg:group-hover:opacity-100 p-1 lg:p-0.5 text-slate-400 hover:text-[#C48229] shrink-0 transition-opacity"
             title="Nova sub-página"
           >
             <Plus className="w-3 h-3" />
@@ -194,7 +202,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Hero */}
-      <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-100 flex flex-row items-center justify-between gap-3 sm:gap-4">
+      <div className={`bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-100 flex-row items-center justify-between gap-3 sm:gap-4 ${detalheNoCelular ? 'hidden lg:flex' : 'flex'}`}>
         <div className="space-y-1 min-w-0">
           <div className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-50 text-[#92611F] text-xs font-semibold border border-amber-200">
             <NotebookPen className="w-3.5 h-3.5" />
@@ -223,7 +231,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
       {/* Workspace */}
       <div className="flex flex-col lg:flex-row gap-4 items-start">
         {/* Sidebar de páginas */}
-        <div className="w-full lg:w-72 shrink-0 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className={`w-full lg:w-72 shrink-0 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden ${detalheNoCelular ? 'hidden lg:block' : ''}`}>
           <div className="p-3 border-b border-slate-100 space-y-2">
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -237,7 +245,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
             </div>
           </div>
 
-          <div className="p-2 max-h-[60vh] overflow-y-auto">
+          <div className="p-2 lg:max-h-[60vh] lg:overflow-y-auto">
             {resultadosBusca ? (
               <div className="space-y-0.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 block mb-1">
@@ -247,7 +255,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setSelectedId(p.id)}
+                    onClick={() => abrir(p.id)}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
                       selectedId === p.id ? 'bg-amber-50 text-[#92611F]' : 'text-slate-600 hover:bg-slate-100'
                     }`}
@@ -273,7 +281,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
                         <button
                           key={p.id}
                           type="button"
-                          onClick={() => setSelectedId(p.id)}
+                          onClick={() => abrir(p.id)}
                           className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
                             selectedId === p.id ? 'bg-amber-50 text-[#92611F]' : 'text-slate-600 hover:bg-slate-100'
                           }`}
@@ -311,7 +319,14 @@ export const NotasView: React.FC<NotasViewProps> = ({
         </div>
 
         {/* Editor */}
-        <div className="flex-1 min-w-0 w-full bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-8 min-h-[60vh]">
+        <div className={`flex-1 min-w-0 w-full bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-8 lg:min-h-[60vh] ${detalheNoCelular ? '' : 'hidden lg:block'}`}>
+          <button
+            type="button"
+            onClick={() => setDetalheNoCelular(false)}
+            className="lg:hidden -mt-1 mb-3 flex items-center gap-1.5 text-xs font-bold text-[#92611F] normal-case tracking-normal"
+          >
+            <ArrowLeft className="w-4 h-4" /> Voltar às páginas
+          </button>
           {paginaSelecionada ? (
             <NotaEditor
               key={paginaSelecionada.id}
