@@ -15,6 +15,7 @@ import {
   portalSolicitacao,
   portalSolicitacoes,
   tituloTipo,
+  ehAudio,
 } from '../../utils/solicitacoesApi';
 import { DocumentoPortal, portalDocumentos } from '../../utils/portalColaboradorApi';
 
@@ -434,12 +435,16 @@ const SolicitacaoAberta: React.FC<{ credenciais: CredenciaisPortal; id: string; 
                   <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm shadow-xs ${doDp ? 'bg-white border border-slate-200 rounded-tl-sm' : 'bg-amber-50 border border-amber-200 rounded-tr-sm'}`}>
                     <p className="text-[10px] font-bold text-slate-500 mb-0.5">
                       {doDp ? 'Departamento Pessoal' : 'Você'} · {dataHora(m.criadoEm)}
+                      {m.editadoEm && !m.apagada ? ' · editada' : ''}
                     </p>
+                    {m.apagada && <p className="text-slate-400 italic text-xs">Mensagem apagada</p>}
                     {m.texto && <p className="text-slate-800 whitespace-pre-line break-words">{m.texto}</p>}
                     {m.anexos.length > 0 && (
                       <div className="mt-1.5 space-y-1">
                         {m.anexos.map((a, i) =>
-                          a.url ? (
+                          a.url && ehAudio(a) ? (
+                            <audio key={i} controls preload="none" src={a.url} className="w-60 max-w-full h-10" />
+                          ) : a.url ? (
                             <a key={i} href={a.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-bold text-[#92611F]">
                               <Download className="w-3.5 h-3.5" /> {a.nome}
                             </a>

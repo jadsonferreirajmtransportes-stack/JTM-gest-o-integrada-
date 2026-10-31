@@ -78,7 +78,14 @@ export interface MensagemSolicitacao {
   texto: string;
   anexos: AnexoSolicitacao[];
   criadoEm: string;
+  /** Mensagem do DP editada depois de enviada (086). */
+  editadoEm?: string;
+  /** Mensagem do DP apagada: não mostra mais texto nem anexos (086). */
+  apagada?: boolean;
 }
+
+/** Anexo de áudio (gravado no Chat)? */
+export const ehAudio = (a: AnexoSolicitacao) => (a.tipo || '').startsWith('audio/');
 
 export interface SolicitacaoResumo {
   id: string;
@@ -199,7 +206,36 @@ export async function getSolicitacoesDp(): Promise<SolicitacaoDp[]> {
 export async function getMensagensSolicitacao(id: string): Promise<MensagemSolicitacao[]> {
   const { data, error } = await supabase.from('solicitacao_mensagens').select('*').eq('solicitacao_id', id).order('criado_em');
   falhou(error, 'getMensagensSolicitacao');
-  return (data ?? []).map((m: any) => ({ id: m.id, autor: m.autor, autorNome: m.autor_nome || undefined, texto: m.texto, anexos: m.anexos || [], criadoEm: m.criado_em }));
+  return (data ?? []).map((m: any) => ({
+    id: m.id,
+    autor: m.autor,
+    autorNome: m.autor_nome || undefined,
+    texto: m.apagada ? '' : m.texto,
+    anexos: m.apagada ? [] : m.anexos || [],
+    criadoEm: m.criado_em,
+    editadoEm: m.editado_em || undefined,
+    apagada: !!m.apagada,
+  }));
+}
+
+/** O DP corrige o texto de uma mensagem que mandou (o colaborador vê "(editada)"). */
+export async function editarMensagemDp(id: string, texto: string): Promise<void> {
+  const { error } = await supabase
+    .from('solicitacao_mensagens')
+    .update({ texto: texto.trim(), editado_em: new Date().toISOString() })
+    .eq('id', id)
+    .eq('autor', 'dp');
+  falhou(error, 'editarMensagemDp');
+}
+
+/** O DP apaga uma mensagem que mandou (fica "Mensagem apagada" para os dois lados). */
+export async function apagarMensagemDp(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('solicitacao_mensagens')
+    .update({ apagada: true, texto: '', anexos: [] })
+    .eq('id', id)
+    .eq('autor', 'dp');
+  falhou(error, 'apagarMensagemDp');
 }
 
 export async function marcarLidaPeloDp(id: string): Promise<void> {
@@ -234,10 +270,12 @@ export async function responderComoDp(
   for (const arq of arquivos.slice(0, 3)) {
     const nomeSeguro = arq.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(-60);
     const caminho = `dp/${s.id}/${Date.now()}-${nomeSeguro}`;
-    const { error } = await supabase.storage.from('solicitacoes').upload(caminho, arq, { contentType: arq.type || 'application/pdf', upsert: false });
+    // Tipo sem parâmetros ("audio/webm;codecs=opus" → "audio/webm"): é o que o espaço aceita.
+    const tipo = (arq.type || 'application/pdf').split(';')[0];
+    const { error } = await supabase.storage.from('solicitacoes').upload(caminho, arq, { contentType: tipo, upsert: false });
     if (error) throw new Error(`Não foi possível enviar "${arq.name}": ${error.message}`);
     const { data } = await supabase.storage.from('solicitacoes').createSignedUrl(caminho, 60 * 60 * 24 * 30);
-    anexos.push({ caminho, nome: arq.name, tipo: arq.type, tamanho: arq.size, url: data?.signedUrl });
+    anexos.push({ caminho, nome: arq.name, tipo, tamanho: arq.size, url: data?.signedUrl });
   }
   const msg = {
     id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

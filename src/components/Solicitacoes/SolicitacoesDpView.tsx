@@ -19,6 +19,10 @@ import { linkUnicoDe } from '../../utils/linkUnico';
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { calcPeriodoAquisitivo, calcPrazoLimiteGozo } from '../../utils/formatters';
 import { estiloStatus, resumoDados } from '../Portal/PortalSolicitacoes';
+import { AudioAnexo } from '../Chat/ConversaDemanda';
+import { AcoesMensagemChat } from '../Chat/MensagemChatAcoes';
+import { GravadorAudio, nomeAudio } from '../Chat/AudioChat';
+import { apagarMensagemDp, editarMensagemDp, ehAudio } from '../../utils/solicitacoesApi';
 
 type Filtro = 'pendentes' | 'respondidas' | 'encerradas' | 'todas';
 
@@ -187,6 +191,38 @@ const SolicitacaoDpModal: React.FC<{
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [criandoFerias, setCriandoFerias] = useState(false);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [textoEdicao, setTextoEdicao] = useState('');
+
+  const salvarEdicao = async (m: MensagemSolicitacao) => {
+    const novo = textoEdicao.trim();
+    if (!novo || novo === m.texto) return setEditandoId(null);
+    try {
+      await editarMensagemDp(m.id, novo);
+      setMensagens((p) => (p || []).map((x) => (x.id === m.id ? { ...x, texto: novo, editadoEm: new Date().toISOString() } : x)));
+      setEditandoId(null);
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível editar a mensagem. Rode a migração 086 no Supabase, se ainda não rodou.');
+    }
+  };
+  const apagar = async (m: MensagemSolicitacao) => {
+    if (!window.confirm('Apagar esta mensagem? O colaborador verá "Mensagem apagada".')) return;
+    try {
+      await apagarMensagemDp(m.id);
+      setMensagens((p) => (p || []).map((x) => (x.id === m.id ? { ...x, texto: '', anexos: [], apagada: true } : x)));
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível apagar a mensagem. Rode a migração 086 no Supabase, se ainda não rodou.');
+    }
+  };
+  const enviarAudio = async (arquivo: File, duracaoSeg: number) => {
+    const ext = arquivo.name.split('.').pop() || 'webm';
+    const comNome = new File([arquivo], `${nomeAudio(duracaoSeg)}.${ext}`, { type: arquivo.type });
+    const m = await responderComoDp(s, '', [comNome], 'respondida', atendente);
+    setMensagens((prev) => [...(prev || []), m]);
+    onMudou({ status: 'respondida', atualizadoEm: new Date().toISOString(), lidaPeloColaborador: false, atendente });
+  };
 
   useEffect(() => {
     getMensagensSolicitacao(s.id)
@@ -344,13 +380,48 @@ const SolicitacaoDpModal: React.FC<{
             mensagens.map((m) => {
               const doDp = m.autor === 'dp';
               return (
-                <div key={m.id} className={`flex ${doDp ? 'justify-end' : 'justify-start'}`}>
+                <div key={m.id} className={`group flex items-center gap-1 ${doDp ? 'justify-end' : 'justify-start'}`}>
+                  {doDp && !m.apagada && editandoId !== m.id && (
+                    <AcoesMensagemChat
+                      podeEditar={!!m.texto}
+                      onEditar={() => {
+                        setEditandoId(m.id);
+                        setTextoEdicao(m.texto);
+                      }}
+                      onApagar={() => apagar(m)}
+                    />
+                  )}
                   <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 shadow-xs ${doDp ? 'bg-amber-50 border border-amber-200 rounded-tr-sm' : 'bg-white border border-slate-200 rounded-tl-sm'}`}>
                     <p className="text-[10px] font-bold text-slate-500 mb-0.5">
                       {doDp ? m.autorNome || 'DP' : nomeBonito(s.colaboradorNome)} · {dataHora(m.criadoEm)}
+                      {m.editadoEm && !m.apagada ? ' · editada' : ''}
                     </p>
-                    {m.texto && <p className="text-sm text-slate-800 whitespace-pre-line break-words">{m.texto}</p>}
-                    {m.anexos.map((a, i) => (
+                    {m.apagada && <p className="text-xs text-slate-400 italic">Mensagem apagada</p>}
+                    {editandoId === m.id ? (
+                      <div className="space-y-1.5">
+                        <textarea
+                          value={textoEdicao}
+                          onChange={(e) => setTextoEdicao(e.target.value)}
+                          rows={3}
+                          autoFocus
+                          data-no-uppercase="true"
+                          className="w-72 max-w-full p-2 border border-slate-300 rounded-lg text-sm bg-white"
+                        />
+                        <div className="flex justify-end gap-1.5">
+                          <button type="button" onClick={() => setEditandoId(null)} className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-[11px] font-bold">
+                            Cancelar
+                          </button>
+                          <button type="button" onClick={() => salvarEdicao(m)} className="px-2.5 py-1 rounded-lg bg-[#C48229] text-white text-[11px] font-bold">
+                            Salvar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      m.texto && <p className="text-sm text-slate-800 whitespace-pre-line break-words">{m.texto}</p>
+                    )}
+                    {m.anexos.map((a, i) => ehAudio(a) ? (
+                      <AudioAnexo key={i} anexo={a} />
+                    ) : (
                       <button key={i} type="button" onClick={() => abrirAnexo(a.caminho, a.url)} className="mt-1 flex items-center gap-1.5 text-xs font-bold text-[#92611F] hover:underline">
                         <Paperclip className="w-3.5 h-3.5" /> {a.nome} <ExternalLink className="w-3 h-3" />
                       </button>
@@ -382,6 +453,7 @@ const SolicitacaoDpModal: React.FC<{
               <Paperclip className="w-3.5 h-3.5" /> Anexar (ex.: declaração em PDF)
               <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={(e) => { setArquivos((p) => [...p, ...Array.from(e.target.files || [])].slice(0, 3)); e.target.value = ''; }} />
             </label>
+            <GravadorAudio onEnviar={enviarAudio} desabilitado={enviando} />
             <button type="button" onClick={avisarWhatsApp} disabled={!colaborador?.telefoneWhatsapp} className="px-3 py-2 border border-emerald-200 text-emerald-700 rounded-lg font-bold flex items-center gap-1.5 hover:bg-emerald-50 disabled:opacity-40" title="Avisar o colaborador pelo WhatsApp, com o link pessoal abrindo nesta solicitação">
               <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
             </button>
