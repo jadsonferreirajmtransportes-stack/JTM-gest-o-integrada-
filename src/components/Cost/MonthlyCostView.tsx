@@ -326,9 +326,9 @@ export const MonthlyCostView: React.FC<MonthlyCostViewProps> = ({
       </div>
 
       {/* Breakdown Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+      <div className="envelope-cartoes bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="envelope-cartoes overflow-x-auto">
+          <table className="tabela-cartoes w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
               {viewMode === 'clt_cct' ? (
                 <tr>
@@ -366,7 +366,7 @@ export const MonthlyCostView: React.FC<MonthlyCostViewProps> = ({
                 costSummaries.map(({ colaborador: c, detailed, pisoReferencia, abaixoPiso, vtDia, vtMes, vaMes, custoOperacionalDireto }) => {
                   return (
                     <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-4">
+                      <td className="cartao-titulo py-3 px-4">
                         <div className="flex items-center gap-1.5">
                           <span className="font-semibold text-slate-900">{c.nomeCompleto}</span>
                           {abaixoPiso && (
@@ -387,15 +387,15 @@ export const MonthlyCostView: React.FC<MonthlyCostViewProps> = ({
                         </div>
                       </td>
 
-                      <td className="py-3 px-3 text-slate-700">{c.setor}</td>
+                      <td data-label="Setor" className="py-3 px-3 text-slate-700">{c.setor}</td>
 
                       {viewMode === 'clt_cct' ? (
                         <>
-                          <td className="py-3 px-3 text-right font-medium text-slate-900">
+                          <td data-label="Salário base" className="py-3 px-3 text-right font-medium text-slate-900">
                             {formatMoney(detailed.salarioBase)}
                           </td>
 
-                          <td className="py-3 px-3 text-right text-amber-800 font-medium">
+                          <td data-label="Adicionais CCT" className="py-3 px-3 text-right text-amber-800 font-medium">
                             {detailed.adicionaisTotal > 0 ? (
                               <span title="Periculosidade, Insalubridade, Acúmulo ou Penosidade">
                                 + {formatMoney(detailed.adicionaisTotal)}
@@ -405,37 +405,37 @@ export const MonthlyCostView: React.FC<MonthlyCostViewProps> = ({
                             )}
                           </td>
 
-                          <td className="py-3 px-3 text-right font-semibold text-slate-900">
+                          <td data-label="Base INSS/FGTS" className="py-3 px-3 text-right font-semibold text-slate-900">
                             {formatMoney(detailed.baseInssFgts)}
                           </td>
 
-                          <td className="py-3 px-3 text-right text-indigo-900 font-medium">
+                          <td data-label="Encargos CLT" className="py-3 px-3 text-right text-indigo-900 font-medium">
                             <span title="FGTS (8%) + Provisão 13º (8,33%) + Férias+1/3 (11,11%)">
                               {formatMoney(detailed.encargosCltTotal)}
                             </span>
                           </td>
 
-                          <td className="py-3 px-3 text-right text-emerald-800 font-medium">
+                          <td data-label="Benefícios CCT" className="py-3 px-3 text-right text-emerald-800 font-medium">
                             <span title={`VT: ${formatMoney(detailed.valeTransporteCustoEmpresa)} | VA: ${formatMoney(detailed.valeAlimentacaoTotal)} | Saúde CCT: ${formatMoney(detailed.subsidioPlanoSaude)} | Cuidado: ${formatMoney(detailed.auxilioCuidadoPessoal)}`}>
                               {formatMoney(detailed.beneficiosCctTotal)}
                             </span>
                           </td>
 
-                          <td className="py-3 px-4 text-right font-black text-slate-900 bg-amber-50/40">
+                          <td data-label="Custo total empresa" className="py-3 px-4 text-right font-black text-slate-900 bg-amber-50/40">
                             {formatMoney(detailed.custoTotalMensal)}
                           </td>
                         </>
                       ) : (
                         <>
-                          <td className="py-3 px-3 text-right font-medium text-slate-900">
+                          <td data-label="Salário base" className="py-3 px-3 text-right font-medium text-slate-900">
                             {formatMoney(c.remuneracao)}
                           </td>
 
-                          <td className="py-3 px-3 text-right text-slate-600">
+                          <td data-label="Gratificação" className="py-3 px-3 text-right text-slate-600">
                             {c.gratificacao > 0 ? formatMoney(c.gratificacao) : '-'}
                           </td>
 
-                          <td className="py-3 px-3 text-right text-slate-600">
+                          <td data-label="VT diário" className="py-3 px-3 text-right text-slate-600">
                             {c.vtQuantidadeTarifasDia > 0 ? (
                               <span>
                                 {c.vtQuantidadeTarifasDia}x ({formatMoney(c.vtValorTarifa)}) ={' '}
@@ -446,19 +446,19 @@ export const MonthlyCostView: React.FC<MonthlyCostViewProps> = ({
                             )}
                           </td>
 
-                          <td className="py-3 px-3 text-right font-semibold text-blue-900">
+                          <td data-label="VT mensal (22d)" className="py-3 px-3 text-right font-semibold text-blue-900">
                             {vtMes > 0 ? formatMoney(vtMes) : '-'}
                           </td>
 
-                          <td className="py-3 px-3 text-right text-slate-600">
+                          <td data-label="VA diário" className="py-3 px-3 text-right text-slate-600">
                             {formatMoney(c.valorValeAlimentacaoDia || VALOR_VA_CCT_DIA)}/d
                           </td>
 
-                          <td className="py-3 px-3 text-right font-semibold text-amber-900">
+                          <td data-label="VA mensal (22d)" className="py-3 px-3 text-right font-semibold text-amber-900">
                             {formatMoney(vaMes)}
                           </td>
 
-                          <td className="py-3 px-4 text-right font-black text-slate-900 bg-amber-50/30">
+                          <td data-label="Custo direto" className="py-3 px-4 text-right font-black text-slate-900 bg-amber-50/30">
                             {formatMoney(custoOperacionalDireto)}
                           </td>
                         </>
@@ -475,12 +475,12 @@ export const MonthlyCostView: React.FC<MonthlyCostViewProps> = ({
                     <td colSpan={2} className="py-3 px-4 uppercase text-[11px]">
                       Total Geral Consolidado ({filtered.length} Colaboradores)
                     </td>
-                    <td className="py-3 px-3 text-right">{formatMoney(totalSalarios)}</td>
-                    <td className="py-3 px-3 text-right text-amber-800">{formatMoney(totalAdicionaisCct)}</td>
-                    <td className="py-3 px-3 text-right">{formatMoney(totalSalarios + totalAdicionaisCct + totalGratificacoes)}</td>
-                    <td className="py-3 px-3 text-right text-indigo-900">{formatMoney(totalEncargosClt)}</td>
-                    <td className="py-3 px-3 text-right text-emerald-800">{formatMoney(totalBeneficiosCct)}</td>
-                    <td className="py-3 px-4 text-right text-amber-950 font-black text-sm bg-amber-100">
+                    <td data-label="Salário base" className="py-3 px-3 text-right">{formatMoney(totalSalarios)}</td>
+                    <td data-label="Adicionais CCT" className="py-3 px-3 text-right text-amber-800">{formatMoney(totalAdicionaisCct)}</td>
+                    <td data-label="Base INSS/FGTS" className="py-3 px-3 text-right">{formatMoney(totalSalarios + totalAdicionaisCct + totalGratificacoes)}</td>
+                    <td data-label="Encargos CLT" className="py-3 px-3 text-right text-indigo-900">{formatMoney(totalEncargosClt)}</td>
+                    <td data-label="Benefícios CCT" className="py-3 px-3 text-right text-emerald-800">{formatMoney(totalBeneficiosCct)}</td>
+                    <td data-label="Custo total empresa" className="py-3 px-4 text-right text-amber-950 font-black text-sm bg-amber-100">
                       {formatMoney(totalGeralCltCct)}
                     </td>
                   </tr>
@@ -489,13 +489,13 @@ export const MonthlyCostView: React.FC<MonthlyCostViewProps> = ({
                     <td colSpan={2} className="py-3 px-4 uppercase text-[11px]">
                       Total Consolidado ({filtered.length} Colaboradores)
                     </td>
-                    <td className="py-3 px-3 text-right">{formatMoney(totalSalarios)}</td>
-                    <td className="py-3 px-3 text-right">{formatMoney(totalGratificacoes)}</td>
-                    <td className="py-3 px-3 text-right">-</td>
-                    <td className="py-3 px-3 text-right text-blue-900">{formatMoney(totalVt)}</td>
-                    <td className="py-3 px-3 text-right">-</td>
-                    <td className="py-3 px-3 text-right text-amber-900">{formatMoney(totalVa)}</td>
-                    <td className="py-3 px-4 text-right text-amber-950 font-black text-sm bg-amber-100">
+                    <td data-label="Salário base" className="py-3 px-3 text-right">{formatMoney(totalSalarios)}</td>
+                    <td data-label="Gratificação" className="py-3 px-3 text-right">{formatMoney(totalGratificacoes)}</td>
+                    <td data-label="VT diário" className="py-3 px-3 text-right">-</td>
+                    <td data-label="VT mensal (22d)" className="py-3 px-3 text-right text-blue-900">{formatMoney(totalVt)}</td>
+                    <td data-label="VA diário" className="py-3 px-3 text-right">-</td>
+                    <td data-label="VA mensal (22d)" className="py-3 px-3 text-right text-amber-900">{formatMoney(totalVa)}</td>
+                    <td data-label="Custo direto" className="py-3 px-4 text-right text-amber-950 font-black text-sm bg-amber-100">
                       {formatMoney(totalGeralOperacional)}
                     </td>
                   </tr>

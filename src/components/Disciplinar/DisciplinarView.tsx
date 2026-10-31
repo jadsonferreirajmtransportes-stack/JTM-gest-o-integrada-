@@ -182,8 +182,8 @@ export const DisciplinarView: React.FC<DisciplinarViewProps> = ({
             Nenhuma medida disciplinar {filtroStatus !== 'todas' ? 'neste filtro' : 'registrada ainda'}.
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
-            <table className="w-full text-xs min-w-[720px]">
+          <div className="envelope-cartoes bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+            <table className="tabela-cartoes w-full text-xs min-w-[720px]">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
                   <th className="px-4 py-2.5">Colaborador</th>
@@ -198,18 +198,18 @@ export const DisciplinarView: React.FC<DisciplinarViewProps> = ({
                   const st = statusExibido(m);
                   return (
                     <tr key={m.id} onClick={() => setDetalhe(m)} className="hover:bg-slate-50/70 cursor-pointer">
-                      <td className="px-4 py-2.5 font-semibold text-slate-800">{m.colaboradorNome}</td>
-                      <td className="px-3 py-2.5 text-slate-700">
+                      <td className="cartao-titulo px-4 py-2.5 font-semibold text-slate-800">{m.colaboradorNome}</td>
+                      <td data-label="Medida" className="px-3 py-2.5 text-slate-700">
                         {tituloMedida(m)} <span className="text-slate-400">• etapa {m.etapa}</span>
                       </td>
-                      <td className="px-3 py-2.5 text-slate-500">{dataBr(m.dataFato)}</td>
-                      <td className="px-3 py-2.5">
+                      <td data-label="Data do fato" className="px-3 py-2.5 text-slate-500">{dataBr(m.dataFato)}</td>
+                      <td data-label="Status" className="px-3 py-2.5">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${st.classe}`}>
                           {st.icone}
                           {st.texto}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-slate-500">{m.propostoPor || '—'}</td>
+                      <td data-label="Proposta por" className="px-3 py-2.5 text-slate-500">{m.propostoPor || '—'}</td>
                     </tr>
                   );
                 })}

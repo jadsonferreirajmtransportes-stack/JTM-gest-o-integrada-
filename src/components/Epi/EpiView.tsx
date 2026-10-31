@@ -137,9 +137,9 @@ export const EpiView: React.FC<EpiViewProps> = ({
       </div>
 
       {/* Lista */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+      <div className="envelope-cartoes bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="envelope-cartoes overflow-x-auto">
+          <table className="tabela-cartoes w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
               <tr>
                 <th className="py-3 px-4">Colaborador</th>
@@ -156,7 +156,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
                 const nome = nomeRecebedor(entrega);
                 return (
                   <tr key={entrega.id} className="group hover:bg-slate-50/80">
-                    <td className="py-3 px-4 font-semibold text-slate-800">
+                    <td className="cartao-titulo py-3 px-4 font-semibold text-slate-800">
                       {nome}
                       {!entrega.colaboradorId && (
                         <span className="ml-1.5 text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full align-middle">
@@ -164,14 +164,14 @@ export const EpiView: React.FC<EpiViewProps> = ({
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-slate-600">{formatDate(entrega.data)}</td>
-                    <td className="py-3 px-4 text-slate-600">
+                    <td data-label="Data" className="py-3 px-4 text-slate-600">{formatDate(entrega.data)}</td>
+                    <td data-label="Itens" className="py-3 px-4 text-slate-600">
                       {entrega.itens
                         .map((i) => `${i.descricao}${i.tamanho ? ` — Tam. ${i.tamanho}` : ''} (${i.quantidade})`)
                         .join(', ')}
                     </td>
-                    <td className="py-3 px-4 text-slate-600">{entrega.responsavelEntrega || '—'}</td>
-                    <td className="py-3 px-4">
+                    <td data-label="Responsável" className="py-3 px-4 text-slate-600">{entrega.responsavelEntrega || '—'}</td>
+                    <td data-label="Recibo" className="py-3 px-4">
                       {entrega.comprovanteAssinadoUrl ? (
                         <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
                           <CheckCircle2 className="w-3 h-3" />
@@ -187,7 +187,7 @@ export const EpiView: React.FC<EpiViewProps> = ({
                         </button>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right sticky right-0 bg-white group-hover:bg-slate-50/80 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)]">
+                    <td className="cartao-acoes py-3 px-4 text-right sticky right-0 bg-white group-hover:bg-slate-50/80 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)]">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"

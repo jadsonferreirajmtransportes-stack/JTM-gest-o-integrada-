@@ -345,8 +345,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+            <div className="envelope-cartoes overflow-x-auto">
+              <table className="tabela-cartoes w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50">
                     <th className="px-6 py-3 text-[10px] uppercase font-bold text-slate-500">
@@ -374,17 +374,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         onClick={() => onSelectColaborador(colab)}
                         className="hover:bg-slate-50/80 transition-colors cursor-pointer"
                       >
-                        <td className="px-6 py-4 font-medium text-slate-800">
+                        <td className="cartao-titulo px-6 py-4 font-medium text-slate-800">
                           <div className="font-medium text-slate-900">{colab.nomeCompleto}</div>
                           <div className="text-[11px] text-slate-400 font-mono">
                             {colab.codigoMatricula}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-slate-600">{colab.setor}</td>
-                        <td className="px-6 py-4 text-slate-600 font-medium">
+                        <td data-label="Setor" className="px-6 py-4 text-slate-600">{colab.setor}</td>
+                        <td data-label="Vencimento do exame" className="px-6 py-4 text-slate-600 font-medium">
                           {formatDate(colab.dataVencimentoExame)}
                         </td>
-                        <td className="px-6 py-4">
+                        <td data-label="Status" className="px-6 py-4">
                           {status === 'Vencido' ? (
                             <span className="px-2.5 py-1 bg-rose-100 text-rose-700 text-[10px] font-bold rounded-full uppercase tracking-wider">
                               Vencido

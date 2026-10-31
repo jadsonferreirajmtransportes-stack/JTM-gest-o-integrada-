@@ -202,12 +202,12 @@ export const ProjetosDashboardTab: React.FC<ProjetosDashboardTabProps> = ({
                 onClick={() => onSelectProjeto(p)}
                 className="p-3.5 bg-slate-50/70 hover:bg-amber-50/50 rounded-xl border border-slate-200 hover:border-amber-300 transition-all cursor-pointer space-y-2.5 group"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-white text-[#92611F] border border-slate-200 shadow-2xs">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="shrink-0 font-mono text-xs font-bold px-2 py-0.5 rounded bg-white text-[#92611F] border border-slate-200 shadow-2xs">
                       {p.codigo}
                     </span>
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-[#5c4526] truncate max-w-md">
+                    <span className="min-w-0 text-xs font-bold text-slate-900 group-hover:text-[#5c4526] truncate max-w-md">
                       {p.titulo}
                     </span>
                   </div>

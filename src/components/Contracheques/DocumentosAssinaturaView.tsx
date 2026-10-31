@@ -504,8 +504,8 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
             ))}
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
-            <table className="w-full text-xs min-w-[760px]">
+          <div className="envelope-cartoes bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+            <table className="tabela-cartoes w-full text-xs min-w-[760px]">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>
                   <th className="px-4 py-2.5">Colaborador</th>
@@ -523,8 +523,8 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
                   const ocupado = acaoEmAndamento === d.id;
                   return (
                     <tr key={d.id} className="hover:bg-slate-50/60">
-                      <td className="px-4 py-2.5 font-semibold text-slate-800">{d.colaboradorNome}</td>
-                      <td className="px-3 py-2.5 text-slate-600">
+                      <td className="cartao-titulo px-4 py-2.5 font-semibold text-slate-800">{d.colaboradorNome}</td>
+                      <td data-label="Documento" className="px-3 py-2.5 text-slate-600">
                         {ehContracheque ? (
                           <>
                             {formatarCompetencia(d.referencia)} <span className="text-slate-400">• {d.tipo}</span>
@@ -537,16 +537,16 @@ export const DocumentosAssinaturaView: React.FC<DocumentosAssinaturaViewProps> =
                           </>
                         )}
                       </td>
-                      <td className="px-3 py-2.5">
+                      <td data-label="Status" className="px-3 py-2.5">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${estilo.classe}`}>
                           {estilo.icone}
                           {d.status}
                         </span>
                         {expirado && <span className="block text-[10px] text-rose-600 font-semibold mt-0.5">Link vencido</span>}
                       </td>
-                      <td className="px-3 py-2.5 text-slate-500">{formatarDataHora(d.visualizadoEm)}</td>
-                      <td className="px-3 py-2.5 text-slate-500">{formatarDataHora(d.assinadoEm)}</td>
-                      <td className="px-3 py-2.5">
+                      <td data-label="Visualizado" className="px-3 py-2.5 text-slate-500">{formatarDataHora(d.visualizadoEm)}</td>
+                      <td data-label="Assinado" className="px-3 py-2.5 text-slate-500">{formatarDataHora(d.assinadoEm)}</td>
+                      <td className="cartao-acoes px-3 py-2.5">
                         <div className="flex items-center justify-end gap-1">
                           {ocupado && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C48229]" />}
                           {d.status !== 'Assinado' &&

@@ -327,20 +327,20 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
   const iconeTipo = { video: PlayCircle, pdf: FileText, instrucao: BookOpen, texto: FileText, telas: MonitorSmartphone };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0">
+          <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] items-center justify-center text-white shrink-0">
             <GraduationCap className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">Portal de Educação</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Portal de Educação</h1>
+            <p className="hidden sm:block text-xs text-slate-500 mt-0.5">
               Treinamentos com vídeo, material, prova e certificado; Instruções de Trabalho e Regulamento Interno — tudo pelo link pessoal do colaborador.
             </p>
           </div>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex flex-wrap gap-2 shrink-0">
           <button
             type="button"
             onClick={handleEnviarTodos}
@@ -377,7 +377,7 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-slate-200 overflow-x-auto sem-barra">
         {(
           [
             ['treinamentos', 'Treinamentos'],
@@ -389,7 +389,7 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
             key={id}
             type="button"
             onClick={() => setAba(id)}
-            className={`px-4 py-2 text-xs font-bold border-b-2 -mb-px ${aba === id ? 'border-[#C48229] text-[#92611F]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+            className={`shrink-0 whitespace-nowrap px-4 py-2 text-xs font-bold border-b-2 -mb-px ${aba === id ? 'border-[#C48229] text-[#92611F]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
           >
             {rotulo}
           </button>

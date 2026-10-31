@@ -176,7 +176,7 @@ export const ProjetosView: React.FC<ProjetosViewProps> = ({
       <StrategicGuidelinesBanner variant="light" />
 
       {/* Modern Navigation Tabs Bar */}
-      <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1">
+      <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto sem-barra pb-1">
         <button
           type="button"
           onClick={() => setActiveTab('dashboard')}

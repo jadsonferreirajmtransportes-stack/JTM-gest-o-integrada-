@@ -514,8 +514,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   18 Funções Homologadas no MTE
                 </span>
               </div>
-              <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                <table className="w-full text-left text-xs">
+              <div className="envelope-cartoes overflow-x-auto border border-slate-200 rounded-xl">
+                <table className="tabela-cartoes w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200">
                     <tr>
                       <th className="py-2.5 px-3">Função Normativa</th>
@@ -528,9 +528,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <tbody className="divide-y divide-slate-100">
                     {CCT_PISOS_SALARIAIS.map((p, idx) => (
                       <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-2 px-3 font-semibold text-slate-900">{p.funcao}</td>
-                        <td className="py-2 px-3 font-mono text-slate-600">{p.cbo || '-'}</td>
-                        <td className="py-2 px-3">
+                        <td className="cartao-titulo py-2 px-3 font-semibold text-slate-900">{p.funcao}</td>
+                        <td data-label="CBO" className="py-2 px-3 font-mono text-slate-600">{p.cbo || '-'}</td>
+                        <td data-label="CNH requerida" className="py-2 px-3">
                           {p.categoriaCnh ? (
                             <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded font-mono font-bold text-[10px]">
                               Cat. {p.categoriaCnh}
@@ -539,10 +539,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             <span className="text-slate-400">-</span>
                           )}
                         </td>
-                        <td className="py-2 px-3 text-right font-mono font-bold text-emerald-950 bg-emerald-50/40">
+                        <td data-label="Piso salarial base" className="py-2 px-3 text-right font-mono font-bold text-emerald-950 bg-emerald-50/40">
                           {formatMoney(p.salarioBase)}
                         </td>
-                        <td className="py-2 px-3 text-[11px] text-slate-600">
+                        <td data-label="Adicionais previstos" className="py-2 px-3 text-[11px] text-slate-600">
                           {p.adicionalPadrao || 'Conforme condições operacionais'}
                         </td>
                       </tr>
@@ -556,8 +556,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* CARGOS E SALÁRIOS */}
         {activeTab === 'cargos' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="envelope-cartoes overflow-x-auto">
+            <table className="tabela-cartoes w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
                 <tr>
                   <th className="py-2.5 px-3">Cargo / Função</th>
@@ -570,15 +570,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {cargos.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-3 font-semibold text-slate-900">{c.cargo}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{c.setor}</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                    <td className="cartao-titulo py-2.5 px-3 font-semibold text-slate-900">{c.cargo}</td>
+                    <td data-label="Setor" className="py-2.5 px-3 text-slate-600">{c.setor}</td>
+                    <td data-label="Piso da CCT" className="py-2.5 px-3 text-right font-mono text-slate-700">
                       {formatMoney(c.pisoConvencaoColetiva)}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                    <td data-label="Faixa mínima" className="py-2.5 px-3 text-right font-mono text-slate-700">
                       {formatMoney(c.faixaSalarialMinima)}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-900">
+                    <td data-label="Faixa máxima" className="py-2.5 px-3 text-right font-mono font-bold text-amber-900">
                       {formatMoney(c.faixaSalarialMaxima)}
                     </td>
                   </tr>
@@ -590,8 +590,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* SUPERVISORES */}
         {activeTab === 'supervisores' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="envelope-cartoes overflow-x-auto">
+            <table className="tabela-cartoes w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
                 <tr>
                   <th className="py-2.5 px-3">Nome do Supervisor</th>
@@ -605,12 +605,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {supervisores.map((s) => (
                   <tr key={s.id} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-3 font-semibold text-slate-900">{s.nome}</td>
-                    <td className="py-2.5 px-3 text-slate-700">{s.cargo}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{s.setor}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{s.email || '-'}</td>
-                    <td className="py-2.5 px-3 text-slate-600 font-mono">{s.telefoneWhatsapp || '-'}</td>
-                    <td className="py-2.5 px-3">
+                    <td className="cartao-titulo py-2.5 px-3 font-semibold text-slate-900">{s.nome}</td>
+                    <td data-label="Cargo" className="py-2.5 px-3 text-slate-700">{s.cargo}</td>
+                    <td data-label="Setor" className="py-2.5 px-3 text-slate-600">{s.setor}</td>
+                    <td data-label="E-mail" className="py-2.5 px-3 text-slate-600">{s.email || '-'}</td>
+                    <td data-label="Telefone" className="py-2.5 px-3 text-slate-600 font-mono">{s.telefoneWhatsapp || '-'}</td>
+                    <td data-label="Status" className="py-2.5 px-3">
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                         Ativo
                       </span>
@@ -624,8 +624,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* EMPREGADORES */}
         {activeTab === 'empregadores' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="envelope-cartoes overflow-x-auto">
+            <table className="tabela-cartoes w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
                 <tr>
                   <th className="py-2.5 px-3">Razão Social</th>
@@ -637,10 +637,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {empregadores.map((e) => (
                   <tr key={e.id} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-3 font-semibold text-slate-900">{e.razaoSocial}</td>
-                    <td className="py-2.5 px-3 text-slate-700">{e.nomeFantasia || '-'}</td>
-                    <td className="py-2.5 px-3 text-slate-700 font-mono">{e.cnpj}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{e.cidadeUF || '-'}</td>
+                    <td className="cartao-titulo py-2.5 px-3 font-semibold text-slate-900">{e.razaoSocial}</td>
+                    <td data-label="Nome fantasia" className="py-2.5 px-3 text-slate-700">{e.nomeFantasia || '-'}</td>
+                    <td data-label="CNPJ" className="py-2.5 px-3 text-slate-700 font-mono">{e.cnpj}</td>
+                    <td data-label="Cidade / UF" className="py-2.5 px-3 text-slate-600">{e.cidadeUF || '-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -650,8 +650,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* FERIADOS */}
         {activeTab === 'feriados' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="envelope-cartoes overflow-x-auto">
+            <table className="tabela-cartoes w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
                 <tr>
                   <th className="py-2.5 px-3">Data</th>
@@ -662,11 +662,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {feriados.map((f) => (
                   <tr key={f.id} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-3 font-semibold text-slate-900 font-mono">
+                    <td data-label="Data" className="py-2.5 px-3 font-semibold text-slate-900 font-mono">
                       {formatDate(f.data)}
                     </td>
-                    <td className="py-2.5 px-3 text-slate-800">{f.descricao}</td>
-                    <td className="py-2.5 px-3">
+                    <td className="cartao-titulo py-2.5 px-3 text-slate-800">{f.descricao}</td>
+                    <td data-label="Abrangência" className="py-2.5 px-3">
                       <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded">
                         {f.tipo}
                       </span>

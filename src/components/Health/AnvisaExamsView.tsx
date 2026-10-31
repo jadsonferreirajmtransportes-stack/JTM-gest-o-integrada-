@@ -456,9 +456,9 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+      <div className="envelope-cartoes bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="envelope-cartoes overflow-x-auto">
+          <table className="tabela-cartoes w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200 tracking-wider">
               <tr>
                 <th className="py-3 px-4">Colaborador</th>
@@ -496,23 +496,23 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                         status === 'Vencido' ? 'bg-rose-50/30' : status === 'A vencer' ? 'bg-amber-50/20' : ''
                       }`}
                     >
-                      <td className="py-3 px-4">
+                      <td className="cartao-titulo py-3 px-4">
                         <div className="font-semibold text-slate-900">{c.nomeCompleto}</div>
                         <div className="text-[11px] text-slate-500 font-mono">
                           {c.codigoMatricula} • CPF: {c.cpf}
                         </div>
                       </td>
 
-                      <td className="py-3 px-3">
+                      <td data-label="Cargo / setor" className="py-3 px-3">
                         <div className="font-medium text-slate-800">{c.funcaoCargo}</div>
                         <div className="text-[11px] text-slate-500">{c.setor}</div>
                       </td>
 
-                      <td className="py-3 px-3 text-slate-700">
+                      <td data-label="Admissional" className="py-3 px-3 text-slate-700">
                         {formatDate(c.dataExameAdmissional)}
                       </td>
 
-                      <td className="py-3 px-3 text-slate-700">
+                      <td data-label="Último / próx. periódico" className="py-3 px-3 text-slate-700">
                         {examAgendado ? (
                           <>
                             <div className="flex items-center gap-1 text-[#92611F] font-semibold">
@@ -527,7 +527,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                         )}
                       </td>
 
-                      <td className="py-3 px-3">
+                      <td data-label="Vencimento" className="py-3 px-3">
                         <div className="font-bold text-slate-900">
                           {formatDate(c.dataVencimentoExame)}
                         </div>
@@ -538,7 +538,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                         </span>
                       </td>
 
-                      <td className="py-3 px-3">
+                      <td data-label="Status ANVISA" className="py-3 px-3">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             status === 'Válido'
@@ -552,7 +552,7 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                         </span>
                       </td>
 
-                      <td className="py-3 px-3">
+                      <td data-label="Comprovante ASO" className="py-3 px-3">
                         {/* A lista vem da versão leve dos colaboradores (sem o arquivo do ASO —
                             ver getColaboradoresResumo), então asoImagemUrl chega sempre vazio
                             aqui; o nome do arquivo é que indica se há comprovante, e o arquivo
@@ -572,11 +572,11 @@ export const AnvisaExamsView: React.FC<AnvisaExamsViewProps> = ({
                         )}
                       </td>
 
-                      <td className="py-3 px-3 text-slate-600">
+                      <td data-label="Clínica / médico" className="py-3 px-3 text-slate-600">
                         {c.clinicaMedica || 'MedSeg Medicina do Trabalho'}
                       </td>
 
-                      <td className="py-3 px-4 text-right">
+                      <td className="cartao-acoes py-3 px-4 text-right">
                         <button
                           type="button"
                           onClick={() => handleOpenRenew(c)}
