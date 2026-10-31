@@ -328,6 +328,7 @@ import { supabase } from './utils/supabaseClient';
 const ChatView = sobDemanda(() => import('./components/Chat/ChatView'), 'ChatView');
 const FloatingChatWidget = sobDemanda(() => import('./components/Chat/FloatingChatWidget'), 'FloatingChatWidget', true);
 import { BarraInferiorMobile } from './components/App/BarraInferiorMobile';
+import { InicioGestaoMobile } from './components/App/InicioGestaoMobile';
 import { useDemandasDp } from './utils/useDemandasDp';
 import type { RascunhoComunicado } from './components/Comunicados/NovoComunicadoModal';
 import { rascunhoDaAtividade } from './components/Agenda/comunicadoDaAgenda';
@@ -412,6 +413,15 @@ export default function App() {
   });
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  // Celular: tela "Início" (como no app do colaborador). Abre nela, a não ser que o link já
+  // aponte para um módulo; qualquer navegação para um módulo sai dela.
+  const [inicioMobile, setInicioMobile] = useState<boolean>(() => {
+    try {
+      return window.innerWidth < 1024 && !new URLSearchParams(window.location.search).get('mod');
+    } catch {
+      return false;
+    }
+  });
   // Menu lateral retrátil (só afeta telas grandes) — preferência de cada navegador/dispositivo,
   // não precisa ir pro banco: só quem usa aquele computador vê a barra recolhida ou não.
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
@@ -760,6 +770,13 @@ export default function App() {
   };
 
   // Switch Global Module
+  const moduloSecaoAnterior = useRef('');
+  useEffect(() => {
+    const atual = `${activeGlobalModule}|${activeSection}`;
+    if (moduloSecaoAnterior.current && moduloSecaoAnterior.current !== atual) setInicioMobile(false);
+    moduloSecaoAnterior.current = atual;
+  }, [activeGlobalModule, activeSection]);
+
   const handleSelectGlobalModule = (modId: GlobalModuleId) => {
     setActiveGlobalModule(modId);
     saveStoredGlobalModule(modId);
@@ -3138,6 +3155,7 @@ export default function App() {
       {/* Main Content Area */}
       <div className={`flex-1 flex flex-col min-w-0 overflow-hidden transition-[padding] duration-300 ease-in-out ${isSidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-72'}`}>
         {/* Top Header */}
+        <div className={inicioMobile ? 'hidden lg:block' : 'contents'}>
         <Header
           onOpenMobile={() => setIsMobileMenuOpen(true)}
           currentSection={activeSection}
@@ -3174,9 +3192,34 @@ export default function App() {
           onImportBackup={handleImportBackup}
           onResetDatabase={handleResetDatabase}
         />
+        </div>
 
         {/* Scrollable Workspace */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 sm:pb-24 lg:pb-8 space-y-6 custom-scrollbar">
+        <main data-inicio={inicioMobile ? '1' : undefined} className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 sm:pb-24 lg:pb-8 space-y-6 custom-scrollbar">
+          {inicioMobile && (
+            <div className="inicio-gestao">
+              <InicioGestaoMobile
+                currentUser={currentUser}
+                compromissosHoje={(() => {
+                  const d = new Date();
+                  const hojeIso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                  return atividadesVisiveis
+                    .filter((a) => a.status !== 'Cancelada' && atividadeOcorreEm(a, hojeIso))
+                    .sort((a, b) => (a.diaInteiro ? '00:00' : a.horaInicio).localeCompare(b.diaInteiro ? '00:00' : b.horaInicio));
+                })()}
+                alertas={alertas}
+                pendencias={{
+                  chat: sidebarCounts.conversasChatNaoLidas,
+                  compras: sidebarCounts.comprasPendentesCount,
+                  demandasDp: demandasDp.naoLidas,
+                }}
+                onAbrirModulo={(m) => {
+                  setInicioMobile(false);
+                  handleSelectGlobalModule(m);
+                }}
+              />
+            </div>
+          )}
           {/* TOAST NOTIFICATION */}
           {toastMessage && (
             <div
@@ -4106,12 +4149,18 @@ export default function App() {
           moduloAtivo={activeGlobalModule}
           modulosPermitidos={currentUser.modulosPermitidos}
           menuAberto={isMobileMenuOpen}
+          inicioAtivo={inicioMobile}
+          onInicio={() => {
+            setInicioMobile(true);
+            setIsMobileMenuOpen(false);
+          }}
           badges={{
             chat: contagensMenu.conversasChatNaoLidas,
             agenda: sidebarCounts.atividadesHoje,
             compras: sidebarCounts.comprasPendentesCount,
           }}
           onIr={(modulo, secao) => {
+            setInicioMobile(false);
             setActiveGlobalModule(modulo as any);
             setActiveSection(secao as any);
             setIsMobileMenuOpen(false);

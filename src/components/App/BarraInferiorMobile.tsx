@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, Menu, MessageSquare, NotebookPen, ShoppingCart } from 'lucide-react';
+import { CalendarDays, Home, Menu, MessageSquare, NotebookPen, ShoppingCart } from 'lucide-react';
 
 /** Atalho da barra de baixo: módulo global + seção que ele abre. */
 interface Atalho {
@@ -14,6 +14,9 @@ interface Props {
   moduloAtivo: string;
   modulosPermitidos?: string[];
   menuAberto: boolean;
+  /** Tela "Início" aberta (os atalhos de módulo ficam apagados). */
+  inicioAtivo?: boolean;
+  onInicio?: () => void;
   badges: { chat?: number; agenda?: number; compras?: number };
   onIr: (modulo: string, secao: string) => void;
   onAbrirMenu: () => void;
@@ -24,7 +27,7 @@ interface Props {
  * fica sempre aberto). Atalhos escolhidos pelo usuário: Chat, Agenda, Notas e Compras — cada
  * um só aparece se o login tiver o módulo liberado. "Mais" abre o menu completo.
  */
-export const BarraInferiorMobile: React.FC<Props> = ({ moduloAtivo, modulosPermitidos, menuAberto, badges, onIr, onAbrirMenu }) => {
+export const BarraInferiorMobile: React.FC<Props> = ({ moduloAtivo, modulosPermitidos, menuAberto, inicioAtivo, onInicio, badges, onIr, onAbrirMenu }) => {
   const atalhos: Atalho[] = [
     { modulo: 'chat', secao: 'chat', rotulo: 'Chat', icone: MessageSquare, badge: badges.chat },
     { modulo: 'agenda', secao: 'agenda_gestao', rotulo: 'Agenda', icone: CalendarDays, badge: badges.agenda },
@@ -43,8 +46,15 @@ export const BarraInferiorMobile: React.FC<Props> = ({ moduloAtivo, modulosPermi
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Atalhos"
     >
+      {onInicio && (
+        <button type="button" onClick={onInicio} className={item(!menuAberto && !!inicioAtivo)} aria-current={!menuAberto && inicioAtivo ? 'page' : undefined}>
+          {!menuAberto && inicioAtivo && <span className="absolute top-0 inset-x-5 h-0.5 rounded-full bg-[#C48229]" />}
+          <Home className="w-[22px] h-[22px]" strokeWidth={!menuAberto && inicioAtivo ? 2.4 : 2} />
+          <span>Início</span>
+        </button>
+      )}
       {atalhos.map((a) => {
-        const ativo = !menuAberto && moduloAtivo === a.modulo;
+        const ativo = !menuAberto && !inicioAtivo && moduloAtivo === a.modulo;
         const Icone = a.icone;
         return (
           <button key={a.modulo} type="button" onClick={() => onIr(a.modulo, a.secao)} className={item(ativo)} aria-current={ativo ? 'page' : undefined}>

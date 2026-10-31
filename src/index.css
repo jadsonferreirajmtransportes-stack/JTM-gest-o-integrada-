@@ -514,3 +514,32 @@
     text-align: center;
   }
 }
+
+/* Tela "Início" do app de gestão (só no celular): enquanto aberta, esconde o conteúdo do módulo
+   (o aviso flutuante "fixed" continua). No computador ela nunca aparece. */
+.inicio-gestao {
+  display: none;
+}
+@media (max-width: 1023px) {
+  main[data-inicio='1'] > :not(.inicio-gestao):not(.fixed) {
+    display: none !important;
+  }
+  main[data-inicio='1'] > .inicio-gestao {
+    display: block;
+  }
+
+  /* Topo do app no celular escuro, como no app do colaborador. Os menus que abrem do topo
+     (posição absolute/fixed) continuam claros. */
+  #jmt-main-header {
+    background: #16130f !important;
+    border-bottom-color: transparent !important;
+  }
+  #jmt-main-header h1 {
+    color: #ffffff !important;
+  }
+  #jmt-main-header button:not(.absolute button):not(.fixed button) {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+  }
+}

@@ -236,8 +236,8 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         {/* Mobile-only brand badge */}
-        <div className="lg:hidden shrink-0 flex items-center pr-1 border-r border-slate-200">
-          <JmtLogo variant="icon" iconSize={26} />
+        <div className="lg:hidden shrink-0 flex items-center pr-1 border-r border-white/15">
+          <JmtLogo variant="icon" theme="dark" iconSize={26} />
         </div>
 
         <div className="truncate">
