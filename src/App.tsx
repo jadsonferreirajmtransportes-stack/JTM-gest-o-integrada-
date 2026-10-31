@@ -1923,6 +1923,24 @@ export default function App() {
     showToast(`Atividade "${item.titulo}" salva na agenda da gestão!`, 'success');
   };
 
+  // Cronograma importado do Excel: salva tudo e recarrega a agenda UMA vez (não uma por item).
+  const handleImportarAtividadesGestao = async (novas: AtividadeGestao[]) => {
+    let salvas = 0;
+    try {
+      for (const item of novas) {
+        await saveAtividadeGestao({
+          ...item,
+          criadoPorUserId: item.criadoPorUserId || currentUser?.id,
+          usuariosMarcadosIds: currentUser?.id ? Array.from(new Set([...(item.usuariosMarcadosIds || []), currentUser.id])) : item.usuariosMarcadosIds,
+        });
+        salvas += 1;
+      }
+    } finally {
+      await recarregarGestao('atividades');
+      if (salvas) showToast(`${salvas} compromisso(s) do cronograma importado(s) para a agenda!`, 'success');
+    }
+  };
+
   const handleDeleteAtividadeGestao = async (id: string) => {
     await deleteAtividadeGestao(id);
     await recarregarGestao('atividades');
@@ -3409,6 +3427,7 @@ export default function App() {
               colaboradores={colaboradores}
               usuarios={users}
               onSaveAtividade={handleSaveAtividadeGestao}
+              onImportarAtividades={handleImportarAtividadesGestao}
               onDeleteAtividade={handleDeleteAtividadeGestao}
               onStatusChange={handleUpdateAtividadeStatus}
               onUpdateDeliberacoes={handleUpdateDeliberacoes}

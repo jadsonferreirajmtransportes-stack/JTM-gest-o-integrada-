@@ -16,8 +16,10 @@ import {
   Kanban,
   FileSpreadsheet,
   CalendarRange,
+  FileUp,
 } from 'lucide-react';
 import { CronogramaAgendaModal } from './CronogramaAgendaModal';
+import { ImportarCronogramaModal } from './ImportarCronogramaModal';
 import {
   AtividadeGestao,
   CategoriaAtividadeGestao,
@@ -52,6 +54,8 @@ interface AgendaGestaoViewProps {
   abrirAtividadeSinal?: number;
   /** Compromisso → comunicado (Lembrete) para o portal dos colaboradores. */
   onGerarComunicado?: (atividade: AtividadeGestao) => void;
+  /** Salva de uma vez os compromissos importados de um cronograma em Excel. */
+  onImportarAtividades?: (novas: AtividadeGestao[]) => Promise<void>;
 }
 
 type ViewMode = 'mes' | 'semana' | 'dia' | 'lista' | 'kanban';
@@ -68,9 +72,11 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
   abrirAtividadeId,
   abrirAtividadeSinal,
   onGerarComunicado,
+  onImportarAtividades,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('mes');
   const [cronogramaAberto, setCronogramaAberto] = useState(false);
+  const [importarAberto, setImportarAberto] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedCategoria, setSelectedCategoria] = useState<string>('todas');
 
@@ -209,6 +215,17 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
             <CalendarRange className="w-4 h-4" />
             <span>Cronograma</span>
           </button>
+          {onImportarAtividades && (
+            <button
+              type="button"
+              onClick={() => setImportarAberto(true)}
+              className="hidden sm:flex px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-[#92611F] border border-[#C48229] text-xs font-semibold items-center gap-1.5 transition-colors shadow-xs"
+              title="Importar compromissos de um cronograma em Excel"
+            >
+              <FileUp className="w-4 h-4" />
+              <span>Importar cronograma</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => exportAtividadesToCSV(atividades)}
@@ -521,6 +538,9 @@ export const AgendaGestaoView: React.FC<AgendaGestaoViewProps> = ({
         onRecordAlerta={handleRecordAlerta}
       />
       {cronogramaAberto && <CronogramaAgendaModal atividades={atividades} onClose={() => setCronogramaAberto(false)} />}
+      {importarAberto && onImportarAtividades && (
+        <ImportarCronogramaModal atividades={atividades} onImportar={onImportarAtividades} onClose={() => setImportarAberto(false)} />
+      )}
     </div>
   );
 };
