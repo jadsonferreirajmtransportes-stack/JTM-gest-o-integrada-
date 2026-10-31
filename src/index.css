@@ -571,3 +571,75 @@
   border-radius: 1rem !important;
   font-size: 0.85rem !important;
 }
+
+/* ===========================================================================
+   App no celular — padrão único (itens 3 e 4): abas, filtros e cartões iguais em todas as
+   telas, no estilo do app do colaborador. Só abaixo de 1024px e só dentro do conteúdo (main);
+   no computador nada muda.
+   =========================================================================== */
+@media (max-width: 1023px) {
+  /* --- Cartões: mesmo arredondamento, borda clara e sombra suave --- */
+  main :is(div, section, article).bg-white:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):not(.tabela-cartoes *):not(.fixed *) {
+    border-radius: 1.25rem !important;
+    border-color: #eef0f3 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -14px rgba(15, 23, 42, 0.12) !important;
+  }
+  .tabela-cartoes :is(tbody, tfoot) > tr {
+    border-radius: 1.25rem !important;
+    border-color: #eef0f3 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -14px rgba(15, 23, 42, 0.12);
+  }
+
+  /* --- Abas sublinhadas (Publicadas / Rascunhos..., Hoje / Espelho...): uma linha que desliza --- */
+  main div:has(> button.border-b-2) {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  main div:has(> button.border-b-2)::-webkit-scrollbar {
+    display: none;
+  }
+  main div:has(> button.border-b-2) > button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* --- Abas em "pílula" (grupo cinza com o item ativo branco): largura toda, partes iguais --- */
+  /* Os seletores só de ícone (lista/grade) têm borda e ficam como estão. */
+  main div.bg-slate-100:is(.p-1, .p-0\.5):not(.border):has(> button) {
+    display: flex !important;
+    width: 100%;
+  }
+  main div.bg-slate-100:is(.p-1, .p-0\.5):not(.border):has(> button) > button {
+    flex: 1 1 0;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  /* --- Filtros em chips arredondados: uma linha que desliza, sem quebrar em várias --- */
+  main div:is(.flex-wrap):has(> button.rounded-full):not(:has(> button:not(.rounded-full))) {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  main div:is(.flex-wrap):has(> button.rounded-full):not(:has(> button:not(.rounded-full)))::-webkit-scrollbar {
+    display: none;
+  }
+  main div:is(.flex-wrap):has(> button.rounded-full) > button.rounded-full {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* --- Busca e seletores: mesma altura, cantos e fundo (alvo de toque confortável) --- */
+  main :is(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']), select):not(.tabela-cartoes *) {
+    min-height: 2.75rem;
+    border-radius: 0.875rem !important;
+    background-color: #ffffff;
+    border-color: #e2e8f0;
+  }
+
+  /* Espaço no fim da tela para o botão dourado flutuante não cobrir o último cartão. */
+  main {
+    padding-bottom: 9rem !important;
+  }
+}
