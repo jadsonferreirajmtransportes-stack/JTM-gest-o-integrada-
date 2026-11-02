@@ -350,6 +350,8 @@ function rowToNota(r: any): NotaPagina {
     atualizadoEm: u(r.atualizado_em),
     criadoPorUserId: u(r.criado_por_user_id),
     usuariosMarcadosIds: j(r.usuarios_marcados_ids),
+    tipo: r.tipo === 'quadro' ? 'quadro' : undefined,
+    quadro: r.quadro && typeof r.quadro === 'object' ? r.quadro : undefined,
   };
 }
 function notaToRow(nt: NotaPagina) {
@@ -367,6 +369,9 @@ function notaToRow(nt: NotaPagina) {
     atualizado_em: new Date().toISOString(),
     criado_por_user_id: n(nt.criadoPorUserId),
     usuarios_marcados_ids: j(nt.usuariosMarcadosIds),
+    // Só manda as colunas da 089 quando é um quadro: as páginas comuns continuam salvando
+    // mesmo se a migração ainda não tiver sido rodada.
+    ...(nt.tipo === 'quadro' ? { tipo: 'quadro', quadro: nt.quadro || { nos: [], arestas: [] } } : {}),
   };
 }
 export async function getNotasPaginas(): Promise<NotaPagina[]> {

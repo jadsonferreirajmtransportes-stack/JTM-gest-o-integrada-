@@ -2021,7 +2021,13 @@ export default function App() {
       usuariosMarcadosIds,
     };
     await saveNotaPagina(registro);
-    await recarregarGestao('notas');
+    // Página que já existe: só atualiza a lista local (o quadro salva sozinho a cada mudança —
+    // recarregar todas as notas a cada salvamento gastaria tráfego à toa). Página nova: recarrega.
+    if (notasPaginas.some((p) => p.id === registro.id)) {
+      setNotasPaginas((prev) => prev.map((p) => (p.id === registro.id ? { ...registro, atualizadoEm: new Date().toISOString() } : p)));
+    } else {
+      await recarregarGestao('notas');
+    }
   };
 
   const handleDeleteNotaPagina = async (id: string) => {

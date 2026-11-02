@@ -1905,9 +1905,45 @@ export interface VinculoNotaModulo {
 }
 
 /** Uma página de anotações/brainstorm, estilo Notion — pode ter sub-páginas (via `paginaPaiId`) e um vínculo opcional com outro módulo. */
+/** Forma de um quadro (mapa / fluxograma estilo Miro) — ver Notas/QuadroBranco.tsx. */
+export type TipoFormaQuadro = 'etapa' | 'decisao' | 'inicio' | 'circulo' | 'nota' | 'texto' | 'raia' | 'documento' | 'dados';
+
+export interface QuadroNo {
+  id: string;
+  tipo: TipoFormaQuadro;
+  x: number;
+  y: number;
+  largura: number;
+  altura: number;
+  texto: string;
+  /** Cor de fundo (hex). */
+  cor?: string;
+  /** Ordem de desenho (raias ficam atrás). */
+  z?: number;
+}
+
+export interface QuadroAresta {
+  id: string;
+  origem: string;
+  destino: string;
+  origemLado?: string;
+  destinoLado?: string;
+  rotulo?: string;
+  tracejada?: boolean;
+  semSeta?: boolean;
+}
+
+export interface QuadroDados {
+  nos: QuadroNo[];
+  arestas: QuadroAresta[];
+}
+
 export interface NotaPagina {
   id: string;
   titulo: string;
+  /** 'quadro' = quadro de desenho (mapa/fluxograma); ausente ou 'pagina' = nota em blocos (089). */
+  tipo?: 'pagina' | 'quadro';
+  quadro?: QuadroDados;
   /** Emoji usado como ícone da página. */
   icone?: string;
   /** ID da página-mãe, para organizar em hierarquia (sub-páginas). */

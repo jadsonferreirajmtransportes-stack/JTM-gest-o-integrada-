@@ -25,6 +25,7 @@ import {
 } from '../../types';
 import { criarPaginaVazia } from './notasUtils';
 import { NotaEditor } from './NotaEditor';
+import { QuadroBranco } from './QuadroBranco';
 import { VincularModuloModal } from './VincularModuloModal';
 import { AcoesTela } from '../Common/AcoesTela';
 
@@ -126,8 +127,10 @@ export const NotasView: React.FC<NotasViewProps> = ({
     });
   };
 
-  const handleNovaPagina = (paginaPaiId?: string) => {
-    const nova = criarPaginaVazia(currentUserName, paginaPaiId);
+  const handleNovaPagina = (paginaPaiId?: string, quadro?: boolean) => {
+    const base = criarPaginaVazia(currentUserName, paginaPaiId);
+    // Quadro: mapa / fluxograma estilo Miro (migração 089).
+    const nova: NotaPagina = quadro ? { ...base, titulo: 'Novo quadro', icone: '🧭', blocos: [], tipo: 'quadro', quadro: { nos: [], arestas: [] } } : base;
     onSavePagina(nova);
     abrir(nova.id);
     if (paginaPaiId) setExpandedIds((prev) => new Set(prev).add(paginaPaiId));
@@ -230,7 +233,16 @@ export const NotasView: React.FC<NotasViewProps> = ({
             <span className="hidden sm:inline">Nova Página</span>
           </button>
           }
-        />
+        >
+          <button
+            type="button"
+            onClick={() => handleNovaPagina(undefined, true)}
+            className="px-4 py-2 rounded-xl bg-white hover:bg-amber-50 border border-[#C48229] text-[#92611F] text-xs font-bold flex items-center gap-2 shrink-0"
+            title="Quadro para desenhar fluxos, mapas mentais e processos (estilo Miro)"
+          >
+            <span className="text-base leading-none">🧭</span> Novo quadro (fluxograma)
+          </button>
+        </AcoesTela>
       </div>
 
       {/* Workspace */}
@@ -324,7 +336,7 @@ export const NotasView: React.FC<NotasViewProps> = ({
         </div>
 
         {/* Editor */}
-        <div className={`flex-1 min-w-0 w-full bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-8 lg:min-h-[60vh] ${detalheNoCelular ? '' : 'hidden lg:block'}`}>
+        <div className={`flex-1 min-w-0 w-full ${paginaSelecionada?.tipo === 'quadro' ? '' : 'bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-8 lg:min-h-[60vh]'} ${detalheNoCelular ? '' : 'hidden lg:block'}`}>
           <button
             type="button"
             onClick={() => setDetalheNoCelular(false)}
@@ -332,7 +344,9 @@ export const NotasView: React.FC<NotasViewProps> = ({
           >
             <ArrowLeft className="w-4 h-4" /> Voltar às páginas
           </button>
-          {paginaSelecionada ? (
+          {paginaSelecionada?.tipo === 'quadro' ? (
+            <QuadroBranco key={paginaSelecionada.id} pagina={paginaSelecionada} onSave={onSavePagina} onDelete={() => window.confirm(`Excluir o quadro "${paginaSelecionada.titulo || 'sem título'}"? Não dá para desfazer.`) && handleDelete(paginaSelecionada.id)} />
+          ) : paginaSelecionada ? (
             <NotaEditor
               key={paginaSelecionada.id}
               pagina={paginaSelecionada}

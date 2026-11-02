@@ -643,3 +643,17 @@
     padding-bottom: 9rem !important;
   }
 }
+
+/* Quadro (Notas): os pontos de ligação das formas só aparecem ao passar o mouse ou com a
+   forma selecionada (no celular, sem mouse, ficam sempre visíveis). */
+@media (hover: hover) {
+  .quadro-branco .quadro-alca {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .quadro-branco .react-flow__node:hover .quadro-alca,
+  .quadro-branco .react-flow__node.selected .quadro-alca,
+  .quadro-branco.react-flow .react-flow__connectionline ~ * .quadro-alca {
+    opacity: 1;
+  }
+}
