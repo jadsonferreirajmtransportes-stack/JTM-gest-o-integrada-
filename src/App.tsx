@@ -269,6 +269,8 @@ const PontoPublicView = sobDemanda(() => import('./components/Frequencia/PontoPu
 const ComunicadosView = sobDemanda(() => import('./components/Comunicados/ComunicadosView'), 'ComunicadosView');
 const JornalView = sobDemanda(() => import('./components/Jornal/JornalView'), 'JornalView');
 const PopsView = sobDemanda(() => import('./components/Pops/PopsView'), 'PopsView');
+const FormulariosView = sobDemanda(() => import('./components/Formularios/FormulariosView'), 'FormulariosView');
+const FormularioPublicoView = sobDemanda(() => import('./components/Formularios/FormularioPublicoView'), 'FormularioPublicoView');
 import { tokenPortal } from './utils/appInstalavel';
 const SolicitacoesDpView = sobDemanda(() => import('./components/Solicitacoes/SolicitacoesDpView'), 'SolicitacoesDpView');
 const GamificacaoView = sobDemanda(() => import('./components/Gamificacao/GamificacaoView'), 'GamificacaoView');
@@ -753,6 +755,8 @@ export default function App() {
   const [pontoToken, setPontoToken] = useState<string | null>(null);
   // Link de comunicado (?form=comunicado&token=...) — leitura e ciência.
   const [comunicadoToken, setComunicadoToken] = useState<string | null>(null);
+  // Link externo de um formulário (?form=formulario&t=...): página pública, sem login.
+  const [formularioToken, setFormularioToken] = useState<string | null>(null);
   const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
   const [isEpiLinkModalOpen, setIsEpiLinkModalOpen] = useState<boolean>(false);
 
@@ -840,11 +844,13 @@ export default function App() {
       setActiveSection('jornal');
     } else if (modId === 'pops') {
       setActiveSection('pops');
+    } else if (modId === 'formularios') {
+      setActiveSection('formularios' as any);
     } else if (modId === 'compras') {
       setActiveSection('compras');
     } else if (modId === 'dp') {
       if (
-        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados', 'documentos', 'jornal', 'pops'].includes(
+        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados', 'documentos', 'jornal', 'pops', 'formularios'].includes(
           activeSection
         )
       ) {
@@ -1157,6 +1163,8 @@ export default function App() {
         setPontoToken(searchParams.get('token') || '');
       } else if (formParam === 'comunicado') {
         setComunicadoToken(searchParams.get('token') || '');
+      } else if (formParam === 'formulario') {
+        setFormularioToken(searchParams.get('t') || '');
       }
     }
   }, []);
@@ -3094,6 +3102,10 @@ export default function App() {
     return <ComunicadoPublicView token={comunicadoToken || undefined} />;
   }
 
+  if (formularioToken !== null) {
+    return <FormularioPublicoView token={formularioToken || undefined} />;
+  }
+
   if (pontoToken !== null) {
     return <PontoPublicView token={pontoToken || undefined} />;
   }
@@ -3159,6 +3171,7 @@ export default function App() {
           else if (sec === 'documentos') setActiveGlobalModule('documentos');
           else if (sec === 'jornal') setActiveGlobalModule('jornal');
           else if (sec === 'pops') setActiveGlobalModule('pops');
+          else if ((sec as string) === 'formularios') setActiveGlobalModule('formularios');
           else setActiveGlobalModule('dp');
           setIsMobileMenuOpen(false);
         }}
@@ -3213,6 +3226,7 @@ export default function App() {
             else if (sec === 'documentos') setActiveGlobalModule('documentos');
           else if (sec === 'jornal') setActiveGlobalModule('jornal');
             else if (sec === 'pops') setActiveGlobalModule('pops');
+            else if ((sec as string) === 'formularios') setActiveGlobalModule('formularios');
             else setActiveGlobalModule('dp');
           }}
           searchQuery={searchQuery}
@@ -3644,6 +3658,8 @@ export default function App() {
           {(activeGlobalModule === 'jornal' || activeSection === 'jornal') && <JornalView colaboradores={colaboradores} currentUser={currentUser} />}
 
           {(activeGlobalModule === 'pops' || activeSection === 'pops') && <PopsView colaboradores={colaboradores} currentUser={currentUser} />}
+
+          {activeGlobalModule === 'formularios' && <FormulariosView colaboradores={colaboradores} currentUser={currentUser} />}
 
           {/* ========================================================================= */}
           {/* MODULE 6: LOGINS & ACESSOS (USUÁRIOS) */}

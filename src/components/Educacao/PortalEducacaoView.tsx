@@ -58,6 +58,8 @@ import type { DocumentoPortal } from '../../utils/portalColaboradorApi';
 import { PortalDocumentos } from '../Portal/PortalDocumentos';
 import { PortalComunicados } from '../Portal/PortalComunicados';
 import { PortalSolicitacoes } from '../Portal/PortalSolicitacoes';
+import { PortalFormularios } from '../Portal/PortalFormularios';
+import { portalFormularios } from '../../utils/formulariosApi';
 import { MeuHistoricoPonto } from '../Frequencia/MeuHistoricoPonto';
 import { MeuDesempenho } from '../Portal/MeuDesempenho';
 import { CartaoColocacao } from '../Portal/CartaoColocacao';
@@ -127,7 +129,7 @@ function lerDestino(ir?: string, abaAntiga?: string, noticiaAntiga?: string): { 
   if (!ir && abaAntiga === 'jornal') return { aba: 'jornal', item: noticiaAntiga };
   const [tipo, ...resto] = (ir || '').split(':');
   const item = resto.join(':') || undefined;
-  const mapa: Record<string, Aba> = { ponto: 'ponto', historico: 'historico', desempenho: 'desempenho', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', solicitacoes: 'solicitacoes', solicitacao: 'solicitacoes', treinamentos: 'treinamentos', jornal: 'jornal' };
+  const mapa: Record<string, Aba> = { ponto: 'ponto', historico: 'historico', desempenho: 'desempenho', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', solicitacoes: 'solicitacoes', solicitacao: 'solicitacoes', formularios: 'formularios', formulario: 'formularios', treinamentos: 'treinamentos', jornal: 'jornal' };
   return { aba: mapa[tipo] || 'inicio', item };
 }
 
@@ -162,7 +164,7 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
   const [noticiasRecentes, setNoticiasRecentes] = useState<NoticiaPortalResumo[]>([]);
   const [abertoId, setAbertoId] = useState<string | null>(null);
   const [instrucaoAberta, setInstrucaoAberta] = useState<InstrucaoTrabalho | null>(null);
-  const [resumo, setResumo] = useState<{ documentos?: number; comunicados?: number; noticias?: number; respostas?: number }>({});
+  const [resumo, setResumo] = useState<{ documentos?: number; comunicados?: number; noticias?: number; respostas?: number; formularios?: number }>({});
   // Documentos que faltam assinar — aviso na página de início e janela ao entrar.
   const [docsPendentes, setDocsPendentes] = useState<DocumentoPortal[]>([]);
 
@@ -183,6 +185,9 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
       .catch(() => undefined);
     portalSolicitacoes(cred)
       .then((l) => setResumo((p) => ({ ...p, respostas: l.filter((x) => x.novaResposta).length })))
+      .catch(() => undefined);
+    portalFormularios(cred)
+      .then((l) => setResumo((p) => ({ ...p, formularios: l.filter((f) => f.aberto && !f.respondidoEm).length })))
       .catch(() => undefined);
     portalJornal(cred)
       .then((l) => {
@@ -285,11 +290,11 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
     irPara('documentos');
   };
   const itemPara = (a: Aba) => (aba === a && itemDoLink?.aba === a ? itemDoLink.item : undefined);
-  const contagem: Partial<Record<Aba, number>> = { documentos: resumo.documentos, comunicados: resumo.comunicados, solicitacoes: resumo.respostas, treinamentos: pendentes, jornal: resumo.noticias };
+  const contagem: Partial<Record<Aba, number>> = { documentos: resumo.documentos, comunicados: resumo.comunicados, solicitacoes: resumo.respostas, formularios: resumo.formularios, treinamentos: pendentes, jornal: resumo.noticias };
 
   const logado = !!(dados && credenciais);
   const naTelaDeArea = logado && !aberto && !instrucaoAberta;
-  const totalPendencias = (resumo.documentos || 0) + (resumo.comunicados || 0) + (resumo.respostas || 0);
+  const totalPendencias = (resumo.documentos || 0) + (resumo.comunicados || 0) + (resumo.respostas || 0) + (resumo.formularios || 0);
   const { cumprimento, primeiroNome } = saudacao(dados?.colaborador.nome || '');
 
   return (
@@ -316,7 +321,7 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
             )}
             <button
               type="button"
-              onClick={() => irPara(resumo.documentos ? 'documentos' : resumo.comunicados ? 'comunicados' : resumo.respostas ? 'solicitacoes' : 'mais')}
+              onClick={() => irPara(resumo.documentos ? 'documentos' : resumo.comunicados ? 'comunicados' : resumo.respostas ? 'solicitacoes' : resumo.formularios ? 'formularios' : 'mais')}
               className="relative w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0"
               title="Pendências"
             >
@@ -511,6 +516,17 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
                 onMudou={(n) => {
                   setItemDoLink(undefined);
                   setResumo((p) => ({ ...p, respostas: n }));
+                }}
+              />
+            )}
+
+            {aba === 'formularios' && (
+              <PortalFormularios
+                credenciais={credenciais}
+                formularioInicial={itemPara('formularios')}
+                onMudou={(n) => {
+                  setItemDoLink(undefined);
+                  setResumo((p) => ({ ...p, formularios: n }));
                 }}
               />
             )}

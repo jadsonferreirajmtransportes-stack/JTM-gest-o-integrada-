@@ -4,6 +4,7 @@ import {
   BookOpen,
   CalendarDays,
   ChevronRight,
+  ClipboardCheck,
   FileSignature,
   Fingerprint,
   GraduationCap,
@@ -27,6 +28,7 @@ export type AreaPortal =
   | 'documentos'
   | 'comunicados'
   | 'solicitacoes'
+  | 'formularios'
   | 'treinamentos'
   | 'jornal'
   | 'instrucoes'
@@ -42,6 +44,7 @@ export const AREAS_PORTAL: Record<Exclude<AreaPortal, 'mais'>, { rotulo: string;
   documentos: { rotulo: 'Documentos', texto: 'Contracheques, férias e outros', icone: FileSignature },
   comunicados: { rotulo: 'Comunicados', texto: 'Avisos da empresa para você', icone: Megaphone },
   solicitacoes: { rotulo: 'Fale com o DP', texto: 'Pedidos, dúvidas e contestações', icone: MessageSquareText },
+  formularios: { rotulo: 'Formulários', texto: 'Pesquisas e formulários para responder', icone: ClipboardCheck },
   treinamentos: { rotulo: 'Treinamentos', texto: 'Cursos, provas e certificados', icone: GraduationCap },
   jornal: { rotulo: 'Jornal JMT', texto: 'Notícias da empresa', icone: Newspaper },
   instrucoes: { rotulo: 'Instruções', texto: 'Como fazer cada processo', icone: BookOpen },
@@ -69,9 +72,9 @@ export const BarraPortal: React.FC<{
     { id: 'inicio', rotulo: 'Início', icone: Home, ativoEm: ['inicio'] },
     { id: 'ponto', rotulo: 'Ponto', icone: Fingerprint, ativoEm: ['ponto', 'historico'] },
     { id: 'documentos', rotulo: 'Documentos', icone: FileSignature, ativoEm: ['documentos'] },
-    { id: 'mais', rotulo: 'Mais', icone: LayoutGrid, ativoEm: ['mais', 'desempenho', 'comunicados', 'solicitacoes', 'treinamentos', 'jornal', 'instrucoes', 'regulamento'] },
+    { id: 'mais', rotulo: 'Mais', icone: LayoutGrid, ativoEm: ['mais', 'desempenho', 'comunicados', 'solicitacoes', 'formularios', 'treinamentos', 'jornal', 'instrucoes', 'regulamento'] },
   ];
-  const outros = (['comunicados', 'solicitacoes', 'treinamentos', 'jornal'] as AreaPortal[]).reduce((s, a) => s + (contagem[a] || 0), 0);
+  const outros = (['comunicados', 'solicitacoes', 'formularios', 'treinamentos', 'jornal'] as AreaPortal[]).reduce((s, a) => s + (contagem[a] || 0), 0);
   return (
     <nav
       className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 shadow-[0_-4px_16px_rgba(15,23,42,0.06)]"
@@ -115,7 +118,7 @@ export const MenuMaisPortal: React.FC<{
 }> = ({ contagem, onIr, onSair }) => {
   const grupos: { titulo: string; areas: Exclude<AreaPortal, 'mais' | 'inicio'>[] }[] = [
     { titulo: 'Meu ponto', areas: ['ponto', 'historico', 'desempenho'] },
-    { titulo: 'Comunicação', areas: ['comunicados', 'solicitacoes', 'jornal'] },
+    { titulo: 'Comunicação', areas: ['comunicados', 'solicitacoes', 'formularios', 'jornal'] },
     { titulo: 'Aprender', areas: ['treinamentos', 'instrucoes', 'regulamento'] },
   ];
   return (

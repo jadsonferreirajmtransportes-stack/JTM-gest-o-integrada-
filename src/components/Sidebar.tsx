@@ -12,6 +12,7 @@ import {
   Briefcase,
   ShieldAlert,
   ClipboardList,
+  ClipboardCheck,
   Share2,
   DollarSign,
   ChevronRight,
@@ -336,6 +337,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: undefined as number | undefined,
       icon: ClipboardList,
       color: 'from-[#7A4F17] to-[#2b2014]',
+      activeBorder: 'border-[#C48229]',
+    },
+    {
+      id: 'formularios' as GlobalModuleId,
+      title: 'Formulários',
+      short: 'Pesquisas no portal e por link',
+      badge: undefined as number | undefined,
+      icon: ClipboardCheck,
+      color: 'from-[#C48229] to-[#7A4F17]',
       activeBorder: 'border-[#C48229]',
     },
     {

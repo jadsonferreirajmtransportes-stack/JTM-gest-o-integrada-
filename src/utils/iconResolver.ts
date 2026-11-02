@@ -19,6 +19,7 @@ import {
   FileStack,
   Newspaper,
   ClipboardList,
+  ClipboardCheck,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -37,6 +38,7 @@ export const ICON_OPTIONS: Record<string, LucideIcon> = {
   FileStack,
   Newspaper,
   ClipboardList,
+  ClipboardCheck,
 };
 
 export function resolveOperacaoIcon(nomeIcone: string | undefined): LucideIcon {

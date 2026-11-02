@@ -199,6 +199,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     iconeNome: 'ClipboardList',
     categoria: 'Corporativo',
   },
+  {
+    id: 'formularios',
+    nome: 'Formulários',
+    sigla: 'FRM',
+    descricao: 'Formulários estilo Google Forms: pesquisas, inscrições e avaliações respondidas no portal do colaborador e/ou por link externo, com resumo em gráficos e Excel.',
+    corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
+    corBorda: 'border-[#C48229]',
+    iconeNome: 'ClipboardCheck',
+    categoria: 'Corporativo',
+  },
 ];
 
 export const INITIAL_USERS_DATA: UsuarioLogin[] = [

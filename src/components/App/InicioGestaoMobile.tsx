@@ -20,6 +20,7 @@ import {
   FileStack,
   Newspaper,
   ClipboardList,
+  ClipboardCheck,
   KeyRound,
   Inbox,
 } from 'lucide-react';
@@ -37,6 +38,7 @@ const MODULOS: { id: GlobalModuleId; rotulo: string; icone: React.ElementType }[
   { id: 'farma_rodoviario', rotulo: 'Rodoviário', icone: Truck },
   { id: 'instrucoes', rotulo: 'Instruções', icone: FileCheck2 },
   { id: 'pops', rotulo: 'POPs', icone: ClipboardList },
+  { id: 'formularios', rotulo: 'Formulários', icone: ClipboardCheck },
   { id: 'documentos', rotulo: 'Padronização', icone: FileStack },
   { id: 'comunicados', rotulo: 'Comunicados', icone: Megaphone },
   { id: 'jornal', rotulo: 'Jornal', icone: Newspaper },
