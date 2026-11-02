@@ -204,6 +204,9 @@ export const NoticiaEditorModal: React.FC<{
 
               <div className="space-y-2">
                 <p className="font-bold text-slate-700">Texto da notícia</p>
+                <p className="text-xs text-slate-500">
+                  Dica: coloque entre asteriscos para deixar em <strong className="text-slate-700">negrito</strong> — ex.: *Informações importantes*. Links (https://...) ficam clicáveis.
+                </p>
                 {n.blocos.map((b, i) => (
                   <div key={b.id} className="flex gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
                     <div className="flex-1 min-w-0">

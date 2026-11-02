@@ -57,6 +57,29 @@ export const CapaNoticia: React.FC<{ titulo: string; categoria: string; capa?: s
   );
 };
 
+/** Texto com *negrito* (ou **negrito**, como no WhatsApp) e endereços http(s) clicáveis. */
+export const TextoFormatado: React.FC<{ texto: string }> = ({ texto }) => (
+  <>
+    {texto.split(/((?<![\p{L}\p{N}*])\*\*[^*\n]+?\*\*(?![\p{L}\p{N}*])|(?<![\p{L}\p{N}*])\*[^*\s][^*\n]*?\*(?![\p{L}\p{N}*])|https?:\/\/[^\s]+)/gu).map((parte, i) => {
+      if (/^\*\*[^*\n]+?\*\*$/.test(parte)) return <strong key={i} className="font-bold text-slate-900">{parte.slice(2, -2)}</strong>;
+      if (/^\*[^*\n]+?\*$/.test(parte)) return <strong key={i} className="font-bold text-slate-900">{parte.slice(1, -1)}</strong>;
+      if (/^https?:\/\//.test(parte)) {
+        const fim = parte.match(/[.,;:!?)]+$/)?.[0] || '';
+        const url = fim ? parte.slice(0, -fim.length) : parte;
+        return (
+          <React.Fragment key={i}>
+            <a href={url} target="_blank" rel="noopener noreferrer" className="text-[#92611F] font-semibold underline break-all">
+              {url}
+            </a>
+            {fim}
+          </React.Fragment>
+        );
+      }
+      return <React.Fragment key={i}>{parte}</React.Fragment>;
+    })}
+  </>
+);
+
 /** Corpo da notícia: parágrafos (linha em branco separa) e grupos de imagens com legenda. */
 export const CorpoNoticia: React.FC<{ blocos: BlocoNoticia[] }> = ({ blocos }) => (
   <div className="space-y-4">
@@ -69,7 +92,7 @@ export const CorpoNoticia: React.FC<{ blocos: BlocoNoticia[] }> = ({ blocos }) =
             .filter(Boolean)
             .map((p, i) => (
               <p key={i} className="text-[15px] leading-relaxed text-slate-700 whitespace-pre-line">
-                {p}
+                <TextoFormatado texto={p} />
               </p>
             ))}
         </div>
