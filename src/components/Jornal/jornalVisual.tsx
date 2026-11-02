@@ -60,9 +60,9 @@ export const CapaNoticia: React.FC<{ titulo: string; categoria: string; capa?: s
 /** Texto com *negrito* (ou **negrito**, como no WhatsApp) e endereços http(s) clicáveis. */
 export const TextoFormatado: React.FC<{ texto: string }> = ({ texto }) => (
   <>
-    {texto.split(/((?<![\p{L}\p{N}*])\*\*[^*\n]+?\*\*(?![\p{L}\p{N}*])|(?<![\p{L}\p{N}*])\*[^*\s][^*\n]*?\*(?![\p{L}\p{N}*])|https?:\/\/[^\s]+)/gu).map((parte, i) => {
-      if (/^\*\*[^*\n]+?\*\*$/.test(parte)) return <strong key={i} className="font-bold text-slate-900">{parte.slice(2, -2)}</strong>;
-      if (/^\*[^*\n]+?\*$/.test(parte)) return <strong key={i} className="font-bold text-slate-900">{parte.slice(1, -1)}</strong>;
+    {texto.split(/((?<![\p{L}\p{N}*])\*\*[^*\n]+?\*\*(?![\p{L}\p{N}*])|(?<![\p{L}\p{N}*])\* ?[^*\s][^*\n]*?\*(?![\p{L}\p{N}*])|https?:\/\/[^\s]+)/gu).map((parte, i) => {
+      if (/^\*\*[^*\n]+?\*\*$/.test(parte)) return <strong key={i} className="font-bold text-slate-900">{parte.slice(2, -2).trim()}</strong>;
+      if (/^\*[^*\n]+?\*$/.test(parte)) return <strong key={i} className="font-bold text-slate-900">{parte.slice(1, -1).trim()}</strong>;
       if (/^https?:\/\//.test(parte)) {
         const fim = parte.match(/[.,;:!?)]+$/)?.[0] || '';
         const url = fim ? parte.slice(0, -fim.length) : parte;
