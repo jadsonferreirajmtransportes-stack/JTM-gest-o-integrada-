@@ -54,7 +54,7 @@ create or replace function formulario__aberto(f formularios)
 returns boolean
 language sql
 stable
-as $
+as $$
   select f.status = 'aberto' and (f.encerra_em is null or f.encerra_em >= (now() at time zone 'America/Sao_Paulo')::date)
 $$;
 
@@ -63,7 +63,7 @@ create or replace function formulario__publico(f formularios)
 returns jsonb
 language sql
 stable
-as $
+as $$
   select jsonb_build_object(
     'id', f.id,
     'titulo', f.titulo,
