@@ -167,6 +167,7 @@ export const PreencherFormulario: React.FC<{
 
   return (
     <form onSubmit={enviar} className="space-y-3" data-texto-livre="true">
+      {f.capa && <img src={f.capa} alt="" className="w-full aspect-[3/1] object-cover rounded-3xl border border-slate-100 shadow-sm bg-slate-100" />}
       <div className="bg-white rounded-3xl border-t-4 border-t-[#C48229] border border-slate-100 shadow-sm p-5">
         <h1 className="text-lg font-black text-slate-900 normal-case tracking-normal">{f.titulo}</h1>
         {f.descricao && <p className="text-sm text-slate-600 mt-1 whitespace-pre-line">{f.descricao}</p>}

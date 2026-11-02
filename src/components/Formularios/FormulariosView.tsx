@@ -7,6 +7,7 @@ import {
   ClipboardList,
   Copy,
   Eye,
+  ImagePlus,
   Link2,
   Loader2,
   Pencil,
@@ -25,6 +26,7 @@ import {
   TIPOS_PERGUNTA,
   TipoPergunta,
   contarRespostas,
+  enviarCapaFormulario,
   excluirFormulario,
   formularioNovo,
   getFormularios,
@@ -135,7 +137,9 @@ export const FormulariosView: React.FC<{ colaboradores: Colaborador[]; currentUs
       ) : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
           {visiveis.map((f) => (
-            <div key={f.id} className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+            <div key={f.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              {f.capaUrl && <img src={f.capaUrl} alt="" className="w-full aspect-[3/1] object-cover bg-slate-100" />}
+              <div className="p-4 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-black text-slate-900 leading-snug">{f.titulo}</p>
                 <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${STATUS[f.status].classe}`}>{STATUS[f.status].rotulo}</span>
@@ -186,6 +190,7 @@ export const FormulariosView: React.FC<{ colaboradores: Colaborador[]; currentUs
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
+              </div>
             </div>
           ))}
         </div>
@@ -208,7 +213,21 @@ const EditorFormulario: React.FC<{
   const [erro, setErro] = useState<string | null>(null);
   const [previa, setPrevia] = useState(false);
   const [buscaColab, setBuscaColab] = useState('');
+  const [enviandoCapa, setEnviandoCapa] = useState(false);
   const mudar = (p: Partial<Formulario>) => setF((x) => ({ ...x, ...p }));
+  const escolherCapa = async (arquivo?: File) => {
+    if (!arquivo) return;
+    setEnviandoCapa(true);
+    setErro(null);
+    try {
+      mudar({ capaUrl: await enviarCapaFormulario(arquivo) });
+    } catch (e) {
+      console.error(e);
+      setErro(e instanceof Error ? `${e.message} (confira se a migração 090 foi rodada no Supabase)` : 'Não foi possível enviar a capa.');
+    } finally {
+      setEnviandoCapa(false);
+    }
+  };
   const mudarPergunta = (id: string, p: Partial<Pergunta>) => setF((x) => ({ ...x, perguntas: x.perguntas.map((q) => (q.id === id ? { ...q, ...p } : q)) }));
   const mover = (i: number, d: -1 | 1) =>
     setF((x) => {
@@ -258,7 +277,7 @@ const EditorFormulario: React.FC<{
         </button>
         <p className="text-[11px] text-slate-500">Prévia: é assim que o colaborador (ou quem abrir o link) vê. Nada é enviado.</p>
         <PreencherFormulario
-          formulario={{ id: f.id || 'previa', titulo: f.titulo || 'Formulário sem título', descricao: f.descricao, perguntas: f.perguntas, identificacao: f.linkExterno ? f.identificacaoExterna : 'anonimo', mensagemFinal: f.mensagemFinal, aberto: true }}
+          formulario={{ id: f.id || 'previa', titulo: f.titulo || 'Formulário sem título', descricao: f.descricao, capa: f.capaUrl, perguntas: f.perguntas, identificacao: f.linkExterno ? f.identificacaoExterna : 'anonimo', mensagemFinal: f.mensagemFinal, aberto: true }}
           identificar={f.linkExterno}
           onEnviar={async () => {
             alert('Prévia: as respostas não são salvas.');
@@ -278,6 +297,28 @@ const EditorFormulario: React.FC<{
           <Eye className="w-3.5 h-3.5" /> Prévia
         </button>
       </div>
+
+      {/* Capa */}
+      {f.capaUrl ? (
+        <div className="relative">
+          <img src={f.capaUrl} alt="" className="w-full aspect-[3/1] object-cover rounded-2xl border border-slate-200 bg-slate-100" />
+          <div className="absolute right-2 bottom-2 flex gap-1.5">
+            <label className="px-2.5 py-1.5 rounded-lg bg-white/90 text-[11px] font-bold cursor-pointer shadow-sm">
+              {enviandoCapa ? 'Enviando...' : 'Trocar capa'}
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { escolherCapa(e.target.files?.[0]); e.target.value = ''; }} />
+            </label>
+            <button type="button" onClick={() => mudar({ capaUrl: '' })} className="px-2.5 py-1.5 rounded-lg bg-white/90 text-[11px] font-bold text-rose-600 shadow-sm">
+              Tirar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <label className="flex items-center justify-center gap-2 py-5 rounded-2xl border-2 border-dashed border-slate-300 text-slate-500 text-xs font-bold cursor-pointer hover:bg-amber-50 hover:border-amber-300">
+          {enviandoCapa ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
+          {enviandoCapa ? 'Enviando a imagem...' : 'Adicionar imagem de capa (opcional — formato largo, ex.: 1500 × 500)'}
+          <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { escolherCapa(e.target.files?.[0]); e.target.value = ''; }} />
+        </label>
+      )}
 
       <div className="bg-white rounded-2xl border-t-4 border-t-[#C48229] border border-slate-200 p-4 space-y-2">
         <input value={f.titulo} onChange={(e) => mudar({ titulo: e.target.value })} placeholder="Título do formulário" data-no-uppercase="true" className="w-full text-lg font-black text-slate-900 border-b border-slate-200 pb-1.5 focus:outline-hidden focus:border-[#C48229]" />

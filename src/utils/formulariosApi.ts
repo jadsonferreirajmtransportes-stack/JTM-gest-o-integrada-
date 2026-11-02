@@ -41,6 +41,8 @@ export interface Formulario {
   id: string;
   titulo: string;
   descricao?: string;
+  /** Imagem de capa (URL pública, espaço "formularios" — migração 090). */
+  capaUrl?: string;
   perguntas: Pergunta[];
   status: StatusFormulario;
   noPortal: boolean;
@@ -76,6 +78,7 @@ export interface FormularioPublico {
   id: string;
   titulo: string;
   descricao?: string;
+  capa?: string;
   perguntas: Pergunta[];
   identificacao: IdentificacaoExterna;
   mensagemFinal?: string;
@@ -88,6 +91,7 @@ export interface FormularioPortalResumo {
   id: string;
   titulo: string;
   descricao?: string;
+  capa?: string;
   encerraEm?: string;
   aberto: boolean;
   respondidoEm?: string;
@@ -134,6 +138,7 @@ function rowToFormulario(r: any): Formulario {
     id: r.id,
     titulo: r.titulo,
     descricao: r.descricao || undefined,
+    capaUrl: r.capa_url || undefined,
     perguntas: Array.isArray(r.perguntas) ? r.perguntas : [],
     status: r.status,
     noPortal: !!r.no_portal,
@@ -172,6 +177,8 @@ export async function salvarFormulario(f: Formulario): Promise<Formulario> {
     id: item.id,
     titulo: item.titulo.trim() || 'Formulário sem título',
     descricao: item.descricao?.trim() || null,
+    // Só manda a capa quando tem (formulário sem capa salva mesmo antes da migração 090).
+    ...(item.capaUrl !== undefined ? { capa_url: item.capaUrl || null } : {}),
     perguntas: item.perguntas,
     status: item.status,
     no_portal: item.noPortal,
@@ -186,6 +193,17 @@ export async function salvarFormulario(f: Formulario): Promise<Formulario> {
   });
   falhou(error, 'salvarFormulario');
   return item;
+}
+
+/** Envia a imagem de capa para o espaço público "formularios" e devolve a URL. */
+export async function enviarCapaFormulario(arquivo: File): Promise<string> {
+  if (arquivo.size > 5 * 1024 * 1024) throw new Error('A imagem passa de 5MB. Use uma menor.');
+  if (!/^image\/(jpeg|png|webp)$/.test(arquivo.type)) throw new Error('Use uma imagem JPG, PNG ou WEBP.');
+  const nomeSeguro = arquivo.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(-60);
+  const caminho = `${new Date().toISOString().slice(0, 7)}/${novoId('capa')}-${nomeSeguro}`;
+  const { error } = await supabase.storage.from('formularios').upload(caminho, arquivo, { contentType: arquivo.type, upsert: false });
+  if (error) throw new Error(`Não foi possível enviar a imagem: ${error.message}`);
+  return supabase.storage.from('formularios').getPublicUrl(caminho).data.publicUrl;
 }
 
 export async function excluirFormulario(id: string): Promise<void> {

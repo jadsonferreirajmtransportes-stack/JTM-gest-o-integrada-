@@ -81,9 +81,13 @@ export const PortalFormularios: React.FC<{
       onClick={() => setAbertoId(f.id)}
       className="w-full text-left bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-3 normal-case tracking-normal active:bg-amber-50"
     >
-      <span className="w-10 h-10 rounded-xl bg-amber-50 text-[#C48229] flex items-center justify-center shrink-0">
-        <ClipboardCheck className="w-5 h-5" />
-      </span>
+      {f.capa ? (
+        <img src={f.capa} alt="" className="w-14 h-10 rounded-xl object-cover shrink-0 bg-slate-100" />
+      ) : (
+        <span className="w-10 h-10 rounded-xl bg-amber-50 text-[#C48229] flex items-center justify-center shrink-0">
+          <ClipboardCheck className="w-5 h-5" />
+        </span>
+      )}
       <span className="flex-1 min-w-0">
         <span className="block text-sm font-bold text-slate-900">{f.titulo}</span>
         <span className="block text-[11px] text-slate-500">
