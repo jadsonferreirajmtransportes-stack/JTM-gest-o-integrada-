@@ -4,6 +4,7 @@
 // Chamada:
 //   { evento: 'chave' }                       → devolve a chave pública (o app usa pra se inscrever)
 //   { evento: 'documento'|'comunicado'|'noticia'|'chat'|'solicitacao'|'qualidade', id } → chamado pelos gatilhos do banco (078/079/093)
+//   { evento: 'ponto_lembrete', id } → a cada 5 min pelo agendamento do banco (097): lembra de bater o ponto
 //
 // Na primeira execução cria as chaves VAPID e guarda em push_config, junto com o
 // próprio endereço (os gatilhos usam). Ninguém precisa digitar chave nenhuma.
@@ -53,6 +54,8 @@ Deno.serve(async (req) => {
   }
   if (evento === 'chave') return resposta({ chave: cfg.vapid_publica });
   if (!evento || !id) return resposta({ erro: 'parametros' }, 400);
+
+  if (evento === 'ponto_lembrete') return resposta(await lembretesPonto(sb, cfg));
 
   // Monta o aviso e quem recebe.
   let aviso: Aviso | null = null;
@@ -169,3 +172,107 @@ Deno.serve(async (req) => {
   if (expiradas.length) await sb.from('push_inscricoes').delete().in('endpoint', expiradas);
   return resposta({ ok: true, enviados });
 });
+
+// ---------------------------------------------------------------------------
+// Lembrete de bater o ponto (097). Roda a cada 5 minutos. Para cada colaborador com
+// jornada e o aviso ativado no celular: 5 min antes de cada marcação e, se passar da
+// tolerância sem a batida, um aviso de "não registrado". Pula folga, feriado, dia com
+// justificativa (atestado, abono, férias...) e quem está de férias, afastado ou inativo.
+// Horário de Fortaleza/Natal (UTC-3, sem horário de verão).
+// ---------------------------------------------------------------------------
+async function lembretesPonto(sb: any, cfg: any) {
+  const MIN = 60 * 1000;
+  const agora = Date.now();
+  const diaLocal = (ms: number) => new Date(ms - 3 * 60 * MIN).toISOString().slice(0, 10);
+  const hoje = diaLocal(agora);
+  const ontem = diaLocal(agora - 24 * 60 * MIN);
+
+  const { data: inscricoes } = await sb.from('push_inscricoes').select('endpoint, p256dh, auth, colaborador_id').eq('tipo', 'colaborador');
+  const porColab = new Map<string, any[]>();
+  (inscricoes ?? []).forEach((i: any) => i.colaborador_id && porColab.set(i.colaborador_id, [...(porColab.get(i.colaborador_id) || []), i]));
+  if (!porColab.size) return { ok: true, enviados: 0 };
+  const ids = Array.from(porColab.keys());
+
+  const [{ data: vinculos }, { data: jornadas }, { data: colabs }, { data: feriados }, { data: justif }, { data: batidas }] = await Promise.all([
+    sb.from('ponto_colaborador_jornada').select('colaborador_id, jornada_id').in('colaborador_id', ids),
+    sb.from('ponto_jornadas').select('*').eq('ativo', true),
+    sb.from('colaboradores').select('id, status').in('id', ids),
+    sb.from('feriados_empresa').select('data, tipo').in('data', [hoje, ontem]),
+    sb.from('ponto_justificativas').select('colaborador_id, data').in('colaborador_id', ids).in('data', [hoje, ontem]),
+    sb.from('ponto_registros').select('colaborador_id, registrado_em').in('colaborador_id', ids).eq('anulado', false).gte('registrado_em', new Date(agora - 30 * 60 * MIN).toISOString()),
+  ]);
+  const jornadaPorId = new Map((jornadas ?? []).map((j: any) => [j.id, j]));
+  const statusPorColab = new Map((colabs ?? []).map((c: any) => [c.id, c.status]));
+  const ehFeriado = new Set((feriados ?? []).filter((f: any) => f.tipo !== 'Ponto Facultativo').map((f: any) => f.data));
+  const justificado = new Set((justif ?? []).map((j: any) => `${j.colaborador_id}|${j.data}`));
+  const minutos = (h?: string | null) => (h ? Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5)) : null);
+  const hhmm = (h: string) => h.slice(0, 5);
+
+  webpush.setVapidDetails('mailto:contato@jmtransportes.com.br', cfg.vapid_publica, cfg.vapid_privada);
+  let enviados = 0;
+  const expiradas: string[] = [];
+
+  for (const v of vinculos ?? []) {
+    const j: any = jornadaPorId.get(v.jornada_id);
+    const status = statusPorColab.get(v.colaborador_id);
+    if (!j || !status || ['Inativo', 'Férias', 'Afastado'].includes(status)) continue;
+    const marcas = [
+      { rotulo: 'entrada', hora: j.entrada },
+      ...(j.saida_intervalo && j.volta_intervalo
+        ? [
+            { rotulo: 'saída para o intervalo', hora: j.saida_intervalo },
+            { rotulo: 'volta do intervalo', hora: j.volta_intervalo },
+          ]
+        : []),
+      { rotulo: 'saída', hora: j.saida },
+    ].filter((m) => minutos(m.hora) !== null);
+    const tolerancia = Math.max(5, Number(j.tolerancia_min ?? 15));
+
+    for (const base of [hoje, ontem]) {
+      const dow = new Date(`${base}T12:00:00Z`).getUTCDay();
+      if (!(j.dias_semana ?? []).includes(dow) || ehFeriado.has(base) || justificado.has(`${v.colaborador_id}|${base}`)) continue;
+      // Horário de cada marcação (jornada que vira a noite: a hora "volta" e vai para o dia seguinte).
+      const meiaNoite = Date.parse(`${base}T03:00:00Z`);
+      let anterior = -1;
+      const tempos = marcas.map((m) => {
+        let t = meiaNoite + minutos(m.hora)! * MIN;
+        while (t <= anterior) t += 24 * 60 * MIN;
+        anterior = t;
+        return t;
+      });
+      const feitas = (batidas ?? []).filter((b: any) => {
+        if (b.colaborador_id !== v.colaborador_id) return false;
+        const t = Date.parse(b.registrado_em);
+        return t >= tempos[0] - 3 * 60 * MIN && t <= tempos[tempos.length - 1] + 4 * 60 * MIN;
+      }).length;
+
+      for (let i = 0; i < marcas.length; i++) {
+        if (feitas > i) continue; // já bateu esta (contando na ordem)
+        let tipo: 'antes' | 'depois' | null = null;
+        if (agora >= tempos[i] - 5 * MIN && agora < tempos[i]) tipo = 'antes';
+        else if (agora >= tempos[i] + tolerancia * MIN && agora < tempos[i] + (tolerancia + 5) * MIN) tipo = 'depois';
+        if (!tipo) continue;
+        const { error: repetido } = await sb.from('push_enviados').insert({ evento: 'ponto_lembrete', ref_id: `${v.colaborador_id}|${base}|${i}|${tipo}` });
+        if (repetido) continue;
+        const aviso =
+          tipo === 'antes'
+            ? { titulo: '⏰ Hora de bater o ponto', corpo: `Sua ${marcas[i].rotulo} é às ${hhmm(marcas[i].hora)}. Toque para registrar.`, url: '/colaborador/?form=portal&ir=ponto', tag: `ponto-${base}-${i}` }
+            : { titulo: '⚠️ Ponto não registrado', corpo: `Você ainda não registrou a ${marcas[i].rotulo} (${hhmm(marcas[i].hora)}). Toque para registrar.`, url: '/colaborador/?form=portal&ir=ponto', tag: `ponto-${base}-${i}` };
+        for (const s of porColab.get(v.colaborador_id) || []) {
+          try {
+            await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(aviso), { TTL: 60 * 30 });
+            enviados++;
+          } catch (err: any) {
+            if (err?.statusCode === 404 || err?.statusCode === 410) expiradas.push(s.endpoint);
+            else console.error('Falha ao enviar lembrete de ponto:', err?.statusCode, err?.body || err?.message);
+          }
+        }
+        break; // um aviso por colaborador por rodada
+      }
+    }
+  }
+  if (expiradas.length) await sb.from('push_inscricoes').delete().in('endpoint', expiradas);
+  // Limpa os registros de lembrete com mais de 3 dias (a tabela não cresce à toa).
+  await sb.from('push_enviados').delete().eq('evento', 'ponto_lembrete').lt('enviado_em', new Date(agora - 3 * 24 * 60 * MIN).toISOString());
+  return { ok: true, enviados };
+}
