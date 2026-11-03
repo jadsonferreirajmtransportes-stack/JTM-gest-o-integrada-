@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Loader2, Paperclip, Plus, Save, Trash2, X } from 'lucide-react';
+import { Download, FileText, Loader2, Paperclip, Plus, Save, Trash2, X } from 'lucide-react';
 import { CampoQualidade, COR_SELO, STATUS_ACAO, configQualidade } from '../../data/qualidadeConfig';
 import {
   AcaoQualidade,
@@ -48,6 +48,21 @@ export const RegistroQualidadeModal: React.FC<{
         a.id === id ? { ...a, ...p, ...(p.status === 'Concluída' && !a.concluidaEm ? { concluidaEm: hojeIso() } : p.status && p.status !== 'Concluída' ? { concluidaEm: undefined } : {}) } : a
       ),
     });
+
+  const baixarPdf = async () => {
+    try {
+      const { gerarRelatorioQualidadePdf } = await import('./relatorioQualidadePdf');
+      const arquivo = gerarRelatorioQualidadePdf(r);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(arquivo);
+      a.download = arquivo.name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível gerar o PDF.');
+    }
+  };
 
   const fechar = () => {
     if ((mudou || nota.trim()) && !window.confirm("Fechar sem salvar? O que você mudou será perdido.")) return;
@@ -169,6 +184,11 @@ export const RegistroQualidadeModal: React.FC<{
             <h2 className="text-base font-black text-slate-900 normal-case truncate">{r.titulo || (novo ? `Novo: ${cfg.singular.toLowerCase()}` : '—')}</h2>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {!novo && r.tipo !== 'qualificacao' && r.tipo !== 'fornecedor' && (
+              <button type="button" onClick={baixarPdf} title={mudou ? 'O PDF sai com o que está na tela (salve para gravar)' : 'Baixar o relatório em PDF'} className="py-1 px-2 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-700 flex items-center gap-1 hover:bg-amber-50">
+                <FileText className="w-3.5 h-3.5 text-[#C48229]" /> PDF
+              </button>
+            )}
             <select value={r.status} onChange={(e) => alterar({ status: e.target.value })} className={`py-1 px-2 rounded-lg border text-[11px] font-bold ${statusAtual ? COR_SELO[statusAtual.cor] : ''}`}>
               {cfg.status.map((s) => (
                 <option key={s.id} value={s.id}>
