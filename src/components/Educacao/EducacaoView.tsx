@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   GraduationCap,
   MonitorSmartphone,
-  PartyPopper,
   FileUp,
   Plus,
   Pencil,
@@ -42,7 +41,6 @@ import {
 } from '../../utils/educacaoApi';
 import { TreinamentoEditorModal } from './TreinamentoEditorModal';
 import { CapaTreinamento } from './CapaTreinamento';
-import { TITULO_BOAS_VINDAS, montarTreinamentoBoasVindas } from './treinamentoBoasVindas';
 import { GRUPOS_TREINAMENTO_SISTEMA, PREFIXO_TREINAMENTO_SISTEMA, TODOS_MODULOS_SISTEMA, montarTreinamentoSistema } from './treinamentosSistema';
 import { documentoParaTreinamento } from './importarTreinamento';
 import { gerarCertificadoPdf, formatarCargaHoraria } from './certificadoPdf';
@@ -369,20 +367,6 @@ export const EducacaoView: React.FC<EducacaoViewProps> = ({ colaboradores, instr
             title="Monta um treinamento a partir de um PDF, Word ou texto colado"
           >
             <FileUp className="w-4 h-4 text-[#92611F]" /> Importar documento
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              // Boas-vindas: abre pronto no editor para conferir e salvar. Se já existe, troca só o
-              // conteúdo e a prova (mantém quem faz, prazo e quem já concluiu).
-              const novo = montarTreinamentoBoasVindas({ criadoPor: currentUser?.nome, admitidosDesde: new Date().toLocaleDateString('sv-SE'), prazoDias: 7 });
-              const atual = treinamentos.find((x) => x.titulo.trim().toLowerCase() === TITULO_BOAS_VINDAS.toLowerCase());
-              setEditando(atual ? { ...atual, conteudos: novo.conteudos, prova: novo.prova, descricao: novo.descricao, cargaHorariaMin: novo.cargaHorariaMin } : novo);
-            }}
-            className="px-3 py-2.5 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5"
-            title="Integração de novos colaboradores: norteadores e Regulamento Interno, com imagens e prova"
-          >
-            <PartyPopper className="w-4 h-4 text-[#92611F]" /> Boas-vindas
           </button>
           <button
             type="button"

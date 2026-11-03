@@ -3,7 +3,8 @@
 // 2026-11-03): norteadores (propósito, missão, visão, valores, pilares) e o
 // Regulamento Interno, com imagens (public/treinamento-boas-vindas, geradas no
 // padrão JMT) e provinha. Os textos vêm de strategicGuidelines.ts e de
-// regulamentoInterno.ts — mudou lá, é só "Atualizar" o treinamento.
+// regulamentoInterno.ts. O treinamento entra no banco pela migração 098 (o SQL foi
+// gerado a partir deste arquivo); para uma versão nova, gerar o SQL de novo daqui.
 // ============================================================================
 
 import { STRATEGIC_GUIDELINES as N } from '../../data/strategicGuidelines';
