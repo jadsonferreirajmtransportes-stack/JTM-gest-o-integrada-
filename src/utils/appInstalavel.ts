@@ -74,10 +74,15 @@ export function configurarApp() {
       document.getElementById('manifest-app')?.setAttribute('href', `/api/manifest-colaborador?t=${token}`);
     }
   }
-  // Notificação do chat: abre o sistema direto no Chat.
-  if (params.get('abrir') === 'chat') {
+  // Notificação do chat / da Qualidade: abre o sistema direto no módulo.
+  const abrir = params.get('abrir');
+  if (abrir === 'chat' || abrir === 'qualidade') {
     try {
-      localStorage.setItem('jmt_active_global_module_v1', JSON.stringify('chat'));
+      localStorage.setItem('jmt_active_global_module_v1', JSON.stringify(abrir));
+      // Abre direto no módulo (no celular, sem passar pela tela Início).
+      sessionStorage.setItem('jmt_secao_atual', `${abrir}|${abrir}`);
+      sessionStorage.setItem('jmt_inicio_mobile', '0');
+      if (abrir === 'qualidade') sessionStorage.setItem('jmt_qualidade_aba', 'desvio');
     } catch {
       /* sem armazenamento */
     }

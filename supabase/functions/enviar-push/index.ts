@@ -3,7 +3,7 @@
 //
 // Chamada:
 //   { evento: 'chave' }                       → devolve a chave pública (o app usa pra se inscrever)
-//   { evento: 'documento'|'comunicado'|'noticia'|'chat'|'solicitacao', id } → chamado pelos gatilhos do banco (078/079)
+//   { evento: 'documento'|'comunicado'|'noticia'|'chat'|'solicitacao'|'qualidade', id } → chamado pelos gatilhos do banco (078/079/093)
 //
 // Na primeira execução cria as chaves VAPID e guarda em push_config, junto com o
 // próprio endereço (os gatilhos usam). Ninguém precisa digitar chave nenhuma.
@@ -122,6 +122,25 @@ Deno.serve(async (req) => {
       aviso = { titulo: '💬 Resposta do DP', corpo: `${s.assunto}: ${conteudo}`, url: `/colaborador/?form=portal&ir=solicitacao:${s.id}`, tag: `sol-${s.id}` };
       inscricoes = (await sb.from('push_inscricoes').select(colunas).eq('tipo', 'colaborador').eq('colaborador_id', s.colaborador_id)).data ?? [];
     }
+  } else if (evento === 'qualidade') {
+    // Ocorrência relatada pelo colaborador no portal (093) → avisa quem tem o módulo Qualidade
+    // (e os administradores).
+    const { data: q } = await sb.from('qualidade_registros').select('id, ano, numero, origem, dados, criado_em').eq('id', id).maybeSingle();
+    if (!q || q.origem !== 'portal' || !recente(q.criado_em)) return resposta({ ok: true, ignorado: true });
+    const d: any = q.dados || {};
+    const protocolo = `DSV-${q.ano}-${String(q.numero || 0).padStart(3, '0')}`;
+    aviso = {
+      titulo: `⚠️ Qualidade · ${d.categoria || 'Nova ocorrência'}`,
+      corpo: `${protocolo}: ${String(d.descricao || '').trim().slice(0, 140)}`,
+      url: '/gestao/?abrir=qualidade',
+      tag: `qld-${q.id}`,
+    };
+    const { data: usuarios } = await sb.from('usuarios').select('id, status, role, modulos_permitidos');
+    const ids = (usuarios ?? [])
+      .filter((u: any) => u.status !== 'Inativo' && u.status !== 'Bloqueado')
+      .filter((u: any) => u.role === 'admin' || (Array.isArray(u.modulos_permitidos) && u.modulos_permitidos.includes('qualidade')))
+      .map((u: any) => u.id);
+    if (ids.length) inscricoes = (await sb.from('push_inscricoes').select(colunas).eq('tipo', 'usuario').in('usuario_id', ids)).data ?? [];
   } else {
     return resposta({ erro: 'evento' }, 400);
   }
