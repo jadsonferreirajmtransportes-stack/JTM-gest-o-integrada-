@@ -3676,7 +3676,7 @@ export default function App() {
           {(activeGlobalModule === 'pops' || activeSection === 'pops') && <PopsView colaboradores={colaboradores} currentUser={currentUser} />}
 
           {activeGlobalModule === 'formularios' && <FormulariosView colaboradores={colaboradores} currentUser={currentUser} />}
-          {activeGlobalModule === 'qualidade' && <QualidadeView currentUser={currentUser} />}
+          {activeGlobalModule === 'qualidade' && <QualidadeView currentUser={currentUser} colaboradores={colaboradores} />}
           {activeGlobalModule === 'sugestoes' && <SugestoesView currentUser={currentUser} />}
 
           {/* ========================================================================= */}

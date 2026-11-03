@@ -60,6 +60,7 @@ import { PortalComunicados } from '../Portal/PortalComunicados';
 import { PortalSolicitacoes } from '../Portal/PortalSolicitacoes';
 import { PortalFormularios } from '../Portal/PortalFormularios';
 import { PortalQualidade } from '../Portal/PortalQualidade';
+import { portalMeusRelatos } from '../../utils/qualidadeApi';
 import { PortalSugestoes } from '../Portal/PortalSugestoes';
 import { portalFormularios } from '../../utils/formulariosApi';
 import { MeuHistoricoPonto } from '../Frequencia/MeuHistoricoPonto';
@@ -166,6 +167,8 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
   const [noticiasRecentes, setNoticiasRecentes] = useState<NoticiaPortalResumo[]>([]);
   const [abertoId, setAbertoId] = useState<string | null>(null);
   const [instrucaoAberta, setInstrucaoAberta] = useState<InstrucaoTrabalho | null>(null);
+  // Relatar ocorrência: some do menu de quem não está na lista de acesso da Qualidade (096).
+  const [relatoLiberado, setRelatoLiberado] = useState(true);
   const [resumo, setResumo] = useState<{ documentos?: number; comunicados?: number; noticias?: number; respostas?: number; formularios?: number }>({});
   // Documentos que faltam assinar — aviso na página de início e janela ao entrar.
   const [docsPendentes, setDocsPendentes] = useState<DocumentoPortal[]>([]);
@@ -187,6 +190,9 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
       .catch(() => undefined);
     portalSolicitacoes(cred)
       .then((l) => setResumo((p) => ({ ...p, respostas: l.filter((x) => x.novaResposta).length })))
+      .catch(() => undefined);
+    portalMeusRelatos(cred)
+      .then((r) => setRelatoLiberado(r.permitido))
       .catch(() => undefined);
     portalFormularios(cred)
       .then((l) => setResumo((p) => ({ ...p, formularios: l.filter((f) => f.aberto && !f.respondidoEm).length })))
@@ -462,7 +468,9 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
           </div>
         ) : (
           <>
-            {aba === 'mais' && <MenuMaisPortal contagem={contagem} onIr={irPara} onSair={entrouPeloAparelho(credenciais) ? handleSair : undefined} />}
+            {aba === 'mais' && (
+              <MenuMaisPortal contagem={contagem} onIr={irPara} onSair={entrouPeloAparelho(credenciais) ? handleSair : undefined} ocultas={relatoLiberado ? [] : ['qualidade']} />
+            )}
 
             {aba === 'inicio' && (
               <PortalInicio

@@ -11,13 +11,17 @@ const campoCls = 'mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white te
 /** Portal do colaborador: relatar uma ocorrência à Qualidade (avaria, extravio, temperatura...). */
 export const PortalQualidade: React.FC<{ credenciais: CredenciaisPortal }> = ({ credenciais }) => {
   const [lista, setLista] = useState<RelatoPortal[] | null>(null);
+  const [permitido, setPermitido] = useState(true);
   const [novo, setNovo] = useState(false);
   const [enviado, setEnviado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   const carregar = () =>
     portalMeusRelatos(credenciais)
-      .then(setLista)
+      .then((r) => {
+        setLista(r.relatos);
+        setPermitido(r.permitido);
+      })
       .catch((e) => {
         setErro(e instanceof Error ? e.message : 'Não foi possível carregar.');
         setLista([]);
@@ -46,9 +50,14 @@ export const PortalQualidade: React.FC<{ credenciais: CredenciaisPortal }> = ({ 
           <CheckCircle2 className="w-4 h-4" /> Ocorrência {enviado} enviada. Obrigado por avisar!
         </p>
       )}
+      {!permitido && lista !== null && (
+        <p className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">Esta área não está liberada para você. Se presenciar uma ocorrência, avise o seu supervisor ou a Qualidade.</p>
+      )}
+      {permitido && (
       <button type="button" onClick={() => (setEnviado(null), setNovo(true))} className="w-full py-3 rounded-2xl bg-[#C48229] hover:bg-[#92611F] text-white text-sm font-bold flex items-center justify-center gap-2">
         <Plus className="w-4 h-4" /> Relatar uma ocorrência
       </button>
+      )}
       {erro && <p className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</p>}
       {lista === null ? (
         <div className="flex items-center justify-center gap-2 py-8 text-slate-500 text-sm">

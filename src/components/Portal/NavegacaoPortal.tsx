@@ -121,7 +121,9 @@ export const MenuMaisPortal: React.FC<{
   contagem: Partial<Record<AreaPortal, number>>;
   onIr: (a: AreaPortal) => void;
   onSair?: () => void;
-}> = ({ contagem, onIr, onSair }) => {
+  /** Áreas que esta pessoa não usa (ex.: Relatar ocorrência sem acesso liberado). */
+  ocultas?: AreaPortal[];
+}> = ({ contagem, onIr, onSair, ocultas = [] }) => {
   const grupos: { titulo: string; areas: Exclude<AreaPortal, 'mais' | 'inicio'>[] }[] = [
     { titulo: 'Meu ponto', areas: ['ponto', 'historico', 'desempenho'] },
     { titulo: 'Comunicação', areas: ['comunicados', 'solicitacoes', 'formularios', 'sugestoes', 'jornal'] },
@@ -130,7 +132,10 @@ export const MenuMaisPortal: React.FC<{
   ];
   return (
     <div className="space-y-4">
-      {grupos.map((g) => (
+      {grupos
+        .map((g) => ({ ...g, areas: g.areas.filter((a) => !ocultas.includes(a)) }))
+        .filter((g) => g.areas.length > 0)
+        .map((g) => (
         <section key={g.titulo}>
           <h2 className="px-1 mb-1.5 text-[11px] font-black uppercase tracking-wide text-slate-400">{g.titulo}</h2>
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs divide-y divide-slate-100 overflow-hidden">

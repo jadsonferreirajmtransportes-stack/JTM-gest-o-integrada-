@@ -197,6 +197,7 @@ const MENSAGENS: Record<string, string> = {
   dados: 'Não foi possível confirmar seu acesso. Saia e entre de novo.',
   vazia: 'Conte o que aconteceu.',
   tamanho: 'O texto passou de 3000 caracteres. Resuma um pouco.',
+  sem_acesso: 'A área de relatar ocorrência não está liberada para você. Fale com a Qualidade.',
   limite: 'Você já relatou 10 ocorrências hoje. Fale com a Qualidade se precisar de mais.',
 };
 
@@ -211,9 +212,35 @@ export async function portalRelatarOcorrencia(
   return data;
 }
 
-export async function portalMeusRelatos(c: CredenciaisPortal): Promise<RelatoPortal[]> {
+/** Relatos da pessoa e se ela pode relatar (lista de acesso — migração 096; sem a 096, pode). */
+export async function portalMeusRelatos(c: CredenciaisPortal): Promise<{ relatos: RelatoPortal[]; permitido: boolean }> {
   const { data, error } = await supabase.rpc('portal_qualidade_meus', args(c));
   falhou(error, 'portalMeusRelatos');
   if (data?.erro) throw new Error(MENSAGENS[data.erro] || 'Não foi possível carregar.');
-  return data?.relatos ?? [];
+  return { relatos: data?.relatos ?? [], permitido: data?.permitido !== false };
+}
+
+// ---------------------------------------------------------------------------
+// Quem pode relatar pelo portal (qualidade_config — migração 096)
+// ---------------------------------------------------------------------------
+export interface AcessoRelato {
+  modo: 'todos' | 'escolhidos';
+  colaboradores: string[];
+}
+
+export async function getAcessoRelato(): Promise<AcessoRelato> {
+  const { data, error } = await supabase.from('qualidade_config').select('relato_acesso, relato_colaboradores').eq('id', 1).maybeSingle();
+  falhou(error, 'getAcessoRelato');
+  return { modo: data?.relato_acesso === 'escolhidos' ? 'escolhidos' : 'todos', colaboradores: data?.relato_colaboradores ?? [] };
+}
+
+export async function salvarAcessoRelato(a: AcessoRelato, por?: string): Promise<void> {
+  const { error } = await supabase.from('qualidade_config').upsert({
+    id: 1,
+    relato_acesso: a.modo,
+    relato_colaboradores: a.colaboradores,
+    atualizado_por: por || null,
+    atualizado_em: new Date().toISOString(),
+  });
+  falhou(error, 'salvarAcessoRelato');
 }

@@ -12,8 +12,10 @@ import {
   Search,
   ShieldCheck,
   Thermometer,
+  Users,
 } from 'lucide-react';
-import type { UsuarioLogin } from '../../types';
+import type { Colaborador, UsuarioLogin } from '../../types';
+import { AcessoRelatoModal } from './AcessoRelatoModal';
 import { CONFIG_QUALIDADE, COR_SELO, TipoQualidade, configQualidade } from '../../data/qualidadeConfig';
 import { RegistroQualidade, acoesAtrasadas, diasAte, emAberto, getRegistrosQualidade, protocoloQualidade, registroNovo } from '../../utils/qualidadeApi';
 import { AcoesTela } from '../Common/AcoesTela';
@@ -53,7 +55,8 @@ const Validade: React.FC<{ prazo?: string }> = ({ prazo }) => {
 };
 
 /** Módulo Qualidade (área farmacêutica — RDC 430/2020). */
-export const QualidadeView: React.FC<{ currentUser?: UsuarioLogin | null }> = ({ currentUser }) => {
+export const QualidadeView: React.FC<{ currentUser?: UsuarioLogin | null; colaboradores?: Colaborador[] }> = ({ currentUser, colaboradores = [] }) => {
+  const [acessoAberto, setAcessoAberto] = useState(false);
   const [lista, setLista] = useState<RegistroQualidade[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [aba, setAba] = useState<Aba>(() => {
@@ -336,6 +339,9 @@ export const QualidadeView: React.FC<{ currentUser?: UsuarioLogin | null }> = ({
           ) : undefined
         }
       >
+        <button type="button" onClick={() => setAcessoAberto(true)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold flex items-center gap-1.5">
+          <Users className="w-4 h-4 text-[#C48229]" /> Quem pode relatar
+        </button>
         {aba !== 'painel' && (
           <button type="button" onClick={exportarExcel} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold flex items-center gap-1.5">
             <FileSpreadsheet className="w-4 h-4 text-emerald-700" /> Excel
@@ -370,6 +376,8 @@ export const QualidadeView: React.FC<{ currentUser?: UsuarioLogin | null }> = ({
       ) : (
         listaTipo(aba)
       )}
+
+      {acessoAberto && <AcessoRelatoModal colaboradores={colaboradores} usuario={currentUser?.nome} onClose={() => setAcessoAberto(false)} />}
 
       {aberto && (
         <RegistroQualidadeModal
