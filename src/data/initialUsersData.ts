@@ -200,6 +200,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     categoria: 'Corporativo',
   },
   {
+    id: 'qualidade',
+    nome: 'Qualidade',
+    sigla: 'QLD',
+    descricao: 'Qualidade farmacêutica (RDC 430/2020): desvios e CAPA, excursões de temperatura, qualificações e calibrações com vencimento, fornecedores, reclamações e auditorias. Colaboradores relatam ocorrências pelo portal.',
+    corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
+    corBorda: 'border-[#C48229]',
+    iconeNome: 'ShieldCheck',
+    categoria: 'Corporativo',
+  },
+  {
     id: 'formularios',
     nome: 'Formulários',
     sigla: 'FRM',

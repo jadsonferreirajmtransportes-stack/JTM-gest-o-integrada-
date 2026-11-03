@@ -21,6 +21,7 @@ import {
   Newspaper,
   ClipboardList,
   ClipboardCheck,
+  ShieldCheck,
   KeyRound,
   Inbox,
 } from 'lucide-react';
@@ -39,6 +40,7 @@ const MODULOS: { id: GlobalModuleId; rotulo: string; icone: React.ElementType }[
   { id: 'instrucoes', rotulo: 'Instruções', icone: FileCheck2 },
   { id: 'pops', rotulo: 'POPs', icone: ClipboardList },
   { id: 'formularios', rotulo: 'Formulários', icone: ClipboardCheck },
+  { id: 'qualidade', rotulo: 'Qualidade', icone: ShieldCheck },
   { id: 'documentos', rotulo: 'Padronização', icone: FileStack },
   { id: 'comunicados', rotulo: 'Comunicados', icone: Megaphone },
   { id: 'jornal', rotulo: 'Jornal', icone: Newspaper },

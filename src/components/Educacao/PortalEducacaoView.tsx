@@ -59,6 +59,7 @@ import { PortalDocumentos } from '../Portal/PortalDocumentos';
 import { PortalComunicados } from '../Portal/PortalComunicados';
 import { PortalSolicitacoes } from '../Portal/PortalSolicitacoes';
 import { PortalFormularios } from '../Portal/PortalFormularios';
+import { PortalQualidade } from '../Portal/PortalQualidade';
 import { portalFormularios } from '../../utils/formulariosApi';
 import { MeuHistoricoPonto } from '../Frequencia/MeuHistoricoPonto';
 import { MeuDesempenho } from '../Portal/MeuDesempenho';
@@ -129,7 +130,7 @@ function lerDestino(ir?: string, abaAntiga?: string, noticiaAntiga?: string): { 
   if (!ir && abaAntiga === 'jornal') return { aba: 'jornal', item: noticiaAntiga };
   const [tipo, ...resto] = (ir || '').split(':');
   const item = resto.join(':') || undefined;
-  const mapa: Record<string, Aba> = { ponto: 'ponto', historico: 'historico', desempenho: 'desempenho', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', solicitacoes: 'solicitacoes', solicitacao: 'solicitacoes', formularios: 'formularios', formulario: 'formularios', treinamentos: 'treinamentos', jornal: 'jornal' };
+  const mapa: Record<string, Aba> = { ponto: 'ponto', historico: 'historico', desempenho: 'desempenho', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', solicitacoes: 'solicitacoes', solicitacao: 'solicitacoes', formularios: 'formularios', formulario: 'formularios', qualidade: 'qualidade', treinamentos: 'treinamentos', jornal: 'jornal' };
   return { aba: mapa[tipo] || 'inicio', item };
 }
 
@@ -519,6 +520,8 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
                 }}
               />
             )}
+
+            {aba === 'qualidade' && <PortalQualidade credenciais={credenciais} />}
 
             {aba === 'formularios' && (
               <PortalFormularios

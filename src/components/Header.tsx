@@ -78,6 +78,7 @@ const TITULO_CURTO: Record<string, string> = {
   jornal: 'Jornal JMT',
   pops: 'POPs',
   formularios: 'Formulários',
+  qualidade: 'Qualidade',
 };
 
 const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = {

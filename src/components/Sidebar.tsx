@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   ClipboardList,
   ClipboardCheck,
+  ShieldCheck as ShieldCheckQualidade,
   Share2,
   DollarSign,
   ChevronRight,
@@ -337,6 +338,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: undefined as number | undefined,
       icon: ClipboardList,
       color: 'from-[#7A4F17] to-[#2b2014]',
+      activeBorder: 'border-[#C48229]',
+    },
+    {
+      id: 'qualidade' as GlobalModuleId,
+      title: 'Qualidade',
+      short: 'Desvios, CAPA, temperatura, fornecedores',
+      badge: undefined as number | undefined,
+      icon: ShieldCheckQualidade,
+      color: 'from-[#92611F] to-[#2b2014]',
       activeBorder: 'border-[#C48229]',
     },
     {
