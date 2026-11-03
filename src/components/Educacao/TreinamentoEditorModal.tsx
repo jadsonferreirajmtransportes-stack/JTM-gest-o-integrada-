@@ -447,6 +447,22 @@ export const TreinamentoEditorModal: React.FC<TreinamentoEditorModalProps> = ({ 
                 </div>
               </div>
             )}
+            <label className="flex flex-wrap items-center gap-2 font-semibold text-slate-700 p-2.5 rounded-lg border border-amber-200 bg-amber-50">
+              <input
+                type="checkbox"
+                checked={!!t.admitidosDesde}
+                onChange={(e) => atualizar({ admitidosDesde: e.target.checked ? new Date().toLocaleDateString('sv-SE') : '' })}
+                className="w-4 h-4 accent-[#C48229]"
+              />
+              Só os novos colaboradores, admitidos a partir de
+              <input
+                type="date"
+                value={t.admitidosDesde || ''}
+                disabled={!t.admitidosDesde}
+                onChange={(e) => atualizar({ admitidosDesde: e.target.value || '' })}
+                className="px-2 py-1 border border-slate-300 rounded-lg bg-white text-xs disabled:opacity-50"
+              />
+            </label>
             <p className="text-[11px] text-slate-500">Também dá pra atribuir a pessoas específicas depois, na aba Acompanhamento.</p>
           </section>
         </div>

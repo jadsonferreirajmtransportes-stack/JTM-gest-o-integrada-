@@ -55,6 +55,8 @@ export interface Treinamento {
   obrigatorioTodos: boolean;
   obrigatorioCargos: string[];
   obrigatorioSetores: string[];
+  /** Só vale para quem foi admitido a partir desta data (ex.: integração de novos) — migração 098. */
+  admitidosDesde?: string;
   validadeMeses?: number;
   prazoDias?: number;
   ativo: boolean;
@@ -118,6 +120,7 @@ function rowToTreinamento(r: any): Treinamento {
     obrigatorioTodos: !!r.obrigatorio_todos,
     obrigatorioCargos: r.obrigatorio_cargos ?? [],
     obrigatorioSetores: r.obrigatorio_setores ?? [],
+    admitidosDesde: u(r.admitidos_desde),
     validadeMeses: r.validade_meses === null ? undefined : Number(r.validade_meses),
     prazoDias: r.prazo_dias === null ? undefined : Number(r.prazo_dias),
     ativo: r.ativo !== false,
@@ -147,6 +150,8 @@ export async function saveTreinamento(t: Treinamento): Promise<Treinamento> {
     obrigatorio_todos: registro.obrigatorioTodos,
     obrigatorio_cargos: registro.obrigatorioCargos,
     obrigatorio_setores: registro.obrigatorioSetores,
+    // Só manda a coluna quando usada — salvar continua funcionando antes da migração 098.
+    ...(registro.admitidosDesde !== undefined ? { admitidos_desde: registro.admitidosDesde || null } : {}),
     validade_meses: registro.validadeMeses ?? null,
     prazo_dias: registro.prazoDias ?? null,
     ativo: registro.ativo,
@@ -256,6 +261,8 @@ function normalizar(v?: string): string {
 /** O treinamento é obrigatório pra este colaborador pela regra (todos / cargo / setor)? */
 export function obrigatorioPara(t: Treinamento, c: Colaborador): boolean {
   if (!t.ativo) return false;
+  // Integração: só quem entrou a partir da data (sem data de admissão no cadastro, não entra).
+  if (t.admitidosDesde && !(c.dataAdmissao && c.dataAdmissao >= t.admitidosDesde)) return false;
   if (t.obrigatorioTodos) return true;
   if (t.obrigatorioCargos.some((cargo) => normalizar(cargo) === normalizar(c.funcaoCargo))) return true;
   if (t.obrigatorioSetores.some((setor) => normalizar(setor) === normalizar(c.setor))) return true;

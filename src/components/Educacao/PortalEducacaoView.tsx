@@ -60,6 +60,7 @@ import { PortalComunicados } from '../Portal/PortalComunicados';
 import { PortalSolicitacoes } from '../Portal/PortalSolicitacoes';
 import { PortalFormularios } from '../Portal/PortalFormularios';
 import { PortalQualidade } from '../Portal/PortalQualidade';
+import { TextoFormatado } from '../Jornal/jornalVisual';
 import { portalMeusRelatos } from '../../utils/qualidadeApi';
 import { PortalSugestoes } from '../Portal/PortalSugestoes';
 import { portalFormularios } from '../../utils/formulariosApi';
@@ -822,8 +823,12 @@ const TreinamentoAberto: React.FC<{
               <PdfEmTela url={conteudo.url} />
             </>
           )}
-          {conteudo.tipo === 'texto' && <p className="text-sm text-slate-700 whitespace-pre-line leading-relaxed">{conteudo.texto}</p>}
           {conteudo.tipo === 'texto' && !!conteudo.telas?.length && <TelasIlustradas telas={conteudo.telas} />}
+          {conteudo.tipo === 'texto' && (
+            <p className="text-sm text-slate-700 whitespace-pre-line leading-relaxed">
+              <TextoFormatado texto={conteudo.texto || ''} />
+            </p>
+          )}
           {conteudo.tipo === 'telas' && <TelasIlustradas telas={conteudo.telas || []} />}
           {conteudo.tipo === 'instrucao' &&
             (instrucao ? (
