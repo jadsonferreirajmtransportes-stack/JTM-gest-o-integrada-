@@ -10,6 +10,7 @@
 //   • Documento assinado em até 3 dias: +5.
 //   • Ciência de comunicado em até 3 dias: +3.
 //   • Reconhecimento lançado pelo DP: os pontos definidos no lançamento.
+//   • Sugestão de melhoria implementada (com nome): +50, lançado sozinho como reconhecimento (095).
 // O nível (Bronze → Diamante) soma todos os meses desde o início do programa.
 // ============================================================================
 
@@ -129,6 +130,7 @@ export function medalhasDe(meses: ResultadoMes[], e: Pick<EntradaGamificacao, 't
     { id: 'aprendiz', nome: 'Aprendiz', emoji: '📘', descricao: 'Concluir o primeiro treinamento.', conquistada: treinosTotal >= 1 },
     { id: 'estudioso', nome: 'Estudioso', emoji: '🎓', descricao: 'Concluir 5 treinamentos.', conquistada: treinosTotal >= 5 },
     { id: 'em-dia', nome: 'Sempre em dia', emoji: '✍️', descricao: 'Assinar 5 documentos em até 3 dias.', conquistada: meses.reduce((s, m) => s + (m.itens.find((i) => i.chave === 'documentos')?.quantidade || 0), 0) >= 5 },
+    { id: 'inovador', nome: 'Ideia que virou realidade', emoji: '💡', descricao: 'Ter uma sugestão de melhoria implementada.', conquistada: e.reconhecimentos.some((r) => r.motivo.startsWith('Sugestão implementada')) },
     { id: 'reconhecido', nome: 'Reconhecido', emoji: '🌟', descricao: 'Receber um reconhecimento do DP.', conquistada: e.reconhecimentos.length > 0 },
     { id: 'destaque', nome: 'Destaque do mês', emoji: '🏆', descricao: 'Ser escolhido destaque do mês.', conquistada: destaques.length > 0 },
   ];

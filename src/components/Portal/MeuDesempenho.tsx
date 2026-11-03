@@ -244,6 +244,7 @@ export const MeuDesempenho: React.FC<{ credenciais: CredenciaisPortal; treinamen
             <li>Documento assinado em até 3 dias: +{PONTOS.documentoEmDia}.</li>
             <li>Ciência de comunicado em até 3 dias: +{PONTOS.cienciaEmDia}.</li>
             <li>Reconhecimentos do DP (elogio de cliente, meta batida...): pontos definidos pelo DP.</li>
+            <li>Sugestão de melhoria implementada (enviada com o seu nome, em Mais → Sugestões): +50.</li>
             <li>Os pontos de cada mês somam no seu nível: Bronze, Prata (300), Ouro (800) e Diamante (1.500).</li>
             <li>Só você vê a sua pontuação. Todo mês, o destaque é homenageado no Jornal JMT.</li>
           </ul>

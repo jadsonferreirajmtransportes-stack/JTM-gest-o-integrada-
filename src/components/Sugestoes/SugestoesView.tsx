@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { EyeOff, FileSpreadsheet, Lightbulb, Loader2, Megaphone, Save, Search, ThumbsUp, Trash2, X } from 'lucide-react';
 import type { UsuarioLogin } from '../../types';
 import { AcoesTela } from '../Common/AcoesTela';
-import { CATEGORIAS_SUGESTAO, STATUS_SUGESTAO, StatusSugestao, Sugestao, atualizarSugestao, excluirSugestao, getSugestoes, statusSugestao } from '../../utils/sugestoesApi';
+import { CATEGORIAS_SUGESTAO, PONTOS_SUGESTAO_IMPLEMENTADA, STATUS_SUGESTAO, StatusSugestao, Sugestao, atualizarSugestao, excluirSugestao, getSugestoes, statusSugestao } from '../../utils/sugestoesApi';
 
 const dataBr = (iso?: string) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '');
 const nomeBonito = (s?: string) =>
@@ -313,6 +313,15 @@ const SugestaoModal: React.FC<{
               <input value={f.responsavel} onChange={(e) => setF((x) => ({ ...x, responsavel: e.target.value }))} maxLength={120} className={campoCls} />
             </label>
           </div>
+          {f.status === 'implementada' && (
+            <p className={`p-2.5 rounded-xl border font-semibold ${s.anonima ? 'bg-slate-50 border-slate-200 text-slate-500' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+              {s.anonima
+                ? 'Sugestão anônima: não gera pontos na gamificação (daria para saber quem mandou).'
+                : s.status === 'implementada'
+                  ? `🏅 ${nomeBonito(s.colaboradorNome).split(' ')[0]} já recebeu +${PONTOS_SUGESTAO_IMPLEMENTADA} pontos no Meu desempenho por esta sugestão.`
+                  : `🏅 Ao salvar, ${nomeBonito(s.colaboradorNome).split(' ')[0]} ganha +${PONTOS_SUGESTAO_IMPLEMENTADA} pontos no Meu desempenho (Gamificação).`}
+            </p>
+          )}
           <label className="block">
             <span className="font-bold text-slate-700">Resposta ao colaborador</span>
             <textarea value={f.resposta} onChange={(e) => setF((x) => ({ ...x, resposta: e.target.value }))} rows={4} placeholder="Ex.: Obrigado pela ideia! Vamos testar na expedição a partir de segunda." className={campoCls} />

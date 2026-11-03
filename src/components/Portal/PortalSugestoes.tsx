@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle2, ChevronLeft, EyeOff, Lightbulb, Loader2, Plus, Send, ThumbsUp, UserRound } from 'lucide-react';
 import type { CredenciaisPortal } from '../../utils/educacaoApi';
-import { CATEGORIAS_SUGESTAO, SugestaoPortal, portalApoiarSugestao, portalEnviarSugestao, portalSugestoes, statusSugestao } from '../../utils/sugestoesApi';
+import { CATEGORIAS_SUGESTAO, PONTOS_SUGESTAO_IMPLEMENTADA, SugestaoPortal, portalApoiarSugestao, portalEnviarSugestao, portalSugestoes, statusSugestao } from '../../utils/sugestoesApi';
 
 const dataBr = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
 const campoCls = 'mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white text-sm';
@@ -224,8 +224,8 @@ const NovaSugestao: React.FC<{ credenciais: CredenciaisPortal; onVoltar: () => v
         <div className="grid grid-cols-2 gap-2">
           {(
             [
-              [false, 'Com o meu nome', 'A gestão sabe que a ideia é sua e pode reconhecer'],
-              [true, 'Sem me identificar', 'Ninguém da gestão vê quem mandou'],
+              [false, 'Com o meu nome', `A gestão sabe que a ideia é sua. Se for implementada, você ganha +${PONTOS_SUGESTAO_IMPLEMENTADA} pontos no Meu desempenho`],
+              [true, 'Sem me identificar', 'Ninguém da gestão vê quem mandou (por isso não soma pontos)'],
             ] as const
           ).map(([anon, titulo, texto]) => (
             <button

@@ -19,6 +19,9 @@ export const CATEGORIAS_SUGESTAO = [
   'Outro',
 ];
 
+/** Pontos no "Meu desempenho" quando a sugestão (com nome) é implementada — migração 095. */
+export const PONTOS_SUGESTAO_IMPLEMENTADA = 50;
+
 export type StatusSugestao = 'recebida' | 'analise' | 'aprovada' | 'implementada' | 'nao_aprovada';
 export const STATUS_SUGESTAO: { id: StatusSugestao; rotulo: string; cls: string }[] = [
   { id: 'recebida', rotulo: 'Recebida', cls: 'bg-amber-50 text-[#92611F] border-amber-200' },
