@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { MessageSquareText, Loader2, Search, Paperclip, Send, MessageCircle, Palmtree, X, ExternalLink, Inbox } from 'lucide-react';
+import { MessageSquareText, Loader2, Search, Paperclip, Send, MessageCircle, Palmtree, X, ExternalLink, Inbox, Clock } from 'lucide-react';
+import { LancarPedidoPontoModal } from './LancarPedidoPontoModal';
 import { Colaborador, ProgramacaoFerias, UsuarioLogin } from '../../types';
 import {
   MensagemSolicitacao,
@@ -204,6 +205,7 @@ const SolicitacaoDpModal: React.FC<{
   const [texto, setTexto] = useState('');
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [novoStatus, setNovoStatus] = useState<StatusSolicitacao>('respondida');
+  const [lancandoPonto, setLancandoPonto] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [criandoFerias, setCriandoFerias] = useState(false);
@@ -379,6 +381,27 @@ const SolicitacaoDpModal: React.FC<{
         </div>
 
         <div className="p-4 overflow-y-auto flex-1 space-y-2 bg-slate-50">
+          {s.tipo === 'ponto' && (
+            <button
+              type="button"
+              onClick={() => setLancandoPonto(true)}
+              className="w-full mb-2 px-3 py-2 bg-white border border-[#C48229] text-[#92611F] rounded-xl font-bold flex items-center justify-center gap-1.5 hover:bg-amber-50"
+            >
+              <Clock className="w-4 h-4" /> Aprovar e lançar no controle de frequência
+            </button>
+          )}
+          {lancandoPonto && (
+            <LancarPedidoPontoModal
+              s={s}
+              criadoPor={atendente}
+              onClose={() => setLancandoPonto(false)}
+              onLancado={(resposta) => {
+                setLancandoPonto(false);
+                setTexto(resposta);
+                setNovoStatus('concluida');
+              }}
+            />
+          )}
           {s.tipo === 'ferias' && onSaveFerias && (
             <button
               type="button"

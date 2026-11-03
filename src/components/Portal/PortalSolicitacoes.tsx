@@ -21,6 +21,7 @@ import {
 
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 import { DocumentoPortal, portalDocumentos } from '../../utils/portalColaboradorApi';
+import { configPedidoPonto, resumoPedidoPonto } from '../../utils/pedidosPonto';
 
 const dataHora = (iso: string) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '');
@@ -49,6 +50,7 @@ export function resumoDados(tipo: string, d: Record<string, any>): string[] {
     if (d.dias) linhas.push(`Dias de férias: ${d.dias}`);
     if (d.venderDias) linhas.push('Quer vender 10 dias (abono)');
   }
+  if (tipo === 'ponto') linhas.push(...resumoPedidoPonto(d));
   if (d.documentoTitulo) linhas.push(`Documento: ${d.documentoTitulo}`);
   return linhas;
 }
@@ -206,6 +208,16 @@ const NovaSolicitacao: React.FC<{ credenciais: CredenciaisPortal; onVoltar: () =
   const [texto, setTexto] = useState('');
   const [anexos, setAnexos] = useState<AnexoSolicitacao[]>([]);
   const [ferias, setFerias] = useState<{ modo: 'mes' | 'data'; mes: string; inicio: string; dias: number; venderDias: boolean }>({ modo: 'mes', mes: '', inicio: '', dias: 30, venderDias: false });
+  const [ponto, setPonto] = useState<{ data: string; horarios: string[]; inicio: string; fim: string; dias: number; de: string; ate: string }>({
+    data: '',
+    horarios: [''],
+    inicio: '',
+    fim: '',
+    dias: 1,
+    de: '',
+    ate: '',
+  });
+  const cfgPonto = tipo === 'ponto' ? configPedidoPonto(assunto) : undefined;
   const [documentos, setDocumentos] = useState<DocumentoPortal[]>([]);
   const [documentoId, setDocumentoId] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -228,10 +240,27 @@ const NovaSolicitacao: React.FC<{ credenciais: CredenciaisPortal; onVoltar: () =
     setErro(null);
     if (!assunto) return setErro('Escolha o assunto.');
     if (tipo === 'ferias' && (ferias.modo === 'mes' ? !ferias.mes : !ferias.inicio)) return setErro('Informe o mês ou a data em que gostaria de sair de férias.');
-    if (tipo !== 'ferias' && !texto.trim()) return setErro('Conte o que aconteceu ou o que você precisa.');
+    if (tipo === 'ponto' && cfgPonto) {
+      const c = cfgPonto.campo;
+      if (c === 'marcacao' && (!ponto.data || !ponto.horarios.some(Boolean))) return setErro('Informe o dia e o horário que faltou marcar.');
+      if (c === 'periodo' && (!ponto.inicio || (ponto.fim && ponto.fim < ponto.inicio))) return setErro('Informe o primeiro e o último dia da ausência.');
+      if (c === 'horas' && (!ponto.data || !ponto.de || !ponto.ate)) return setErro('Informe o dia e o horário (das ... às ...).');
+      if (c === 'dias' && (!ponto.inicio || !(ponto.dias >= 1))) return setErro('Informe a data de início e quantos dias.');
+      if (cfgPonto.anexoObrigatorio && anexos.length === 0) return setErro('Anexe a foto ou o PDF do documento (atestado, certidão ou comprovante).');
+      if (cfgPonto.motivoObrigatorio && !texto.trim()) return setErro('Explique o motivo.');
+    } else if (tipo !== 'ferias' && !texto.trim()) return setErro('Conte o que aconteceu ou o que você precisa.');
     const doc = documentos.find((d) => d.id === documentoId);
+    const dadosPonto = (): Record<string, any> => {
+      const c = cfgPonto?.campo;
+      if (c === 'marcacao') return { data: ponto.data, horarios: ponto.horarios.filter(Boolean).sort() };
+      if (c === 'periodo') return { inicio: ponto.inicio, fim: ponto.fim || ponto.inicio };
+      if (c === 'horas') return { data: ponto.data, de: ponto.de, ate: ponto.ate };
+      return { inicio: ponto.inicio, dias: ponto.dias };
+    };
     const dados: Record<string, any> =
-      tipo === 'ferias'
+      tipo === 'ponto'
+        ? dadosPonto()
+        : tipo === 'ferias'
         ? { ...(ferias.modo === 'mes' ? { mes: ferias.mes } : { inicio: ferias.inicio }), dias: ferias.dias, venderDias: ferias.venderDias }
         : doc
           ? { documentoId: doc.id, documentoTitulo: doc.titulo }
@@ -268,7 +297,15 @@ const NovaSolicitacao: React.FC<{ credenciais: CredenciaisPortal; onVoltar: () =
           {def && def.assuntos.length > 1 && (
             <label className="block">
               <span className="font-bold text-slate-700">Assunto</span>
-              <select value={assunto} onChange={(e) => setAssunto(e.target.value)} className="mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white text-sm">
+              <select
+                value={assunto}
+                onChange={(e) => {
+                  setAssunto(e.target.value);
+                  const dp = configPedidoPonto(e.target.value)?.diasPadrao;
+                  if (dp) setPonto((p) => ({ ...p, dias: dp }));
+                }}
+                className="mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white text-sm"
+              >
                 <option value="">Escolha...</option>
                 {def.assuntos.map((a) => (
                   <option key={a} value={a}>
@@ -277,6 +314,80 @@ const NovaSolicitacao: React.FC<{ credenciais: CredenciaisPortal; onVoltar: () =
                 ))}
               </select>
             </label>
+          )}
+
+          {cfgPonto && (
+            <div className="space-y-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <p className="text-[11px] text-slate-500">{cfgPonto.dica}</p>
+              {(cfgPonto.campo === 'marcacao' || cfgPonto.campo === 'horas') && (
+                <label className="block">
+                  <span className="font-bold text-slate-700">Dia</span>
+                  <input type="date" value={ponto.data} onChange={(e) => setPonto((p) => ({ ...p, data: e.target.value }))} className="mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white text-sm" />
+                </label>
+              )}
+              {cfgPonto.campo === 'marcacao' && (
+                <div className="space-y-1.5">
+                  <span className="font-bold text-slate-700">Horário que faltou marcar</span>
+                  {ponto.horarios.map((h, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        value={h}
+                        onChange={(e) => setPonto((p) => ({ ...p, horarios: p.horarios.map((x, k) => (k === i ? e.target.value : x)) }))}
+                        className="flex-1 p-3 border border-slate-300 rounded-xl bg-white text-sm"
+                      />
+                      {ponto.horarios.length > 1 && (
+                        <button type="button" onClick={() => setPonto((p) => ({ ...p, horarios: p.horarios.filter((_, k) => k !== i) }))} className="p-2 text-slate-400 hover:text-rose-600" title="Tirar">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {ponto.horarios.length < 4 && (
+                    <button type="button" onClick={() => setPonto((p) => ({ ...p, horarios: [...p.horarios, ''] }))} className="text-[11px] font-bold text-[#92611F] flex items-center gap-1">
+                      <Plus className="w-3.5 h-3.5" /> Outro horário no mesmo dia
+                    </button>
+                  )}
+                </div>
+              )}
+              {cfgPonto.campo === 'horas' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="font-bold text-slate-700">Das</span>
+                    <input type="time" value={ponto.de} onChange={(e) => setPonto((p) => ({ ...p, de: e.target.value }))} className="mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white text-sm" />
+                  </label>
+                  <label className="block">
+                    <span className="font-bold text-slate-700">Às</span>
+                    <input type="time" value={ponto.ate} onChange={(e) => setPonto((p) => ({ ...p, ate: e.target.value }))} className="mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white text-sm" />
+                  </label>
+                </div>
+              )}
+              {cfgPonto.campo === 'periodo' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="font-bold text-slate-700">Primeiro dia</span>
+                    <input type="date" value={ponto.inicio} onChange={(e) => setPonto((p) => ({ ...p, inicio: e.target.value }))} className="mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white text-sm" />
+                  </label>
+                  <label className="block">
+                    <span className="font-bold text-slate-700">Último dia</span>
+                    <input type="date" value={ponto.fim} min={ponto.inicio || undefined} onChange={(e) => setPonto((p) => ({ ...p, fim: e.target.value }))} className="mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white text-sm" />
+                  </label>
+                </div>
+              )}
+              {cfgPonto.campo === 'dias' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="font-bold text-slate-700">A partir de</span>
+                    <input type="date" value={ponto.inicio} onChange={(e) => setPonto((p) => ({ ...p, inicio: e.target.value }))} className="mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white text-sm" />
+                  </label>
+                  <label className="block">
+                    <span className="font-bold text-slate-700">Quantos dias</span>
+                    <input type="number" min={1} max={180} value={ponto.dias} onChange={(e) => setPonto((p) => ({ ...p, dias: Math.min(180, Math.max(1, Number(e.target.value) || 1)) }))} className="mt-1 w-full p-3 border border-slate-300 rounded-xl bg-white text-sm" />
+                  </label>
+                </div>
+              )}
+              {cfgPonto.anexoObrigatorio && <p className="text-[11px] font-semibold text-[#92611F]">Anexe a foto ou o PDF do documento logo abaixo (obrigatório).</p>}
+            </div>
           )}
 
           {tipo === 'ferias' && (
@@ -337,13 +448,25 @@ const NovaSolicitacao: React.FC<{ credenciais: CredenciaisPortal; onVoltar: () =
           )}
 
           <label className="block">
-            <span className="font-bold text-slate-700">{tipo === 'ferias' ? 'Observação (opcional)' : tipo === 'contestacao' ? 'O que não confere?' : 'Conte o que você precisa'}</span>
+            <span className="font-bold text-slate-700">
+              {tipo === 'ferias'
+                ? 'Observação (opcional)'
+                : tipo === 'ponto'
+                  ? cfgPonto?.motivoObrigatorio
+                    ? 'Motivo'
+                    : 'Observação (opcional)'
+                  : tipo === 'contestacao'
+                    ? 'O que não confere?'
+                    : 'Conte o que você precisa'}
+            </span>
             <textarea
               value={texto}
               onChange={(e) => setTexto(e.target.value.slice(0, 3000))}
               rows={5}
               placeholder={
-                tipo === 'contestacao'
+                tipo === 'ponto'
+                  ? 'Ex.: o celular estava sem bateria na saída.'
+                  : tipo === 'contestacao'
                   ? 'Ex.: no VA da 1ª quinzena de outubro aparece 1 falta no dia 03/10, mas eu trabalhei nesse dia.'
                   : tipo === 'cadastro'
                     ? 'Informe o dado novo. Ex.: novo endereço completo com CEP.'

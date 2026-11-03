@@ -7,11 +7,18 @@
 
 import { supabase } from './supabaseClient';
 import type { CredenciaisPortal } from './educacaoApi';
+import { PEDIDOS_PONTO } from './pedidosPonto';
 
-export type TipoSolicitacao = 'contestacao' | 'ferias' | 'documento' | 'cadastro' | 'outros';
+export type TipoSolicitacao = 'ponto' | 'contestacao' | 'ferias' | 'documento' | 'cadastro' | 'outros';
 export type StatusSolicitacao = 'aberta' | 'em_analise' | 'respondida' | 'concluida' | 'recusada';
 
 export const TIPOS_SOLICITACAO: { tipo: TipoSolicitacao; titulo: string; descricao: string; assuntos: string[] }[] = [
+  {
+    tipo: 'ponto',
+    titulo: 'Ponto, atestados e licenças',
+    descricao: 'Esqueci de bater o ponto, abono de horas, atestado médico, licenças',
+    assuntos: PEDIDOS_PONTO.map((p) => p.assunto),
+  },
   {
     tipo: 'contestacao',
     titulo: 'Contestar algo',

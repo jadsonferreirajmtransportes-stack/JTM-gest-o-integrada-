@@ -63,6 +63,8 @@ export interface JustificativaDia {
 export const TIPOS_JUSTIFICATIVA: { tipo: string; abona: boolean }[] = [
   { tipo: 'Atestado médico', abona: true },
   { tipo: 'Falta legal (CLT art. 473)', abona: true },
+  { tipo: 'Atestado de comparecimento', abona: true },
+  { tipo: 'Abono de horas', abona: true },
   { tipo: 'Folga / compensação', abona: true },
   { tipo: 'Feriado', abona: true },
   { tipo: 'Serviço externo / viagem', abona: true },
@@ -327,6 +329,22 @@ export async function salvarJustificativa(j: Omit<JustificativaDia, 'id'> & { id
   );
   assertNoError(error, 'salvarJustificativa');
   return registro as JustificativaDia;
+}
+/** Várias justificativas de uma vez (pedido do colaborador lançado pelo DP); substitui a do mesmo dia. */
+export async function salvarJustificativasLote(itens: Omit<JustificativaDia, 'id'>[]): Promise<void> {
+  const linhas = itens.map((j) => ({
+    id: novoId('just'),
+    colaborador_id: j.colaboradorId,
+    data: j.data,
+    tipo: j.tipo,
+    abona: j.abona,
+    observacao: j.observacao || null,
+    criado_por: j.criadoPor || null,
+  }));
+  for (let k = 0; k < linhas.length; k += 200) {
+    const { error } = await supabase.from('ponto_justificativas').upsert(linhas.slice(k, k + 200), { onConflict: 'colaborador_id,data' });
+    assertNoError(error, 'salvarJustificativasLote');
+  }
 }
 export async function excluirJustificativa(colaboradorId: string, data: string): Promise<void> {
   const { error } = await supabase.from('ponto_justificativas').delete().eq('colaborador_id', colaboradorId).eq('data', data);
