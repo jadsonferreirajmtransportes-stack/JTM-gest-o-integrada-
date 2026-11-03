@@ -79,6 +79,7 @@ const TITULO_CURTO: Record<string, string> = {
   pops: 'POPs',
   formularios: 'Formulários',
   qualidade: 'Qualidade',
+  sugestoes: 'Sugestões',
 };
 
 const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = {

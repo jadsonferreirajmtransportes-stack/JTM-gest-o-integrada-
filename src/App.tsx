@@ -271,6 +271,7 @@ const JornalView = sobDemanda(() => import('./components/Jornal/JornalView'), 'J
 const PopsView = sobDemanda(() => import('./components/Pops/PopsView'), 'PopsView');
 const FormulariosView = sobDemanda(() => import('./components/Formularios/FormulariosView'), 'FormulariosView');
 const QualidadeView = sobDemanda(() => import('./components/Qualidade/QualidadeView'), 'QualidadeView');
+const SugestoesView = sobDemanda(() => import('./components/Sugestoes/SugestoesView'), 'SugestoesView');
 const FormularioPublicoView = sobDemanda(() => import('./components/Formularios/FormularioPublicoView'), 'FormularioPublicoView');
 import { tokenPortal } from './utils/appInstalavel';
 const SolicitacoesDpView = sobDemanda(() => import('./components/Solicitacoes/SolicitacoesDpView'), 'SolicitacoesDpView');
@@ -849,11 +850,13 @@ export default function App() {
       setActiveSection('formularios' as any);
     } else if (modId === 'qualidade') {
       setActiveSection('qualidade' as any);
+    } else if (modId === 'sugestoes') {
+      setActiveSection('sugestoes' as any);
     } else if (modId === 'compras') {
       setActiveSection('compras');
     } else if (modId === 'dp') {
       if (
-        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados', 'documentos', 'jornal', 'pops', 'formularios', 'qualidade'].includes(
+        ['visao_geral', 'clientes', 'farma_aereo', 'farma_rodoviario', 'projetos', 'agenda_gestao', 'notas', 'usuarios', 'comunicados', 'documentos', 'jornal', 'pops', 'formularios', 'qualidade', 'sugestoes'].includes(
           activeSection
         )
       ) {
@@ -3182,6 +3185,7 @@ export default function App() {
           else if (sec === 'pops') setActiveGlobalModule('pops');
           else if ((sec as string) === 'formularios') setActiveGlobalModule('formularios');
           else if ((sec as string) === 'qualidade') setActiveGlobalModule('qualidade');
+          else if ((sec as string) === 'sugestoes') setActiveGlobalModule('sugestoes');
           else setActiveGlobalModule('dp');
           setIsMobileMenuOpen(false);
         }}
@@ -3238,6 +3242,7 @@ export default function App() {
             else if (sec === 'pops') setActiveGlobalModule('pops');
             else if ((sec as string) === 'formularios') setActiveGlobalModule('formularios');
             else if ((sec as string) === 'qualidade') setActiveGlobalModule('qualidade');
+            else if ((sec as string) === 'sugestoes') setActiveGlobalModule('sugestoes');
             else setActiveGlobalModule('dp');
           }}
           searchQuery={searchQuery}
@@ -3672,6 +3677,7 @@ export default function App() {
 
           {activeGlobalModule === 'formularios' && <FormulariosView colaboradores={colaboradores} currentUser={currentUser} />}
           {activeGlobalModule === 'qualidade' && <QualidadeView currentUser={currentUser} />}
+          {activeGlobalModule === 'sugestoes' && <SugestoesView currentUser={currentUser} />}
 
           {/* ========================================================================= */}
           {/* MODULE 6: LOGINS & ACESSOS (USUÁRIOS) */}

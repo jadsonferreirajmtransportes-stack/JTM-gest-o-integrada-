@@ -22,6 +22,7 @@ import {
   ClipboardList,
   ClipboardCheck,
   ShieldCheck,
+  Lightbulb,
   KeyRound,
   Inbox,
 } from 'lucide-react';
@@ -41,6 +42,7 @@ const MODULOS: { id: GlobalModuleId; rotulo: string; icone: React.ElementType }[
   { id: 'pops', rotulo: 'POPs', icone: ClipboardList },
   { id: 'formularios', rotulo: 'Formulários', icone: ClipboardCheck },
   { id: 'qualidade', rotulo: 'Qualidade', icone: ShieldCheck },
+  { id: 'sugestoes', rotulo: 'Sugestões', icone: Lightbulb },
   { id: 'documentos', rotulo: 'Padronização', icone: FileStack },
   { id: 'comunicados', rotulo: 'Comunicados', icone: Megaphone },
   { id: 'jornal', rotulo: 'Jornal', icone: Newspaper },

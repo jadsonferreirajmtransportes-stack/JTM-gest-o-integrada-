@@ -210,6 +210,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     categoria: 'Corporativo',
   },
   {
+    id: 'sugestoes',
+    nome: 'Sugestões',
+    sigla: 'SUG',
+    descricao: 'Sugestões de melhoria enviadas pelos colaboradores no portal (identificadas ou anônimas): análise, resposta e mural com apoios.',
+    corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
+    corBorda: 'border-[#C48229]',
+    iconeNome: 'Lightbulb',
+    categoria: 'Corporativo',
+  },
+  {
     id: 'formularios',
     nome: 'Formulários',
     sigla: 'FRM',

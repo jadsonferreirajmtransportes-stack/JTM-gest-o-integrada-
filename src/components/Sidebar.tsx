@@ -14,6 +14,7 @@ import {
   ClipboardList,
   ClipboardCheck,
   ShieldCheck as ShieldCheckQualidade,
+  Lightbulb as LightbulbSugestoes,
   Share2,
   DollarSign,
   ChevronRight,
@@ -347,6 +348,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: undefined as number | undefined,
       icon: ShieldCheckQualidade,
       color: 'from-[#92611F] to-[#2b2014]',
+      activeBorder: 'border-[#C48229]',
+    },
+    {
+      id: 'sugestoes' as GlobalModuleId,
+      title: 'Sugestões',
+      short: 'Ideias de melhoria dos colaboradores',
+      badge: undefined as number | undefined,
+      icon: LightbulbSugestoes,
+      color: 'from-[#C48229] to-[#7A4F17]',
       activeBorder: 'border-[#C48229]',
     },
     {

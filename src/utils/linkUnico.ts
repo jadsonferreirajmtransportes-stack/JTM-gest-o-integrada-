@@ -22,6 +22,7 @@ export type DestinoPortal =
   | 'formularios'
   | `formulario:${string}`
   | 'qualidade'
+  | 'sugestoes'
   | 'treinamentos'
   | 'jornal'
   | `jornal:${string}`;

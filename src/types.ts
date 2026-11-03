@@ -22,6 +22,7 @@ export type GlobalModuleId =
   | 'jornal'
   | 'pops'
   | 'qualidade'
+  | 'sugestoes'
   | string;
 
 // Seções de dentro do módulo DP (Departamento Pessoal) que podem ser restringidas

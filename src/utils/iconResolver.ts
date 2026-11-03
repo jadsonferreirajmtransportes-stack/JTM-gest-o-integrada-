@@ -20,6 +20,7 @@ import {
   Newspaper,
   ClipboardList,
   ClipboardCheck,
+  Lightbulb,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -39,6 +40,7 @@ export const ICON_OPTIONS: Record<string, LucideIcon> = {
   Newspaper,
   ClipboardList,
   ClipboardCheck,
+  Lightbulb,
 };
 
 export function resolveOperacaoIcon(nomeIcone: string | undefined): LucideIcon {
