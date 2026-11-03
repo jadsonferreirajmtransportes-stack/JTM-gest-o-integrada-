@@ -139,6 +139,50 @@ function lerPremissas(linhas: unknown[][]): BlocoPremissas[] {
   return blocos.filter((b) => b.custosExtras.length || b.observacoes.length);
 }
 
+/** Aba "Custos extras" da planilha que o próprio sistema exporta: blocos com o título da
+ *  categoria ("FIORINO ATÉ 500KG — 1 item(ns)"), o cabeçalho Item / descrição | Grupo /
+ *  destinatário | Como é cobrado | Valor e uma linha por item. Não é essa aba: undefined. */
+function lerAbaCustosExtras(linhas: unknown[][]): CustoExtraTarifa[] | undefined {
+  const ehCabecalho = (l: unknown[]) => norm(l[0]).startsWith('ITEM') && norm(l[3]).startsWith('VALOR');
+  if (!linhas.some(ehCabecalho)) return undefined;
+  const custos: CustoExtraTarifa[] = [];
+  let categoria = '';
+  let dentro = false;
+  const tipoDe = (t: string): CustoExtraTarifa['tipoCobranca'] => {
+    const n = norm(t);
+    if (n.includes('KM')) return 'Valor/KM';
+    if (n.includes('AVULSO')) return 'Serviço avulso';
+    return 'Valor fechado';
+  };
+  linhas.forEach((l, i) => {
+    if (ehCabecalho(l)) {
+      // Título da categoria: a linha logo acima ("NOME — N item(ns)").
+      const titulo = String(linhas[i - 1]?.[0] ?? '').trim();
+      categoria = titulo.replace(/\s+[—-]\s+\d+\s+ITEM\(NS\)\s*$/i, '').trim();
+      dentro = true;
+      return;
+    }
+    const item = String(l[0] ?? '').trim();
+    if (!item) {
+      dentro = false;
+      return;
+    }
+    if (!dentro) return;
+    const valor = numero(l[3]);
+    if (valor === undefined) return;
+    const grupo = String(l[1] ?? '').trim();
+    custos.push({
+      id: novoId('cex'),
+      categoria: categoria || item,
+      itemDescricao: item === '—' ? '' : item,
+      grupoDestinatario: norm(grupo) === 'TODOS' ? '' : grupo,
+      tipoCobranca: tipoDe(String(l[2] ?? '')),
+      valor,
+    });
+  });
+  return custos;
+}
+
 /** Linha de título de faixa da planilha exportada ("ATÉ 50 KM  —  18 cidade(s)"): devolve o
  *  raio. As faixas por km ("Até 50 km", "De 51 a 100 km"...) a exportação calcula sozinha pela
  *  distância, então voltam vazias (como no cadastro original). Não é título: undefined. */
@@ -270,15 +314,33 @@ export function lerTarifarioExcel(dados: ArrayBuffer): AbaTarifario[] {
   const wb = XLSX.read(dados, { type: 'array' });
   const abas: AbaTarifario[] = [];
   const blocos: BlocoPremissas[] = [];
+  const abasExtras: { nome: string; custos: CustoExtraTarifa[] }[] = [];
   wb.SheetNames.forEach((nome) => {
     const linhas = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[nome], { header: 1, defval: '' });
     const iCab = linhas.findIndex((l) => {
       const n = l.map(norm);
       return n.some((x) => x === 'CIDADE') && n.some((x) => x.startsWith('ATE 10') || x.startsWith('KG EXCEDENTE'));
     });
-    if (iCab >= 0) abas.push(lerAbaTabela(nome, linhas, iCab));
+    if (iCab >= 0) {
+      abas.push(lerAbaTabela(nome, linhas, iCab));
+      return;
+    }
+    const extras = lerAbaCustosExtras(linhas);
+    if (extras) abasExtras.push({ nome, custos: extras });
     else blocos.push(...lerPremissas(linhas));
   });
+  // Planilha exportada pelo sistema: "Custos extras" vale para todas as tabelas; "Custos extras —
+  // Aéreo" / "— Rodoviário" vale só para a aba do mesmo modal (e tem preferência).
+  const modalDe = (nome: string) => (norm(nome).includes('RODOVIARIO') ? 'RODOVIARIO' : norm(nome).includes('AEREO') ? 'AEREO' : '');
+  [...abasExtras]
+    .sort((x, y) => Number(!!modalDe(x.nome)) - Number(!!modalDe(y.nome))) // gerais primeiro, específicas por cima
+    .forEach(({ nome, custos }) => {
+      const modal = modalDe(nome);
+      abas.forEach((a) => {
+        if (modal && !norm(a.nome).includes(modal)) return;
+        a.custosExtras = custos.map((c) => ({ ...c, id: novoId('cex') }));
+      });
+    });
   // Cada bloco de premissas vai para a tabela cuja Capital tem o mesmo valor (ex.: R$ 40,18 =
   // Rodoviário, R$ 43,20 = Aéreo). Achou: os custos extras do bloco (completos) substituem os
   // lidos do topo da aba; as observações do bloco somam às da aba.
