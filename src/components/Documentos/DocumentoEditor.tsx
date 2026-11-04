@@ -44,6 +44,7 @@ import {
 import { corrigirAutomaticamente, verificarPadrao } from './padraoDocumento';
 import { gerarDocxDocumento, gerarPdfDocumento, gerarXlsxDocumento } from './gerarDocumento';
 import { baixarBlob } from '../../utils/downloadUtils';
+import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 import { BlocoImagem } from './BlocoImagem';
 import { BlocoAssinaturas } from './BlocoAssinaturas';
 import { BlocoChecklist } from './BlocoChecklist';
@@ -346,6 +347,49 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
         <aside className="overflow-y-auto border-r border-slate-200 bg-white p-4 space-y-4 text-xs">
           <section className="space-y-2.5">
             <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-wide">Dados do documento</h3>
+            <div>
+              <label className={rotulo}>Modelo do documento gerado</label>
+              <select
+                value={d.modelo || 'padrao'}
+                disabled={somenteLeitura}
+                onChange={(e) =>
+                  atualizar(
+                    e.target.value === 'oficio'
+                      ? { modelo: 'oficio', oficio: { local: d.oficio?.local ?? EMPRESA_REGULAMENTO.cidadeUF, destinatario: d.oficio?.destinatario ?? '', assunto: d.oficio?.assunto ?? '' } }
+                      : { modelo: undefined }
+                  )
+                }
+                className={campo}
+              >
+                <option value="padrao">Padrão JMT (documento controlado)</option>
+                <option value="oficio">Ofício / carta timbrada</option>
+              </select>
+            </div>
+            {d.modelo === 'oficio' && (
+              <div className="space-y-2 p-2.5 rounded-xl bg-amber-50/60 border border-amber-200">
+                <p className="text-[10px] text-[#7A4F17]">Papel timbrado da JMT, com local e data, destinatário e assunto. A assinatura vem do bloco Assinaturas.</p>
+                <div>
+                  <label className={rotulo}>Local</label>
+                  <input value={d.oficio?.local || ''} disabled={somenteLeitura} onChange={(e) => atualizar({ oficio: { ...d.oficio, local: e.target.value } })} className={campo} placeholder={EMPRESA_REGULAMENTO.cidadeUF} />
+                </div>
+                <div>
+                  <label className={rotulo}>Destinatário</label>
+                  <textarea
+                    data-texto-livre
+                    rows={4}
+                    value={d.oficio?.destinatario || ''}
+                    disabled={somenteLeitura}
+                    onChange={(e) => atualizar({ oficio: { ...d.oficio, destinatario: e.target.value } })}
+                    className={campo}
+                    placeholder={'Ao Senhor\nNome do destinatário\nCargo\nEmpresa — Cidade/UF'}
+                  />
+                </div>
+                <div>
+                  <label className={rotulo}>Assunto</label>
+                  <input data-texto-livre value={d.oficio?.assunto || ''} disabled={somenteLeitura} onChange={(e) => atualizar({ oficio: { ...d.oficio, assunto: e.target.value } })} className={campo} placeholder="Se vazio, usa o título" />
+                </div>
+              </div>
+            )}
             <div>
               <label className={rotulo}>Título</label>
               <input value={d.titulo} disabled={somenteLeitura} onChange={(e) => atualizar({ titulo: e.target.value })} className={campo} />

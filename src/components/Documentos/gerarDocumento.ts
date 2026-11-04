@@ -62,6 +62,18 @@ const nomeSetor = (sigla: string) => SETORES_DOCUMENTO.find((s) => s.sigla === s
 const nomeArquivo = (d: DocumentoPadronizado, ext: string) =>
   `${d.codigo}_v${d.versao}_${d.titulo}`.replace(/[^\p{L}\p{N}-]+/gu, '_').slice(0, 110) + `.${ext}`;
 
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+/** "Parnamirim/RN, 4 de novembro de 2026." */
+function localEData(d: DocumentoPadronizado): string {
+  const iso = d.dataDocumento || new Date().toLocaleDateString('sv-SE');
+  const dia = Number(iso.slice(8, 10));
+  return `${d.oficio?.local?.trim() || EMPRESA_REGULAMENTO.cidadeUF}, ${dia} de ${MESES[Number(iso.slice(5, 7)) - 1]} de ${iso.slice(0, 4)}.`;
+}
+const linhasDestinatario = (d: DocumentoPadronizado) => (d.oficio?.destinatario || '').split('\n').map((l) => l.trim()).filter(Boolean);
+const assuntoOficio = (d: DocumentoPadronizado) => d.oficio?.assunto?.trim() || d.titulo;
+const referenciaOficio = (d: DocumentoPadronizado) => (d.tipo === 'Ofício' ? `Ofício nº ${d.codigo || '(gerado ao salvar)'}` : d.codigo ? `Ref.: ${d.codigo}` : '');
+const enderecoEmpresa = () => `${EMPRESA_REGULAMENTO.endereco} — CEP ${EMPRESA_REGULAMENTO.cep} — ${EMPRESA_REGULAMENTO.cidadeUF}`;
+
 function quadroControle(d: DocumentoPadronizado): [string, string][] {
   return [
     ['Código', d.codigo || '(gerado ao salvar)'],
@@ -116,7 +128,8 @@ export async function gerarPdfDocumento(
   const altura = doc.internal.pageSize.getHeight();
   const MARGEM = 20;
   const larguraTexto = largura - 2 * MARGEM;
-  const TOPO = 32;
+  const oficio = d.modelo === 'oficio';
+  const TOPO = oficio ? 36 : 32;
   const LIMITE = altura - 24;
   let y = TOPO;
 
@@ -142,6 +155,31 @@ export async function gerarPdfDocumento(
     });
   };
 
+  if (oficio) {
+    // Ofício / carta: referência e local/data, destinatário e assunto.
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...TEXTO);
+    const ref = referenciaOficio(d);
+    if (ref) doc.text(ref, MARGEM, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(localEData(d), largura - MARGEM, y, { align: 'right' });
+    y += 14;
+    const dest = linhasDestinatario(d);
+    if (dest.length) {
+      dest.forEach((l) => texto(l, 10.5, 'normal', TEXTO));
+      y += 7;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(...TEXTO);
+    const assunto = doc.splitTextToSize(`Assunto: ${assuntoOficio(d)}`, larguraTexto) as string[];
+    assunto.forEach((l) => {
+      doc.text(l, MARGEM, y);
+      y += 5;
+    });
+    y += 8;
+  } else {
   // Título e quadro de controle (1ª página)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
@@ -173,13 +211,15 @@ export async function gerarPdfDocumento(
     doc.text(v.length > 1 ? `${v[0].replace(/\s+\S*$/, '')}…` : v[0] || '—', x, yLinha + 4.2);
   });
   y += alturaFaixa + 9;
+  }
 
   let numeroSecao = 0;
   for (const b of d.blocos) {
     if (b.tipo === 'titulo') {
       espaco(14);
       y += b.nivel === 1 ? 3 : 1;
-      if (b.nivel === 1) {
+      if (oficio) texto(b.texto, b.nivel === 1 ? 11.5 : 10.5, 'bold', TEXTO);
+      else if (b.nivel === 1) {
         numeroSecao += 1;
         texto(`${numeroSecao}. ${b.texto.toUpperCase()}`, 12.5, 'bold', TEXTO);
         doc.setFillColor(...BRONZE);
@@ -188,8 +228,8 @@ export async function gerarPdfDocumento(
       } else texto(b.texto, b.nivel === 2 ? 11 : 10, 'bold', b.nivel === 2 ? TEXTO : CORPO);
       y += 1.5;
     } else if (b.tipo === 'paragrafo') {
-      texto(b.texto, 10, 'normal', CORPO);
-      y += 2.8;
+      texto(b.texto, oficio ? 10.5 : 10, 'normal', oficio ? TEXTO : CORPO);
+      y += oficio ? 3.5 : 2.8;
     } else if (b.tipo === 'destaque') {
       const inicioY = y - 4;
       const pagina = doc.getNumberOfPages();
@@ -294,13 +334,15 @@ export async function gerarPdfDocumento(
       // Até 3 por linha (4 = 2 + 2); cada espaço: papel, área para assinar, linha, nome, cargo e data.
       const porLinha = b.pessoas.length === 4 ? 2 : Math.min(3, b.pessoas.length);
       const vao = 10;
-      const larg = (larguraTexto - vao * (porLinha - 1)) / porLinha;
+      // Uma pessoa só: linha de 85mm centralizada (não a largura toda).
+      const larg = porLinha === 1 ? 85 : (larguraTexto - vao * (porLinha - 1)) / porLinha;
+      const inicioX = porLinha === 1 ? (largura - larg) / 2 : MARGEM;
       const alturaEspaco = 34 + (b.comData ? 6 : 0);
       y += 4;
       for (let i = 0; i < b.pessoas.length; i += porLinha) {
         espaco(alturaEspaco);
         b.pessoas.slice(i, i + porLinha).forEach((pessoa, k) => {
-          const x = MARGEM + k * (larg + vao);
+          const x = inicioX + k * (larg + vao);
           const meio = x + larg / 2;
           const posicao = `${b.id}:${i + k}`;
           const assinada = opcoes.assinaturas?.[posicao];
@@ -414,7 +456,27 @@ export async function gerarPdfDocumento(
   const total = doc.getNumberOfPages();
   const logoLargura = 32;
   const logoAltura = (logoLargura * 339) / 900;
-  for (let p = 1; p <= total; p++) {
+  for (let p = 1; p <= total && oficio; p++) {
+    // Papel timbrado: logo + razão social/CNPJ no topo; endereço no rodapé.
+    doc.setPage(p);
+    doc.addImage(JMT_LOGO_BASE64, 'PNG', MARGEM, 10, 36, (36 * 339) / 900, 'jmt-logo', 'FAST');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...TEXTO);
+    doc.text(EMPRESA_REGULAMENTO.razaoSocial, largura - MARGEM, 15.5, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...CINZA);
+    doc.text(`CNPJ ${EMPRESA_REGULAMENTO.cnpj}`, largura - MARGEM, 19.5, { align: 'right' });
+    doc.setFillColor(...BRONZE);
+    doc.rect(MARGEM, 10 + (36 * 339) / 900 + 3, larguraTexto, 0.6, 'F');
+    doc.rect(MARGEM, altura - 17, larguraTexto, 0.4, 'F');
+    doc.setFontSize(7);
+    doc.setTextColor(...CINZA);
+    doc.text(enderecoEmpresa(), largura / 2, altura - 12, { align: 'center', maxWidth: larguraTexto });
+    if (total > 1) doc.text(`Página ${p} de ${total}`, largura - MARGEM, altura - 8, { align: 'right' });
+  }
+  for (let p = 1; p <= total && !oficio; p++) {
     doc.setPage(p);
     doc.addImage(JMT_LOGO_BASE64, 'PNG', MARGEM, 10, logoLargura, logoAltura, 'jmt-logo', 'FAST');
     doc.setFont('helvetica', 'bold');
@@ -489,8 +551,22 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
       children: [new Paragraph({ children: [new TextRun({ text: t, bold: cabecalho, font: FONTE, size: 18, color: cabecalho ? '111111' : '333333' })] })],
     });
 
+  const oficio = d.modelo === 'oficio';
   const controle = quadroControle(d);
-  const filhos: (InstanceType<typeof Paragraph> | InstanceType<typeof Table>)[] = [
+  const filhos: (InstanceType<typeof Paragraph> | InstanceType<typeof Table>)[] = oficio
+    ? [
+        new Paragraph({
+          tabStops: [{ type: TabStopType.RIGHT, position: 9600 }],
+          spacing: { after: 360 },
+          children: [
+            new TextRun({ text: referenciaOficio(d), bold: true, font: FONTE, size: 20, color: '111111' }),
+            new TextRun({ text: `\t${localEData(d)}`, font: FONTE, size: 20, color: '111111' }),
+          ],
+        }),
+        ...linhasDestinatario(d).map((l, i, a) => new Paragraph({ spacing: { after: i === a.length - 1 ? 300 : 0 }, children: [new TextRun({ text: l, font: FONTE, size: 21, color: '111111' })] })),
+        new Paragraph({ spacing: { after: 300 }, children: [new TextRun({ text: `Assunto: ${assuntoOficio(d)}`, bold: true, font: FONTE, size: 21, color: '111111' })] }),
+      ]
+    : [
     new Paragraph({
       spacing: { after: 200 },
       children: [new TextRun({ text: d.titulo.toUpperCase(), bold: true, size: 34, font: FONTE, color: '111111' })],
@@ -542,10 +618,10 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
       filhos.push(
         new Paragraph({
           spacing: { before: b.nivel === 1 ? 320 : 220, after: 120 },
-          border: b.nivel === 1 ? { bottom: { style: BorderStyle.SINGLE, size: 8, color: BRONZE_HEX, space: 4 } } : undefined,
+          border: b.nivel === 1 && !oficio ? { bottom: { style: BorderStyle.SINGLE, size: 8, color: BRONZE_HEX, space: 4 } } : undefined,
           children: [
             new TextRun({
-              text: b.nivel === 1 ? `${numeroSecao}. ${b.texto.toUpperCase()}` : b.texto,
+              text: oficio ? b.texto : b.nivel === 1 ? `${numeroSecao}. ${b.texto.toUpperCase()}` : b.texto,
               bold: true,
               font: FONTE,
               size: b.nivel === 1 ? 26 : b.nivel === 2 ? 23 : 21,
@@ -555,7 +631,7 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
         })
       );
     } else if (b.tipo === 'paragrafo') {
-      filhos.push(new Paragraph({ spacing: { after: 140, line: 300 }, alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: b.texto, font: FONTE, size: 21, color: '333333' })] }));
+      filhos.push(new Paragraph({ spacing: { after: 140, line: 300 }, alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: b.texto, font: FONTE, size: oficio ? 22 : 21, color: oficio ? '111111' : '333333' })] }));
     } else if (b.tipo === 'destaque') {
       filhos.push(
         new Paragraph({
@@ -692,7 +768,22 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
         properties: { page: { margin: { top: 1500, bottom: 1300, left: 1134, right: 1134 } } },
         headers: {
           default: new Header({
-            children: [
+            children: oficio
+              ? [
+                  new Paragraph({
+                    tabStops: [{ type: TabStopType.RIGHT, position: 9600 }],
+                    children: [
+                      new ImageRun({ type: 'png', data: logo, transformation: { width: 140, height: 53 } }),
+                      new TextRun({ text: `\t${EMPRESA_REGULAMENTO.razaoSocial}`, bold: true, font: FONTE, size: 17, color: '111111' }),
+                    ],
+                  }),
+                  new Paragraph({
+                    alignment: AlignmentType.RIGHT,
+                    border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: BRONZE_HEX, space: 6 } },
+                    children: [new TextRun({ text: `CNPJ ${EMPRESA_REGULAMENTO.cnpj}`, font: FONTE, size: 15, color: '787878' })],
+                  }),
+                ]
+              : [
               new Paragraph({
                 tabStops: [{ type: TabStopType.RIGHT, position: 9600 }],
                 border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: BRONZE_HEX, space: 6 } },
@@ -706,7 +797,15 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
         },
         footers: {
           default: new Footer({
-            children: [
+            children: oficio
+              ? [
+                  new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    border: { top: { style: BorderStyle.SINGLE, size: 6, color: BRONZE_HEX, space: 4 } },
+                    children: [new TextRun({ text: enderecoEmpresa(), font: FONTE, size: 14, color: '787878' })],
+                  }),
+                ]
+              : [
               new Paragraph({
                 tabStops: [{ type: TabStopType.RIGHT, position: 9600 }],
                 border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'DDDDDD', space: 4 } },

@@ -27,7 +27,16 @@ export interface ItemChecklist {
 
 export type StatusDocumento = 'Rascunho' | 'Vigente' | 'Obsoleto';
 
-export const TIPOS_DOCUMENTO = ['Procedimento', 'Política', 'Manual', 'Relatório', 'Formulário', 'Ata', 'Contrato', 'Proposta', 'Comunicado', 'Planilha', 'Outro'];
+export const TIPOS_DOCUMENTO = ['Procedimento', 'Política', 'Manual', 'Relatório', 'Formulário', 'Ata', 'Contrato', 'Proposta', 'Comunicado', 'Ofício', 'Carta', 'Planilha', 'Outro'];
+
+/** Visual do documento gerado: 'padrao' = documento controlado (faixa de controle, código e
+ *  versão); 'oficio' = papel timbrado da JMT, com local e data, destinatário e assunto. */
+export type ModeloDocumento = 'padrao' | 'oficio';
+export interface DadosOficio {
+  local?: string;
+  destinatario?: string;
+  assunto?: string;
+}
 export { SETORES_DOCUMENTO, CLASSIFICACOES } from '../data/setoresDocumento';
 
 export interface DocumentoPadronizado {
@@ -42,6 +51,8 @@ export interface DocumentoPadronizado {
   responsavel?: string;
   aprovadoPor?: string;
   dataDocumento?: string;
+  modelo?: ModeloDocumento;
+  oficio?: DadosOficio;
   blocos: BlocoDocumento[];
   origemArquivo?: string;
   origemTipo?: string;
@@ -83,6 +94,8 @@ function rowToDocumento(r: any): DocumentoPadronizado {
     responsavel: u(r.responsavel),
     aprovadoPor: u(r.aprovado_por),
     dataDocumento: u(r.data_documento),
+    modelo: r.modelo === 'oficio' ? 'oficio' : undefined,
+    oficio: u(r.oficio) ?? undefined,
     blocos: r.blocos ?? [],
     origemArquivo: u(r.origem_arquivo),
     origemTipo: u(r.origem_tipo),
@@ -92,7 +105,7 @@ function rowToDocumento(r: any): DocumentoPadronizado {
   };
 }
 
-const COLUNAS_LISTA = 'id, codigo, titulo, tipo, setor, versao, status, classificacao, responsavel, aprovado_por, data_documento, origem_arquivo, origem_tipo, criado_por, criado_em, atualizado_em';
+const COLUNAS_LISTA = 'id, codigo, titulo, tipo, setor, versao, status, classificacao, responsavel, aprovado_por, data_documento, modelo, origem_arquivo, origem_tipo, criado_por, criado_em, atualizado_em';
 
 /** Biblioteca (sem o conteúdo — ver getDocumento). */
 export async function getDocumentos(): Promise<DocumentoPadronizado[]> {
@@ -129,6 +142,8 @@ function paraLinha(d: DocumentoPadronizado) {
     responsavel: d.responsavel || null,
     aprovado_por: d.aprovadoPor || null,
     data_documento: d.dataDocumento || null,
+    modelo: d.modelo === 'oficio' ? 'oficio' : null,
+    oficio: d.modelo === 'oficio' ? d.oficio ?? {} : null,
     blocos: d.blocos,
     origem_arquivo: d.origemArquivo || null,
     origem_tipo: d.origemTipo || null,
@@ -177,6 +192,8 @@ export async function publicarVersao(d: DocumentoPadronizado, nota: string, por?
         responsavel: salvo.responsavel,
         aprovadoPor: salvo.aprovadoPor,
         dataDocumento: salvo.dataDocumento,
+        modelo: salvo.modelo,
+        oficio: salvo.oficio,
       },
       nota: nota || null,
       criado_por: por || null,
