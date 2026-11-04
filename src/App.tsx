@@ -278,6 +278,7 @@ const SolicitacoesDpView = sobDemanda(() => import('./components/Solicitacoes/So
 const GamificacaoView = sobDemanda(() => import('./components/Gamificacao/GamificacaoView'), 'GamificacaoView');
 const DocumentosView = sobDemanda(() => import('./components/Documentos/DocumentosView'), 'DocumentosView');
 const ComunicadoPublicView = sobDemanda(() => import('./components/Comunicados/ComunicadoPublicView'), 'ComunicadoPublicView');
+const MotoristaBaixasView = sobDemanda(() => import('./components/FarmaRodoviario/MotoristaBaixasView'), 'MotoristaBaixasView');
 const PublicEpiEntregaView = sobDemanda(() => import('./components/Epi/PublicEpiEntregaView'), 'PublicEpiEntregaView');
 const EpiFormularioLinkModal = sobDemanda(() => import('./components/Epi/EpiFormularioLinkModal'), 'EpiFormularioLinkModal', true);
 const ValeAlimentacaoView = sobDemanda(() => import('./components/Vacation/ValeAlimentacaoView'), 'ValeAlimentacaoView');
@@ -757,6 +758,8 @@ export default function App() {
   const [pontoToken, setPontoToken] = useState<string | null>(null);
   // Link de comunicado (?form=comunicado&token=...) — leitura e ciência.
   const [comunicadoToken, setComunicadoToken] = useState<string | null>(null);
+  /** Link do motorista na Performance das baixas (?form=motorista&t=...). */
+  const [motoristaBaixasToken, setMotoristaBaixasToken] = useState<string | null>(null);
   // Link externo de um formulário (?form=formulario&t=...): página pública, sem login.
   const [formularioToken, setFormularioToken] = useState<string | null>(null);
   const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
@@ -1171,6 +1174,8 @@ export default function App() {
         setComunicadoToken(searchParams.get('token') || '');
       } else if (formParam === 'formulario') {
         setFormularioToken(searchParams.get('t') || '');
+      } else if (formParam === 'motorista') {
+        setMotoristaBaixasToken(searchParams.get('t') || '');
       }
     }
   }, []);
@@ -3110,6 +3115,9 @@ export default function App() {
     );
   }
 
+  if (motoristaBaixasToken !== null) {
+    return <MotoristaBaixasView token={motoristaBaixasToken || undefined} />;
+  }
   if (comunicadoToken !== null) {
     return <ComunicadoPublicView token={comunicadoToken || undefined} />;
   }

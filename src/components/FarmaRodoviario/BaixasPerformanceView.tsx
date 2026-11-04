@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Copy, MessageCircle } from 'lucide-react';
+import { Copy, Link2, MessageCircle, RefreshCw } from 'lucide-react';
 import { Award, ClipboardCheck, CalendarDays, ChevronDown, ChevronRight, Clock, FileSpreadsheet, FileText, Loader2, Package, Search, Trash2, TriangleAlert, Upload, UserRound, X, CheckCircle2 } from 'lucide-react';
 import type { Cliente, Colaborador, LancamentoFaturamentoAereo, UsuarioLogin } from '../../types';
 import { CruzamentoFaturamento } from './CruzamentoFaturamento';
@@ -37,6 +37,8 @@ import {
   pct,
   registrarEntregaTardia,
   salvarUploadBaixas,
+  obterLinkMotorista,
+  urlLinkMotorista,
 } from '../../utils/baixasApi';
 
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '');
@@ -245,7 +247,7 @@ export const BaixasPerformanceView: React.FC<{
           <Loader2 className="w-5 h-5 animate-spin text-[#C48229]" /> Carregando...
         </div>
       ) : aba === 'painel' ? (
-        <PainelMes bases={bases} temImportacoes={uploads.length > 0} mesInicial={uploads[0]?.dataReferencia.slice(0, 7) || mesAtual()} regras={regras} lancamentos={lancamentos} clientes={clientes} />
+        <PainelMes bases={bases} temImportacoes={uploads.length > 0} mesInicial={uploads[0]?.dataReferencia.slice(0, 7) || mesAtual()} regras={regras} lancamentos={lancamentos} clientes={clientes} usuario={currentUser?.nome} />
       ) : (
         <Importacoes
           uploads={uploads}
@@ -302,7 +304,8 @@ export const BaixasPerformanceView: React.FC<{
 // ---------------------------------------------------------------------------
 // Painel do mês (dossiê)
 // ---------------------------------------------------------------------------
-const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial: string; regras: RegrasBaixas; lancamentos: LancamentoFaturamentoAereo[]; clientes: Cliente[] }> = ({
+const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial: string; regras: RegrasBaixas; lancamentos: LancamentoFaturamentoAereo[]; clientes: Cliente[]; usuario?: string }> = ({
+  usuario,
   bases,
   temImportacoes,
   mesInicial,
@@ -315,6 +318,7 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
   const [resumo, setResumo] = useState<ResumoMes | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [linkDe, setLinkDe] = useState<string | null>(null);
 
   useEffect(() => {
     setCarregando(true);
@@ -454,17 +458,19 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
                     <p className="text-base font-black text-[#92611F]">{m.pontos.toFixed(1)} pts</p>
                     <p className={`text-[10px] ${m.taxa < regras.metaEntrega ? 'text-rose-700 font-bold' : 'text-slate-500'}`}>Entrega {f1(m.taxa)}</p>
                   </div>
+                  <BotaoLinkMotorista onClick={() => setLinkDe(m.motorista)} />
                 </div>
               ))}
               {foraRanking.length > 0 && (
                 <div className="pt-2">
                   <p className="text-[10px] font-black uppercase tracking-wide text-slate-400 mb-1">Abaixo do mínimo de {regras.motorista.minimoNotas} notas (sem posição)</p>
                   {foraRanking.map((m) => (
-                    <p key={m.motorista} className="flex justify-between text-[11px] text-slate-500 px-3 py-1">
-                      <span>{nomeBonito(m.motorista)}</span>
+                    <p key={m.motorista} className="flex items-center justify-between gap-2 text-[11px] text-slate-500 px-3 py-1">
+                      <span className="flex-1">{nomeBonito(m.motorista)}</span>
                       <span>
                         {m.entregues} / {m.total} OK · {f1(m.taxa)}
                       </span>
+                      <BotaoLinkMotorista onClick={() => setLinkDe(m.motorista)} />
                     </p>
                   ))}
                 </div>
@@ -473,6 +479,7 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
           </div>
 
           <CruzamentoFaturamento mes={mes} base={base} lancamentos={lancamentos} clientes={clientes} />
+          {linkDe && <LinkMotoristaModal motorista={linkDe} usuario={usuario} onClose={() => setLinkDe(null)} />}
         </>
       )}
     </div>
@@ -603,6 +610,75 @@ const Importacoes: React.FC<{
       ) : (
         <p className="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center text-xs text-slate-500">Escolha um dia na lista ao lado para ver a auditoria das notas.</p>
       )}
+    </div>
+  );
+};
+
+const BotaoLinkMotorista: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+  <button type="button" onClick={onClick} className="p-1.5 rounded-lg border border-slate-200 bg-white text-[#92611F] hover:bg-amber-50 shrink-0" title="Link para o motorista acompanhar o desempenho">
+    <Link2 className="w-3.5 h-3.5" />
+  </button>
+);
+
+/** Link exclusivo do motorista (página "Meu desempenho"): copiar, mandar pelo WhatsApp ou trocar. */
+const LinkMotoristaModal: React.FC<{ motorista: string; usuario?: string; onClose: () => void }> = ({ motorista, usuario, onClose }) => {
+  const [token, setToken] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [trocando, setTrocando] = useState(false);
+  useEffect(() => {
+    obterLinkMotorista(motorista, usuario)
+      .then(setToken)
+      .catch((e) => setErro(e instanceof Error ? e.message : 'Não foi possível gerar o link.'));
+  }, [motorista]);
+  const url = token ? urlLinkMotorista(token) : '';
+  const texto = `Olá, ${nomeBonito(motorista).split(' ')[0]}! Este é o seu link para acompanhar o seu desempenho nas baixas (entregas, prazo, pendências e posição no ranking). É só seu, não repasse:\n${url}`;
+  const trocar = async () => {
+    if (!window.confirm('Gerar um link novo? O link antigo deste motorista para de funcionar.')) return;
+    setTrocando(true);
+    try {
+      setToken(await obterLinkMotorista(motorista, usuario, true));
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível trocar o link.');
+    } finally {
+      setTrocando(false);
+    }
+  };
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-md p-5 space-y-3 text-xs" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal">Link do motorista</h3>
+            <p className="text-slate-500">{nomeBonito(motorista)} acompanha o próprio desempenho: resumo do mês, dia a dia, pendências e posição no ranking (sem ver os números dos outros).</p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 text-slate-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {erro ? (
+          <p className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 font-semibold">{erro}</p>
+        ) : !token ? (
+          <p className="flex items-center gap-2 text-slate-500">
+            <Loader2 className="w-4 h-4 animate-spin text-[#C48229]" /> Gerando o link...
+          </p>
+        ) : (
+          <>
+            <input readOnly value={url} onFocus={(e) => e.target.select()} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-[11px]" />
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => enviarWhatsApp(texto)} className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5">
+                <MessageCircle className="w-4 h-4" /> Enviar pelo WhatsApp
+              </button>
+              <button type="button" onClick={() => copiarTexto(url)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold flex items-center gap-1.5">
+                <Copy className="w-4 h-4" /> Copiar link
+              </button>
+              <button type="button" onClick={trocar} disabled={trocando} className="px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold flex items-center gap-1.5 text-rose-700 disabled:opacity-50">
+                <RefreshCw className="w-4 h-4" /> Gerar novo link
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-400">O motorista é reconhecido pelo nome como vem na planilha de baixas. Se o link for repassado, gere um novo — o antigo para de funcionar.</p>
+          </>
+        )}
+      </div>
     </div>
   );
 };

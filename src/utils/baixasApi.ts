@@ -615,3 +615,52 @@ export async function getCruzamentoMes(mes: string, base: string | undefined, fa
   falhou(error, 'getCruzamentoMes (rode a migração 103 no Supabase, se ainda não rodou)');
   return data as CruzamentoMes;
 }
+
+// ---------------------------------------------------------------------------
+// Link do motorista (migração 108): cada motorista acompanha o próprio desempenho
+// ---------------------------------------------------------------------------
+const chaveMotorista = (nome: string) => nome.trim().toUpperCase();
+const novoTokenMotorista = () => {
+  const b = new Uint8Array(18);
+  crypto.getRandomValues(b);
+  return Array.from(b, (x) => x.toString(36).padStart(2, '0')).join('').slice(0, 28);
+};
+export const urlLinkMotorista = (token: string) => `${window.location.origin}/?form=motorista&t=${token}`;
+
+/** Link do motorista (cria na primeira vez). novo = true troca o link (o anterior para de funcionar). */
+export async function obterLinkMotorista(motorista: string, por?: string, novo = false): Promise<string> {
+  const chave = chaveMotorista(motorista);
+  if (!novo) {
+    const { data, error } = await supabase.from('baixas_links_motorista').select('token').eq('motorista', chave).maybeSingle();
+    falhou(error, 'obterLinkMotorista (rode a migração 108 no Supabase, se ainda não rodou)');
+    if (data?.token) return data.token as string;
+  }
+  const token = novoTokenMotorista();
+  const { error } = await supabase.from('baixas_links_motorista').upsert({ motorista: chave, token, criado_em: new Date().toISOString(), criado_por: por || null });
+  falhou(error, 'obterLinkMotorista');
+  return token;
+}
+
+export interface PainelMotorista {
+  erro?: string;
+  motorista: string;
+  mes: string;
+  meses: string[];
+  metaEntrega?: number;
+  minimoNotas?: number;
+  total: number;
+  entregues?: number;
+  noPrazo?: number;
+  comprovadas?: number;
+  abonadas?: number;
+  pontos?: number | null;
+  posicao?: number | null;
+  noRanking?: number;
+  dias?: { data: string; total: number; entregues: number; noPrazo: number; comprovadas: number }[];
+  pendencias?: { numero: string; empresa?: string; destinatario?: string; cidade?: string; emissao?: string; dia: string; prazo?: string }[];
+}
+export async function getPainelMotorista(token: string, mes?: string): Promise<PainelMotorista> {
+  const { data, error } = await supabase.rpc('motorista_baixas_painel', { p_token: token, p_mes: mes || null });
+  falhou(error, 'getPainelMotorista');
+  return data as PainelMotorista;
+}
