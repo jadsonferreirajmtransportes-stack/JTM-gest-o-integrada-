@@ -48,6 +48,36 @@ import { AliquotasTributosModal } from './AliquotasTributosModal';
 import { AliquotaTributo, aliquotaEm, getAliquotas, tributosDoValor } from '../../utils/tributosApi';
 import { gerarRelatorioFinanceiroPdf, gerarRelatorioFinanceiroXlsx } from './relatorioFinanceiro';
 import { baixarBlob } from '../../utils/downloadUtils';
+import { ROTULO_SITUACAO_NF, SituacaoEntregaNF, getDetalheBaixaNF, nfNormalizada } from '../../utils/baixasApi';
+
+/** Situação da entrega (Performance das baixas) de um lançamento, pela NF. 'sem' = NF sem baixa importada. */
+function situacaoDoLancamento(l: LancamentoFaturamentoAereo, mapa?: Map<string, SituacaoEntregaNF>): SituacaoEntregaNF | 'sem' | undefined {
+  if (!mapa) return undefined;
+  const nfs = (l.notaFiscal || '').split(/[^\d]+/).map(nfNormalizada).filter(Boolean);
+  for (const nf of nfs) {
+    const s = mapa.get(nf);
+    if (s) return s;
+  }
+  return 'sem';
+}
+
+async function mostrarDetalheBaixa(nf?: string) {
+  if (!nf) return;
+  try {
+    const d = (await getDetalheBaixaNF(nf))[0];
+    if (!d) return alert('Esta NF ainda não apareceu em nenhuma planilha de baixa importada.');
+    const linhas = [
+      `NF ${d.numero} — baixa de ${d.dataReferencia.split('-').reverse().join('/')}`,
+      `Motorista: ${d.motorista || '—'}`,
+      `Responsável: ${d.responsavel} (${d.base})`,
+      `Situação: ${d.abonoMotivo ? `abonada (${d.abonoMotivo}${d.abonoObs ? ` — ${d.abonoObs}` : ''})` : d.entregaTardiaEm ? 'entrega tardia' : d.situacao || '—'} · ${d.status || ''}`,
+      d.dataEntrega ? `Entrega: ${new Date(d.dataEntrega).toLocaleString('pt-BR')} (${d.prazo || ''})` : 'Ainda sem data de entrega',
+    ];
+    alert(linhas.join('\n'));
+  } catch (e) {
+    alert(e instanceof Error ? e.message : 'Não foi possível consultar a baixa.');
+  }
+}
 
 interface FaturamentoAereoViewProps {
   lancamentos: LancamentoFaturamentoAereo[];
@@ -65,6 +95,8 @@ interface FaturamentoAereoViewProps {
   /** Setor aplicado às faturas/lançamentos criados aqui (manual ou importação) quando não
    *  vier um "Modal" explícito na planilha — ver ehModalRodoviario/mapRowsToFaturamentoAereo. */
   modalPadrao?: string;
+  /** Situação das entregas (Performance das baixas) por NF — só no Farma Rodoviário. */
+  situacoesEntrega?: Map<string, SituacaoEntregaNF>;
 }
 
 const KpiCard: React.FC<{
@@ -178,6 +210,8 @@ interface LancamentoRowProps {
   destacado?: boolean;
   onFieldChange: (patch: Partial<LancamentoFaturamentoAereo>) => void;
   onDelete: () => void;
+  /** Situação da entrega pela NF (só quando há o cruzamento com as baixas). */
+  situacaoEntrega?: SituacaoEntregaNF | 'sem';
 }
 
 /** Uma linha de lançamento (CT-e), reaproveitada tanto dentro de uma fatura expandida
@@ -194,6 +228,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
   destacado,
   onFieldChange,
   onDelete,
+  situacaoEntrega,
 }) => {
   const [detalheAberto, setDetalheAberto] = useState(false);
   const valorCalculado = computeValorACobrar(l, cliente);
@@ -232,6 +267,16 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
         >
           {l.notaFiscal || l.numeroCte || '—'}
         </button>
+        {situacaoEntrega && (
+          <button
+            type="button"
+            onClick={() => mostrarDetalheBaixa((l.notaFiscal || '').split(/[^\d]+/).find(Boolean))}
+            className={`block mt-0.5 px-1.5 py-px rounded-full border text-[9px] font-bold whitespace-nowrap ${situacaoEntrega === 'sem' ? 'bg-white text-slate-400 border-slate-200' : ROTULO_SITUACAO_NF[situacaoEntrega].cls}`}
+            title="Situação da entrega na Performance das baixas — clique para ver o motorista e a data"
+          >
+            {situacaoEntrega === 'sem' ? 'Sem baixa' : ROTULO_SITUACAO_NF[situacaoEntrega].rotulo}
+          </button>
+        )}
         {detalheAberto && (
           <DetalheLancamentoModal lancamento={l} cliente={cliente} onClose={() => setDetalheAberto(false)} onSalvar={(patch) => onFieldChange(patch)} />
         )}
@@ -436,6 +481,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   onDeleteLancamento,
   tituloSetor = 'Farma Aéreo',
   modalPadrao,
+  situacoesEntrega,
 }) => {
   // O mesmo CT-e nunca pode entrar duas vezes na lista: com id repetido o React se perde e
   // deixa linhas "fantasma" na tabela (aparecem e não somem ao mudar a busca).
@@ -470,6 +516,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [faturaDestinoSelecao, setFaturaDestinoSelecao] = useState('');
   const [buscaSemFatura, setBuscaSemFatura] = useState('');
+  const [filtroEntrega, setFiltroEntrega] = useState<'' | 'entregues' | 'comprovadas' | 'pendentes' | 'sem'>('');
 
   // Busca dentro de cada fatura — um termo por fatura (chaveado pelo id), para filtrar as
   // notas/CT-es exibidos quando a fatura está expandida, sem afetar as demais faturas abertas.
@@ -644,8 +691,16 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   const [limiteSemFatura, setLimiteSemFatura] = useState(LIMITE_LINHAS);
   useEffect(() => setLimiteSemFatura(LIMITE_LINHAS), [buscaSemFaturaAdiada]);
   const lancamentosSemFaturaFiltrados = useMemo(
-    () => filtrarPorBusca(lancamentosSemFatura, buscaSemFaturaAdiada),
-    [lancamentosSemFatura, buscaSemFaturaAdiada]
+    () =>
+      filtrarPorBusca(lancamentosSemFatura, buscaSemFaturaAdiada).filter((l) => {
+        if (!filtroEntrega || !situacoesEntrega) return true;
+        const s = situacaoDoLancamento(l, situacoesEntrega);
+        if (filtroEntrega === 'entregues') return s === 'C' || s === 'E' || s === 'T';
+        if (filtroEntrega === 'comprovadas') return s === 'C';
+        if (filtroEntrega === 'pendentes') return s === 'P';
+        return s === 'sem';
+      }),
+    [lancamentosSemFatura, buscaSemFaturaAdiada, filtroEntrega, situacoesEntrega]
   );
   // Número buscado que não está em "Sem fatura": em qual fatura ele está?
   const encontradosEmFaturas = useMemo(() => {
@@ -848,8 +903,28 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     setFaturaDestinoSelecao('');
   };
 
+  /** Antes de faturar: avisa se há NFs pendentes, sem comprovação, abonadas ou sem baixa. */
+  const confirmarEntregasDaSelecao = (): boolean => {
+    if (!situacoesEntrega || selecionados.size === 0) return true;
+    const cont = { P: 0, E: 0, A: 0, sem: 0 } as Record<string, number>;
+    selecionados.forEach((id) => {
+      const l = lancamentos.find((x) => x.id === id);
+      const s = l && situacaoDoLancamento(l, situacoesEntrega);
+      if (s && s in cont) cont[s] += 1;
+    });
+    const avisos = [
+      cont.P && `• ${cont.P} pendente(s) — ainda não entregue(s)`,
+      cont.E && `• ${cont.E} entregue(s) sem comprovante`,
+      cont.A && `• ${cont.A} abonada(s) — não foi(ram) entregue(s)`,
+      cont.sem && `• ${cont.sem} sem baixa importada`,
+    ].filter(Boolean);
+    if (!avisos.length) return true;
+    return window.confirm(`Atenção — entre as notas selecionadas:\n\n${avisos.join('\n')}\n\nFaturar mesmo assim?`);
+  };
+
   const handleVincularSelecionadosAFatura = () => {
     if (!faturaDestinoSelecao) return;
+    if (!confirmarEntregasDaSelecao()) return;
     selecionados.forEach((id) => {
       const l = lancamentos.find((x) => x.id === id);
       if (l) onUpdateLancamento({ ...l, faturaId: faturaDestinoSelecao });
@@ -859,6 +934,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
 
   const handleCriarFatura = () => {
     if (!novaFaturaCliente.trim() || !novaFaturaNumero.trim()) return;
+    if (!confirmarEntregasDaSelecao()) return;
     const cliente = clientes.find((c) => c.id === novaFaturaCliente);
     const novaFaturaId = `fatura-aereo-${Date.now()}`;
     onCreateFatura({
@@ -2009,6 +2085,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                                       key={l.id}
                                       destacado={l.id === destaqueId}
                                       lancamento={l}
+                                      situacaoEntrega={situacaoDoLancamento(l, situacoesEntrega)}
                                       cliente={clienteDaFatura || findClienteById(clientes, l.clienteId, l.clienteNome)}
                                       showRemoverDaFatura
                                       onFieldChange={handleFieldChangeFactory(l)}
@@ -2064,7 +2141,30 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                 </button>
               )}
             </div>
-            {buscaSemFatura && (
+            {situacoesEntrega && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-2 text-[10px]">
+                <span className="font-bold text-slate-500">Entrega:</span>
+                {(
+                  [
+                    ['', 'Todas'],
+                    ['entregues', 'Entregues'],
+                    ['comprovadas', 'Comprovadas'],
+                    ['pendentes', 'Pendentes'],
+                    ['sem', 'Sem baixa'],
+                  ] as const
+                ).map(([v, r]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setFiltroEntrega(v)}
+                    className={`px-2 py-0.5 rounded-full border font-bold ${filtroEntrega === v ? 'bg-[#C48229] border-[#C48229] text-white' : 'bg-white border-slate-200 text-slate-600'}`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            )}
+            {(buscaSemFatura || filtroEntrega) && (
               <p className="text-[10px] text-slate-400 mt-1">
                 {lancamentosSemFaturaFiltrados.length} de {lancamentosSemFatura.length} CT-e(s) encontrados
               </p>
@@ -2163,6 +2263,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                     key={l.id}
                     destacado={l.id === destaqueId || bateNumeroExato(l, buscaSemFaturaAdiada)}
                     lancamento={l}
+                    situacaoEntrega={situacaoDoLancamento(l, situacoesEntrega)}
                     cliente={findClienteById(clientes, l.clienteId, l.clienteNome)}
                     showCliente
                     showSelecao

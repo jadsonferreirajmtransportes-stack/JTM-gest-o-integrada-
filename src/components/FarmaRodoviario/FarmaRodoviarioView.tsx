@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { SituacaoEntregaNF, getSituacoesBaixas } from '../../utils/baixasApi';
 import {
   Truck,
   Building2,
@@ -133,6 +134,17 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
     () => lancamentosFaturamentoAereo.filter((l) => !pertenceAoFarmaAereo(l, clientes)),
     [lancamentosFaturamentoAereo, clientes]
   );
+  // Situação das entregas (Performance das baixas) por NF — para o Controle Financeiro mostrar
+  // se cada CT-e já foi entregue/comprovado e avisar ao faturar o que não foi (migração 103).
+  const [situacoesEntrega, setSituacoesEntrega] = useState<Map<string, SituacaoEntregaNF> | undefined>(undefined);
+  useEffect(() => {
+    if (activeSubTab !== 'controle_financeiro' || situacoesEntrega) return;
+    const desde = new Date(Date.now() - 150 * 86400000).toLocaleDateString('sv-SE');
+    getSituacoesBaixas(desde)
+      .then(setSituacoesEntrega)
+      .catch(() => undefined); // sem a migração 103 (ou sem baixas): o faturamento segue como antes
+  }, [activeSubTab, situacoesEntrega]);
+
   const faturasDoSetor = useMemo(
     () => faturasAereo.filter((f) => !pertenceAoFarmaAereo(f, clientes)),
     [faturasAereo, clientes]
@@ -286,7 +298,7 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
         )}
       </div>
 
-      {activeSubTab === 'baixas' && podeVerAbaOperacoes(currentUser, 'baixas', 'farma_rodoviario') && <BaixasPerformanceView currentUser={currentUser} colaboradores={colaboradores} />}
+      {activeSubTab === 'baixas' && podeVerAbaOperacoes(currentUser, 'baixas', 'farma_rodoviario') && <BaixasPerformanceView currentUser={currentUser} colaboradores={colaboradores} lancamentos={lancamentosDoSetor} clientes={clientes} />}
 
       {/* TAB 1: VISÃO GERAL GERENCIAL & DRE */}
       {activeSubTab === 'visao_geral' && podeVerAbaOperacoes(currentUser, 'visao_geral', 'farma_rodoviario') && (
@@ -355,6 +367,7 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
           onUpdateLancamento={onUpdateLancamentoFaturamentoAereo}
           onDeleteLancamento={onDeleteLancamentoFaturamentoAereo}
           tituloSetor="Farma Rodoviário"
+          situacoesEntrega={situacoesEntrega}
           modalPadrao="Rodoviário"
         />
       )}

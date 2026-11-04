@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Copy, MessageCircle } from 'lucide-react';
 import { Award, ClipboardCheck, CalendarDays, ChevronDown, ChevronRight, Clock, FileSpreadsheet, FileText, Loader2, Package, Search, Trash2, TriangleAlert, Upload, UserRound, X, CheckCircle2 } from 'lucide-react';
-import type { Colaborador, UsuarioLogin } from '../../types';
+import type { Cliente, Colaborador, LancamentoFaturamentoAereo, UsuarioLogin } from '../../types';
+import { CruzamentoFaturamento } from './CruzamentoFaturamento';
 import { ResponsaveisBaixasModal } from './ResponsaveisBaixasModal';
 import { RegrasBaixasModal } from './RegrasBaixasModal';
 import { SlidersHorizontal } from 'lucide-react';
@@ -164,7 +165,13 @@ const Medalha: React.FC<{ pos: number }> = ({ pos }) => (
 
 /** Farma Rodoviário → Performance das baixas: importação diária do "Relatório de documentos"
  *  (baixas dos motoristas), auditoria de cada dia e o dossiê do mês (responsáveis e motoristas). */
-export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null; colaboradores?: Colaborador[] }> = ({ currentUser, colaboradores = [] }) => {
+export const BaixasPerformanceView: React.FC<{
+  currentUser?: UsuarioLogin | null;
+  colaboradores?: Colaborador[];
+  /** Faturamento do setor (Controle Financeiro) — para o cruzamento pela NF. */
+  lancamentos?: LancamentoFaturamentoAereo[];
+  clientes?: Cliente[];
+}> = ({ currentUser, colaboradores = [], lancamentos = [], clientes = [] }) => {
   const [responsaveisAberto, setResponsaveisAberto] = useState(false);
   const [regras, setRegras] = useState<RegrasBaixas>(REGRAS_PADRAO);
   const [regrasAberto, setRegrasAberto] = useState(false);
@@ -238,7 +245,7 @@ export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null
           <Loader2 className="w-5 h-5 animate-spin text-[#C48229]" /> Carregando...
         </div>
       ) : aba === 'painel' ? (
-        <PainelMes bases={bases} temImportacoes={uploads.length > 0} mesInicial={uploads[0]?.dataReferencia.slice(0, 7) || mesAtual()} regras={regras} />
+        <PainelMes bases={bases} temImportacoes={uploads.length > 0} mesInicial={uploads[0]?.dataReferencia.slice(0, 7) || mesAtual()} regras={regras} lancamentos={lancamentos} clientes={clientes} />
       ) : (
         <Importacoes
           uploads={uploads}
@@ -295,7 +302,14 @@ export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null
 // ---------------------------------------------------------------------------
 // Painel do mês (dossiê)
 // ---------------------------------------------------------------------------
-const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial: string; regras: RegrasBaixas }> = ({ bases, temImportacoes, mesInicial, regras }) => {
+const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial: string; regras: RegrasBaixas; lancamentos: LancamentoFaturamentoAereo[]; clientes: Cliente[] }> = ({
+  bases,
+  temImportacoes,
+  mesInicial,
+  regras,
+  lancamentos,
+  clientes,
+}) => {
   const [mes, setMes] = useState(mesInicial);
   const [base, setBase] = useState('');
   const [resumo, setResumo] = useState<ResumoMes | null>(null);
@@ -457,6 +471,8 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
               )}
             </div>
           </div>
+
+          <CruzamentoFaturamento mes={mes} base={base} lancamentos={lancamentos} clientes={clientes} />
         </>
       )}
     </div>

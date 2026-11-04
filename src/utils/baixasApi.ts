@@ -547,3 +547,65 @@ export async function portalBaixasTardia(c: Cred, nota: BaixaNota, quando: strin
   await rpc('portal_baixas_tardia', { ...args(c), p_nota: nota.id, p_quando: quando });
   return { ...nota, entregaTardiaEm: quando };
 }
+
+// ---------------------------------------------------------------------------
+// Ligação com o faturamento pelo número da NF (migração 103)
+// ---------------------------------------------------------------------------
+/** NF só com os dígitos, sem zeros à esquerda (igual à função baixas__nf do banco). */
+export const nfNormalizada = (nf?: string) => (nf || '').replace(/\D/g, '').replace(/^0+/, '');
+
+/** C entregue e comprovada · E entregue sem comprovação · T entrega tardia · A abonada · P pendente */
+export type SituacaoEntregaNF = 'C' | 'E' | 'T' | 'A' | 'P';
+export const ROTULO_SITUACAO_NF: Record<SituacaoEntregaNF, { rotulo: string; cls: string }> = {
+  C: { rotulo: 'Entregue', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  E: { rotulo: 'Entregue s/ comprovante', cls: 'bg-amber-50 text-[#92611F] border-amber-200' },
+  T: { rotulo: 'Entrega tardia', cls: 'bg-amber-50 text-[#92611F] border-amber-200' },
+  A: { rotulo: 'Abonada', cls: 'bg-slate-100 text-slate-600 border-slate-300' },
+  P: { rotulo: 'Pendente', cls: 'bg-rose-50 text-rose-700 border-rose-200' },
+};
+
+/** Situação da entrega de cada NF importada desde a data (mapa NF normalizada → código). */
+export async function getSituacoesBaixas(desde: string): Promise<Map<string, SituacaoEntregaNF>> {
+  const { data, error } = await supabase.rpc('baixas_situacoes_desde', { p_desde: desde });
+  falhou(error, 'getSituacoesBaixas');
+  return new Map(Object.entries((data || {}) as Record<string, SituacaoEntregaNF>));
+}
+
+export interface DetalheBaixaNF {
+  numero: string;
+  status?: string;
+  situacao?: string;
+  motorista?: string;
+  responsavel: string;
+  base: string;
+  dataReferencia: string;
+  dataEntrega?: string;
+  prazo?: string;
+  entregaTardiaEm?: string;
+  abonoMotivo?: string;
+  abonoObs?: string;
+  destinatario?: string;
+  cidade?: string;
+}
+export async function getDetalheBaixaNF(nf: string): Promise<DetalheBaixaNF[]> {
+  const { data, error } = await supabase.rpc('baixas_detalhe_nf', { p_nf: nf });
+  falhou(error, 'getDetalheBaixaNF');
+  return (data ?? []) as DetalheBaixaNF[];
+}
+
+export interface CruzamentoMes {
+  valorTotal: number;
+  notasComValor: number;
+  motoristas: { motorista: string; valor: number; notas: number; notasComValor: number }[];
+  responsaveis: { responsavel: string; valor: number; notas: number; notasComValor: number }[];
+  semCteTotal: number;
+  semCte: { numero: string; motorista?: string; responsavel: string; data: string; destinatario?: string; cidade?: string }[];
+  semBaixaTotal: number;
+  semBaixa: string[];
+}
+/** fat = { NF normalizada: Valor a Cobrar } das NFs do faturamento do período. */
+export async function getCruzamentoMes(mes: string, base: string | undefined, fat: Record<string, number>): Promise<CruzamentoMes> {
+  const { data, error } = await supabase.rpc('baixas_cruzamento_mes', { p_mes: mes, p_base: base || null, p_fat: fat });
+  falhou(error, 'getCruzamentoMes (rode a migração 103 no Supabase, se ainda não rodou)');
+  return data as CruzamentoMes;
+}
