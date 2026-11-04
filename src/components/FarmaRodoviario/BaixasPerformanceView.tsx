@@ -960,16 +960,13 @@ export const DetalheUpload: React.FC<{
               </button>
             </div>
             <div className="envelope-cartoes bg-white rounded-2xl border border-slate-200 overflow-x-auto">
-              <table className="tabela-cartoes w-full text-xs min-w-[900px]">
+              <table className="tabela-cartoes w-full text-xs min-w-[620px]">
                 <thead className="bg-slate-50 text-left text-slate-500">
                   <tr>
-                    <th className="p-3">Nota</th>
-                    <th className="p-3">Remetente</th>
-                    <th className="p-3">Destinatário</th>
-                    <th className="p-3">Cidade</th>
+                    <th className="p-3">Nota / empresa</th>
+                    <th className="p-3">Destino</th>
                     <th className="p-3">Motorista</th>
                     <th className="p-3">Situação</th>
-                    <th className="p-3">Emissão</th>
                     <th className="p-3">Entrega</th>
                   </tr>
                 </thead>
@@ -980,18 +977,20 @@ export const DetalheUpload: React.FC<{
                       <tr key={n.id} className={`border-t border-slate-100 ${pend ? 'bg-rose-50/60' : notaAbonada(n) ? 'bg-slate-50' : ''}`}>
                         <td className="p-3 cartao-titulo">
                           <p className="font-black text-slate-900">{n.numero}</p>
+                          {n.remetente && (
+                            <p className="text-[10px] text-slate-500 max-w-[200px] truncate" title={n.remetente}>
+                              {n.remetente}
+                            </p>
+                          )}
                           {pend && n.prazo === 'FORA PRAZO' && <span className="px-1.5 py-0.5 rounded bg-rose-200 text-rose-800 text-[9px] font-bold">Prazo vencido</span>}
                         </td>
-                        <td className="p-3 max-w-[160px] truncate" data-label="Remetente" title={n.remetente}>
-                          {n.remetente}
+                        <td className="p-3" data-label="Destino">
+                          <p className="max-w-[200px] truncate" title={n.destinatario}>
+                            {n.destinatario}
+                          </p>
+                          <p className="text-[10px] font-bold text-slate-500">{n.cidade}</p>
                         </td>
-                        <td className="p-3 max-w-[180px] truncate" data-label="Destinatário" title={n.destinatario}>
-                          {n.destinatario}
-                        </td>
-                        <td className="p-3" data-label="Cidade">
-                          {n.cidade}
-                        </td>
-                        <td className="p-3 max-w-[150px] truncate" data-label="Motorista">
+                        <td className="p-3 max-w-[140px] truncate" data-label="Motorista" title={nomeBonito(n.motorista)}>
                           {nomeBonito(n.motorista)}
                         </td>
                         <td className="p-3" data-label="Situação">
@@ -999,7 +998,7 @@ export const DetalheUpload: React.FC<{
                             {notaAbonada(n) ? 'ABONADA' : n.entregaTardiaEm ? 'ENTREGA TARDIA' : n.situacao || '—'}
                           </span>
                           {pend && (
-                            <span className="flex flex-col items-start gap-0.5 mt-1">
+                            <span className="flex flex-col items-start gap-0.5 mt-1 whitespace-nowrap">
                               <button type="button" onClick={() => tardia(n)} className="text-[10px] font-bold text-[#92611F] hover:underline normal-case tracking-normal">
                                 ✓ Registrar entrega tardia
                               </button>
@@ -1022,12 +1021,10 @@ export const DetalheUpload: React.FC<{
                             </span>
                           )}
                         </td>
-                        <td className="p-3 whitespace-nowrap" data-label="Emissão">
-                          {dataHoraBr(n.dataEmissao)}
-                        </td>
-                        <td className="p-3 whitespace-nowrap font-semibold" data-label="Entrega">
-                          {n.entregaTardiaEm ? dataHoraBr(n.entregaTardiaEm) : n.dataEntrega ? dataHoraBr(n.dataEntrega) : notaAbonada(n) ? '— (abonada)' : 'Pendente / em rota'}
+                        <td className="p-3 whitespace-nowrap" data-label="Entrega">
+                          <span className="font-semibold">{n.entregaTardiaEm ? dataHoraBr(n.entregaTardiaEm) : n.dataEntrega ? dataHoraBr(n.dataEntrega) : notaAbonada(n) ? '— (abonada)' : 'Pendente / em rota'}</span>
                           {!pend && !notaAbonada(n) && !notaNoPrazo(n) && <span className="block text-[10px] text-rose-700">fora do prazo</span>}
+                          <span className="block text-[10px] text-slate-400">Emitida {dataHoraBr(n.dataEmissao)}</span>
                         </td>
                       </tr>
                     );
