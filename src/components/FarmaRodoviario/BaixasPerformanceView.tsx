@@ -613,13 +613,17 @@ const pctTexto = (p: number, t: number) => `${pct(p, t).toLocaleString('pt-BR', 
 const LIMITE_LISTA = 25;
 
 /** Resumo do dia de um motorista, no formato do WhatsApp (*negrito*). */
-export function textoResumoMotorista(upload: BaixaUpload, motorista: string, notas: BaixaNota[]): string {
+/** "ACRIPEL FARMA — " antes do número da nota (empresa = remetente). */
+const empresaDaNota = (n: BaixaNota) => (n.remetente ? `${nomeBonito(n.remetente)} — ` : '');
+
+export function textoResumoMotorista(upload: BaixaUpload, motorista: string, notas: BaixaNota[], empresa?: string): string {
   const c = contar(notas);
   const pend = notas.filter(notaPendente);
   const foraPrazo = notas.filter((n) => !notaPendente(n) && !notaNoPrazo(n));
   const linhas = [
     `*JM Transportes — Baixas de ${dataBr(upload.dataReferencia)}*`,
     `Motorista: *${nomeBonito(motorista)}*`,
+    ...(empresa ? [`Empresa: *${nomeBonito(empresa)}*`] : []),
     '',
     `📦 Notas: *${c.total}*`,
     `✅ Entregues: *${c.entregues}* (${pctTexto(c.entregues, c.total)})`,
@@ -628,31 +632,32 @@ export function textoResumoMotorista(upload: BaixaUpload, motorista: string, not
   ];
   if (pend.length) {
     linhas.push('', `⚠️ *Pendentes (${pend.length}):*`);
-    pend.slice(0, LIMITE_LISTA).forEach((n) => linhas.push(`• NF ${n.numero}${n.destinatario ? ` — ${nomeBonito(n.destinatario)}` : ''}${n.cidade ? ` (${n.cidade})` : ''}`));
+    pend.slice(0, LIMITE_LISTA).forEach((n) => linhas.push(`• ${empresaDaNota(n)}NF ${n.numero}${n.destinatario ? ` — ${nomeBonito(n.destinatario)}` : ''}${n.cidade ? ` (${n.cidade})` : ''}`));
     if (pend.length > LIMITE_LISTA) linhas.push(`… e mais ${pend.length - LIMITE_LISTA}`);
   } else linhas.push('', '🎉 Nenhuma pendência. Parabéns!');
   if (foraPrazo.length) {
     linhas.push('', `🕒 Entregues fora do prazo (${foraPrazo.length}):`);
-    foraPrazo.slice(0, LIMITE_LISTA).forEach((n) => linhas.push(`• NF ${n.numero}`));
+    foraPrazo.slice(0, LIMITE_LISTA).forEach((n) => linhas.push(`• ${empresaDaNota(n)}NF ${n.numero}`));
     if (foraPrazo.length > LIMITE_LISTA) linhas.push(`… e mais ${foraPrazo.length - LIMITE_LISTA}`);
   }
   const abonadas = notas.filter(notaAbonada);
   if (abonadas.length) {
     linhas.push('', `🟡 Abonadas (${abonadas.length}) — não contam no resultado:`);
-    abonadas.slice(0, LIMITE_LISTA).forEach((n) => linhas.push(`• NF ${n.numero} — ${n.abonoMotivo}`));
+    abonadas.slice(0, LIMITE_LISTA).forEach((n) => linhas.push(`• ${empresaDaNota(n)}NF ${n.numero} — ${n.abonoMotivo}`));
   }
   linhas.push('', `Responsável: ${upload.responsavel}`);
   return linhas.join('\n');
 }
 
 /** Resumo do dia com todos os motoristas (para o grupo). */
-export function textoResumoDia(upload: BaixaUpload, notas: BaixaNota[]): string {
+export function textoResumoDia(upload: BaixaUpload, notas: BaixaNota[], empresa?: string): string {
   const c = contar(notas);
   const por = new Map<string, BaixaNota[]>();
   notas.forEach((n) => por.set(n.motorista || 'Sem motorista', [...(por.get(n.motorista || 'Sem motorista') || []), n]));
   const linhas = [
     `*JM Transportes — Baixas de ${dataBr(upload.dataReferencia)}*`,
     `Base: ${upload.base} · Responsável: ${upload.responsavel}`,
+    ...(empresa ? [`Empresa: *${nomeBonito(empresa)}*`] : []),
     '',
     `📦 Notas: *${c.total}* · ✅ Entregues: *${pctTexto(c.entregues, c.total)}* · ⏱️ No prazo: *${pctTexto(c.noPrazo, c.total)}*`,
     '',
@@ -696,6 +701,7 @@ export const DetalheUpload: React.FC<{
   const [abonando, setAbonando] = useState<BaixaNota | null>(null);
   const [notas, setNotas] = useState<BaixaNota[] | null>(null);
   const [motorista, setMotorista] = useState('');
+  const [empresa, setEmpresa] = useState('');
   const [pagina, setPagina] = useState(0);
 
   useEffect(() => {
@@ -704,21 +710,29 @@ export const DetalheUpload: React.FC<{
       .catch(() => setNotas([]));
   }, [upload.id]);
 
+  const empresas = useMemo(() => {
+    const m = new Map<string, number>();
+    (notas || []).forEach((n) => n.remetente && m.set(n.remetente, (m.get(n.remetente) || 0) + 1));
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [notas]);
+  // Notas visíveis (filtro por empresa): painel, motoristas, lista, WhatsApp e Excel.
+  const visiveis = useMemo(() => (notas || []).filter((n) => !empresa || n.remetente === empresa), [notas, empresa]);
+
   const porMotorista = useMemo(() => {
     const m = new Map<string, BaixaNota[]>();
-    (notas || []).forEach((n) => {
+    visiveis.forEach((n) => {
       const k = n.motorista || 'Sem motorista';
       m.set(k, [...(m.get(k) || []), n]);
     });
     return [...m.entries()].map(([nome, l]) => ({ nome, ...contar(l) })).sort((a, b) => b.total - a.total);
-  }, [notas]);
-  const cont = useMemo(() => contar(notas || []), [notas]);
+  }, [visiveis]);
+  const cont = useMemo(() => contar(visiveis), [visiveis]);
   const lista = useMemo(
     () =>
-      (notas || [])
+      visiveis
         .filter((n) => !motorista || (n.motorista || 'Sem motorista') === motorista)
         .sort((a, b) => Number(notaPendente(b)) - Number(notaPendente(a)) || Number(notaAbonada(b)) - Number(notaAbonada(a)) || a.numero.localeCompare(b.numero)),
-    [notas, motorista]
+    [visiveis, motorista]
   );
   const paginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
 
@@ -757,7 +771,7 @@ export const DetalheUpload: React.FC<{
   };
 
   const baixarPendencias = async () => {
-    const pend = (notas || []).filter(notaPendente);
+    const pend = visiveis.filter(notaPendente);
     const ExcelJS = (await import('exceljs')).default;
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Pendências');
@@ -799,6 +813,27 @@ export const DetalheUpload: React.FC<{
             <p className="font-black text-slate-900">{upload.base}</p>
           </div>
         </div>
+        {empresas.length > 1 && (
+          <label className="bg-white rounded-xl border border-slate-200 px-3 py-2 text-xs flex flex-col gap-0.5">
+            <span className="text-[9px] font-black uppercase tracking-wide text-slate-400">Empresa</span>
+            <select
+              value={empresa}
+              onChange={(e) => {
+                setEmpresa(e.target.value);
+                setMotorista('');
+                setPagina(0);
+              }}
+              className="font-bold text-slate-900 bg-transparent max-w-[260px]"
+            >
+              <option value="">Todas ({(notas || []).length})</option>
+              {empresas.map(([nome, qtd]) => (
+                <option key={nome} value={nome}>
+                  {nomeBonito(nome)} ({qtd})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <p className="text-[10px] text-slate-400">Importado em {dataHoraBr(upload.criadoEm)}{upload.criadoPor ? ` por ${upload.criadoPor}` : ''}</p>
       </div>
       {notas === null ? (
@@ -832,10 +867,10 @@ export const DetalheUpload: React.FC<{
                 <p className="text-[11px] text-slate-500">Use o WhatsApp de cada linha para mandar o resumo do dia ao motorista.</p>
               </div>
               <div className="flex gap-1.5">
-                <button type="button" onClick={() => enviarWhatsApp(textoResumoDia(upload, notas || []))} className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold flex items-center gap-1.5 normal-case tracking-normal" title="Resumo do dia com todos os motoristas">
+                <button type="button" onClick={() => enviarWhatsApp(textoResumoDia(upload, visiveis, empresa))} className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold flex items-center gap-1.5 normal-case tracking-normal" title="Resumo do dia com todos os motoristas">
                   <MessageCircle className="w-3.5 h-3.5 text-emerald-600" /> Resumo do dia
                 </button>
-                <button type="button" onClick={() => copiarTexto(textoResumoDia(upload, notas || []))} className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500" title="Copiar o resumo do dia">
+                <button type="button" onClick={() => copiarTexto(textoResumoDia(upload, visiveis, empresa))} className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500" title="Copiar o resumo do dia">
                   <Copy className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -875,7 +910,7 @@ export const DetalheUpload: React.FC<{
                       <div className="flex justify-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => enviarWhatsApp(textoResumoMotorista(upload, m.nome, (notas || []).filter((n) => (n.motorista || 'Sem motorista') === m.nome)))}
+                          onClick={() => enviarWhatsApp(textoResumoMotorista(upload, m.nome, visiveis.filter((n) => (n.motorista || 'Sem motorista') === m.nome), empresa))}
                           className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold flex items-center gap-1 normal-case tracking-normal"
                           title="Enviar o resumo do dia deste motorista pelo WhatsApp"
                         >
@@ -883,7 +918,7 @@ export const DetalheUpload: React.FC<{
                         </button>
                         <button
                           type="button"
-                          onClick={() => copiarTexto(textoResumoMotorista(upload, m.nome, (notas || []).filter((n) => (n.motorista || 'Sem motorista') === m.nome)))}
+                          onClick={() => copiarTexto(textoResumoMotorista(upload, m.nome, visiveis.filter((n) => (n.motorista || 'Sem motorista') === m.nome), empresa))}
                           className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500"
                           title="Copiar o resumo"
                         >
@@ -920,7 +955,7 @@ export const DetalheUpload: React.FC<{
                   </select>
                 </label>
               </div>
-              <button type="button" onClick={baixarPendencias} disabled={!(notas || []).some(notaPendente)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-50">
+              <button type="button" onClick={baixarPendencias} disabled={!visiveis.some(notaPendente)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-50">
                 <FileSpreadsheet className="w-4 h-4 text-emerald-700" /> Baixar pendências (Excel)
               </button>
             </div>
