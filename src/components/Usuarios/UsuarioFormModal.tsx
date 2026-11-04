@@ -63,6 +63,7 @@ const SECOES_OPERACOES: { id: SecaoOperacoes; label: string }[] = [
   { id: 'faturamento', label: 'Faturamento' },
   { id: 'controle_financeiro', label: 'Controle Financeiro (Faturas)' },
   { id: 'custos', label: 'Custos Operacionais' },
+  { id: 'baixas', label: 'Performance das baixas (só Farma Rodoviário)' },
 ];
 const TODAS_SECOES_OPERACOES = SECOES_OPERACOES.map((s) => s.id);
 

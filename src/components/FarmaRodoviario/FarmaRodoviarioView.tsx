@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   ShieldCheck,
   Wallet,
+  ClipboardCheck,
 } from 'lucide-react';
 import {
   ViagemRodoviaria,
@@ -25,6 +26,8 @@ import {
   Operacao,
 } from '../../types';
 import { podeVerAbaOperacoes } from '../../utils/visibilidadeUtils';
+import { sobDemanda } from '../../utils/sobDemanda';
+
 import { SectorClientsTab } from '../Common/SectorClientsTab';
 import { SectorEmployeesTab } from '../Common/SectorEmployeesTab';
 import { SectorManagerialDashboard } from '../Common/SectorManagerialDashboard';
@@ -40,6 +43,8 @@ import {
   isColaboradorFarmaRodoviario,
 } from '../../utils/sectorUtils';
 import { formatCurrency } from '../../utils/formatters';
+
+const BaixasPerformanceView = sobDemanda(() => import('./BaixasPerformanceView'), 'BaixasPerformanceView');
 
 interface FarmaRodoviarioViewProps {
   viagens?: ViagemRodoviaria[];
@@ -113,9 +118,10 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
     'faturamento',
     'controle_financeiro',
     'custos',
+    'baixas',
   ] as const;
   const [activeSubTab, setActiveSubTab] = useState<
-    'visao_geral' | 'empresas' | 'equipe' | 'faturamento' | 'controle_financeiro' | 'custos'
+    'visao_geral' | 'empresas' | 'equipe' | 'faturamento' | 'controle_financeiro' | 'custos' | 'baixas'
   >(() => ORDEM_ABAS_OPERACOES.find((aba) => podeVerAbaOperacoes(currentUser, aba, 'farma_rodoviario')) || 'visao_geral');
 
   // Farma Aéreo e Farma Rodoviário compartilham a mesma tabela de lançamentos/faturas — quem
@@ -264,7 +270,23 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
             <span>Custos Operacionais ({formatCurrency(metrics.custoTotalSetor)})</span>
           </button>
         )}
+
+        {podeVerAbaOperacoes(currentUser, 'baixas', 'farma_rodoviario') && (
+          <button
+            onClick={() => setActiveSubTab('baixas')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all shrink-0 ${
+              activeSubTab === 'baixas'
+                ? 'border-[#C48229] text-[#92611F] bg-amber-50/50 rounded-t-lg'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <ClipboardCheck className="w-4 h-4" />
+            <span>Performance das baixas</span>
+          </button>
+        )}
       </div>
+
+      {activeSubTab === 'baixas' && podeVerAbaOperacoes(currentUser, 'baixas', 'farma_rodoviario') && <BaixasPerformanceView currentUser={currentUser} />}
 
       {/* TAB 1: VISÃO GERAL GERENCIAL & DRE */}
       {activeSubTab === 'visao_geral' && podeVerAbaOperacoes(currentUser, 'visao_geral', 'farma_rodoviario') && (

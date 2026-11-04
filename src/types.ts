@@ -63,7 +63,8 @@ export type SecaoOperacoes =
   | 'equipe'
   | 'faturamento'
   | 'controle_financeiro'
-  | 'custos';
+  | 'custos'
+  | 'baixas';
 
 /** Cadastro de uma "operação"/setor (Farma Aéreo, Farma Rodoviário, e qualquer outra que a
  *  empresa venha a abrir, ex.: Unimed) — generaliza o que antes só existia hardcoded pros 2
