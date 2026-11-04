@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Copy, MessageCircle } from 'lucide-react';
 import { Award, ClipboardCheck, CalendarDays, ChevronDown, ChevronRight, Clock, FileSpreadsheet, FileText, Loader2, Package, Search, Trash2, TriangleAlert, Upload, UserRound, X, CheckCircle2 } from 'lucide-react';
 import type { Colaborador, UsuarioLogin } from '../../types';
 import { ResponsaveisBaixasModal } from './ResponsaveisBaixasModal';
@@ -580,6 +581,72 @@ const Importacoes: React.FC<{
 
 const POR_PAGINA = 50;
 
+const pctTexto = (p: number, t: number) => `${pct(p, t).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;
+const LIMITE_LISTA = 25;
+
+/** Resumo do dia de um motorista, no formato do WhatsApp (*negrito*). */
+export function textoResumoMotorista(upload: BaixaUpload, motorista: string, notas: BaixaNota[]): string {
+  const c = contar(notas);
+  const pend = notas.filter(notaPendente);
+  const foraPrazo = notas.filter((n) => !notaPendente(n) && !notaNoPrazo(n));
+  const linhas = [
+    `*JM Transportes — Baixas de ${dataBr(upload.dataReferencia)}*`,
+    `Motorista: *${nomeBonito(motorista)}*`,
+    '',
+    `📦 Notas: *${c.total}*`,
+    `✅ Entregues: *${c.entregues}* (${pctTexto(c.entregues, c.total)})`,
+    `⏱️ No prazo: *${c.noPrazo}* (${pctTexto(c.noPrazo, c.total)})`,
+    `📄 Comprovadas: *${c.comprovadas}* (${pctTexto(c.comprovadas, c.total)})`,
+  ];
+  if (pend.length) {
+    linhas.push('', `⚠️ *Pendentes (${pend.length}):*`);
+    pend.slice(0, LIMITE_LISTA).forEach((n) => linhas.push(`• NF ${n.numero}${n.destinatario ? ` — ${nomeBonito(n.destinatario)}` : ''}${n.cidade ? ` (${n.cidade})` : ''}`));
+    if (pend.length > LIMITE_LISTA) linhas.push(`… e mais ${pend.length - LIMITE_LISTA}`);
+  } else linhas.push('', '🎉 Nenhuma pendência. Parabéns!');
+  if (foraPrazo.length) {
+    linhas.push('', `🕒 Entregues fora do prazo (${foraPrazo.length}):`);
+    foraPrazo.slice(0, LIMITE_LISTA).forEach((n) => linhas.push(`• NF ${n.numero}`));
+    if (foraPrazo.length > LIMITE_LISTA) linhas.push(`… e mais ${foraPrazo.length - LIMITE_LISTA}`);
+  }
+  linhas.push('', `Responsável: ${upload.responsavel}`);
+  return linhas.join('\n');
+}
+
+/** Resumo do dia com todos os motoristas (para o grupo). */
+export function textoResumoDia(upload: BaixaUpload, notas: BaixaNota[]): string {
+  const c = contar(notas);
+  const por = new Map<string, BaixaNota[]>();
+  notas.forEach((n) => por.set(n.motorista || 'Sem motorista', [...(por.get(n.motorista || 'Sem motorista') || []), n]));
+  const linhas = [
+    `*JM Transportes — Baixas de ${dataBr(upload.dataReferencia)}*`,
+    `Base: ${upload.base} · Responsável: ${upload.responsavel}`,
+    '',
+    `📦 Notas: *${c.total}* · ✅ Entregues: *${pctTexto(c.entregues, c.total)}* · ⏱️ No prazo: *${pctTexto(c.noPrazo, c.total)}*`,
+    '',
+    '*Por motorista:*',
+  ];
+  [...por.entries()]
+    .sort((a, b) => b[1].length - a[1].length)
+    .forEach(([m, l]) => {
+      const x = contar(l);
+      const p = x.total - x.entregues;
+      linhas.push(`• ${nomeBonito(m)}: ${x.entregues}/${x.total} (${pctTexto(x.entregues, x.total)})${p ? ` — ⚠️ ${p} pendente(s)` : ' ✅'}`);
+    });
+  return linhas.join('\n');
+}
+
+function enviarWhatsApp(texto: string) {
+  window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, 'jmt-whatsapp');
+}
+async function copiarTexto(texto: string) {
+  try {
+    await navigator.clipboard.writeText(texto);
+    alert('Resumo copiado. É só colar no WhatsApp.');
+  } catch {
+    window.prompt('Copie o resumo:', texto);
+  }
+}
+
 /** Auditoria de uma importação. Usado na gestão e no portal do responsável (que passa as
  *  funções do portal para carregar as notas e registrar a entrega tardia). */
 export const DetalheUpload: React.FC<{
@@ -700,9 +767,19 @@ export const DetalheUpload: React.FC<{
           </div>
 
           <div className="envelope-cartoes bg-white rounded-2xl border border-slate-200 overflow-x-auto">
-            <div className="p-4 pb-2">
-              <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal">Resumo por motorista</h3>
-              <p className="text-[11px] text-slate-500">Resultado por motorista nesta importação.</p>
+            <div className="p-4 pb-2 flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal">Resumo por motorista</h3>
+                <p className="text-[11px] text-slate-500">Use o WhatsApp de cada linha para mandar o resumo do dia ao motorista.</p>
+              </div>
+              <div className="flex gap-1.5">
+                <button type="button" onClick={() => enviarWhatsApp(textoResumoDia(upload, notas || []))} className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold flex items-center gap-1.5 normal-case tracking-normal" title="Resumo do dia com todos os motoristas">
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-600" /> Resumo do dia
+                </button>
+                <button type="button" onClick={() => copiarTexto(textoResumoDia(upload, notas || []))} className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500" title="Copiar o resumo do dia">
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
             <table className="tabela-cartoes w-full text-xs min-w-[640px]">
               <thead className="bg-slate-50 text-left text-slate-500">
@@ -713,6 +790,7 @@ export const DetalheUpload: React.FC<{
                   <th className="p-3 text-center">Não entregues</th>
                   <th className="p-3 text-center">Entrega</th>
                   <th className="p-3 text-center">No prazo</th>
+                  <th className="p-3 text-center">Enviar</th>
                 </tr>
               </thead>
               <tbody>
@@ -733,6 +811,26 @@ export const DetalheUpload: React.FC<{
                     </td>
                     <td className="p-3 text-center font-bold text-[#92611F]" data-label="No prazo">
                       {f1(pct(m.noPrazo, m.total))}
+                    </td>
+                    <td className="p-3 cartao-acoes">
+                      <div className="flex justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => enviarWhatsApp(textoResumoMotorista(upload, m.nome, (notas || []).filter((n) => (n.motorista || 'Sem motorista') === m.nome)))}
+                          className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold flex items-center gap-1 normal-case tracking-normal"
+                          title="Enviar o resumo do dia deste motorista pelo WhatsApp"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copiarTexto(textoResumoMotorista(upload, m.nome, (notas || []).filter((n) => (n.motorista || 'Sem motorista') === m.nome)))}
+                          className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500"
+                          title="Copiar o resumo"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
