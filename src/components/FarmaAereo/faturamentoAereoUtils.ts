@@ -1441,7 +1441,9 @@ export function ehModalRodoviario(modal?: string): boolean {
  *  1. O lançamento não tem clienteId vinculado (import que não bateu com nenhum cadastro).
  *  2. O cliente está vinculado aos DOIS setores (ex.: "ambos") — aí o cadastro sozinho não
  *     decide, e cada linha pode legitimamente ser de um modal diferente. */
-export function pertenceAoFarmaAereo(item: { clienteId?: string; modal?: string }, clientes: Cliente[]): boolean {
+export function pertenceAoFarmaAereo(item: { clienteId?: string; modal?: string; origem?: string }, clientes: Cliente[]): boolean {
+  // Lançado pela Performance das baixas (operação do rodoviário): sempre no Farma Rodoviário.
+  if (item.origem === 'baixas') return false;
   const cliente = item.clienteId ? clientes.find((c) => c.id === item.clienteId) : undefined;
   if (cliente) {
     const aereo = isClienteFarmaAereo(cliente);

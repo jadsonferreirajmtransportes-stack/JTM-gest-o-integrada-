@@ -40,6 +40,7 @@ export interface BaixaNota {
   prazo?: string;
   entregaTardiaEm?: string;
   entregaTardiaPor?: string;
+  cnpjRemetente?: string;
   /** Abono: pendência que não conta contra ninguém (expedição, local fechado...). */
   abonoMotivo?: string;
   abonoObs?: string;
@@ -126,6 +127,7 @@ export function lerPlanilhaBaixas(dados: ArrayBuffer, nomeArquivo: string): Plan
     status: col('STATUS'),
     situacao: col('SITUACAO'),
     remetente: col('REMETENTE'),
+    cnpjRemetente: col('CNPJ REMETENTE'),
     destinatario: col('DESTINATARIO'),
     transportadora: col('TRANSPORTADORA'),
     cidade: col('CIDADE'),
@@ -144,6 +146,7 @@ export function lerPlanilhaBaixas(dados: ArrayBuffer, nomeArquivo: string): Plan
       status: txt(l, c.status)?.toUpperCase(),
       situacao: txt(l, c.situacao)?.toUpperCase(),
       remetente: txt(l, c.remetente),
+      cnpjRemetente: txt(l, c.cnpjRemetente),
       destinatario: txt(l, c.destinatario),
       cidade: txt(l, c.cidade),
       transportadora: txt(l, c.transportadora),
@@ -285,6 +288,7 @@ export async function salvarUploadBaixas(p: {
     data_emissao: n.dataEmissao ?? null,
     data_entrega: n.dataEntrega ?? null,
     prazo: n.prazo ?? null,
+    cnpj_remetente: n.cnpjRemetente ?? null,
   }));
   for (let k = 0; k < linhas.length; k += 500) {
     const { error } = await supabase.from('baixas_notas').insert(linhas.slice(k, k + 500));
@@ -293,6 +297,8 @@ export async function salvarUploadBaixas(p: {
       falhou(error, 'salvarUploadBaixas (notas)');
     }
   }
+  // Notas do dia viram lançamentos no Controle Financeiro do Farma Rodoviário (migração 105).
+  await supabase.rpc('baixas__lancar_financeiro', { p_upload: id }).then(({ error }) => error && console.warn('Lançar no financeiro:', error.message));
   return { id, responsavel: p.responsavel.trim(), base: p.base, dataReferencia: p.dataReferencia, arquivoNome: p.arquivoNome, ...cont, criadoPor: p.criadoPor, criadoEm: new Date().toISOString() };
 }
 

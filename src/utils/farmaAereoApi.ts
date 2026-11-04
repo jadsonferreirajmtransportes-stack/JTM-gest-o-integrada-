@@ -317,6 +317,7 @@ function rowToLancamento(r: any): LancamentoFaturamentoAereo {
     clienteId: u(r.cliente_id),
     clienteNome: r.cliente_nome,
     cnpjRemetente: u(r.cnpj_remetente),
+    origem: u(r.origem),
     estadoRemetente: u(r.estado_remetente),
     cidadeRemetente: u(r.cidade_remetente),
     remetenteLab: u(r.remetente_lab),
@@ -356,6 +357,8 @@ export function lancamentoToRow(l: LancamentoFaturamentoAereo) {
     cliente_id: n(l.clienteId),
     cliente_nome: l.clienteNome ?? '',
     cnpj_remetente: n(l.cnpjRemetente),
+    // Só manda quando há (antes da migração 105 a coluna não existe).
+    ...(l.origem ? { origem: l.origem } : {}),
     estado_remetente: n(l.estadoRemetente),
     cidade_remetente: n(l.cidadeRemetente),
     remetente_lab: n(l.remetenteLab),

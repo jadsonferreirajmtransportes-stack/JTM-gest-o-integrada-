@@ -1227,6 +1227,8 @@ export interface LancamentoFaturamentoAereo {
   bairroDestino?: string;
   notaFiscal?: string;
   valorNF?: number;
+  /** 'baixas' = criado pela Performance das baixas (fica sempre no Farma Rodoviário) — migração 105. */
+  origem?: string;
   valorPrestacao?: number;
   dataEmissao?: string; // YYYY-MM-DD
   numeroCte?: string;
