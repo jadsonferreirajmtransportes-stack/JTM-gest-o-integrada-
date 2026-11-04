@@ -74,6 +74,48 @@ const assuntoOficio = (d: DocumentoPadronizado) => d.oficio?.assunto?.trim() || 
 const referenciaOficio = (d: DocumentoPadronizado) => (d.tipo === 'Ofício' ? `Ofício nº ${d.codigo || '(gerado ao salvar)'}` : d.codigo ? `Ref.: ${d.codigo}` : '');
 const enderecoEmpresa = () => `${EMPRESA_REGULAMENTO.endereco} — CEP ${EMPRESA_REGULAMENTO.cep} — ${EMPRESA_REGULAMENTO.cidadeUF}`;
 
+// ---- Informativo (orientações para a equipe) ----
+const NAVY: [number, number, number] = [23, 43, 64];
+const AZUL: [number, number, number] = [37, 99, 145];
+const TEXTO_INFO: [number, number, number] = [40, 48, 56];
+const CINZA_INFO: [number, number, number] = [100, 112, 124];
+const CAIXA_AZUL: [number, number, number] = [236, 243, 250];
+const BORDA_AZUL: [number, number, number] = [214, 226, 238];
+const CAIXA_LARANJA: [number, number, number] = [255, 241, 226];
+const BORDA_LARANJA: [number, number, number] = [245, 220, 195];
+const MESES_CAP = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const mesAno = (d: DocumentoPadronizado) => {
+  const iso = d.dataDocumento || new Date().toLocaleDateString('sv-SE');
+  return `${MESES_CAP[Number(iso.slice(5, 7)) - 1]} de ${iso.slice(0, 4)}`;
+};
+const etiquetaInfo = (resto?: string) => `JM TRANSPORTES${resto?.trim() ? ` / ${resto.trim().toUpperCase()}` : ''}`;
+/** "ROTINA DE COLETA / Devoluções sem dúvida" → etiqueta + título. */
+function parteInfo(texto: string, d: DocumentoPadronizado): { etiqueta: string; titulo: string } {
+  const i = texto.indexOf(' / ');
+  return i > 0 ? { etiqueta: etiquetaInfo(texto.slice(0, i)), titulo: texto.slice(i + 3).trim() } : { etiqueta: etiquetaInfo(d.oficio?.publico), titulo: texto };
+}
+/** Caixa do destaque: 1ª linha = título (se houver mais de uma linha). */
+function caixaInfo(texto: string): { titulo?: string; corpo: string; laranja: boolean } {
+  const [primeira, ...resto] = texto.split('\n');
+  const titulo = resto.length ? primeira.trim() : undefined;
+  return { titulo, corpo: (resto.length ? resto.join('\n') : texto).trim(), laranja: /aten[cç][aã]o|cuidado|importante!/i.test(titulo || '') };
+}
+interface Trecho {
+  t: string;
+  b: boolean;
+}
+/** **negrito** no texto; nas listas, o rótulo antes dos dois-pontos sai em negrito. */
+function trechos(texto: string, rotuloNegrito = false): Trecho[] {
+  if (!texto.includes('**') && rotuloNegrito) {
+    const m = texto.match(/^([^:\n]{2,45}):\s/);
+    if (m) return [{ t: `${m[1]}:`, b: true }, { t: texto.slice(m[1].length + 1), b: false }];
+  }
+  return texto
+    .split(/\*\*(.+?)\*\*/g)
+    .map((t, i) => ({ t, b: i % 2 === 1 }))
+    .filter((x) => x.t);
+}
+
 function quadroControle(d: DocumentoPadronizado): [string, string][] {
   return [
     ['Código', d.codigo || '(gerado ao salvar)'],
@@ -129,7 +171,8 @@ export async function gerarPdfDocumento(
   const MARGEM = 20;
   const larguraTexto = largura - 2 * MARGEM;
   const oficio = d.modelo === 'oficio';
-  const TOPO = oficio ? 36 : 32;
+  const info = d.modelo === 'informativo';
+  const TOPO = oficio ? 36 : info ? 22 : 32;
   const LIMITE = altura - 24;
   let y = TOPO;
 
@@ -155,7 +198,95 @@ export async function gerarPdfDocumento(
     });
   };
 
-  if (oficio) {
+  const quebrarRico = (partes: Trecho[], larg: number, tamanho: number) => {
+    doc.setFontSize(tamanho);
+    const linhas: { t: string; b: boolean; x: number }[][] = [[]];
+    let x = 0;
+    partes.forEach((p) => {
+      doc.setFont('helvetica', p.b ? 'bold' : 'normal');
+      p.t.split(/(\n|\s+)/).forEach((pal) => {
+        if (!pal) return;
+        if (pal === '\n') {
+          linhas.push([]);
+          x = 0;
+          return;
+        }
+        const espacoBranco = /^\s+$/.test(pal);
+        if (espacoBranco && x === 0) return;
+        const w = doc.getTextWidth(espacoBranco ? ' ' : pal);
+        if (!espacoBranco && x + w > larg && x > 0) {
+          linhas.push([]);
+          x = 0;
+        }
+        linhas[linhas.length - 1].push({ t: espacoBranco ? ' ' : pal, b: p.b, x });
+        x += w;
+      });
+    });
+    return linhas;
+  };
+  const desenharRico = (linhas: { t: string; b: boolean; x: number }[][], x0: number, tamanho: number, cor: [number, number, number], entre: number) => {
+    doc.setFontSize(tamanho);
+    doc.setTextColor(...cor);
+    linhas.forEach((l) => {
+      espaco(entre);
+      l.forEach((p) => {
+        doc.setFont('helvetica', p.b ? 'bold' : 'normal');
+        doc.text(p.t, x0 + p.x, y);
+      });
+      y += entre;
+    });
+  };
+  const capaInfo = (etiqueta: string, titulo: string, sub: string) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...AZUL);
+    doc.text(etiqueta, MARGEM + 2, y);
+    y += 11;
+    doc.setFontSize(24);
+    doc.setTextColor(...NAVY);
+    const tl = doc.splitTextToSize(titulo, larguraTexto * 0.7) as string[];
+    tl.forEach((l) => {
+      doc.text(l, MARGEM + 2, y);
+      y += 10;
+    });
+    y -= 3;
+    if (sub) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(...CINZA_INFO);
+      (doc.splitTextToSize(sub, larguraTexto) as string[]).forEach((l) => {
+        doc.text(l, MARGEM + 2, y);
+        y += 5.5;
+      });
+    }
+    y += 7;
+  };
+  const caixaPdf = (texto: string) => {
+    const c = caixaInfo(texto);
+    const linhas = quebrarRico(trechos(c.corpo), larguraTexto - 10, 10.5);
+    const h = (c.titulo ? 7 : 0) + linhas.length * 5.4 + 8;
+    espaco(h + 2);
+    doc.setFillColor(...(c.laranja ? CAIXA_LARANJA : CAIXA_AZUL));
+    doc.setDrawColor(...(c.laranja ? BORDA_LARANJA : BORDA_AZUL));
+    doc.setLineWidth(0.25);
+    doc.rect(MARGEM, y, larguraTexto, h, 'FD');
+    let yy = y + 7;
+    if (c.titulo) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...AZUL);
+      doc.text(c.titulo.toUpperCase(), MARGEM + 5, yy);
+      yy += 7;
+    }
+    const salvo = y;
+    y = yy;
+    desenharRico(linhas, MARGEM + 5, 10.5, TEXTO_INFO, 5.4);
+    y = salvo + h + 6;
+  };
+
+  if (info) {
+    capaInfo(etiquetaInfo(d.oficio?.publico), d.titulo, [d.oficio?.subtitulo?.trim(), mesAno(d)].filter(Boolean).join(' • '));
+  } else if (oficio) {
     // Ofício / carta: referência e local/data, destinatário e assunto.
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -214,7 +345,57 @@ export async function gerarPdfDocumento(
   }
 
   let numeroSecao = 0;
-  for (const b of d.blocos) {
+  for (let ib = 0; ib < d.blocos.length; ib++) {
+    const b = d.blocos[ib];
+    if (info && b.tipo === 'titulo') {
+      if (b.nivel === 1) {
+        // Nova parte: página nova (se a atual já tem conteúdo), etiqueta, título grande e frase cinza.
+        if (y > TOPO + 1) novaPagina();
+        const parte = parteInfo(b.texto, d);
+        const seguinte = d.blocos[ib + 1];
+        const sub = seguinte?.tipo === 'paragrafo' ? seguinte.texto : '';
+        if (sub) ib += 1;
+        capaInfo(parte.etiqueta, parte.titulo, sub);
+      } else {
+        espaco(16);
+        y += 3;
+        if (b.nivel === 2) numeroSecao += 1;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(b.nivel === 2 ? 15 : 12);
+        doc.setTextColor(...NAVY);
+        const t = b.nivel === 2 ? `${String(numeroSecao).padStart(2, '0')} ${b.texto}` : b.texto;
+        (doc.splitTextToSize(t, larguraTexto) as string[]).forEach((l) => {
+          doc.text(l, MARGEM + 2, y);
+          y += b.nivel === 2 ? 7 : 6;
+        });
+        y += 1;
+      }
+      continue;
+    }
+    if (info && b.tipo === 'paragrafo') {
+      desenharRico(quebrarRico(trechos(b.texto), larguraTexto - 4, 10.5), MARGEM + 2, 10.5, TEXTO_INFO, 5.4);
+      y += 3;
+      continue;
+    }
+    if (info && b.tipo === 'lista') {
+      b.itens.forEach((item, i) => {
+        const marca = b.ordenada ? `${i + 1}.` : '•';
+        const linhas = quebrarRico(trechos(item, true), larguraTexto - 12, 10.5);
+        espaco(5.4);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10.5);
+        doc.setTextColor(...TEXTO_INFO);
+        doc.text(marca, MARGEM + 4, y);
+        desenharRico(linhas, MARGEM + 8, 10.5, TEXTO_INFO, 5.4);
+        y += 1.6;
+      });
+      y += 1.5;
+      continue;
+    }
+    if (info && b.tipo === 'destaque') {
+      caixaPdf(b.texto);
+      continue;
+    }
     if (b.tipo === 'titulo') {
       espaco(14);
       y += b.nivel === 1 ? 3 : 1;
@@ -476,7 +657,18 @@ export async function gerarPdfDocumento(
     doc.text(enderecoEmpresa(), largura / 2, altura - 12, { align: 'center', maxWidth: larguraTexto });
     if (total > 1) doc.text(`Página ${p} de ${total}`, largura - MARGEM, altura - 8, { align: 'right' });
   }
-  for (let p = 1; p <= total && !oficio; p++) {
+  for (let p = 1; p <= total && info; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(...BORDA_AZUL);
+    doc.setLineWidth(0.4);
+    doc.line(MARGEM, altura - 17, largura - MARGEM, altura - 17);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...CINZA_INFO);
+    doc.text(`JM Transportes  •  ${d.tipo === 'Comunicado' ? 'Comunicado' : 'Informativo'}  •  ${mesAno(d)}`, MARGEM, altura - 12);
+    doc.text(`${p} / ${total}`, largura - MARGEM, altura - 12, { align: 'right' });
+  }
+  for (let p = 1; p <= total && !oficio && !info; p++) {
     doc.setPage(p);
     doc.addImage(JMT_LOGO_BASE64, 'PNG', MARGEM, 10, logoLargura, logoAltura, 'jmt-logo', 'FAST');
     doc.setFont('helvetica', 'bold');
@@ -552,8 +744,41 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
     });
 
   const oficio = d.modelo === 'oficio';
+  const info = d.modelo === 'informativo';
+  const NAVY_HEX = '172B40';
+  const AZUL_HEX = '256391';
+  const corridos = (partes: Trecho[], tamanho = 21) => partes.map((p) => new TextRun({ text: p.t, bold: p.b, font: FONTE, size: tamanho, color: '28303A' }));
+  const capaWord = (etiqueta: string, titulo: string, sub: string, novaPagina: boolean) => [
+    new Paragraph({ pageBreakBefore: novaPagina, spacing: { after: 160 }, children: [new TextRun({ text: etiqueta, bold: true, font: FONTE, size: 17, color: AZUL_HEX })] }),
+    new Paragraph({ spacing: { after: 80, line: 260 }, children: [new TextRun({ text: titulo, bold: true, font: FONTE, size: 48, color: NAVY_HEX })] }),
+    ...(sub ? [new Paragraph({ spacing: { after: 240 }, children: [new TextRun({ text: sub, font: FONTE, size: 22, color: '64707C' })] })] : []),
+  ];
+  const caixaWord = (texto: string) => {
+    const c = caixaInfo(texto);
+    const borda = { style: BorderStyle.SINGLE, size: 4, color: c.laranja ? 'F5DCC3' : 'D6E2EE' };
+    return new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              borders: { top: borda, bottom: borda, left: borda, right: borda },
+              shading: { fill: c.laranja ? 'FFF1E2' : 'ECF3FA', type: ShadingType.CLEAR, color: 'auto' },
+              margins: { top: 160, bottom: 160, left: 220, right: 220 },
+              children: [
+                ...(c.titulo ? [new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: c.titulo.toUpperCase(), bold: true, font: FONTE, size: 17, color: AZUL_HEX })] })] : []),
+                new Paragraph({ spacing: { line: 300 }, children: corridos(trechos(c.corpo)) }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    });
+  };
   const controle = quadroControle(d);
-  const filhos: (InstanceType<typeof Paragraph> | InstanceType<typeof Table>)[] = oficio
+  const filhos: (InstanceType<typeof Paragraph> | InstanceType<typeof Table>)[] = info
+    ? capaWord(etiquetaInfo(d.oficio?.publico), d.titulo, [d.oficio?.subtitulo?.trim(), mesAno(d)].filter(Boolean).join(' • '), false)
+    : oficio
     ? [
         new Paragraph({
           tabStops: [{ type: TabStopType.RIGHT, position: 9600 }],
@@ -612,7 +837,49 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
 
   let numeroSecao = 0;
   let instanciaLista = 0;
-  for (const b of d.blocos) {
+  for (let ib = 0; ib < d.blocos.length; ib++) {
+    const b = d.blocos[ib];
+    if (info && b.tipo === 'titulo') {
+      if (b.nivel === 1) {
+        const parte = parteInfo(b.texto, d);
+        const seguinte = d.blocos[ib + 1];
+        const sub = seguinte?.tipo === 'paragrafo' ? seguinte.texto : '';
+        if (sub) ib += 1;
+        filhos.push(...capaWord(parte.etiqueta, parte.titulo, sub, true));
+      } else {
+        if (b.nivel === 2) numeroSecao += 1;
+        filhos.push(
+          new Paragraph({
+            spacing: { before: 280, after: 120 },
+            children: [new TextRun({ text: b.nivel === 2 ? `${String(numeroSecao).padStart(2, '0')} ${b.texto}` : b.texto, bold: true, font: FONTE, size: b.nivel === 2 ? 30 : 24, color: NAVY_HEX })],
+          })
+        );
+      }
+      continue;
+    }
+    if (info && b.tipo === 'paragrafo') {
+      filhos.push(new Paragraph({ spacing: { after: 140, line: 300 }, children: corridos(trechos(b.texto)) }));
+      continue;
+    }
+    if (info && b.tipo === 'lista') {
+      instanciaLista += 1;
+      b.itens.forEach((item) =>
+        filhos.push(
+          new Paragraph({
+            numbering: { reference: b.ordenada ? 'jmt-numerada' : 'jmt-marcadores', level: 0, instance: instanciaLista },
+            spacing: { after: 100, line: 300 },
+            children: corridos(trechos(item, true)),
+          })
+        )
+      );
+      filhos.push(new Paragraph({ text: '', spacing: { after: 60 } }));
+      continue;
+    }
+    if (info && b.tipo === 'destaque') {
+      filhos.push(caixaWord(b.texto));
+      filhos.push(new Paragraph({ text: '', spacing: { after: 160 } }));
+      continue;
+    }
     if (b.tipo === 'titulo') {
       if (b.nivel === 1) numeroSecao += 1;
       filhos.push(
@@ -768,7 +1035,9 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
         properties: { page: { margin: { top: 1500, bottom: 1300, left: 1134, right: 1134 } } },
         headers: {
           default: new Header({
-            children: oficio
+            children: info
+              ? [new Paragraph({ text: '' })]
+              : oficio
               ? [
                   new Paragraph({
                     tabStops: [{ type: TabStopType.RIGHT, position: 9600 }],
@@ -797,7 +1066,18 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
         },
         footers: {
           default: new Footer({
-            children: oficio
+            children: info
+              ? [
+                  new Paragraph({
+                    tabStops: [{ type: TabStopType.RIGHT, position: 9600 }],
+                    border: { top: { style: BorderStyle.SINGLE, size: 6, color: 'D6E2EE', space: 4 } },
+                    children: [
+                      new TextRun({ text: `JM Transportes  •  ${d.tipo === 'Comunicado' ? 'Comunicado' : 'Informativo'}  •  ${mesAno(d)}`, font: FONTE, size: 15, color: '64707C' }),
+                      new TextRun({ children: ['\t', PageNumber.CURRENT, ' / ', PageNumber.TOTAL_PAGES], font: FONTE, size: 15, color: '64707C' }),
+                    ],
+                  }),
+                ]
+              : oficio
               ? [
                   new Paragraph({
                     alignment: AlignmentType.CENTER,

@@ -27,15 +27,19 @@ export interface ItemChecklist {
 
 export type StatusDocumento = 'Rascunho' | 'Vigente' | 'Obsoleto';
 
-export const TIPOS_DOCUMENTO = ['Procedimento', 'Política', 'Manual', 'Relatório', 'Formulário', 'Ata', 'Contrato', 'Proposta', 'Comunicado', 'Ofício', 'Carta', 'Planilha', 'Outro'];
+export const TIPOS_DOCUMENTO = ['Procedimento', 'Política', 'Manual', 'Relatório', 'Formulário', 'Ata', 'Contrato', 'Proposta', 'Comunicado', 'Informativo', 'Ofício', 'Carta', 'Planilha', 'Outro'];
 
 /** Visual do documento gerado: 'padrao' = documento controlado (faixa de controle, código e
  *  versão); 'oficio' = papel timbrado da JMT, com local e data, destinatário e assunto. */
-export type ModeloDocumento = 'padrao' | 'oficio';
+export type ModeloDocumento = 'padrao' | 'oficio' | 'informativo';
+/** Dados do modelo escolhido (coluna oficio): ofício = local/destinatário/assunto;
+ *  informativo = público ("JM TRANSPORTES / MOTORISTAS PARCEIROS") e subtítulo. */
 export interface DadosOficio {
   local?: string;
   destinatario?: string;
   assunto?: string;
+  publico?: string;
+  subtitulo?: string;
 }
 export { SETORES_DOCUMENTO, CLASSIFICACOES } from '../data/setoresDocumento';
 
@@ -94,7 +98,7 @@ function rowToDocumento(r: any): DocumentoPadronizado {
     responsavel: u(r.responsavel),
     aprovadoPor: u(r.aprovado_por),
     dataDocumento: u(r.data_documento),
-    modelo: r.modelo === 'oficio' ? 'oficio' : undefined,
+    modelo: r.modelo === 'oficio' || r.modelo === 'informativo' ? r.modelo : undefined,
     oficio: u(r.oficio) ?? undefined,
     blocos: r.blocos ?? [],
     origemArquivo: u(r.origem_arquivo),
@@ -142,8 +146,8 @@ function paraLinha(d: DocumentoPadronizado) {
     responsavel: d.responsavel || null,
     aprovado_por: d.aprovadoPor || null,
     data_documento: d.dataDocumento || null,
-    modelo: d.modelo === 'oficio' ? 'oficio' : null,
-    oficio: d.modelo === 'oficio' ? d.oficio ?? {} : null,
+    modelo: d.modelo === 'oficio' || d.modelo === 'informativo' ? d.modelo : null,
+    oficio: d.modelo === 'oficio' || d.modelo === 'informativo' ? d.oficio ?? {} : null,
     blocos: d.blocos,
     origem_arquivo: d.origemArquivo || null,
     origem_tipo: d.origemTipo || null,

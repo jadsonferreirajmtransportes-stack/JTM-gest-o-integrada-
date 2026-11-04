@@ -355,16 +355,38 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
                 onChange={(e) =>
                   atualizar(
                     e.target.value === 'oficio'
-                      ? { modelo: 'oficio', oficio: { local: d.oficio?.local ?? EMPRESA_REGULAMENTO.cidadeUF, destinatario: d.oficio?.destinatario ?? '', assunto: d.oficio?.assunto ?? '' } }
-                      : { modelo: undefined }
+                      ? { modelo: 'oficio', oficio: { ...d.oficio, local: d.oficio?.local ?? EMPRESA_REGULAMENTO.cidadeUF, destinatario: d.oficio?.destinatario ?? '', assunto: d.oficio?.assunto ?? '' } }
+                      : e.target.value === 'informativo'
+                        ? { modelo: 'informativo', oficio: { ...d.oficio, publico: d.oficio?.publico ?? '', subtitulo: d.oficio?.subtitulo ?? '' } }
+                        : { modelo: undefined }
                   )
                 }
                 className={campo}
               >
                 <option value="padrao">Padrão JMT (documento controlado)</option>
                 <option value="oficio">Ofício / carta timbrada</option>
+                <option value="informativo">Informativo (orientações para a equipe)</option>
               </select>
             </div>
+            {d.modelo === 'informativo' && (
+              <div className="space-y-2 p-2.5 rounded-xl bg-sky-50 border border-sky-200">
+                <div>
+                  <label className={rotulo}>Para quem (aparece no topo)</label>
+                  <input data-texto-livre value={d.oficio?.publico || ''} disabled={somenteLeitura} onChange={(e) => atualizar({ oficio: { ...d.oficio, publico: e.target.value } })} className={campo} placeholder="Ex.: Motoristas parceiros" />
+                </div>
+                <div>
+                  <label className={rotulo}>Subtítulo</label>
+                  <input data-texto-livre value={d.oficio?.subtitulo || ''} disabled={somenteLeitura} onChange={(e) => atualizar({ oficio: { ...d.oficio, subtitulo: e.target.value } })} className={campo} placeholder="Ex.: Orientações práticas alinhadas em reunião" />
+                </div>
+                <div className="text-[10px] text-sky-900 space-y-0.5">
+                  <p><b>Como montar:</b></p>
+                  <p>• <b>Subtítulo</b> (nível 2) = seção numerada: 01, 02, 03…</p>
+                  <p>• <b>Título</b> (nível 1) = começa uma nova página com título grande. Escreva "ROTINA DE COLETA / Devoluções sem dúvida" para ter a etiqueta em cima; o parágrafo logo abaixo vira a frase cinza.</p>
+                  <p>• <b>Destaque</b> = caixa colorida; a 1ª linha é o título da caixa (com "ATENÇÃO" a caixa fica laranja).</p>
+                  <p>• Em listas, o texto antes dos dois-pontos sai em negrito ("Pagamento: ..."). Use **assim** para negritar no meio do texto.</p>
+                </div>
+              </div>
+            )}
             {d.modelo === 'oficio' && (
               <div className="space-y-2 p-2.5 rounded-xl bg-amber-50/60 border border-amber-200">
                 <p className="text-[10px] text-[#7A4F17]">Papel timbrado da JMT, com local e data, destinatário e assunto. A assinatura vem do bloco Assinaturas.</p>
