@@ -286,7 +286,7 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
         )}
       </div>
 
-      {activeSubTab === 'baixas' && podeVerAbaOperacoes(currentUser, 'baixas', 'farma_rodoviario') && <BaixasPerformanceView currentUser={currentUser} />}
+      {activeSubTab === 'baixas' && podeVerAbaOperacoes(currentUser, 'baixas', 'farma_rodoviario') && <BaixasPerformanceView currentUser={currentUser} colaboradores={colaboradores} />}
 
       {/* TAB 1: VISÃO GERAL GERENCIAL & DRE */}
       {activeSubTab === 'visao_geral' && podeVerAbaOperacoes(currentUser, 'visao_geral', 'farma_rodoviario') && (

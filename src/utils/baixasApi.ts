@@ -347,3 +347,68 @@ export function desempenhoResponsavel(r: ResumoResponsavel, diasOperacao: string
   const pontos = PESOS_PONTOS.regularidade * regularidade + PESOS_PONTOS.comprovacao * comprovacao + PESOS_PONTOS.entrega * entrega;
   return { ...r, pontos, regularidade, comprovacao, entrega, diasNoPrazo, diasEsperados, diasFaltantes };
 }
+
+// ---------------------------------------------------------------------------
+// Responsáveis que importam pelo link pessoal (migração 100)
+// ---------------------------------------------------------------------------
+export interface ResponsavelBaixas {
+  colaboradorId: string;
+  nome: string;
+  base: string;
+}
+
+export async function getResponsaveisBaixas(): Promise<ResponsavelBaixas[]> {
+  const { data, error } = await supabase.from('baixas_responsaveis').select('*').order('nome');
+  falhou(error, 'getResponsaveisBaixas');
+  return (data ?? []).map((r: any) => ({ colaboradorId: r.colaborador_id, nome: r.nome, base: r.base }));
+}
+
+/** Troca a lista inteira (quem sai perde o acesso pelo portal; o histórico fica). */
+export async function salvarResponsaveisBaixas(lista: ResponsavelBaixas[]): Promise<void> {
+  const atuais = await getResponsaveisBaixas();
+  const sair = atuais.filter((a) => !lista.some((l) => l.colaboradorId === a.colaboradorId)).map((a) => a.colaboradorId);
+  if (sair.length) {
+    const { error } = await supabase.from('baixas_responsaveis').delete().in('colaborador_id', sair);
+    falhou(error, 'salvarResponsaveisBaixas (remover)');
+  }
+  if (lista.length) {
+    const { error } = await supabase
+      .from('baixas_responsaveis')
+      .upsert(lista.map((l) => ({ colaborador_id: l.colaboradorId, nome: l.nome.trim().toUpperCase(), base: l.base.trim() || 'Matriz' })));
+    falhou(error, 'salvarResponsaveisBaixas');
+  }
+}
+
+// Portal (sem login): funções portal_baixas_* com as credenciais do link pessoal.
+type Cred = { token: string; cpf: string; nascimento: string };
+const args = (c: Cred) => ({ p_token: c.token, p_cpf: c.cpf, p_nascimento: c.nascimento });
+const MSG: Record<string, string> = {
+  dados: 'Não foi possível confirmar seu acesso. Saia e entre de novo.',
+  sem_acesso: 'Esta área não está liberada para você.',
+  data: 'Data de referência inválida.',
+  notas: 'A planilha não tem notas (ou tem mais de 5.000).',
+  nao_encontrada: 'Importação não encontrada.',
+};
+const rpc = async (nome: string, corpo: Record<string, unknown>) => {
+  const { data, error } = await supabase.rpc(nome, corpo);
+  falhou(error, nome);
+  if (data?.erro) throw new Error(MSG[data.erro] || 'Não foi possível concluir.');
+  return data;
+};
+
+export async function portalBaixasEstado(c: Cred): Promise<{ permitido: boolean; nome?: string; base?: string; uploads: BaixaUpload[] }> {
+  const d = await rpc('portal_baixas_estado', args(c));
+  return { permitido: !!d?.permitido, nome: d?.nome, base: d?.base, uploads: d?.uploads ?? [] };
+}
+export async function portalBaixasImportar(c: Cred, dataReferencia: string, arquivoNome: string, notas: PlanilhaBaixas['notas']): Promise<string> {
+  const d = await rpc('portal_baixas_importar', { ...args(c), p_data: dataReferencia, p_arquivo: arquivoNome, p_notas: notas });
+  return d.id;
+}
+export async function portalBaixasNotas(c: Cred, uploadId: string): Promise<BaixaNota[]> {
+  const d = await rpc('portal_baixas_notas', { ...args(c), p_upload: uploadId });
+  return d?.notas ?? [];
+}
+export async function portalBaixasTardia(c: Cred, nota: BaixaNota, quando: string): Promise<BaixaNota> {
+  await rpc('portal_baixas_tardia', { ...args(c), p_nota: nota.id, p_quando: quando });
+  return { ...nota, entregaTardiaEm: quando };
+}

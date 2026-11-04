@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronRight,
   ClipboardCheck,
+  ClipboardList,
   FileSignature,
   Fingerprint,
   GraduationCap,
@@ -33,6 +34,7 @@ export type AreaPortal =
   | 'formularios'
   | 'qualidade'
   | 'sugestoes'
+  | 'baixas'
   | 'treinamentos'
   | 'jornal'
   | 'instrucoes'
@@ -51,6 +53,7 @@ export const AREAS_PORTAL: Record<Exclude<AreaPortal, 'mais'>, { rotulo: string;
   formularios: { rotulo: 'Formulários', texto: 'Pesquisas e formulários para responder', icone: ClipboardCheck },
   qualidade: { rotulo: 'Relatar ocorrência', texto: 'Avaria, falta, temperatura, embalagem', icone: ShieldAlert },
   sugestoes: { rotulo: 'Sugestões', texto: 'Dê ideias para melhorar a empresa', icone: Lightbulb },
+  baixas: { rotulo: 'Baixas do dia', texto: 'Importar e auditar as baixas dos motoristas', icone: ClipboardList },
   treinamentos: { rotulo: 'Treinamentos', texto: 'Cursos, provas e certificados', icone: GraduationCap },
   jornal: { rotulo: 'Jornal JMT', texto: 'Notícias da empresa', icone: Newspaper },
   instrucoes: { rotulo: 'Instruções', texto: 'Como fazer cada processo', icone: BookOpen },
@@ -78,7 +81,7 @@ export const BarraPortal: React.FC<{
     { id: 'inicio', rotulo: 'Início', icone: Home, ativoEm: ['inicio'] },
     { id: 'ponto', rotulo: 'Ponto', icone: Fingerprint, ativoEm: ['ponto', 'historico'] },
     { id: 'documentos', rotulo: 'Documentos', icone: FileSignature, ativoEm: ['documentos'] },
-    { id: 'mais', rotulo: 'Mais', icone: LayoutGrid, ativoEm: ['mais', 'desempenho', 'comunicados', 'solicitacoes', 'formularios', 'qualidade', 'sugestoes', 'treinamentos', 'jornal', 'instrucoes', 'regulamento'] },
+    { id: 'mais', rotulo: 'Mais', icone: LayoutGrid, ativoEm: ['mais', 'desempenho', 'comunicados', 'solicitacoes', 'formularios', 'qualidade', 'sugestoes', 'baixas', 'treinamentos', 'jornal', 'instrucoes', 'regulamento'] },
   ];
   const outros = (['comunicados', 'solicitacoes', 'formularios', 'treinamentos', 'jornal'] as AreaPortal[]).reduce((s, a) => s + (contagem[a] || 0), 0);
   return (
@@ -127,6 +130,7 @@ export const MenuMaisPortal: React.FC<{
   const grupos: { titulo: string; areas: Exclude<AreaPortal, 'mais' | 'inicio'>[] }[] = [
     { titulo: 'Meu ponto', areas: ['ponto', 'historico', 'desempenho'] },
     { titulo: 'Comunicação', areas: ['comunicados', 'solicitacoes', 'formularios', 'sugestoes', 'jornal'] },
+    { titulo: 'Meu trabalho', areas: ['baixas'] },
     { titulo: 'Qualidade', areas: ['qualidade'] },
     { titulo: 'Aprender', areas: ['treinamentos', 'instrucoes', 'regulamento'] },
   ];

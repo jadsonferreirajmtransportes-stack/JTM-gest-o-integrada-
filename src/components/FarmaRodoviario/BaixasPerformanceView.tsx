@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Award, CalendarDays, ChevronDown, ChevronRight, Clock, FileSpreadsheet, FileText, Loader2, Package, Search, Trash2, TriangleAlert, Upload, UserRound, X, CheckCircle2 } from 'lucide-react';
-import type { UsuarioLogin } from '../../types';
+import type { Colaborador, UsuarioLogin } from '../../types';
+import { ResponsaveisBaixasModal } from './ResponsaveisBaixasModal';
 import { AcoesTela } from '../Common/AcoesTela';
 import {
   BaixaNota,
@@ -135,7 +136,8 @@ const Medalha: React.FC<{ pos: number }> = ({ pos }) => (
 
 /** Farma Rodoviário → Performance das baixas: importação diária do "Relatório de documentos"
  *  (baixas dos motoristas), auditoria de cada dia e o dossiê do mês (responsáveis e motoristas). */
-export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null }> = ({ currentUser }) => {
+export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null; colaboradores?: Colaborador[] }> = ({ currentUser, colaboradores = [] }) => {
+  const [responsaveisAberto, setResponsaveisAberto] = useState(false);
   const [uploads, setUploads] = useState<BaixaUpload[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [aba, setAba] = useState<'painel' | 'importacoes'>('painel');
@@ -178,7 +180,11 @@ export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null
               <Upload className="w-4 h-4" /> Importar baixas do dia
             </button>
           }
-        />
+        >
+          <button type="button" onClick={() => setResponsaveisAberto(true)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold flex items-center gap-1.5">
+            <UserRound className="w-4 h-4 text-[#C48229]" /> Responsáveis (link pessoal)
+          </button>
+        </AcoesTela>
       </div>
 
       {erro && <p className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</p>}
@@ -201,6 +207,8 @@ export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null
           usuario={currentUser?.nome}
         />
       )}
+
+      {responsaveisAberto && <ResponsaveisBaixasModal colaboradores={colaboradores} bases={bases} onClose={() => setResponsaveisAberto(false)} />}
 
       {importando && (
         <ImportarBaixasModal
@@ -511,13 +519,21 @@ const Importacoes: React.FC<{
 
 const POR_PAGINA = 50;
 
-const DetalheUpload: React.FC<{ upload: BaixaUpload; usuario?: string; onAtualizado: (u: BaixaUpload) => void }> = ({ upload, usuario, onAtualizado }) => {
+/** Auditoria de uma importação. Usado na gestão e no portal do responsável (que passa as
+ *  funções do portal para carregar as notas e registrar a entrega tardia). */
+export const DetalheUpload: React.FC<{
+  upload: BaixaUpload;
+  usuario?: string;
+  onAtualizado: (u: BaixaUpload) => void;
+  carregarNotas?: (uploadId: string) => Promise<BaixaNota[]>;
+  marcarTardia?: (n: BaixaNota, quando: string) => Promise<BaixaNota>;
+}> = ({ upload, usuario, onAtualizado, carregarNotas, marcarTardia }) => {
   const [notas, setNotas] = useState<BaixaNota[] | null>(null);
   const [motorista, setMotorista] = useState('');
   const [pagina, setPagina] = useState(0);
 
   useEffect(() => {
-    getNotasDoUpload(upload.id)
+    (carregarNotas || getNotasDoUpload)(upload.id)
       .then(setNotas)
       .catch(() => setNotas([]));
   }, [upload.id]);
@@ -547,7 +563,7 @@ const DetalheUpload: React.FC<{ upload: BaixaUpload; usuario?: string; onAtualiz
     const iso = new Date(`${v.trim().replace(' ', 'T')}:00-03:00`);
     if (isNaN(iso.getTime())) return alert('Data inválida. Use o formato AAAA-MM-DD HH:MM.');
     try {
-      const nova = await registrarEntregaTardia(n, iso.toISOString(), usuario, notas || []);
+      const nova = marcarTardia ? await marcarTardia(n, iso.toISOString()) : await registrarEntregaTardia(n, iso.toISOString(), usuario, notas || []);
       const novas = (notas || []).map((x) => (x.id === n.id ? nova : x));
       setNotas(novas);
       const c = contar(novas);

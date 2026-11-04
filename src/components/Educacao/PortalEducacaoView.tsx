@@ -63,6 +63,8 @@ import { PortalQualidade } from '../Portal/PortalQualidade';
 import { TextoFormatado } from '../Jornal/jornalVisual';
 import { portalMeusRelatos } from '../../utils/qualidadeApi';
 import { PortalSugestoes } from '../Portal/PortalSugestoes';
+import { PortalBaixas } from '../Portal/PortalBaixas';
+import { portalBaixasEstado } from '../../utils/baixasApi';
 import { portalFormularios } from '../../utils/formulariosApi';
 import { MeuHistoricoPonto } from '../Frequencia/MeuHistoricoPonto';
 import { MeuDesempenho } from '../Portal/MeuDesempenho';
@@ -133,7 +135,7 @@ function lerDestino(ir?: string, abaAntiga?: string, noticiaAntiga?: string): { 
   if (!ir && abaAntiga === 'jornal') return { aba: 'jornal', item: noticiaAntiga };
   const [tipo, ...resto] = (ir || '').split(':');
   const item = resto.join(':') || undefined;
-  const mapa: Record<string, Aba> = { ponto: 'ponto', historico: 'historico', desempenho: 'desempenho', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', solicitacoes: 'solicitacoes', solicitacao: 'solicitacoes', formularios: 'formularios', formulario: 'formularios', qualidade: 'qualidade', sugestoes: 'sugestoes', treinamentos: 'treinamentos', jornal: 'jornal' };
+  const mapa: Record<string, Aba> = { ponto: 'ponto', historico: 'historico', desempenho: 'desempenho', documentos: 'documentos', documento: 'documentos', comunicados: 'comunicados', comunicado: 'comunicados', solicitacoes: 'solicitacoes', solicitacao: 'solicitacoes', formularios: 'formularios', formulario: 'formularios', qualidade: 'qualidade', sugestoes: 'sugestoes', baixas: 'baixas', treinamentos: 'treinamentos', jornal: 'jornal' };
   return { aba: mapa[tipo] || 'inicio', item };
 }
 
@@ -170,6 +172,8 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
   const [instrucaoAberta, setInstrucaoAberta] = useState<InstrucaoTrabalho | null>(null);
   // Relatar ocorrência: some do menu de quem não está na lista de acesso da Qualidade (096).
   const [relatoLiberado, setRelatoLiberado] = useState(true);
+  // Baixas do dia: só para os responsáveis do escritório cadastrados no Farma Rodoviário (100).
+  const [baixasLiberado, setBaixasLiberado] = useState(false);
   const [resumo, setResumo] = useState<{ documentos?: number; comunicados?: number; noticias?: number; respostas?: number; formularios?: number }>({});
   // Documentos que faltam assinar — aviso na página de início e janela ao entrar.
   const [docsPendentes, setDocsPendentes] = useState<DocumentoPortal[]>([]);
@@ -195,6 +199,9 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
     portalMeusRelatos(cred)
       .then((r) => setRelatoLiberado(r.permitido))
       .catch(() => undefined);
+    portalBaixasEstado(cred)
+      .then((r) => setBaixasLiberado(r.permitido))
+      .catch(() => setBaixasLiberado(false));
     portalFormularios(cred)
       .then((l) => setResumo((p) => ({ ...p, formularios: l.filter((f) => f.aberto && !f.respondidoEm).length })))
       .catch(() => undefined);
@@ -470,7 +477,7 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
         ) : (
           <>
             {aba === 'mais' && (
-              <MenuMaisPortal contagem={contagem} onIr={irPara} onSair={entrouPeloAparelho(credenciais) ? handleSair : undefined} ocultas={relatoLiberado ? [] : ['qualidade']} />
+              <MenuMaisPortal contagem={contagem} onIr={irPara} onSair={entrouPeloAparelho(credenciais) ? handleSair : undefined} ocultas={[...(relatoLiberado ? [] : (['qualidade'] as const)), ...(baixasLiberado ? [] : (['baixas'] as const))]} />
             )}
 
             {aba === 'inicio' && (
@@ -534,6 +541,8 @@ export const PortalEducacaoView: React.FC<{ token?: string; abaInicial?: string;
             {aba === 'qualidade' && <PortalQualidade credenciais={credenciais} />}
 
             {aba === 'sugestoes' && <PortalSugestoes credenciais={credenciais} />}
+
+            {aba === 'baixas' && <PortalBaixas credenciais={credenciais} />}
 
             {aba === 'formularios' && (
               <PortalFormularios
