@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { SituacaoEntregaNF, getSituacoesBaixas } from '../../utils/baixasApi';
+import React, { useState, useMemo } from 'react';
 import {
   Plane,
   Building2,
@@ -129,17 +128,6 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
     () => lancamentosFaturamentoAereo.filter((l) => pertenceAoFarmaAereo(l, clientes)),
     [lancamentosFaturamentoAereo, clientes]
   );
-  // CT-es do rodoviário lançados aqui (cliente vinculado ao Aéreo) também mostram a situação da
-  // entrega (Performance das baixas) — só as NFs que aparecem nas baixas ganham selo.
-  const [situacoesEntrega, setSituacoesEntrega] = useState<Map<string, SituacaoEntregaNF> | undefined>(undefined);
-  useEffect(() => {
-    if (activeSubTab !== 'controle_financeiro' || situacoesEntrega) return;
-    const desde = new Date(Date.now() - 150 * 86400000).toLocaleDateString('sv-SE');
-    getSituacoesBaixas(desde)
-      .then((m) => setSituacoesEntrega(m.size ? m : undefined))
-      .catch(() => undefined);
-  }, [activeSubTab, situacoesEntrega]);
-
   const faturasDoSetor = useMemo(
     () => faturasAereo.filter((f) => pertenceAoFarmaAereo(f, clientes)),
     [faturasAereo, clientes]
@@ -344,8 +332,6 @@ export const FarmaAereoView: React.FC<FarmaAereoViewProps> = ({
           onUpdateLancamento={onUpdateLancamentoFaturamentoAereo}
           onDeleteLancamento={onDeleteLancamentoFaturamentoAereo}
           tituloSetor="Farma Aéreo"
-          situacoesEntrega={situacoesEntrega}
-          mostrarSemBaixa={false}
         />
       )}
 

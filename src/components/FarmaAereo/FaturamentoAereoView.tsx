@@ -51,14 +51,14 @@ import { baixarBlob } from '../../utils/downloadUtils';
 import { ROTULO_SITUACAO_NF, SituacaoEntregaNF, getDetalheBaixaNF, nfNormalizada } from '../../utils/baixasApi';
 
 /** Situação da entrega (Performance das baixas) de um lançamento, pela NF. 'sem' = NF sem baixa importada. */
-function situacaoDoLancamento(l: LancamentoFaturamentoAereo, mapa?: Map<string, SituacaoEntregaNF>, mostrarSemBaixa = true): SituacaoEntregaNF | 'sem' | undefined {
+function situacaoDoLancamento(l: LancamentoFaturamentoAereo, mapa?: Map<string, SituacaoEntregaNF>): SituacaoEntregaNF | 'sem' | undefined {
   if (!mapa) return undefined;
   const nfs = (l.notaFiscal || '').split(/[^\d]+/).map(nfNormalizada).filter(Boolean);
   for (const nf of nfs) {
     const s = mapa.get(nf);
     if (s) return s;
   }
-  return mostrarSemBaixa ? 'sem' : undefined;
+  return 'sem';
 }
 
 async function mostrarDetalheBaixa(nf?: string) {
@@ -97,8 +97,6 @@ interface FaturamentoAereoViewProps {
   modalPadrao?: string;
   /** Situação das entregas (Performance das baixas) por NF — só no Farma Rodoviário. */
   situacoesEntrega?: Map<string, SituacaoEntregaNF>;
-  /** Mostra "Sem baixa" nas NFs que não apareceram nas baixas (no Aéreo, não: só as que têm baixa ganham selo). */
-  mostrarSemBaixa?: boolean;
 }
 
 const KpiCard: React.FC<{
@@ -484,7 +482,6 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   tituloSetor = 'Farma Aéreo',
   modalPadrao,
   situacoesEntrega,
-  mostrarSemBaixa = true,
 }) => {
   // O mesmo CT-e nunca pode entrar duas vezes na lista: com id repetido o React se perde e
   // deixa linhas "fantasma" na tabela (aparecem e não somem ao mudar a busca).
@@ -697,7 +694,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     () =>
       filtrarPorBusca(lancamentosSemFatura, buscaSemFaturaAdiada).filter((l) => {
         if (!filtroEntrega || !situacoesEntrega) return true;
-        const s = situacaoDoLancamento(l, situacoesEntrega, true);
+        const s = situacaoDoLancamento(l, situacoesEntrega);
         if (filtroEntrega === 'entregues') return s === 'C' || s === 'E' || s === 'T';
         if (filtroEntrega === 'comprovadas') return s === 'C';
         if (filtroEntrega === 'pendentes') return s === 'P';
@@ -912,7 +909,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
     const cont = { P: 0, E: 0, A: 0, sem: 0 } as Record<string, number>;
     selecionados.forEach((id) => {
       const l = lancamentos.find((x) => x.id === id);
-      const s = l && situacaoDoLancamento(l, situacoesEntrega, mostrarSemBaixa);
+      const s = l && situacaoDoLancamento(l, situacoesEntrega);
       if (s && s in cont) cont[s] += 1;
     });
     const avisos = [
@@ -2088,7 +2085,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                                       key={l.id}
                                       destacado={l.id === destaqueId}
                                       lancamento={l}
-                                      situacaoEntrega={situacaoDoLancamento(l, situacoesEntrega, mostrarSemBaixa)}
+                                      situacaoEntrega={situacaoDoLancamento(l, situacoesEntrega)}
                                       cliente={clienteDaFatura || findClienteById(clientes, l.clienteId, l.clienteNome)}
                                       showRemoverDaFatura
                                       onFieldChange={handleFieldChangeFactory(l)}
@@ -2155,9 +2152,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                     ['pendentes', 'Pendentes'],
                     ['sem', 'Sem baixa'],
                   ] as const
-                )
-                  .filter(([v]) => mostrarSemBaixa || v !== 'sem')
-                  .map(([v, r]) => (
+                ).map(([v, r]) => (
                   <button
                     key={v}
                     type="button"
@@ -2268,7 +2263,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                     key={l.id}
                     destacado={l.id === destaqueId || bateNumeroExato(l, buscaSemFaturaAdiada)}
                     lancamento={l}
-                    situacaoEntrega={situacaoDoLancamento(l, situacoesEntrega, mostrarSemBaixa)}
+                    situacaoEntrega={situacaoDoLancamento(l, situacoesEntrega)}
                     cliente={findClienteById(clientes, l.clienteId, l.clienteNome)}
                     showCliente
                     showSelecao
