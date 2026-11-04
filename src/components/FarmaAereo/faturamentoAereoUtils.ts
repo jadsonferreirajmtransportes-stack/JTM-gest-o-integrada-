@@ -196,8 +196,16 @@ export function explicarValorACobrar(
   const linhasTarifa = detalharTarifaPorPeso(l, cliente);
   if (!linhasTarifa) {
     const valor = l.valorACobrar ?? 0;
+    const tabela = tabelaFreteParaModal(cliente, l.modal);
+    const motivo = !cliente
+      ? 'lançamento sem cliente cadastrado'
+      : !tabela
+        ? 'cliente sem tarifário cadastrado'
+        : ehAdValorem(tabela)
+          ? 'tarifário em % Ad Valorem sem o percentual'
+          : `cidade "${l.cidadeDestino || '—'}" não está no tarifário do cliente`;
     return {
-      linhas: [{ label: 'Valor informado (sem tarifário do cliente cadastrado para recalcular)', valor }],
+      linhas: [{ label: `Valor informado — não deu para calcular: ${motivo}`, valor }],
       total: valor,
     };
   }
