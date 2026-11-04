@@ -17,6 +17,8 @@ export interface BaixaUpload {
   entregues: number;
   comprovadas: number;
   noPrazo: number;
+  /** Notas abonadas (fora da conta) — migração 102. */
+  abonadas?: number;
   criadoPor?: string;
   criadoEm: string;
 }
@@ -38,13 +40,29 @@ export interface BaixaNota {
   prazo?: string;
   entregaTardiaEm?: string;
   entregaTardiaPor?: string;
+  /** Abono: pendência que não conta contra ninguém (expedição, local fechado...). */
+  abonoMotivo?: string;
+  abonoObs?: string;
+  abonadoEm?: string;
+  abonadoPor?: string;
 }
 
+export const MOTIVOS_ABONO = [
+  'Pendência na expedição',
+  'Local de entrega fechado',
+  'Sem recebedor / cliente ausente',
+  'Endereço não localizado',
+  'Reagendado pelo cliente',
+  'Outro',
+];
+
 export interface ContagemBaixas {
+  /** Notas que contam (sem as abonadas). */
   total: number;
   entregues: number;
   comprovadas: number;
   noPrazo: number;
+  abonadas?: number;
 }
 
 /** Regras de contagem (as mesmas da função baixas_resumo_mes no banco). */
@@ -52,10 +70,13 @@ export const notaEntregue = (n: Pick<BaixaNota, 'situacao' | 'entregaTardiaEm'>)
   !!n.entregaTardiaEm || !['PENDENTE', 'DEVOLUCAO', 'DEVOLUÇÃO', ''].includes((n.situacao || '').toUpperCase());
 export const notaComprovada = (n: Pick<BaixaNota, 'status'>) => (n.status || '').toUpperCase() === 'COMPROVADO';
 export const notaNoPrazo = (n: Pick<BaixaNota, 'prazo' | 'entregaTardiaEm'>) => (n.prazo || '').toUpperCase() === 'NO PRAZO' && !n.entregaTardiaEm;
-export const notaPendente = (n: BaixaNota) => !notaEntregue(n);
+export const notaAbonada = (n: Pick<BaixaNota, 'abonoMotivo'>) => !!n.abonoMotivo;
+export const notaPendente = (n: BaixaNota) => !notaAbonada(n) && !notaEntregue(n);
 
-export function contar(notas: BaixaNota[]): ContagemBaixas {
+export function contar(todas: BaixaNota[]): ContagemBaixas {
+  const notas = todas.filter((n) => !notaAbonada(n));
   return {
+    abonadas: todas.length - notas.length,
     total: notas.length,
     entregues: notas.filter(notaEntregue).length,
     comprovadas: notas.filter(notaComprovada).length,
@@ -163,6 +184,7 @@ const rowToUpload = (r: any): BaixaUpload => ({
   entregues: r.entregues,
   comprovadas: r.comprovadas,
   noPrazo: r.no_prazo,
+  abonadas: r.abonadas ?? 0,
   criadoPor: u(r.criado_por),
   criadoEm: r.criado_em,
 });
@@ -183,6 +205,10 @@ const rowToNota = (r: any): BaixaNota => ({
   prazo: u(r.prazo),
   entregaTardiaEm: u(r.entrega_tardia_em),
   entregaTardiaPor: u(r.entrega_tardia_por),
+  abonoMotivo: u(r.abono_motivo),
+  abonoObs: u(r.abono_obs),
+  abonadoEm: u(r.abonado_em),
+  abonadoPor: u(r.abonado_por),
 });
 
 export async function getUploadsBaixas(): Promise<BaixaUpload[]> {
@@ -282,6 +308,26 @@ export async function registrarEntregaTardia(nota: BaixaNota, quando: string, po
   const atualizada = { ...nota, entregaTardiaEm: quando, entregaTardiaPor: por };
   const cont = contar(notasDoUpload.map((n) => (n.id === nota.id ? atualizada : n)));
   await supabase.from('baixas_uploads').update({ entregues: cont.entregues, no_prazo: cont.noPrazo }).eq('id', nota.uploadId);
+  return atualizada;
+}
+
+/** Abona uma pendência (ou desfaz, com motivo vazio). Atualiza os totais da importação. */
+export async function abonarNota(nota: BaixaNota, motivo: string, obs: string, por: string | undefined, notasDoUpload: BaixaNota[]): Promise<BaixaNota> {
+  const limpar = !motivo;
+  const dados = {
+    abono_motivo: limpar ? null : motivo,
+    abono_obs: limpar ? null : obs.trim() || null,
+    abonado_em: limpar ? null : new Date().toISOString(),
+    abonado_por: limpar ? null : por || null,
+  };
+  const { error } = await supabase.from('baixas_notas').update(dados).eq('id', nota.id);
+  falhou(error, 'abonarNota (rode a migração 102 no Supabase, se ainda não rodou)');
+  const atualizada: BaixaNota = { ...nota, abonoMotivo: dados.abono_motivo || undefined, abonoObs: dados.abono_obs || undefined, abonadoEm: dados.abonado_em || undefined, abonadoPor: dados.abonado_por || undefined };
+  const cont = contar(notasDoUpload.map((n) => (n.id === nota.id ? atualizada : n)));
+  await supabase
+    .from('baixas_uploads')
+    .update({ total: cont.total, entregues: cont.entregues, comprovadas: cont.comprovadas, no_prazo: cont.noPrazo, abonadas: cont.abonadas ?? 0 })
+    .eq('id', nota.uploadId);
   return atualizada;
 }
 
@@ -485,6 +531,12 @@ export async function portalBaixasImportar(c: Cred, dataReferencia: string, arqu
 export async function portalBaixasNotas(c: Cred, uploadId: string): Promise<BaixaNota[]> {
   const d = await rpc('portal_baixas_notas', { ...args(c), p_upload: uploadId });
   return d?.notas ?? [];
+}
+export async function portalBaixasAbonar(c: Cred, nota: BaixaNota, motivo: string, obs: string): Promise<BaixaNota> {
+  await rpc('portal_baixas_abonar', { ...args(c), p_nota: nota.id, p_motivo: motivo, p_obs: obs });
+  return motivo
+    ? { ...nota, abonoMotivo: motivo, abonoObs: obs.trim() || undefined, abonadoEm: new Date().toISOString() }
+    : { ...nota, abonoMotivo: undefined, abonoObs: undefined, abonadoEm: undefined, abonadoPor: undefined };
 }
 export async function portalBaixasTardia(c: Cred, nota: BaixaNota, quando: string): Promise<BaixaNota> {
   await rpc('portal_baixas_tardia', { ...args(c), p_nota: nota.id, p_quando: quando });

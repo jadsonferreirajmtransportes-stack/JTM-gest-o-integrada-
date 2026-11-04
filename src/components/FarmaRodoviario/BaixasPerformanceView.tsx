@@ -11,6 +11,9 @@ import {
   BaixaUpload,
   DesempenhoResponsavel,
   REGRAS_PADRAO,
+  MOTIVOS_ABONO,
+  abonarNota,
+  notaAbonada,
   RegrasBaixas,
   desempenhoMotoristas,
   explicarRegrasMotorista,
@@ -608,6 +611,11 @@ export function textoResumoMotorista(upload: BaixaUpload, motorista: string, not
     foraPrazo.slice(0, LIMITE_LISTA).forEach((n) => linhas.push(`• NF ${n.numero}`));
     if (foraPrazo.length > LIMITE_LISTA) linhas.push(`… e mais ${foraPrazo.length - LIMITE_LISTA}`);
   }
+  const abonadas = notas.filter(notaAbonada);
+  if (abonadas.length) {
+    linhas.push('', `🟡 Abonadas (${abonadas.length}) — não contam no resultado:`);
+    abonadas.slice(0, LIMITE_LISTA).forEach((n) => linhas.push(`• NF ${n.numero} — ${n.abonoMotivo}`));
+  }
   linhas.push('', `Responsável: ${upload.responsavel}`);
   return linhas.join('\n');
 }
@@ -655,7 +663,9 @@ export const DetalheUpload: React.FC<{
   onAtualizado: (u: BaixaUpload) => void;
   carregarNotas?: (uploadId: string) => Promise<BaixaNota[]>;
   marcarTardia?: (n: BaixaNota, quando: string) => Promise<BaixaNota>;
-}> = ({ upload, usuario, onAtualizado, carregarNotas, marcarTardia }) => {
+  marcarAbono?: (n: BaixaNota, motivo: string, obs: string) => Promise<BaixaNota>;
+}> = ({ upload, usuario, onAtualizado, carregarNotas, marcarTardia, marcarAbono }) => {
+  const [abonando, setAbonando] = useState<BaixaNota | null>(null);
   const [notas, setNotas] = useState<BaixaNota[] | null>(null);
   const [motorista, setMotorista] = useState('');
   const [pagina, setPagina] = useState(0);
@@ -679,7 +689,7 @@ export const DetalheUpload: React.FC<{
     () =>
       (notas || [])
         .filter((n) => !motorista || (n.motorista || 'Sem motorista') === motorista)
-        .sort((a, b) => Number(notaPendente(b)) - Number(notaPendente(a)) || a.numero.localeCompare(b.numero)),
+        .sort((a, b) => Number(notaPendente(b)) - Number(notaPendente(a)) || Number(notaAbonada(b)) - Number(notaAbonada(a)) || a.numero.localeCompare(b.numero)),
     [notas, motorista]
   );
   const paginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
@@ -698,6 +708,23 @@ export const DetalheUpload: React.FC<{
       onAtualizado({ ...upload, entregues: c.entregues, noPrazo: c.noPrazo });
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Não foi possível registrar.');
+    }
+  };
+
+  /** Abona (motivo preenchido) ou desfaz o abono (motivo vazio). */
+  const aplicarAbono = async (n: BaixaNota, motivo: string, obs: string) => {
+    const nova = marcarAbono ? await marcarAbono(n, motivo, obs) : await abonarNota(n, motivo, obs, usuario, notas || []);
+    const novas = (notas || []).map((x) => (x.id === n.id ? (motivo ? { ...nova, abonadoPor: nova.abonadoPor || usuario } : nova) : x));
+    setNotas(novas);
+    const c = contar(novas);
+    onAtualizado({ ...upload, total: c.total, entregues: c.entregues, comprovadas: c.comprovadas, noPrazo: c.noPrazo, abonadas: c.abonadas });
+  };
+  const desfazerAbono = async (n: BaixaNota) => {
+    if (!window.confirm(`Desfazer o abono da NF ${n.numero}? Ela volta a contar como pendente.`)) return;
+    try {
+      await aplicarAbono(n, '', '');
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Não foi possível desfazer.');
     }
   };
 
@@ -721,6 +748,10 @@ export const DetalheUpload: React.FC<{
 
   return (
     <div className="space-y-4 min-w-0">
+      {abonando && <AbonoModal nota={abonando} onClose={() => setAbonando(null)} onConfirmar={async (motivo, obs) => {
+        await aplicarAbono(abonando, motivo, obs);
+        setAbonando(null);
+      }} />}
       <div className="flex flex-wrap items-center gap-2">
         <div className="bg-white rounded-xl border border-slate-200 px-4 py-2 flex gap-6 text-xs">
           <div>
@@ -752,7 +783,7 @@ export const DetalheUpload: React.FC<{
             <Kpi titulo="Taxa de sucesso" valor={f1(pct(cont.entregues, cont.total))} detalhe="pedidos entregues" icone={CheckCircle2} />
             <Kpi titulo="Não entregues" valor={f1(100 - pct(cont.entregues, cont.total))} detalhe={`${cont.total - cont.entregues} com ocorrência`} alerta={cont.total - cont.entregues > 0} icone={TriangleAlert} />
             <Kpi titulo="Dentro do prazo" valor={f1(pct(cont.noPrazo, cont.total))} detalhe="entregas no prazo" icone={Clock} />
-            <Kpi titulo="Total processado" valor={String(cont.total)} detalhe={`${cont.comprovadas} comprovadas`} icone={Package} />
+            <Kpi titulo="Total processado" valor={String(cont.total)} detalhe={`${cont.comprovadas} comprovadas${cont.abonadas ? ` · ${cont.abonadas} abonada(s)` : ''}`} icone={Package} />
           </div>
 
           <div className="grid xl:grid-cols-2 gap-3">
@@ -883,7 +914,7 @@ export const DetalheUpload: React.FC<{
                   {lista.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA).map((n) => {
                     const pend = notaPendente(n);
                     return (
-                      <tr key={n.id} className={`border-t border-slate-100 ${pend ? 'bg-rose-50/60' : ''}`}>
+                      <tr key={n.id} className={`border-t border-slate-100 ${pend ? 'bg-rose-50/60' : notaAbonada(n) ? 'bg-slate-50' : ''}`}>
                         <td className="p-3 cartao-titulo">
                           <p className="font-black text-slate-900">{n.numero}</p>
                           {pend && n.prazo === 'FORA PRAZO' && <span className="px-1.5 py-0.5 rounded bg-rose-200 text-rose-800 text-[9px] font-bold">Prazo vencido</span>}
@@ -901,21 +932,39 @@ export const DetalheUpload: React.FC<{
                           {nomeBonito(n.motorista)}
                         </td>
                         <td className="p-3" data-label="Situação">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${pend ? 'bg-rose-50 text-rose-700 border border-rose-200' : n.entregaTardiaEm ? 'bg-amber-50 text-[#92611F] border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
-                            {n.entregaTardiaEm ? 'ENTREGA TARDIA' : n.situacao || '—'}
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${pend ? 'bg-rose-50 text-rose-700 border border-rose-200' : notaAbonada(n) ? 'bg-slate-100 text-slate-600 border border-slate-300' : n.entregaTardiaEm ? 'bg-amber-50 text-[#92611F] border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+                            {notaAbonada(n) ? 'ABONADA' : n.entregaTardiaEm ? 'ENTREGA TARDIA' : n.situacao || '—'}
                           </span>
                           {pend && (
-                            <button type="button" onClick={() => tardia(n)} className="block mt-1 text-[10px] font-bold text-[#92611F] hover:underline normal-case tracking-normal">
-                              ✓ Registrar entrega tardia
-                            </button>
+                            <span className="flex flex-col items-start gap-0.5 mt-1">
+                              <button type="button" onClick={() => tardia(n)} className="text-[10px] font-bold text-[#92611F] hover:underline normal-case tracking-normal">
+                                ✓ Registrar entrega tardia
+                              </button>
+                              <button type="button" onClick={() => setAbonando(n)} className="text-[10px] font-bold text-slate-600 hover:underline normal-case tracking-normal">
+                                ⊘ Abonar
+                              </button>
+                            </span>
+                          )}
+                          {notaAbonada(n) && (
+                            <span className="block mt-1 text-[10px] text-slate-600 max-w-[220px]">
+                              <b>{n.abonoMotivo}</b>
+                              {n.abonoObs ? ` — ${n.abonoObs}` : ''}
+                              <span className="block text-slate-400">
+                                {n.abonadoPor ? `por ${n.abonadoPor} ` : ''}
+                                {n.abonadoEm ? `em ${dataHoraBr(n.abonadoEm)}` : ''}
+                              </span>
+                              <button type="button" onClick={() => desfazerAbono(n)} className="text-[10px] font-bold text-rose-700 hover:underline normal-case tracking-normal">
+                                Desfazer abono
+                              </button>
+                            </span>
                           )}
                         </td>
                         <td className="p-3 whitespace-nowrap" data-label="Emissão">
                           {dataHoraBr(n.dataEmissao)}
                         </td>
                         <td className="p-3 whitespace-nowrap font-semibold" data-label="Entrega">
-                          {n.entregaTardiaEm ? dataHoraBr(n.entregaTardiaEm) : n.dataEntrega ? dataHoraBr(n.dataEntrega) : 'Pendente / em rota'}
-                          {!pend && !notaNoPrazo(n) && <span className="block text-[10px] text-rose-700">fora do prazo</span>}
+                          {n.entregaTardiaEm ? dataHoraBr(n.entregaTardiaEm) : n.dataEntrega ? dataHoraBr(n.dataEntrega) : notaAbonada(n) ? '— (abonada)' : 'Pendente / em rota'}
+                          {!pend && !notaAbonada(n) && !notaNoPrazo(n) && <span className="block text-[10px] text-rose-700">fora do prazo</span>}
                         </td>
                       </tr>
                     );
@@ -939,6 +988,67 @@ export const DetalheUpload: React.FC<{
           </div>
         </>
       )}
+    </div>
+  );
+};
+
+const AbonoModal: React.FC<{ nota: BaixaNota; onClose: () => void; onConfirmar: (motivo: string, obs: string) => Promise<void> }> = ({ nota, onClose, onConfirmar }) => {
+  const [motivo, setMotivo] = useState('');
+  const [obs, setObs] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const confirmar = async () => {
+    if (!motivo) return setErro('Escolha o motivo.');
+    if (motivo === 'Outro' && !obs.trim()) return setErro('Explique o motivo na observação.');
+    setSalvando(true);
+    setErro(null);
+    try {
+      await onConfirmar(motivo, obs);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível abonar.');
+      setSalvando(false);
+    }
+  };
+  return (
+    <div className="fixed inset-0 z-[60] bg-slate-900/50 flex items-center justify-center p-3" data-texto-livre="true">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md text-xs">
+        <div className="p-4 border-b border-slate-200 flex items-start justify-between">
+          <div>
+            <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal">Abonar a NF {nota.numero}</h3>
+            <p className="text-slate-500">
+              {nomeBonito(nota.motorista)}
+              {nota.destinatario ? ` · ${nomeBonito(nota.destinatario)}` : ''}
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-4 space-y-3">
+          <p className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-[#92611F]">A nota abonada sai da conta: não pesa contra o motorista nem contra o responsável. Dá para desfazer depois.</p>
+          <div className="space-y-1.5">
+            {MOTIVOS_ABONO.map((m) => (
+              <label key={m} className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer ${motivo === m ? 'border-[#C48229] bg-amber-50' : 'border-slate-200'}`}>
+                <input type="radio" name="motivo-abono" checked={motivo === m} onChange={() => setMotivo(m)} className="accent-[#C48229]" />
+                <span className="font-semibold text-slate-800">{m}</span>
+              </label>
+            ))}
+          </div>
+          <label className="block">
+            <span className="font-bold text-slate-700">Observação {motivo === 'Outro' ? '(obrigatória)' : '(opcional)'}</span>
+            <textarea value={obs} onChange={(e) => setObs(e.target.value.slice(0, 500))} rows={2} className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm" placeholder="Ex.: farmácia fechada às 17h, reentrega amanhã." />
+          </label>
+          {erro && <p className="text-rose-700 font-semibold">{erro}</p>}
+        </div>
+        <div className="p-4 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-3 py-2 rounded-lg border border-slate-200 font-bold text-slate-600">
+            Cancelar
+          </button>
+          <button type="button" onClick={confirmar} disabled={salvando} className="px-4 py-2 rounded-lg bg-[#C48229] hover:bg-[#92611F] text-white font-bold flex items-center gap-1.5 disabled:opacity-50">
+            {salvando && <Loader2 className="w-4 h-4 animate-spin" />} Abonar
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

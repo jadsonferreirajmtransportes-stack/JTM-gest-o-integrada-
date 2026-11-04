@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarDays, ChevronLeft, ClipboardCheck, Loader2, Upload } from 'lucide-react';
 import type { CredenciaisPortal } from '../../utils/educacaoApi';
-import { BaixaNota, BaixaUpload, contar, lerPlanilhaBaixas, pct, portalBaixasEstado, portalBaixasImportar, portalBaixasNotas, portalBaixasTardia } from '../../utils/baixasApi';
+import { BaixaNota, BaixaUpload, contar, lerPlanilhaBaixas, pct, portalBaixasEstado, portalBaixasImportar, portalBaixasNotas, portalBaixasTardia, portalBaixasAbonar } from '../../utils/baixasApi';
 import { DetalheUpload } from '../FarmaRodoviario/BaixasPerformanceView';
 
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '');
@@ -76,6 +76,7 @@ export const PortalBaixas: React.FC<{ credenciais: CredenciaisPortal }> = ({ cre
           onAtualizado={(u) => setAberto(u)}
           carregarNotas={(id) => portalBaixasNotas(credenciais, id)}
           marcarTardia={(n: BaixaNota, quando: string) => portalBaixasTardia(credenciais, n, quando)}
+          marcarAbono={(n: BaixaNota, motivo: string, obs: string) => portalBaixasAbonar(credenciais, n, motivo, obs)}
         />
       </div>
     );
