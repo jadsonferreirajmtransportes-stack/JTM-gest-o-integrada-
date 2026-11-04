@@ -308,9 +308,65 @@ export async function getResumoMes(mes: string, base?: string): Promise<ResumoMe
   return data as ResumoMes;
 }
 
-/** Pontos do responsável: 20% regularidade (dias importados no prazo ÷ dias de operação) +
- *  40% comprovação (notas comprovadas) + 40% entrega (notas entregues). */
-export const PESOS_PONTOS = { regularidade: 0.2, comprovacao: 0.4, entrega: 0.4 };
+// ---------------------------------------------------------------------------
+// Regras de pontuação — editáveis no sistema (baixas_config, migração 101)
+// ---------------------------------------------------------------------------
+export interface RegrasBaixas {
+  responsavel: {
+    /** Pesos em % (somam 100). */
+    pesoRegularidade: number;
+    pesoComprovacao: number;
+    pesoEntrega: number;
+    /** A planilha do dia vale "no prazo" se importada até N dias úteis depois (0 = no mesmo dia). */
+    diasParaImportar: number;
+  };
+  motorista: {
+    pesoEntrega: number;
+    pesoPrazo: number;
+    pesoComprovacao: number;
+    /** Mínimo de notas no mês para entrar no ranking. */
+    minimoNotas: number;
+  };
+  /** Meta de entrega (%): abaixo dela, o número aparece em vermelho. */
+  metaEntrega: number;
+}
+
+export const REGRAS_PADRAO: RegrasBaixas = {
+  responsavel: { pesoRegularidade: 20, pesoComprovacao: 40, pesoEntrega: 40, diasParaImportar: 1 },
+  motorista: { pesoEntrega: 100, pesoPrazo: 0, pesoComprovacao: 0, minimoNotas: 1 },
+  metaEntrega: 95,
+};
+
+/** Junta o salvo com o padrão (campos novos ganham o valor padrão). */
+export function normalizarRegras(r?: Partial<RegrasBaixas> | null): RegrasBaixas {
+  return {
+    responsavel: { ...REGRAS_PADRAO.responsavel, ...(r?.responsavel || {}) },
+    motorista: { ...REGRAS_PADRAO.motorista, ...(r?.motorista || {}) },
+    metaEntrega: r?.metaEntrega ?? REGRAS_PADRAO.metaEntrega,
+  };
+}
+
+export async function getRegrasBaixas(): Promise<RegrasBaixas> {
+  const { data, error } = await supabase.from('baixas_config').select('regras').eq('id', 1).maybeSingle();
+  if (error) return REGRAS_PADRAO; // antes da migração 101: regras padrão
+  return normalizarRegras(data?.regras);
+}
+
+export async function salvarRegrasBaixas(r: RegrasBaixas, por?: string): Promise<void> {
+  const { error } = await supabase.from('baixas_config').upsert({ id: 1, regras: r, atualizado_por: por || null, atualizado_em: new Date().toISOString() });
+  falhou(error, 'salvarRegrasBaixas (rode a migração 101 no Supabase, se ainda não rodou)');
+}
+
+/** Texto curto da fórmula (painel e dossiê). */
+export function explicarRegrasResponsavel(r: RegrasBaixas): string {
+  const prazo = r.responsavel.diasParaImportar === 0 ? 'no mesmo dia' : `até ${r.responsavel.diasParaImportar} dia(s) útil(eis) depois`;
+  return `Pontos = ${r.responsavel.pesoRegularidade}% regularidade (planilha do dia importada ${prazo} ÷ dias de operação) + ${r.responsavel.pesoComprovacao}% comprovação + ${r.responsavel.pesoEntrega}% entrega.`;
+}
+export function explicarRegrasMotorista(r: RegrasBaixas): string {
+  const p = r.motorista;
+  const partes = [p.pesoEntrega && `${p.pesoEntrega}% entrega`, p.pesoPrazo && `${p.pesoPrazo}% no prazo`, p.pesoComprovacao && `${p.pesoComprovacao}% comprovação`].filter(Boolean);
+  return `Pontos = ${partes.join(' + ')}${p.minimoNotas > 1 ? ` · mínimo de ${p.minimoNotas} notas no mês para entrar no ranking` : ''}.`;
+}
 
 /** Dias de operação do mês: os dias em que pelo menos um responsável (da base) importou.
  *  Assim sábados trabalhados e feriados se resolvem sozinhos. */
@@ -318,11 +374,13 @@ export function diasDeOperacao(r: ResumoResponsavel[]): string[] {
   return Array.from(new Set(r.flatMap((x) => (x.dias || []).map((d) => d.data)))).sort();
 }
 
-/** Próximo dia útil depois de uma data (prazo para importar a planilha do dia). */
-export function proximoDiaUtil(iso: string, feriados: Set<string>): string {
+/** N dias úteis depois de uma data (prazo para importar a planilha do dia). 0 = a própria data. */
+export function diasUteisDepois(iso: string, n: number, feriados: Set<string> = new Set()): string {
   const dt = new Date(`${iso}T12:00:00Z`);
-  do dt.setUTCDate(dt.getUTCDate() + 1);
-  while (dt.getUTCDay() === 0 || dt.getUTCDay() === 6 || feriados.has(dt.toISOString().slice(0, 10)));
+  for (let i = 0; i < n; i++) {
+    do dt.setUTCDate(dt.getUTCDate() + 1);
+    while (dt.getUTCDay() === 0 || dt.getUTCDay() === 6 || feriados.has(dt.toISOString().slice(0, 10)));
+  }
   return dt.toISOString().slice(0, 10);
 }
 
@@ -336,16 +394,36 @@ export interface DesempenhoResponsavel extends ResumoResponsavel {
   diasFaltantes: string[];
 }
 
-export function desempenhoResponsavel(r: ResumoResponsavel, diasOperacao: string[], feriados: Set<string> = new Set()): DesempenhoResponsavel {
+export function desempenhoResponsavel(r: ResumoResponsavel, diasOperacao: string[], regras: RegrasBaixas = REGRAS_PADRAO, feriados: Set<string> = new Set()): DesempenhoResponsavel {
   const importados = new Map((r.dias || []).map((d) => [d.data, d.importadoEm]));
   const diasFaltantes = diasOperacao.filter((d) => !importados.has(d));
-  const diasNoPrazo = [...importados.entries()].filter(([d, em]) => diaLocal(em) <= proximoDiaUtil(d, feriados)).length;
+  const diasNoPrazo = [...importados.entries()].filter(([d, em]) => diaLocal(em) <= diasUteisDepois(d, regras.responsavel.diasParaImportar, feriados)).length;
   const diasEsperados = Math.max(diasOperacao.length, importados.size);
   const regularidade = diasEsperados ? Math.min(100, pct(diasNoPrazo, diasEsperados)) : 100;
   const comprovacao = pct(r.comprovadas, r.total);
   const entrega = pct(r.entregues, r.total);
-  const pontos = PESOS_PONTOS.regularidade * regularidade + PESOS_PONTOS.comprovacao * comprovacao + PESOS_PONTOS.entrega * entrega;
+  const p = regras.responsavel;
+  const soma = p.pesoRegularidade + p.pesoComprovacao + p.pesoEntrega || 1;
+  const pontos = (p.pesoRegularidade * regularidade + p.pesoComprovacao * comprovacao + p.pesoEntrega * entrega) / soma;
   return { ...r, pontos, regularidade, comprovacao, entrega, diasNoPrazo, diasEsperados, diasFaltantes };
+}
+
+export interface DesempenhoMotorista extends ResumoMotorista {
+  pontos: number;
+  taxa: number; // % de entrega
+  noRanking: boolean; // atingiu o mínimo de notas
+}
+
+export function desempenhoMotoristas(lista: ResumoMotorista[], regras: RegrasBaixas = REGRAS_PADRAO): DesempenhoMotorista[] {
+  const p = regras.motorista;
+  const soma = p.pesoEntrega + p.pesoPrazo + p.pesoComprovacao || 1;
+  return lista
+    .map((m) => {
+      const taxa = pct(m.entregues, m.total);
+      const pontos = (p.pesoEntrega * taxa + p.pesoPrazo * pct(m.noPrazo, m.total) + p.pesoComprovacao * pct(m.comprovadas, m.total)) / soma;
+      return { ...m, taxa, pontos, noRanking: m.total >= (p.minimoNotas || 1) };
+    })
+    .sort((a, b) => Number(b.noRanking) - Number(a.noRanking) || b.pontos - a.pontos || b.total - a.total);
 }
 
 // ---------------------------------------------------------------------------

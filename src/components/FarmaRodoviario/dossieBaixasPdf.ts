@@ -7,7 +7,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
-import { DesempenhoResponsavel, PESOS_PONTOS, ResumoMes, ResumoMotorista, pct } from '../../utils/baixasApi';
+import { DesempenhoMotorista, DesempenhoResponsavel, RegrasBaixas, ResumoMes, explicarRegrasMotorista, explicarRegrasResponsavel, pct } from '../../utils/baixasApi';
 
 const BRONZE: [number, number, number] = [196, 130, 41];
 const TEXTO: [number, number, number] = [17, 17, 17];
@@ -29,8 +29,9 @@ const nomeMes = (ym: string) => {
 };
 const dataBr = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 
-export function gerarDossieBaixasPdf(p: { mes: string; base: string; resumo: ResumoMes; ranking: DesempenhoResponsavel[]; motoristas: (ResumoMotorista & { taxa: number })[] }): File {
-  const { mes, base, resumo, ranking, motoristas } = p;
+export function gerarDossieBaixasPdf(p: { mes: string; base: string; resumo: ResumoMes; ranking: DesempenhoResponsavel[]; motoristas: DesempenhoMotorista[]; regras: RegrasBaixas }): File {
+  const { mes, base, resumo, ranking, regras } = p;
+  const motoristas = p.motoristas.filter((m) => m.noRanking);
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const L = doc.internal.pageSize.getWidth();
   const A = doc.internal.pageSize.getHeight();
@@ -145,22 +146,27 @@ export function gerarDossieBaixasPdf(p: { mes: string; base: string; resumo: Res
   doc.setFontSize(7.5);
   doc.setTextColor(...CINZA);
   doc.text(
-    `Pontos = ${PESOS_PONTOS.regularidade * 100}% regularidade (dias importados até o dia útil seguinte ÷ dias de operação) + ${PESOS_PONTOS.comprovacao * 100}% comprovação + ${PESOS_PONTOS.entrega * 100}% entrega.`,
+    explicarRegrasResponsavel(regras),
     M,
     y - 5
   );
 
   tabela('RANKING DOS MOTORISTAS', {
-    head: [['#', 'Motorista', 'Base', 'Notas OK', 'No prazo', 'Entrega']],
-    body: motoristas.map((m, i) => [`${i + 1}º`, nomeBonito(m.motorista), m.base, `${m.entregues} / ${m.total}`, p1(pct(m.noPrazo, m.total)), p1(m.taxa)]),
-    columnStyles: { 0: { cellWidth: 9, halign: 'center' }, 5: { fontStyle: 'bold', halign: 'right' } },
+    head: [['#', 'Motorista', 'Base', 'Notas OK', 'No prazo', 'Entrega', 'Pontos']],
+    body: motoristas.map((m, i) => [`${i + 1}º`, nomeBonito(m.motorista), m.base, `${m.entregues} / ${m.total}`, p1(pct(m.noPrazo, m.total)), p1(m.taxa), m.pontos.toFixed(1).replace('.', ',')]),
+    columnStyles: { 0: { cellWidth: 9, halign: 'center' }, 5: { fontStyle: 'bold', halign: 'right' }, 6: { fontStyle: 'bold', textColor: BRONZE_ESCURO, halign: 'right' } },
     didParseCell: (h) => {
       if (h.section === 'body' && h.column.index === 5) {
         const t = motoristas[h.row.index]?.taxa ?? 0;
-        h.cell.styles.textColor = t >= 93 ? TEXTO : VERMELHO;
+        h.cell.styles.textColor = t >= regras.metaEntrega ? TEXTO : VERMELHO;
       }
     },
   });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...CINZA);
+  doc.text(doc.splitTextToSize(`${explicarRegrasMotorista(regras)} Meta de entrega: ${String(regras.metaEntrega).replace('.', ',')}%.`, L - 2 * M), M, y - 5);
 
   const total = doc.getNumberOfPages();
   for (let pg = 1; pg <= total; pg++) {

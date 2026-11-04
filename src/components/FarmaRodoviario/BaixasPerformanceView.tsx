@@ -2,12 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Award, ClipboardCheck, CalendarDays, ChevronDown, ChevronRight, Clock, FileSpreadsheet, FileText, Loader2, Package, Search, Trash2, TriangleAlert, Upload, UserRound, X, CheckCircle2 } from 'lucide-react';
 import type { Colaborador, UsuarioLogin } from '../../types';
 import { ResponsaveisBaixasModal } from './ResponsaveisBaixasModal';
+import { RegrasBaixasModal } from './RegrasBaixasModal';
+import { SlidersHorizontal } from 'lucide-react';
 import { AcoesTela } from '../Common/AcoesTela';
 import {
   BaixaNota,
   BaixaUpload,
   DesempenhoResponsavel,
-  PESOS_PONTOS,
+  REGRAS_PADRAO,
+  RegrasBaixas,
+  desempenhoMotoristas,
+  explicarRegrasMotorista,
+  explicarRegrasResponsavel,
+  getRegrasBaixas,
   ResumoMes,
   buscarNotaBaixas,
   contar,
@@ -154,6 +161,11 @@ const Medalha: React.FC<{ pos: number }> = ({ pos }) => (
  *  (baixas dos motoristas), auditoria de cada dia e o dossiê do mês (responsáveis e motoristas). */
 export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null; colaboradores?: Colaborador[] }> = ({ currentUser, colaboradores = [] }) => {
   const [responsaveisAberto, setResponsaveisAberto] = useState(false);
+  const [regras, setRegras] = useState<RegrasBaixas>(REGRAS_PADRAO);
+  const [regrasAberto, setRegrasAberto] = useState(false);
+  useEffect(() => {
+    getRegrasBaixas().then(setRegras).catch(() => undefined);
+  }, []);
   const [uploads, setUploads] = useState<BaixaUpload[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [aba, setAba] = useState<'painel' | 'importacoes'>('painel');
@@ -209,6 +221,9 @@ export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null
           <button type="button" onClick={() => setResponsaveisAberto(true)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold flex items-center gap-1.5">
             <UserRound className="w-4 h-4 text-[#C48229]" /> Responsáveis (link pessoal)
           </button>
+          <button type="button" onClick={() => setRegrasAberto(true)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold flex items-center gap-1.5">
+            <SlidersHorizontal className="w-4 h-4 text-[#C48229]" /> Regras de pontuação
+          </button>
         </AcoesTela>
       </div>
 
@@ -218,7 +233,7 @@ export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null
           <Loader2 className="w-5 h-5 animate-spin text-[#C48229]" /> Carregando...
         </div>
       ) : aba === 'painel' ? (
-        <PainelMes bases={bases} temImportacoes={uploads.length > 0} mesInicial={uploads[0]?.dataReferencia.slice(0, 7) || mesAtual()} />
+        <PainelMes bases={bases} temImportacoes={uploads.length > 0} mesInicial={uploads[0]?.dataReferencia.slice(0, 7) || mesAtual()} regras={regras} />
       ) : (
         <Importacoes
           uploads={uploads}
@@ -230,6 +245,19 @@ export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null
           }}
           onAtualizado={(u) => setUploads((p) => (p || []).map((x) => (x.id === u.id ? u : x)))}
           usuario={currentUser?.nome}
+          metaEntrega={regras.metaEntrega}
+        />
+      )}
+
+      {regrasAberto && (
+        <RegrasBaixasModal
+          regras={regras}
+          usuario={currentUser?.nome}
+          onClose={() => setRegrasAberto(false)}
+          onSalvo={(r) => {
+            setRegras(r);
+            setRegrasAberto(false);
+          }}
         />
       )}
 
@@ -256,7 +284,7 @@ export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null
 // ---------------------------------------------------------------------------
 // Painel do mês (dossiê)
 // ---------------------------------------------------------------------------
-const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial: string }> = ({ bases, temImportacoes, mesInicial }) => {
+const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial: string; regras: RegrasBaixas }> = ({ bases, temImportacoes, mesInicial, regras }) => {
   const [mes, setMes] = useState(mesInicial);
   const [base, setBase] = useState('');
   const [resumo, setResumo] = useState<ResumoMes | null>(null);
@@ -279,18 +307,17 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
   const ranking: DesempenhoResponsavel[] = useMemo(() => {
     if (!resumo) return [];
     const dias = diasDeOperacao(resumo.responsaveis);
-    return resumo.responsaveis.map((r) => desempenhoResponsavel(r, dias)).sort((a, b) => b.pontos - a.pontos);
-  }, [resumo]);
-  const motoristas = useMemo(
-    () => (resumo?.motoristas || []).map((m) => ({ ...m, taxa: pct(m.entregues, m.total) })).sort((a, b) => b.taxa - a.taxa || b.total - a.total),
-    [resumo]
-  );
+    return resumo.responsaveis.map((r) => desempenhoResponsavel(r, dias, regras)).sort((a, b) => b.pontos - a.pontos);
+  }, [resumo, regras]);
+  const motoristas = useMemo(() => desempenhoMotoristas(resumo?.motoristas || [], regras), [resumo, regras]);
+  const noRanking = motoristas.filter((m) => m.noRanking);
+  const foraRanking = motoristas.filter((m) => !m.noRanking);
   const top5 = useMemo(() => [...(resumo?.motoristas || [])].sort((a, b) => b.total - a.total).slice(0, 5), [resumo]);
 
   const baixarPdf = async () => {
     if (!resumo) return;
     const { gerarDossieBaixasPdf } = await import('./dossieBaixasPdf');
-    const arq = gerarDossieBaixasPdf({ mes, base, resumo, ranking, motoristas });
+    const arq = gerarDossieBaixasPdf({ mes, base, resumo, ranking, motoristas, regras });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(arq);
     a.download = arq.name;
@@ -364,9 +391,7 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
           <div className="grid lg:grid-cols-2 gap-3">
             <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-2">
               <TituloBloco icone={Award} titulo="Ranking dos responsáveis" sub="Quem cuida das planilhas de baixa no escritório" />
-              <p className="text-[10px] text-slate-500">
-                Pontos = {PESOS_PONTOS.regularidade * 100}% regularidade (dias importados até o dia útil seguinte) + {PESOS_PONTOS.comprovacao * 100}% comprovação + {PESOS_PONTOS.entrega * 100}% entrega.
-              </p>
+              <p className="text-[10px] text-slate-500">{explicarRegrasResponsavel(regras)}</p>
               {ranking.map((r, i) => (
                 <div key={r.responsavel} className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 bg-[#FCFAF6]">
                   <Medalha pos={i + 1} />
@@ -382,14 +407,15 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-lg font-black text-[#92611F]">{r.pontos.toFixed(1)} pts</p>
-                    <p className="text-[10px] text-slate-500">Entrega {f1(r.entrega)}</p>
+                    <p className={`text-[10px] ${r.entrega < regras.metaEntrega ? 'text-rose-700 font-bold' : 'text-slate-500'}`}>Entrega {f1(r.entrega)}</p>
                   </div>
                 </div>
               ))}
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-2">
-              <TituloBloco icone={UserRound} titulo="Ranking dos motoristas" sub="Pela taxa de entrega (entregues ÷ notas do motorista)" />
-              {motoristas.map((m, i) => (
+              <TituloBloco icone={UserRound} titulo="Ranking dos motoristas" sub="Pontos de cada motorista no mês" />
+              <p className="text-[10px] text-slate-500">{explicarRegrasMotorista(regras)}</p>
+              {noRanking.map((m, i) => (
                 <div key={m.motorista} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-[#FCFAF6]">
                   <Medalha pos={i + 1} />
                   <div className="flex-1 min-w-0">
@@ -399,9 +425,25 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
                       {m.entregues} / {m.total} OK · {f1(pct(m.noPrazo, m.total))} no prazo
                     </p>
                   </div>
-                  <p className={`text-base font-black ${m.taxa >= 93 ? 'text-slate-900' : 'text-rose-700'}`}>{f1(m.taxa)}</p>
+                  <div className="text-right shrink-0">
+                    <p className="text-base font-black text-[#92611F]">{m.pontos.toFixed(1)} pts</p>
+                    <p className={`text-[10px] ${m.taxa < regras.metaEntrega ? 'text-rose-700 font-bold' : 'text-slate-500'}`}>Entrega {f1(m.taxa)}</p>
+                  </div>
                 </div>
               ))}
+              {foraRanking.length > 0 && (
+                <div className="pt-2">
+                  <p className="text-[10px] font-black uppercase tracking-wide text-slate-400 mb-1">Abaixo do mínimo de {regras.motorista.minimoNotas} notas (sem posição)</p>
+                  {foraRanking.map((m) => (
+                    <p key={m.motorista} className="flex justify-between text-[11px] text-slate-500 px-3 py-1">
+                      <span>{nomeBonito(m.motorista)}</span>
+                      <span>
+                        {m.entregues} / {m.total} OK · {f1(m.taxa)}
+                      </span>
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </>
@@ -420,7 +462,8 @@ const Importacoes: React.FC<{
   onExcluido: (id: string) => void;
   onAtualizado: (u: BaixaUpload) => void;
   usuario?: string;
-}> = ({ uploads, aberto, onAbrir, onExcluido, onAtualizado, usuario }) => {
+  metaEntrega: number;
+}> = ({ uploads, aberto, onAbrir, onExcluido, onAtualizado, usuario, metaEntrega }) => {
   const [busca, setBusca] = useState('');
   const [resultado, setResultado] = useState<BaixaNota[] | null>(null);
   const [fechados, setFechados] = useState<Set<string>>(new Set());
@@ -514,7 +557,7 @@ const Importacoes: React.FC<{
                               {dataBr(u.dataReferencia)}
                               {u.base !== 'Matriz' && <span className="text-[10px] text-slate-500"> · {u.base}</span>}
                             </button>
-                            <span className={`text-[10px] font-bold ${pct(u.entregues, u.total) >= 93 ? 'text-slate-500' : 'text-rose-700'}`}>{f1(pct(u.entregues, u.total))}</span>
+                            <span className={`text-[10px] font-bold ${pct(u.entregues, u.total) >= metaEntrega ? 'text-slate-500' : 'text-rose-700'}`}>{f1(pct(u.entregues, u.total))}</span>
                             <button type="button" onClick={() => excluir(u)} className="p-0.5 text-slate-300 hover:text-rose-600" title="Excluir importação">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
