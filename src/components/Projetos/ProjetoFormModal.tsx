@@ -1,3 +1,4 @@
+import { baixarArquivo } from '../../utils/downloadUtils';
 import React, { useState, useEffect } from 'react';
 import {
   X,
@@ -1241,14 +1242,14 @@ export const ProjetoFormModal: React.FC<ProjetoFormModalProps> = ({
 
                           <div className="flex items-center gap-1 shrink-0">
                             {(doc.url || doc.arquivoUrl) && (
-                              <a
-                                href={doc.arquivoUrl || doc.url}
-                                download={doc.nome}
+                              <button
+                                type="button"
+                                onClick={() => baixarArquivo((doc.arquivoUrl || doc.url)!, doc.nome).catch((e) => alert(e instanceof Error ? e.message : 'Não foi possível baixar.'))}
                                 className="p-1.5 text-slate-500 hover:text-[#C48229] hover:bg-slate-100 rounded-lg transition-colors"
                                 title="Baixar Arquivo"
                               >
                                 <Download className="w-4 h-4" />
-                              </a>
+                              </button>
                             )}
                             <button
                               type="button"

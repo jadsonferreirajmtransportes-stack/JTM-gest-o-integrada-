@@ -38,6 +38,7 @@ import { resolveOperacaoIcon } from '../../utils/iconResolver';
 import { UsuarioFormModal } from './UsuarioFormModal';
 import { SwitchUserModal } from './SwitchUserModal';
 import { StrategicGuidelinesBanner } from '../Common/StrategicGuidelinesBanner';
+import { MoverAnexosCard } from './MoverAnexosCard';
 
 interface UsuariosViewProps {
   users: UsuarioLogin[];
@@ -742,6 +743,7 @@ export const UsuariosView: React.FC<UsuariosViewProps> = ({
       {/* TAB 3: BOAS PRÁTICAS & SEGURANÇA RDC 430 */}
       {activeTab === 'seguranca' && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+          {currentUser.role === 'admin' && <MoverAnexosCard />}
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
             <div className="w-10 h-10 rounded-xl bg-[#C48229] text-white flex items-center justify-center font-bold">
               <FileCheck className="w-5 h-5" />

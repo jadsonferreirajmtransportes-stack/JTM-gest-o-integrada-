@@ -29,6 +29,15 @@ import {
   UserRole,
 } from '../../types';
 import { baixarArquivo } from '../../utils/downloadUtils';
+import { ImagemArquivo } from '../Common/ImagemArquivo';
+import { useArquivoUrl } from '../../utils/arquivosStorage';
+
+/** PDF anexado (base64 antigo ou Storage) dentro de um iframe. */
+const IframeArquivo: React.FC<{ valor?: string; titulo: string }> = ({ valor, titulo }) => {
+  const { url } = useArquivoUrl(valor);
+  if (!url) return null;
+  return <iframe src={url} title={titulo} className="w-full h-full border-0" />;
+};
 
 interface ProjetoAnexosSectionProps {
   projeto: ProjetoGerencial;
@@ -506,11 +515,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
                       onClick={() => hasPreviewUrl && setPreviewDoc(doc)}
                     >
                       {isImage && (doc.arquivoUrl || doc.url) ? (
-                        <img
-                          src={doc.arquivoUrl || doc.url}
-                          alt={doc.nome}
-                          className="w-full h-full object-cover rounded-xl"
-                        />
+                        <ImagemArquivo valor={doc.arquivoUrl || doc.url} alt={doc.nome} className="w-full h-full object-cover rounded-xl" />
                       ) : (
                         <IconComponent className="w-5 h-5" />
                       )}
@@ -770,8 +775,8 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
               previewDoc.arquivoUrl?.startsWith('data:image/') ||
               /\.(png|jpe?g|webp|gif|svg)$/i.test(previewDoc.nome) ? (
                 <div className="max-h-[70vh] flex items-center justify-center">
-                  <img
-                    src={previewDoc.arquivoUrl || previewDoc.url}
+                  <ImagemArquivo
+                    valor={previewDoc.arquivoUrl || previewDoc.url}
                     alt={previewDoc.nome}
                     className="max-h-[70vh] max-w-full object-contain rounded-xl shadow-lg border border-slate-200 bg-white"
                   />
@@ -780,11 +785,7 @@ export const ProjetoAnexosSection: React.FC<ProjetoAnexosSectionProps> = ({
                 previewDoc.arquivoUrl?.startsWith('data:application/pdf') ||
                 /\.pdf$/i.test(previewDoc.nome) ? (
                 <div className="w-full h-[65vh] bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden flex flex-col">
-                  <iframe
-                    src={previewDoc.arquivoUrl || previewDoc.url}
-                    title={previewDoc.nome}
-                    className="w-full h-full border-0"
-                  />
+                  <IframeArquivo valor={previewDoc.arquivoUrl || previewDoc.url} titulo={previewDoc.nome} />
                 </div>
               ) : (
                 <div className="text-center p-8 bg-white rounded-2xl border border-slate-200 shadow-sm max-w-md space-y-3">

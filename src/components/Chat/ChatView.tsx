@@ -28,7 +28,7 @@ import {
 import { getMensagens, getAnexoMensagem, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem, reagirMensagem } from '../../utils/chatApi';
 import { AcoesMensagemChat, BarraRespondendo, CitacaoMensagem, EditorMensagemChat, MensagemApagada, ReacoesMensagem } from './MensagemChatAcoes';
 import { AudioDaMensagem, GravadorAudio, nomeAudio } from './AudioChat';
-import { enviarArquivo } from '../../utils/arquivosStorage';
+import { enviarArquivo, obterUrlArquivo } from '../../utils/arquivosStorage';
 import { podeVerRegistroCompartilhado } from '../../utils/visibilidadeUtils';
 import { podeVerAtividade } from '../Agenda/agendaUtils';
 import { NovaConversaModal } from './NovaConversaModal';
@@ -78,7 +78,8 @@ const AnexoDaMensagem: React.FC<{
   propria: boolean;
   onAbrir: (url: string) => void;
 }> = ({ mensagem, ehImagem, propria, onAbrir }) => {
-  const [url, setUrl] = useState<string | undefined>(mensagem.anexoUrl);
+  // Anexo antigo vem em base64; os movidos para o Storage vêm como "storage:..." (link assinado).
+  const [url, setUrl] = useState<string | undefined>(mensagem.anexoUrl?.startsWith('storage:') ? undefined : mensagem.anexoUrl);
   const [carregando, setCarregando] = useState(false);
   const [falhou, setFalhou] = useState(false);
 
@@ -87,7 +88,8 @@ const AnexoDaMensagem: React.FC<{
     setCarregando(true);
     setFalhou(false);
     try {
-      const encontrado = (await getAnexoMensagem(mensagem.id)) || undefined;
+      const bruto = mensagem.anexoUrl || (await getAnexoMensagem(mensagem.id)) || undefined;
+      const encontrado = bruto ? await obterUrlArquivo(bruto) : undefined;
       setUrl(encontrado);
       if (!encontrado) setFalhou(true);
       return encontrado;
@@ -275,6 +277,9 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [isNovaConversaOpen, setIsNovaConversaOpen] = useState(false);
   const [busca, setBusca] = useState('');
   const [anexoPendente, setAnexoPendente] = useState<AnexoMensagemChat | null>(null);
+  // Arquivo escolhido: vai para o Storage na hora de enviar (a prévia usa o data URL só na tela).
+  const arquivoPendenteRef = useRef<File | null>(null);
+  const [enviandoAnexo, setEnviandoAnexo] = useState(false);
   const [erroAnexo, setErroAnexo] = useState<string | null>(null);
   const [anexoVisualizando, setAnexoVisualizando] = useState<{ url: string; nome: string; tipo: string } | null>(null);
   const [mencaoQuery, setMencaoQuery] = useState<string | null>(null);
@@ -402,10 +407,23 @@ export const ChatView: React.FC<ChatViewProps> = ({
     onExcluirConversa(conversa.id);
   };
 
-  const handleEnviar = () => {
+  const handleEnviar = async () => {
     if (!conversaAbertaId) return;
     if (!textoNovo.trim() && !anexoPendente) return;
-    onEnviarMensagem(conversaAbertaId, textoNovo, anexoPendente || undefined, respondendo?.id);
+    let anexo = anexoPendente || undefined;
+    if (anexo && arquivoPendenteRef.current) {
+      setEnviandoAnexo(true);
+      try {
+        anexo = { ...anexo, url: await enviarArquivo(arquivoPendenteRef.current, 'chat/anexos') };
+      } catch (e) {
+        setErroAnexo(e instanceof Error ? e.message : 'Não foi possível enviar o anexo.');
+        setEnviandoAnexo(false);
+        return;
+      }
+      setEnviandoAnexo(false);
+    }
+    arquivoPendenteRef.current = null;
+    onEnviarMensagem(conversaAbertaId, textoNovo, anexo, respondendo?.id);
     setRespondendo(null);
     setTextoNovo('');
     setAnexoPendente(null);
@@ -433,6 +451,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
     }
 
     setErroAnexo(null);
+    arquivoPendenteRef.current = file;
     const reader = new FileReader();
     reader.onload = () => {
       setAnexoPendente({ url: reader.result as string, nome: file.name, tipo: file.type });
@@ -927,7 +946,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               {!gravandoAudio && <button
                 type="button"
                 onClick={handleEnviar}
-                disabled={!textoNovo.trim() && !anexoPendente}
+                disabled={(!textoNovo.trim() && !anexoPendente) || enviandoAnexo}
                 className="p-2.5 bg-[#C48229] hover:bg-[#92611F] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl transition-colors shrink-0"
                 title="Enviar (Enter)"
               >
