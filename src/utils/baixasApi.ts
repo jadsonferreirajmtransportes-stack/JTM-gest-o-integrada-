@@ -375,12 +375,15 @@ export interface RegrasBaixas {
   };
   /** Meta de entrega (%): abaixo dela, o número aparece em vermelho. */
   metaEntrega: number;
+  /** Motivos que aparecem na hora de abonar uma pendência. */
+  motivosAbono: string[];
 }
 
 export const REGRAS_PADRAO: RegrasBaixas = {
   responsavel: { pesoRegularidade: 20, pesoComprovacao: 40, pesoEntrega: 40, diasParaImportar: 1 },
   motorista: { pesoEntrega: 100, pesoPrazo: 0, pesoComprovacao: 0, minimoNotas: 1 },
   metaEntrega: 95,
+  motivosAbono: MOTIVOS_ABONO,
 };
 
 /** Junta o salvo com o padrão (campos novos ganham o valor padrão). */
@@ -389,6 +392,7 @@ export function normalizarRegras(r?: Partial<RegrasBaixas> | null): RegrasBaixas
     responsavel: { ...REGRAS_PADRAO.responsavel, ...(r?.responsavel || {}) },
     motorista: { ...REGRAS_PADRAO.motorista, ...(r?.motorista || {}) },
     metaEntrega: r?.metaEntrega ?? REGRAS_PADRAO.metaEntrega,
+    motivosAbono: Array.isArray(r?.motivosAbono) && r!.motivosAbono.length ? r!.motivosAbono : MOTIVOS_ABONO,
   };
 }
 
@@ -520,9 +524,10 @@ const rpc = async (nome: string, corpo: Record<string, unknown>) => {
   return data;
 };
 
-export async function portalBaixasEstado(c: Cred): Promise<{ permitido: boolean; nome?: string; base?: string; uploads: BaixaUpload[] }> {
+export async function portalBaixasEstado(c: Cred): Promise<{ permitido: boolean; nome?: string; base?: string; uploads: BaixaUpload[]; motivosAbono: string[] }> {
   const d = await rpc('portal_baixas_estado', args(c));
-  return { permitido: !!d?.permitido, nome: d?.nome, base: d?.base, uploads: d?.uploads ?? [] };
+  const motivos = Array.isArray(d?.motivosAbono) && d.motivosAbono.length ? d.motivosAbono : MOTIVOS_ABONO;
+  return { permitido: !!d?.permitido, nome: d?.nome, base: d?.base, uploads: d?.uploads ?? [], motivosAbono: motivos };
 }
 export async function portalBaixasImportar(c: Cred, dataReferencia: string, arquivoNome: string, notas: PlanilhaBaixas['notas']): Promise<string> {
   const d = await rpc('portal_baixas_importar', { ...args(c), p_data: dataReferencia, p_arquivo: arquivoNome, p_notas: notas });

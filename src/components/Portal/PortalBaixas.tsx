@@ -20,7 +20,7 @@ export const PortalBaixas: React.FC<{ credenciais: CredenciaisPortal }> = ({ cre
       .then(setEstado)
       .catch((e) => {
         setErro(e instanceof Error ? e.message : 'Não foi possível carregar.');
-        setEstado({ permitido: false, uploads: [] });
+        setEstado({ permitido: false, uploads: [], motivosAbono: [] });
       });
   useEffect(() => {
     carregar();
@@ -77,6 +77,7 @@ export const PortalBaixas: React.FC<{ credenciais: CredenciaisPortal }> = ({ cre
           carregarNotas={(id) => portalBaixasNotas(credenciais, id)}
           marcarTardia={(n: BaixaNota, quando: string) => portalBaixasTardia(credenciais, n, quando)}
           marcarAbono={(n: BaixaNota, motivo: string, obs: string) => portalBaixasAbonar(credenciais, n, motivo, obs)}
+          motivosAbono={estado.motivosAbono}
         />
       </div>
     );

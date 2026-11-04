@@ -1,7 +1,7 @@
 -- 102: Performance das baixas — ABONO de pendência (expedição, local fechado, sem recebedor...).
 -- Nota abonada sai da conta: não pesa contra o motorista nem contra o responsável (fica fora do
 -- total). Guarda motivo, observação, quem e quando; dá para desfazer.
--- Também no link pessoal do responsável (portal_baixas_abonar).
+-- Também no link pessoal do responsável (portal_baixas_abonar), com a lista de motivos editável.
 -- Rodar no dev e na produção ANTES de publicar.
 
 alter table baixas_notas add column if not exists abono_motivo text;
@@ -141,5 +141,36 @@ end;
 $$;
 revoke all on function portal_baixas_abonar(text, text, date, text, text, text) from public;
 grant execute on function portal_baixas_abonar(text, text, date, text, text, text) to anon, authenticated;
+
+-- Estado do portal agora traz também os motivos de abono (lista editável em Regras de pontuação).
+create or replace function portal_baixas_estado(p_token text, p_cpf text, p_nascimento date)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r baixas_responsaveis;
+begin
+  if portal__colaborador(p_token, p_cpf, p_nascimento) is null then return jsonb_build_object('erro', 'dados'); end if;
+  r := baixas__responsavel(p_token, p_cpf, p_nascimento);
+  if r.colaborador_id is null then return jsonb_build_object('permitido', false); end if;
+  return jsonb_build_object(
+    'permitido', true,
+    'nome', r.nome,
+    'base', r.base,
+    'motivosAbono', (select c.regras->'motivosAbono' from baixas_config c where c.id = 1),
+    'uploads', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', u.id, 'responsavel', u.responsavel, 'base', u.base, 'dataReferencia', u.data_referencia, 'arquivoNome', u.arquivo_nome,
+        'total', u.total, 'entregues', u.entregues, 'comprovadas', u.comprovadas, 'noPrazo', u.no_prazo, 'criadoEm', u.criado_em
+      ) order by u.data_referencia desc)
+      from baixas_uploads u
+      where (u.colaborador_id = r.colaborador_id or lower(u.responsavel) = lower(r.nome))
+        and u.data_referencia >= current_date - 120
+    ), '[]'::jsonb)
+  );
+end;
+$$;
 
 notify pgrst, 'reload schema';

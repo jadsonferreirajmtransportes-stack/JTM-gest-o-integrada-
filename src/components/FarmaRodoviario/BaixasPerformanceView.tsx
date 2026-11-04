@@ -19,6 +19,7 @@ import {
   explicarRegrasMotorista,
   explicarRegrasResponsavel,
   getRegrasBaixas,
+  salvarRegrasBaixas,
   ResumoMes,
   buscarNotaBaixas,
   contar,
@@ -250,6 +251,12 @@ export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null
           onAtualizado={(u) => setUploads((p) => (p || []).map((x) => (x.id === u.id ? u : x)))}
           usuario={currentUser?.nome}
           metaEntrega={regras.metaEntrega}
+          motivosAbono={regras.motivosAbono}
+          onNovoMotivo={async (m) => {
+            const novas = { ...regras, motivosAbono: [...regras.motivosAbono, m] };
+            await salvarRegrasBaixas(novas, currentUser?.nome);
+            setRegras(novas);
+          }}
         />
       )}
 
@@ -467,7 +474,9 @@ const Importacoes: React.FC<{
   onAtualizado: (u: BaixaUpload) => void;
   usuario?: string;
   metaEntrega: number;
-}> = ({ uploads, aberto, onAbrir, onExcluido, onAtualizado, usuario, metaEntrega }) => {
+  motivosAbono: string[];
+  onNovoMotivo: (motivo: string) => Promise<void>;
+}> = ({ uploads, aberto, onAbrir, onExcluido, onAtualizado, usuario, metaEntrega, motivosAbono, onNovoMotivo }) => {
   const [busca, setBusca] = useState('');
   const [resultado, setResultado] = useState<BaixaNota[] | null>(null);
   const [fechados, setFechados] = useState<Set<string>>(new Set());
@@ -574,7 +583,7 @@ const Importacoes: React.FC<{
         </div>
       </aside>
       {aberto ? (
-        <DetalheUpload key={aberto.id} upload={aberto} usuario={usuario} onAtualizado={onAtualizado} />
+        <DetalheUpload key={aberto.id} upload={aberto} usuario={usuario} onAtualizado={onAtualizado} motivosAbono={motivosAbono} onNovoMotivo={onNovoMotivo} />
       ) : (
         <p className="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center text-xs text-slate-500">Escolha um dia na lista ao lado para ver a auditoria das notas.</p>
       )}
@@ -664,7 +673,10 @@ export const DetalheUpload: React.FC<{
   carregarNotas?: (uploadId: string) => Promise<BaixaNota[]>;
   marcarTardia?: (n: BaixaNota, quando: string) => Promise<BaixaNota>;
   marcarAbono?: (n: BaixaNota, motivo: string, obs: string) => Promise<BaixaNota>;
-}> = ({ upload, usuario, onAtualizado, carregarNotas, marcarTardia, marcarAbono }) => {
+  motivosAbono?: string[];
+  /** Gestão: acrescenta um motivo novo à lista (salvo nas regras). */
+  onNovoMotivo?: (motivo: string) => Promise<void>;
+}> = ({ upload, usuario, onAtualizado, carregarNotas, marcarTardia, marcarAbono, motivosAbono = MOTIVOS_ABONO, onNovoMotivo }) => {
   const [abonando, setAbonando] = useState<BaixaNota | null>(null);
   const [notas, setNotas] = useState<BaixaNota[] | null>(null);
   const [motorista, setMotorista] = useState('');
@@ -748,7 +760,7 @@ export const DetalheUpload: React.FC<{
 
   return (
     <div className="space-y-4 min-w-0">
-      {abonando && <AbonoModal nota={abonando} onClose={() => setAbonando(null)} onConfirmar={async (motivo, obs) => {
+      {abonando && <AbonoModal nota={abonando} motivos={motivosAbono} onNovoMotivo={onNovoMotivo} onClose={() => setAbonando(null)} onConfirmar={async (motivo, obs) => {
         await aplicarAbono(abonando, motivo, obs);
         setAbonando(null);
       }} />}
@@ -992,14 +1004,41 @@ export const DetalheUpload: React.FC<{
   );
 };
 
-const AbonoModal: React.FC<{ nota: BaixaNota; onClose: () => void; onConfirmar: (motivo: string, obs: string) => Promise<void> }> = ({ nota, onClose, onConfirmar }) => {
+const AbonoModal: React.FC<{
+  nota: BaixaNota;
+  motivos: string[];
+  onNovoMotivo?: (motivo: string) => Promise<void>;
+  onClose: () => void;
+  onConfirmar: (motivo: string, obs: string) => Promise<void>;
+}> = ({ nota, motivos, onNovoMotivo, onClose, onConfirmar }) => {
   const [motivo, setMotivo] = useState('');
+  const [lista, setLista] = useState<string[]>(motivos);
+  const [novo, setNovo] = useState('');
+  const [criando, setCriando] = useState(false);
+  const adicionar = async () => {
+    const m = novo.trim();
+    if (!m || !onNovoMotivo) return;
+    setCriando(true);
+    setErro(null);
+    try {
+      if (!lista.some((x) => x.toLowerCase() === m.toLowerCase())) {
+        await onNovoMotivo(m);
+        setLista((l) => [...l, m]);
+      }
+      setMotivo(lista.find((x) => x.toLowerCase() === m.toLowerCase()) || m);
+      setNovo('');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível adicionar o motivo.');
+    } finally {
+      setCriando(false);
+    }
+  };
   const [obs, setObs] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const confirmar = async () => {
     if (!motivo) return setErro('Escolha o motivo.');
-    if (motivo === 'Outro' && !obs.trim()) return setErro('Explique o motivo na observação.');
+    if (/^outro/i.test(motivo) && !obs.trim()) return setErro('Explique o motivo na observação.');
     setSalvando(true);
     setErro(null);
     try {
@@ -1027,15 +1066,34 @@ const AbonoModal: React.FC<{ nota: BaixaNota; onClose: () => void; onConfirmar: 
         <div className="p-4 space-y-3">
           <p className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-[#92611F]">A nota abonada sai da conta: não pesa contra o motorista nem contra o responsável. Dá para desfazer depois.</p>
           <div className="space-y-1.5">
-            {MOTIVOS_ABONO.map((m) => (
+            {lista.map((m) => (
               <label key={m} className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer ${motivo === m ? 'border-[#C48229] bg-amber-50' : 'border-slate-200'}`}>
                 <input type="radio" name="motivo-abono" checked={motivo === m} onChange={() => setMotivo(m)} className="accent-[#C48229]" />
                 <span className="font-semibold text-slate-800">{m}</span>
               </label>
             ))}
           </div>
+          {onNovoMotivo && (
+            <div className="flex gap-2">
+              <input
+                value={novo}
+                onChange={(e) => setNovo(e.target.value.slice(0, 80))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    adicionar();
+                  }
+                }}
+                placeholder="+ Adicionar motivo à lista"
+                className="flex-1 p-2 border border-dashed border-slate-300 rounded-lg text-sm"
+              />
+              <button type="button" onClick={adicionar} disabled={!novo.trim() || criando} className="px-3 py-2 rounded-lg border border-[#C48229] text-[#92611F] font-bold disabled:opacity-50">
+                {criando ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Adicionar'}
+              </button>
+            </div>
+          )}
           <label className="block">
-            <span className="font-bold text-slate-700">Observação {motivo === 'Outro' ? '(obrigatória)' : '(opcional)'}</span>
+            <span className="font-bold text-slate-700">Observação {/^outro/i.test(motivo) ? '(obrigatória)' : '(opcional)'}</span>
             <textarea value={obs} onChange={(e) => setObs(e.target.value.slice(0, 500))} rows={2} className="mt-1 w-full p-2 border border-slate-300 rounded-lg text-sm" placeholder="Ex.: farmácia fechada às 17h, reentrega amanhã." />
           </label>
           {erro && <p className="text-rose-700 font-semibold">{erro}</p>}

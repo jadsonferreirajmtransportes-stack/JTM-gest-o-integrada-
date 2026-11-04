@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Loader2, RotateCcw, Save, X } from 'lucide-react';
+import { Loader2, Plus, RotateCcw, Save, Trash2, X } from 'lucide-react';
 import { REGRAS_PADRAO, RegrasBaixas, explicarRegrasMotorista, explicarRegrasResponsavel, salvarRegrasBaixas } from '../../utils/baixasApi';
 
 const Peso: React.FC<{ rotulo: string; ajuda: string; valor: number; onChange: (v: number) => void }> = ({ rotulo, ajuda, valor, onChange }) => (
@@ -34,6 +34,7 @@ export const RegrasBaixasModal: React.FC<{ regras: RegrasBaixas; usuario?: strin
   const [r, setR] = useState<RegrasBaixas>(regras);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [novoMotivo, setNovoMotivo] = useState('');
   const resp = r.responsavel;
   const mot = r.motorista;
   const somaResp = resp.pesoRegularidade + resp.pesoComprovacao + resp.pesoEntrega;
@@ -43,11 +44,13 @@ export const RegrasBaixasModal: React.FC<{ regras: RegrasBaixas; usuario?: strin
 
   const salvar = async () => {
     if (somaResp !== 100 || somaMot !== 100) return setErro('Os pesos de cada parte precisam somar 100%.');
+    if (!r.motivosAbono.filter((m) => m.trim()).length) return setErro('Deixe pelo menos um motivo de abono.');
     setSalvando(true);
     setErro(null);
     try {
-      await salvarRegrasBaixas(r, usuario);
-      onSalvo(r);
+      const final = { ...r, motivosAbono: Array.from(new Set(r.motivosAbono.map((m) => m.trim()).filter(Boolean))) };
+      await salvarRegrasBaixas(final, usuario);
+      onSalvo(final);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível salvar.');
       setSalvando(false);
@@ -60,7 +63,7 @@ export const RegrasBaixasModal: React.FC<{ regras: RegrasBaixas; usuario?: strin
         <div className="p-4 border-b border-slate-200 flex items-start justify-between">
           <div>
             <h2 className="text-base font-black text-slate-900 normal-case">Regras de pontuação</h2>
-            <p className="text-slate-500">Valem para o painel do mês e o dossiê — inclusive dos meses anteriores, que são recalculados.</p>
+            <p className="text-slate-500">Pontos, meta e motivos de abono. Valem para o painel do mês e o dossiê — inclusive dos meses anteriores, que são recalculados.</p>
           </div>
           <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
             <X className="w-4 h-4" />
@@ -103,6 +106,51 @@ export const RegrasBaixasModal: React.FC<{ regras: RegrasBaixas; usuario?: strin
               <input type="number" min={0} max={100} step={0.5} value={r.metaEntrega} onChange={(e) => setR((x) => ({ ...x, metaEntrega: Math.max(0, Math.min(100, Number(e.target.value) || 0)) }))} className="mt-1 w-full p-2 border border-slate-300 rounded-lg bg-white" />
               <span className="block text-[11px] text-slate-500 mt-0.5">Abaixo da meta, a taxa de entrega aparece em vermelho.</span>
             </label>
+          </section>
+
+          <section className="p-3 rounded-xl border border-slate-200 bg-[#FCFAF6] space-y-2">
+            <div>
+              <h3 className="text-sm font-black text-slate-900 normal-case">Motivos de abono</h3>
+              <p className="text-[11px] text-slate-500">Aparecem na hora de abonar uma pendência (gestão e link pessoal do responsável).</p>
+            </div>
+            {r.motivosAbono.map((m, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  value={m}
+                  onChange={(e) => setR((x) => ({ ...x, motivosAbono: x.motivosAbono.map((y, k) => (k === i ? e.target.value.slice(0, 80) : y)) }))}
+                  className="flex-1 p-2 border border-slate-300 rounded-lg bg-white"
+                />
+                <button type="button" onClick={() => setR((x) => ({ ...x, motivosAbono: x.motivosAbono.filter((_, k) => k !== i) }))} className="p-1.5 text-slate-400 hover:text-rose-600" title="Tirar o motivo">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            <div className="flex gap-2">
+              <input
+                value={novoMotivo}
+                onChange={(e) => setNovoMotivo(e.target.value.slice(0, 80))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && novoMotivo.trim()) {
+                    e.preventDefault();
+                    setR((x) => ({ ...x, motivosAbono: [...x.motivosAbono, novoMotivo.trim()] }));
+                    setNovoMotivo('');
+                  }
+                }}
+                placeholder="Novo motivo (ex.: Avaria na carga)"
+                className="flex-1 p-2 border border-slate-300 rounded-lg bg-white"
+              />
+              <button
+                type="button"
+                disabled={!novoMotivo.trim()}
+                onClick={() => {
+                  setR((x) => ({ ...x, motivosAbono: [...x.motivosAbono, novoMotivo.trim()] }));
+                  setNovoMotivo('');
+                }}
+                className="px-3 py-2 rounded-lg border border-[#C48229] text-[#92611F] font-bold flex items-center gap-1 disabled:opacity-50"
+              >
+                <Plus className="w-4 h-4" /> Adicionar
+              </button>
+            </div>
           </section>
 
           <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[#92611F] space-y-1">
