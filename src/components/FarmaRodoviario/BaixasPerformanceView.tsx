@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Award, CalendarDays, ChevronDown, ChevronRight, Clock, FileSpreadsheet, FileText, Loader2, Package, Search, Trash2, TriangleAlert, Upload, UserRound, X, CheckCircle2 } from 'lucide-react';
+import { Award, ClipboardCheck, CalendarDays, ChevronDown, ChevronRight, Clock, FileSpreadsheet, FileText, Loader2, Package, Search, Trash2, TriangleAlert, Upload, UserRound, X, CheckCircle2 } from 'lucide-react';
 import type { Colaborador, UsuarioLogin } from '../../types';
 import { ResponsaveisBaixasModal } from './ResponsaveisBaixasModal';
 import { AcoesTela } from '../Common/AcoesTela';
@@ -41,21 +41,37 @@ const nomeBonito = (s?: string) =>
     .replace(/(^|\s)\S/g, (l) => l.toUpperCase())
     .replace(/\s(Da|De|Do|Das|Dos|E)\s/g, (m) => m.toLowerCase());
 
-const Kpi: React.FC<{ titulo: string; valor: string; detalhe: string; cor: 'verde' | 'vermelho' | 'azul' | 'cinza'; icone: React.ElementType }> = ({ titulo, valor, detalhe, cor, icone: Icone }) => {
-  const cls = { verde: 'border-t-emerald-600 text-emerald-700', vermelho: 'border-t-rose-600 text-rose-700', azul: 'border-t-blue-600 text-blue-700', cinza: 'border-t-slate-500 text-slate-700' }[cor];
-  return (
-    <div className={`bg-white rounded-2xl border border-slate-200 border-t-4 p-4 ${cls.split(' ')[0]}`}>
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">{titulo}</p>
-        <Icone className={`w-4 h-4 ${cls.split(' ')[1]}`} />
-      </div>
-      <p className="text-3xl font-black text-slate-900 mt-1">{valor}</p>
-      <p className="text-[11px] text-slate-500">{detalhe}</p>
+const Kpi: React.FC<{ titulo: string; valor: string; detalhe: string; alerta?: boolean; icone: React.ElementType }> = ({ titulo, valor, detalhe, alerta, icone: Icone }) => (
+  <div className={`bg-white rounded-2xl border p-4 shadow-xs ${alerta ? 'border-rose-200' : 'border-slate-200'}`}>
+    <div className="flex items-start justify-between gap-2">
+      <p className="text-[11px] font-bold text-slate-500">{titulo}</p>
+      <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${alerta ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-[#C48229]'}`}>
+        <Icone className="w-[18px] h-[18px]" />
+      </span>
     </div>
-  );
-};
+    <p className={`text-[28px] leading-tight font-black tracking-tight ${alerta ? 'text-rose-700' : 'text-slate-900'}`} style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}>
+      {valor}
+    </p>
+    <p className="text-[11px] text-slate-500">{detalhe}</p>
+  </div>
+);
 
-/** Barras horizontais: entregues (verde) e não entregues (vermelho) por motorista. */
+/** Título de bloco no padrão do sistema. */
+const TituloBloco: React.FC<{ titulo: string; sub?: string; icone?: React.ElementType }> = ({ titulo, sub, icone: Icone }) => (
+  <div className="flex items-center gap-2 mb-3">
+    {Icone && (
+      <span className="w-8 h-8 rounded-xl bg-amber-50 text-[#C48229] flex items-center justify-center shrink-0">
+        <Icone className="w-4 h-4" />
+      </span>
+    )}
+    <div>
+      <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal">{titulo}</h3>
+      {sub && <p className="text-[11px] text-slate-500">{sub}</p>}
+    </div>
+  </div>
+);
+
+/** Barras horizontais: entregues (bronze) e não entregues (vermelho suave) por motorista. */
 const BarrasMotoristas: React.FC<{ linhas: { nome: string; entregues: number; total: number }[] }> = ({ linhas }) => {
   const max = Math.max(1, ...linhas.map((l) => l.total));
   return (
@@ -65,9 +81,9 @@ const BarrasMotoristas: React.FC<{ linhas: { nome: string; entregues: number; to
           <span className="w-36 shrink-0 text-right text-slate-600 truncate" title={l.nome}>
             {nomeBonito(l.nome)}
           </span>
-          <div className="flex-1 h-5 bg-slate-50 rounded flex overflow-hidden">
-            <div className="bg-emerald-600 h-full" style={{ width: `${(l.entregues / max) * 100}%` }} />
-            <div className="bg-rose-600 h-full" style={{ width: `${((l.total - l.entregues) / max) * 100}%` }} />
+          <div className="flex-1 h-4 bg-[#FBF6EE] rounded-full flex overflow-hidden">
+            <div className="bg-[#C48229] h-full" style={{ width: `${(l.entregues / max) * 100}%` }} />
+            <div className="bg-rose-400 h-full" style={{ width: `${((l.total - l.entregues) / max) * 100}%` }} />
           </div>
           <span className="w-14 shrink-0 font-bold text-slate-700">
             {l.entregues}/{l.total}
@@ -76,10 +92,10 @@ const BarrasMotoristas: React.FC<{ linhas: { nome: string; entregues: number; to
       ))}
       <p className="text-[10px] text-slate-500 flex gap-3 justify-center pt-1">
         <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Entregues
+          <span className="w-2.5 h-2.5 rounded-full bg-[#C48229]" /> Entregues
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> Não entregues
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-400" /> Não entregues
         </span>
       </p>
     </div>
@@ -93,8 +109,8 @@ const BarrasPercentual: React.FC<{ linhas: { nome: string; valor: number }[] }> 
         <span className="w-36 shrink-0 text-right text-slate-600 truncate" title={l.nome}>
           {nomeBonito(l.nome)}
         </span>
-        <div className="flex-1 h-5 bg-slate-50 rounded overflow-hidden">
-          <div className="bg-blue-600 h-full rounded" style={{ width: `${Math.min(100, l.valor)}%` }} />
+        <div className="flex-1 h-4 bg-[#FBF6EE] rounded-full overflow-hidden">
+          <div className="bg-[#92611F] h-full rounded-full" style={{ width: `${Math.min(100, l.valor)}%` }} />
         </div>
         <span className="w-12 shrink-0 font-bold text-slate-700">{f1(l.valor)}</span>
       </div>
@@ -109,15 +125,15 @@ const Rosca: React.FC<{ ok: number; total: number }> = ({ ok, total }) => {
   return (
     <div className="flex items-center justify-center gap-6">
       <svg viewBox="0 0 140 140" className="w-40 h-40 -rotate-90">
-        <circle cx="70" cy="70" r={r} fill="none" stroke="#dc2626" strokeWidth="22" />
-        <circle cx="70" cy="70" r={r} fill="none" stroke="#047857" strokeWidth="22" strokeDasharray={`${c * p} ${c}`} />
+        <circle cx="70" cy="70" r={r} fill="none" stroke="#FDA4AF" strokeWidth="20" />
+        <circle cx="70" cy="70" r={r} fill="none" stroke="#C48229" strokeWidth="20" strokeLinecap="butt" strokeDasharray={`${c * p} ${c}`} />
       </svg>
       <div className="text-xs space-y-1">
         <p className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-emerald-700" /> Entregue <b>{f1(p * 100)}</b>
+          <span className="w-3 h-3 rounded-full bg-[#C48229]" /> Entregue <b>{f1(p * 100)}</b>
         </p>
         <p className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-rose-600" /> Falha <b>{f1(100 - p * 100)}</b>
+          <span className="w-3 h-3 rounded-full bg-rose-300" /> Falha <b>{f1(100 - p * 100)}</b>
         </p>
       </div>
     </div>
@@ -127,7 +143,7 @@ const Rosca: React.FC<{ ok: number; total: number }> = ({ ok, total }) => {
 const Medalha: React.FC<{ pos: number }> = ({ pos }) => (
   <span
     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-      pos === 1 ? 'bg-amber-400 text-white' : pos === 2 ? 'bg-slate-300 text-white' : pos === 3 ? 'bg-[#C48229] text-white' : 'bg-slate-100 text-slate-500'
+      pos === 1 ? 'bg-[#E2A64B] text-white' : pos === 2 ? 'bg-slate-400 text-white' : pos === 3 ? 'bg-[#92611F] text-white' : 'bg-[#FBF6EE] text-[#92611F] border border-amber-200'
     }`}
   >
     {pos}º
@@ -161,6 +177,15 @@ export const BaixasPerformanceView: React.FC<{ currentUser?: UsuarioLogin | null
 
   return (
     <div className="space-y-4">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs hidden lg:flex items-center gap-3">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C48229] to-[#92611F] flex items-center justify-center text-white shrink-0">
+          <ClipboardCheck className="w-6 h-6" />
+        </div>
+        <div>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight normal-case">Performance das baixas</h1>
+          <p className="text-xs text-slate-500">Planilhas de baixa do dia, auditoria das notas e o resultado do mês por responsável e por motorista.</p>
+        </div>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 bg-white border border-slate-200 rounded-xl p-1">
           {(
@@ -302,16 +327,10 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
       ) : (
         <>
           <div className="bg-white rounded-2xl border border-slate-200 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Award className="w-5 h-5 text-[#C48229]" />
-              <div>
-                <h3 className="text-sm font-black text-slate-900 normal-case">Pódio de excelência — {nomeMes(mes)}</h3>
-                <p className="text-[11px] text-slate-500">Os 3 melhores responsáveis pelas baixas{base ? ` da base ${base}` : ''}</p>
-              </div>
-            </div>
+            <TituloBloco icone={Award} titulo={`Pódio de excelência — ${nomeMes(mes)}`} sub={`Os 3 melhores responsáveis pelas baixas${base ? ` da base ${base}` : ''}`} />
             <div className="grid sm:grid-cols-3 gap-3">
               {ranking.slice(0, 3).map((r, i) => (
-                <div key={r.responsavel} className={`flex items-center gap-3 p-3 rounded-xl border ${i === 0 ? 'border-amber-300 bg-amber-50/50' : i === 2 ? 'border-[#E8C48E] bg-orange-50/30' : 'border-slate-200 bg-slate-50'}`}>
+                <div key={r.responsavel} className={`flex items-center gap-3 p-3 rounded-xl border ${i === 0 ? 'border-[#E2A64B] bg-[#FBF6EE]' : 'border-slate-200 bg-white'}`}>
                   <Medalha pos={i + 1} />
                   <div>
                     <p className="text-sm font-black text-slate-900">{r.responsavel.toUpperCase()}</p>
@@ -325,54 +344,53 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Kpi titulo="Sucesso geral" valor={f1(pct(resumo.entregues, resumo.total))} detalhe="notas entregues" cor="verde" icone={CheckCircle2} />
-            <Kpi titulo="Falhas gerais" valor={f1(100 - pct(resumo.entregues, resumo.total))} detalhe={`${resumo.total - resumo.entregues} notas não entregues`} cor="vermelho" icone={TriangleAlert} />
-            <Kpi titulo="Dentro do prazo" valor={f1(pct(resumo.noPrazo, resumo.total))} detalhe="entregas no prazo" cor="azul" icone={Clock} />
-            <Kpi titulo="Total de notas" valor={resumo.total.toLocaleString('pt-BR')} detalhe={`${pct(resumo.comprovadas, resumo.total).toFixed(1)}% comprovadas`} cor="cinza" icone={Package} />
+            <Kpi titulo="Sucesso geral" valor={f1(pct(resumo.entregues, resumo.total))} detalhe="notas entregues" icone={CheckCircle2} />
+            <Kpi titulo="Falhas gerais" valor={f1(100 - pct(resumo.entregues, resumo.total))} detalhe={`${resumo.total - resumo.entregues} notas não entregues`} alerta={resumo.total - resumo.entregues > 0} icone={TriangleAlert} />
+            <Kpi titulo="Dentro do prazo" valor={f1(pct(resumo.noPrazo, resumo.total))} detalhe="entregas no prazo" icone={Clock} />
+            <Kpi titulo="Total de notas" valor={resumo.total.toLocaleString('pt-BR')} detalhe={`${pct(resumo.comprovadas, resumo.total).toFixed(1)}% comprovadas`} icone={Package} />
           </div>
 
           <div className="grid lg:grid-cols-2 gap-3">
             <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <h3 className="text-xs font-black text-slate-700 uppercase tracking-wide text-center mb-3">Taxa de efetividade da operação</h3>
+              <TituloBloco icone={CheckCircle2} titulo="Efetividade da operação" sub="Notas entregues × não entregues no mês" />
               <Rosca ok={resumo.entregues} total={resumo.total} />
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <h3 className="text-xs font-black text-slate-700 uppercase tracking-wide text-center mb-3">Top 5 motoristas (volume)</h3>
+              <TituloBloco icone={Package} titulo="Top 5 motoristas" sub="Os que mais tiveram notas no mês" />
               <BarrasMotoristas linhas={top5.map((m) => ({ nome: m.motorista, entregues: m.entregues, total: m.total }))} />
             </div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-3">
             <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-2">
-              <h3 className="text-sm font-black text-slate-900 normal-case">🏆 Ranking dos responsáveis</h3>
+              <TituloBloco icone={Award} titulo="Ranking dos responsáveis" sub="Quem cuida das planilhas de baixa no escritório" />
               <p className="text-[10px] text-slate-500">
                 Pontos = {PESOS_PONTOS.regularidade * 100}% regularidade (dias importados até o dia útil seguinte) + {PESOS_PONTOS.comprovacao * 100}% comprovação + {PESOS_PONTOS.entrega * 100}% entrega.
               </p>
               {ranking.map((r, i) => (
-                <div key={r.responsavel} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50">
+                <div key={r.responsavel} className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 bg-[#FCFAF6]">
                   <Medalha pos={i + 1} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-black text-slate-900">{r.responsavel.toUpperCase()}</p>
                     <p className="text-[11px] text-slate-600">
                       {r.entregues.toLocaleString('pt-BR')} / {r.total.toLocaleString('pt-BR')} OK
                     </p>
-                    <p className="text-[10px] font-semibold text-rose-700">
+                    <p className="text-[10px] font-semibold text-[#92611F]">
                       Regularidade {f1(r.regularidade)} • comprovação {f1(r.comprovacao)} • {r.diasNoPrazo}/{r.diasEsperados} dias no prazo
                     </p>
-                    {r.diasFaltantes.length > 0 && <p className="text-[10px] text-slate-500">Dias faltantes: {r.diasFaltantes.map(dataBr).join(', ')}</p>}
+                    {r.diasFaltantes.length > 0 && <p className="text-[10px] text-rose-700">Dias faltantes: {r.diasFaltantes.map(dataBr).join(', ')}</p>}
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-lg font-black text-emerald-700">{r.pontos.toFixed(1)} pts</p>
+                    <p className="text-lg font-black text-[#92611F]">{r.pontos.toFixed(1)} pts</p>
                     <p className="text-[10px] text-slate-500">Entrega {f1(r.entrega)}</p>
                   </div>
                 </div>
               ))}
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-2">
-              <h3 className="text-sm font-black text-slate-900 normal-case">🚚 Ranking dos motoristas</h3>
-              <p className="text-[10px] text-slate-500">Ordem pela taxa de entrega (entregues ÷ notas do motorista).</p>
+              <TituloBloco icone={UserRound} titulo="Ranking dos motoristas" sub="Pela taxa de entrega (entregues ÷ notas do motorista)" />
               {motoristas.map((m, i) => (
-                <div key={m.motorista} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+                <div key={m.motorista} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-[#FCFAF6]">
                   <Medalha pos={i + 1} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-slate-900 truncate">{nomeBonito(m.motorista)}</p>
@@ -381,7 +399,7 @@ const PainelMes: React.FC<{ bases: string[]; temImportacoes: boolean; mesInicial
                       {m.entregues} / {m.total} OK · {f1(pct(m.noPrazo, m.total))} no prazo
                     </p>
                   </div>
-                  <p className={`text-base font-black ${m.taxa >= 97 ? 'text-emerald-700' : m.taxa >= 93 ? 'text-[#92611F]' : 'text-rose-700'}`}>{f1(m.taxa)}</p>
+                  <p className={`text-base font-black ${m.taxa >= 93 ? 'text-slate-900' : 'text-rose-700'}`}>{f1(m.taxa)}</p>
                 </div>
               ))}
             </div>
@@ -476,9 +494,9 @@ const Importacoes: React.FC<{
         <div className="space-y-1 max-h-[70vh] overflow-y-auto">
           {arvore.map(([resp, meses]) => (
             <div key={resp}>
-              <button type="button" onClick={() => alternar(resp)} className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-blue-50 text-xs font-black text-slate-800 normal-case tracking-normal">
+              <button type="button" onClick={() => alternar(resp)} className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#FBF6EE] text-xs font-black text-[#92611F] normal-case tracking-normal">
                 {fechados.has(resp) ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                <UserRound className="w-3.5 h-3.5 text-blue-700" /> {resp}
+                <UserRound className="w-3.5 h-3.5" /> {resp}
               </button>
               {!fechados.has(resp) &&
                 [...meses.entries()]
@@ -496,7 +514,7 @@ const Importacoes: React.FC<{
                               {dataBr(u.dataReferencia)}
                               {u.base !== 'Matriz' && <span className="text-[10px] text-slate-500"> · {u.base}</span>}
                             </button>
-                            <span className={`text-[10px] font-bold ${pct(u.entregues, u.total) >= 97 ? 'text-emerald-700' : 'text-rose-700'}`}>{f1(pct(u.entregues, u.total))}</span>
+                            <span className={`text-[10px] font-bold ${pct(u.entregues, u.total) >= 93 ? 'text-slate-500' : 'text-rose-700'}`}>{f1(pct(u.entregues, u.total))}</span>
                             <button type="button" onClick={() => excluir(u)} className="p-0.5 text-slate-300 hover:text-rose-600" title="Excluir importação">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -598,13 +616,13 @@ export const DetalheUpload: React.FC<{
           <div>
             <p className="text-[9px] font-black uppercase tracking-wide text-slate-400">Responsável pela planilha</p>
             <p className="font-black text-slate-900 flex items-center gap-1">
-              <UserRound className="w-3.5 h-3.5 text-blue-700" /> {upload.responsavel.toUpperCase()}
+              <UserRound className="w-3.5 h-3.5 text-[#C48229]" /> {upload.responsavel.toUpperCase()}
             </p>
           </div>
           <div>
             <p className="text-[9px] font-black uppercase tracking-wide text-slate-400">Data referência</p>
             <p className="font-black text-slate-900 flex items-center gap-1">
-              <CalendarDays className="w-3.5 h-3.5 text-blue-700" /> {dataBr(upload.dataReferencia)}
+              <CalendarDays className="w-3.5 h-3.5 text-[#C48229]" /> {dataBr(upload.dataReferencia)}
             </p>
           </div>
           <div>
@@ -621,26 +639,26 @@ export const DetalheUpload: React.FC<{
       ) : (
         <>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-            <Kpi titulo="Taxa de sucesso" valor={f1(pct(cont.entregues, cont.total))} detalhe="pedidos entregues" cor="verde" icone={CheckCircle2} />
-            <Kpi titulo="Não entregues" valor={f1(100 - pct(cont.entregues, cont.total))} detalhe={`${cont.total - cont.entregues} com ocorrência`} cor="vermelho" icone={TriangleAlert} />
-            <Kpi titulo="Dentro do prazo" valor={f1(pct(cont.noPrazo, cont.total))} detalhe="entregas no prazo" cor="azul" icone={Clock} />
-            <Kpi titulo="Total processado" valor={String(cont.total)} detalhe={`${cont.comprovadas} comprovadas`} cor="cinza" icone={Package} />
+            <Kpi titulo="Taxa de sucesso" valor={f1(pct(cont.entregues, cont.total))} detalhe="pedidos entregues" icone={CheckCircle2} />
+            <Kpi titulo="Não entregues" valor={f1(100 - pct(cont.entregues, cont.total))} detalhe={`${cont.total - cont.entregues} com ocorrência`} alerta={cont.total - cont.entregues > 0} icone={TriangleAlert} />
+            <Kpi titulo="Dentro do prazo" valor={f1(pct(cont.noPrazo, cont.total))} detalhe="entregas no prazo" icone={Clock} />
+            <Kpi titulo="Total processado" valor={String(cont.total)} detalhe={`${cont.comprovadas} comprovadas`} icone={Package} />
           </div>
 
           <div className="grid xl:grid-cols-2 gap-3">
             <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <h3 className="text-xs font-black text-slate-800 mb-3 normal-case">Entregues e não entregues</h3>
+              <TituloBloco icone={UserRound} titulo="Entregues e não entregues" sub="Por motorista" />
               <BarrasMotoristas linhas={porMotorista.map((m) => ({ nome: m.nome, entregues: m.entregues, total: m.total }))} />
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <h3 className="text-xs font-black text-slate-800 mb-3 normal-case">Eficiência dentro do prazo</h3>
+              <TituloBloco icone={Clock} titulo="Dentro do prazo" sub="% das notas de cada motorista entregues no prazo" />
               <BarrasPercentual linhas={porMotorista.map((m) => ({ nome: m.nome, valor: pct(m.noPrazo, m.total) }))} />
             </div>
           </div>
 
           <div className="envelope-cartoes bg-white rounded-2xl border border-slate-200 overflow-x-auto">
             <div className="p-4 pb-2">
-              <h3 className="text-sm font-black text-slate-900 normal-case">Resumo consolidado</h3>
+              <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal">Resumo por motorista</h3>
               <p className="text-[11px] text-slate-500">Resultado por motorista nesta importação.</p>
             </div>
             <table className="tabela-cartoes w-full text-xs min-w-[640px]">
@@ -661,16 +679,16 @@ export const DetalheUpload: React.FC<{
                     <td className="p-3 text-center" data-label="Total">
                       {m.total}
                     </td>
-                    <td className="p-3 text-center font-bold text-emerald-700" data-label="Entregues">
+                    <td className="p-3 text-center font-bold text-slate-900" data-label="Entregues">
                       {m.entregues}
                     </td>
-                    <td className="p-3 text-center font-bold text-rose-700" data-label="Não entregues">
+                    <td className={`p-3 text-center font-bold ${m.total - m.entregues ? 'text-rose-700' : 'text-slate-400'}`} data-label="Não entregues">
                       {m.total - m.entregues}
                     </td>
                     <td className="p-3 text-center font-bold" data-label="Entrega">
                       {f1(pct(m.entregues, m.total))}
                     </td>
-                    <td className="p-3 text-center font-bold text-blue-700" data-label="No prazo">
+                    <td className="p-3 text-center font-bold text-[#92611F]" data-label="No prazo">
                       {f1(pct(m.noPrazo, m.total))}
                     </td>
                   </tr>
@@ -682,7 +700,7 @@ export const DetalheUpload: React.FC<{
           <div className="space-y-2">
             <div className="flex flex-wrap items-end justify-between gap-2">
               <div>
-                <h3 className="text-sm font-black text-slate-900 normal-case">Auditoria detalhada das notas</h3>
+                <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal">Auditoria das notas</h3>
                 <label className="text-[11px] text-slate-500 flex items-center gap-2 mt-1">
                   Motorista
                   <select
@@ -702,8 +720,8 @@ export const DetalheUpload: React.FC<{
                   </select>
                 </label>
               </div>
-              <button type="button" onClick={baixarPendencias} disabled={!(notas || []).some(notaPendente)} className="px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-50">
-                <FileSpreadsheet className="w-4 h-4" /> Baixar pendências (Excel)
+              <button type="button" onClick={baixarPendencias} disabled={!(notas || []).some(notaPendente)} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-50">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-700" /> Baixar pendências (Excel)
               </button>
             </div>
             <div className="envelope-cartoes bg-white rounded-2xl border border-slate-200 overflow-x-auto">
@@ -724,7 +742,7 @@ export const DetalheUpload: React.FC<{
                   {lista.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA).map((n) => {
                     const pend = notaPendente(n);
                     return (
-                      <tr key={n.id} className={`border-t border-slate-100 ${pend ? 'bg-rose-50' : ''}`}>
+                      <tr key={n.id} className={`border-t border-slate-100 ${pend ? 'bg-rose-50/60' : ''}`}>
                         <td className="p-3 cartao-titulo">
                           <p className="font-black text-slate-900">{n.numero}</p>
                           {pend && n.prazo === 'FORA PRAZO' && <span className="px-1.5 py-0.5 rounded bg-rose-200 text-rose-800 text-[9px] font-bold">Prazo vencido</span>}
@@ -742,11 +760,11 @@ export const DetalheUpload: React.FC<{
                           {nomeBonito(n.motorista)}
                         </td>
                         <td className="p-3" data-label="Situação">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${pend ? 'bg-rose-100 text-rose-800' : n.entregaTardiaEm ? 'bg-amber-100 text-[#92611F]' : 'bg-emerald-100 text-emerald-800'}`}>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${pend ? 'bg-rose-50 text-rose-700 border border-rose-200' : n.entregaTardiaEm ? 'bg-amber-50 text-[#92611F] border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
                             {n.entregaTardiaEm ? 'ENTREGA TARDIA' : n.situacao || '—'}
                           </span>
                           {pend && (
-                            <button type="button" onClick={() => tardia(n)} className="block mt-1 text-[10px] font-bold text-emerald-700 hover:underline normal-case tracking-normal">
+                            <button type="button" onClick={() => tardia(n)} className="block mt-1 text-[10px] font-bold text-[#92611F] hover:underline normal-case tracking-normal">
                               ✓ Registrar entrega tardia
                             </button>
                           )}
@@ -851,7 +869,7 @@ const ImportarBaixasModal: React.FC<{
             <input type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => escolher(e.target.files?.[0])} />
           </label>
           {cont && (
-            <p className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold">
+            <p className="p-3 rounded-xl bg-[#FBF6EE] border border-amber-200 text-[#92611F] font-semibold">
               {cont.total} notas · {motoristas} motorista(s) · {cont.entregues} entregues · {cont.total - cont.entregues} pendentes · {cont.comprovadas} comprovadas
             </p>
           )}

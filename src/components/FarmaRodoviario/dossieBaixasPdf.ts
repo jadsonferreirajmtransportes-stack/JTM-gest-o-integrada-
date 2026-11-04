@@ -13,9 +13,8 @@ const BRONZE: [number, number, number] = [196, 130, 41];
 const TEXTO: [number, number, number] = [17, 17, 17];
 const CINZA: [number, number, number] = [110, 110, 110];
 const CREME: [number, number, number] = [248, 240, 228];
-const VERDE: [number, number, number] = [4, 120, 87];
+const BRONZE_ESCURO: [number, number, number] = [146, 97, 31];
 const VERMELHO: [number, number, number] = [190, 18, 60];
-const AZUL: [number, number, number] = [29, 78, 216];
 
 const p1 = (n: number) => `${n.toFixed(1).replace('.', ',')}%`;
 const nomeBonito = (s?: string) =>
@@ -52,9 +51,9 @@ export function gerarDossieBaixasPdf(p: { mes: string; base: string; resumo: Res
 
   // Indicadores
   const cartoes: [string, string, [number, number, number]][] = [
-    ['SUCESSO GERAL', p1(pct(resumo.entregues, resumo.total)), VERDE],
+    ['SUCESSO GERAL', p1(pct(resumo.entregues, resumo.total)), BRONZE],
     ['FALHAS GERAIS', p1(100 - pct(resumo.entregues, resumo.total)), VERMELHO],
-    ['DENTRO DO PRAZO', p1(pct(resumo.noPrazo, resumo.total)), AZUL],
+    ['DENTRO DO PRAZO', p1(pct(resumo.noPrazo, resumo.total)), BRONZE_ESCURO],
     ['TOTAL DE NOTAS', resumo.total.toLocaleString('pt-BR'), TEXTO],
   ];
   const lc = (larg - 9) / 4;
@@ -83,9 +82,9 @@ export function gerarDossieBaixasPdf(p: { mes: string; base: string; resumo: Res
   y += 3;
   const lp = (larg - 6) / 3;
   const coresPodio: [number, number, number][] = [
-    [234, 179, 8],
+    [226, 166, 75],
     [148, 163, 184],
-    [196, 130, 41],
+    [146, 97, 31],
   ];
   ranking.slice(0, 3).forEach((r, i) => {
     const x = M + i * (lp + 3);
@@ -140,7 +139,7 @@ export function gerarDossieBaixasPdf(p: { mes: string; base: string; resumo: Res
       p1(r.entrega),
       r.pontos.toFixed(1).replace('.', ','),
     ]),
-    columnStyles: { 0: { cellWidth: 9, halign: 'center' }, 1: { cellWidth: 48 }, 7: { fontStyle: 'bold', textColor: VERDE, halign: 'right' } },
+    columnStyles: { 0: { cellWidth: 9, halign: 'center' }, 1: { cellWidth: 48 }, 7: { fontStyle: 'bold', textColor: BRONZE_ESCURO, halign: 'right' } },
   });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
@@ -158,7 +157,7 @@ export function gerarDossieBaixasPdf(p: { mes: string; base: string; resumo: Res
     didParseCell: (h) => {
       if (h.section === 'body' && h.column.index === 5) {
         const t = motoristas[h.row.index]?.taxa ?? 0;
-        h.cell.styles.textColor = t >= 97 ? VERDE : t >= 93 ? [146, 97, 31] : VERMELHO;
+        h.cell.styles.textColor = t >= 93 ? TEXTO : VERMELHO;
       }
     },
   });
