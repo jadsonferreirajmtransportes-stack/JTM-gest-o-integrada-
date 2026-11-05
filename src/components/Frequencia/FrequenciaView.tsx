@@ -19,6 +19,8 @@ import {
   CalendarCheck,
   Info,
   Sheet,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Colaborador, FeriadoEmpresa, UsuarioLogin } from '../../types';
 import {
@@ -99,6 +101,28 @@ const ESTILO_SITUACAO: Record<SituacaoDia, string> = {
 };
 
 const mesAtual = () => hojeLocal().slice(0, 7);
+const somarMes = (ym: string, n: number) => {
+  const [a, m] = ym.split('-').map(Number);
+  const d = new Date(Date.UTC(a, m - 1 + n, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+};
+
+/** Mês do espelho: ‹ Novembro de 2026 › (não passa do mês atual). */
+const SeletorMes: React.FC<{ mes: string; onChange: (m: string) => void; carregando?: boolean }> = ({ mes, onChange, carregando }) => (
+  <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1 shrink-0">
+    <button type="button" onClick={() => onChange(somarMes(mes, -1))} className="p-1.5 text-slate-500 hover:text-[#92611F]" title="Mês anterior">
+      <ChevronLeft className="w-4 h-4" />
+    </button>
+    <label className="relative text-xs font-bold text-slate-800 min-w-[130px] text-center cursor-pointer">
+      {carregando ? <Loader2 className="w-3.5 h-3.5 animate-spin inline mr-1 text-[#C48229]" /> : null}
+      {nomeMes(mes)}
+      <input type="month" value={mes} max={mesAtual()} onChange={(e) => e.target.value && onChange(e.target.value)} onClick={(e) => { try { (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.(); } catch { /* navegador sem showPicker */ } }} className="absolute inset-0 opacity-0 cursor-pointer" aria-label="Escolher o mês" />
+    </label>
+    <button type="button" onClick={() => onChange(somarMes(mes, 1))} disabled={mes >= mesAtual()} className="p-1.5 text-slate-500 hover:text-[#92611F] disabled:opacity-30" title="Próximo mês">
+      <ChevronRight className="w-4 h-4" />
+    </button>
+  </div>
+);
 const dataBr = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
 
 /** DP → Controle de Frequência (CONTROLE INTERNO — o ponto oficial continua no sistema atual).
@@ -530,6 +554,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
       {aba === 'espelho' && (
         <>
           <div className="flex flex-col sm:flex-row gap-3">
+            <SeletorMes mes={mes} onChange={setMes} carregando={carregandoMes} />
             <select value={colaboradorId} onChange={(e) => setColaboradorId(e.target.value)} className="flex-1 p-2 border border-slate-200 rounded-lg bg-white text-xs font-semibold">
               <option value="">Escolha o colaborador...</option>
               {ativos.map((c) => (
