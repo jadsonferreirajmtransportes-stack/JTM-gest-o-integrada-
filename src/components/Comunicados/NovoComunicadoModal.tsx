@@ -120,8 +120,19 @@ const CampoDoModelo: React.FC<{ campo: CampoModelo; valor: ValoresModelo[string]
             <div key={i} className="flex gap-1.5">
               <input
                 value={item}
-                maxLength={140}
+                maxLength={220}
                 onChange={(e) => onChange(itens.map((x, k) => (k === i ? e.target.value : x)))}
+                onPaste={(e) => {
+                  const partes = e.clipboardData
+                    .getData('text')
+                    .split(/\n|·|•/)
+                    .map((p) => p.replace(/^\s*\d+[.)]\s*/, '').trim())
+                    .filter(Boolean);
+                  if (partes.length < 2) return;
+                  e.preventDefault();
+                  const novos = [...itens.slice(0, i), ...partes, ...itens.slice(i + 1)].filter((x, k, arr) => x.trim() || k === arr.length - 1);
+                  onChange(novos.slice(0, c.max || 5));
+                }}
                 placeholder={i === 0 ? c.placeholder : 'Mais um item'}
                 className={estilo}
               />

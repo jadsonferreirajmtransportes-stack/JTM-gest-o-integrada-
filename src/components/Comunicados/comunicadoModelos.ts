@@ -94,6 +94,11 @@ export const horaFalada = (h: string) => {
   return `${Number(hh)}h${mm && mm !== '00' ? mm : ''}`;
 };
 const marcadores = (itens: string[]) => itens.map((i) => `• ${inicioDeFrase(i)}`).join('\n');
+/** Frase curta para a imagem: sem o que vem entre parênteses, no máximo ~60 caracteres. */
+const curta = (s: string) => {
+  const t = inicioDeFrase(s.split(/[(;]/)[0].trim().replace(/[,:]$/, ''));
+  return t.length > 62 ? `${t.slice(0, 60).replace(/\s+\S*$/, '').replace(/[,;:]$/, '')}…` : t;
+};
 const numerados = (itens: string[]) => itens.map((i, k) => `${k + 1}. ${inicioDeFrase(i)}`).join('\n');
 const saudacao = (p: PublicoComunicado) => (p === 'clientes' ? 'Prezado(a) {nome},' : 'Olá, {nome}!');
 
@@ -193,7 +198,8 @@ export const MODELOS_REDACAO: Record<string, ModeloRedacao> = {
       return {
         titulo: inicioDeFrase(v.t('tema')),
         corpo: partes.join('\n\n'),
-        textoImagem: [certo.length ? numerados(certo) : '', errado.length ? errado.map((e) => `Não: ${meioDeFrase(e)}`).join('\n') : ''].filter(Boolean).join('\n\n') || `${inicioDeFrase(v.t('contexto'))}.`,
+        textoImagem:
+          [...certo.slice(0, 3).map((x) => `✓ ${curta(x)}`), ...errado.slice(0, 3).map((x) => `✗ ${curta(x)}`)].join('\n') || `${inicioDeFrase(v.t('contexto'))}.`,
       };
     },
   },
