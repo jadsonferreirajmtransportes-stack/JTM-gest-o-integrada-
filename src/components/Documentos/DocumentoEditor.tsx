@@ -27,6 +27,7 @@ import {
   PenLine,
   ListChecks,
   Users,
+  Link2,
 } from 'lucide-react';
 import {
   BlocoDocumento,
@@ -50,6 +51,7 @@ import { BlocoAssinaturas } from './BlocoAssinaturas';
 import { BlocoChecklist } from './BlocoChecklist';
 import { EnviarAssinaturaDocumentoModal } from './EnviarAssinaturaDocumentoModal';
 import { CienciaDocumentoModal } from './CienciaDocumentoModal';
+import { CienciaLinkModal } from './CienciaLinkModal';
 import type { Cliente, Colaborador } from '../../types';
 import { CalculadoraFreteModal, FreteCalculado } from '../Clients/CalculadoraFreteModal';
 
@@ -146,6 +148,7 @@ const STATUS_ESTILO: Record<string, string> = {
  *  e saída em PDF/Word/Excel. Publicar = versão Vigente guardada no histórico. */
 export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, colaboradores = [], clientes = [], avisosImportacao = [], usuario, onVoltar, onSalvo }) => {
   const [calculadoraAberta, setCalculadoraAberta] = useState(false);
+  const [cienciaLink, setCienciaLink] = useState(false);
   const [enviandoAssinatura, setEnviandoAssinatura] = useState(false);
   const [enviandoVias, setEnviandoVias] = useState(false);
   const [d, setD] = useState<DocumentoPadronizado>(documento);
@@ -300,6 +303,16 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
         {d.id && (
           <button
             type="button"
+            onClick={() => (alterado ? setErro('Salve o documento antes de criar o link de ciência.') : setCienciaLink(true))}
+            title="Um link para pessoas de fora do sistema (ex.: motoristas agregados) lerem, responderem o questionário e confirmarem a ciência"
+            className="px-3 py-2 bg-white border border-[#C48229] text-[#92611F] rounded-lg text-xs font-bold flex items-center gap-1.5 hover:bg-amber-50"
+          >
+            <Link2 className="w-3.5 h-3.5" /> Ciência por link
+          </button>
+        )}
+        {d.id && (
+          <button
+            type="button"
             onClick={async () => setHistorico(await getVersoes(d.id).catch(() => []))}
             className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1.5 hover:bg-slate-50"
           >
@@ -327,6 +340,7 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
         </div>
       </div>
 
+      {cienciaLink && <CienciaLinkModal documento={d} usuario={usuario} onClose={() => setCienciaLink(false)} />}
       {enviandoVias && <CienciaDocumentoModal documento={d} colaboradores={colaboradores} criadoPor={usuario} onClose={() => setEnviandoVias(false)} />}
       {enviandoAssinatura && <EnviarAssinaturaDocumentoModal documento={d} colaboradores={colaboradores} criadoPor={usuario} onClose={() => setEnviandoAssinatura(false)} />}
       {erro && <div className="mx-4 mt-3 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">{erro}</div>}

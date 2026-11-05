@@ -278,6 +278,7 @@ const SolicitacoesDpView = sobDemanda(() => import('./components/Solicitacoes/So
 const GamificacaoView = sobDemanda(() => import('./components/Gamificacao/GamificacaoView'), 'GamificacaoView');
 const DocumentosView = sobDemanda(() => import('./components/Documentos/DocumentosView'), 'DocumentosView');
 const ComunicadoPublicView = sobDemanda(() => import('./components/Comunicados/ComunicadoPublicView'), 'ComunicadoPublicView');
+const CienciaLinkView = sobDemanda(() => import('./components/Documentos/CienciaLinkView'), 'CienciaLinkView');
 const MotoristaBaixasView = sobDemanda(() => import('./components/FarmaRodoviario/MotoristaBaixasView'), 'MotoristaBaixasView');
 const PublicEpiEntregaView = sobDemanda(() => import('./components/Epi/PublicEpiEntregaView'), 'PublicEpiEntregaView');
 const EpiFormularioLinkModal = sobDemanda(() => import('./components/Epi/EpiFormularioLinkModal'), 'EpiFormularioLinkModal', true);
@@ -760,6 +761,8 @@ export default function App() {
   const [comunicadoToken, setComunicadoToken] = useState<string | null>(null);
   /** Link do motorista na Performance das baixas (?form=motorista&t=...). */
   const [motoristaBaixasToken, setMotoristaBaixasToken] = useState<string | null>(null);
+  /** Ciência por link de documento padronizado (?form=ciencia&t=...). */
+  const [cienciaLinkToken, setCienciaLinkToken] = useState<string | null>(null);
   // Link externo de um formulário (?form=formulario&t=...): página pública, sem login.
   const [formularioToken, setFormularioToken] = useState<string | null>(null);
   const [isEpiFormularioPublicoView, setIsEpiFormularioPublicoView] = useState<boolean>(false);
@@ -1176,6 +1179,8 @@ export default function App() {
         setFormularioToken(searchParams.get('t') || '');
       } else if (formParam === 'motorista') {
         setMotoristaBaixasToken(searchParams.get('t') || '');
+      } else if (formParam === 'ciencia') {
+        setCienciaLinkToken(searchParams.get('t') || '');
       }
     }
   }, []);
@@ -3116,6 +3121,9 @@ export default function App() {
     );
   }
 
+  if (cienciaLinkToken !== null) {
+    return <CienciaLinkView token={cienciaLinkToken || undefined} />;
+  }
   if (motoristaBaixasToken !== null) {
     return <MotoristaBaixasView token={motoristaBaixasToken || undefined} />;
   }

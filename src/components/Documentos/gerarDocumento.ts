@@ -126,7 +126,7 @@ const mesAno = (d: DocumentoPadronizado) => {
 };
 const etiquetaInfo = (resto?: string) => `JM TRANSPORTES${resto?.trim() ? ` / ${resto.trim().toUpperCase()}` : ''}`;
 /** "ROTINA DE COLETA / Devoluções sem dúvida" → etiqueta + título. */
-function parteInfo(texto: string, d: DocumentoPadronizado): { etiqueta: string; titulo: string } {
+export function parteInfo(texto: string, d: DocumentoPadronizado): { etiqueta: string; titulo: string } {
   const i = texto.indexOf(' / ');
   return i > 0 ? { etiqueta: etiquetaInfo(texto.slice(0, i)), titulo: texto.slice(i + 3).trim() } : { etiqueta: etiquetaInfo(d.oficio?.publico), titulo: texto };
 }
@@ -143,7 +143,7 @@ function separarTituloCaixa(texto: string): string {
  * (o sistema numera); parágrafo entre duas listas é continuação do item anterior; título da caixa
  * de destaque colado no texto é separado.
  */
-function normalizarInformativo(blocos: BlocoDocumento[]): BlocoDocumento[] {
+export function normalizarInformativo(blocos: BlocoDocumento[]): BlocoDocumento[] {
   const saida: BlocoDocumento[] = [];
   let etiqueta: string | undefined;
   let tituloAberto = false; // último bloco é um título grande que ainda pode receber continuação
@@ -193,7 +193,7 @@ const subtituloCapa = (d: DocumentoPadronizado) => {
 const temCapaPropria = (blocos: BlocoDocumento[]) => blocos[0]?.tipo === 'titulo' && blocos[0].nivel === 1;
 
 /** Caixa do destaque: 1ª linha = título (se houver mais de uma linha). */
-function caixaInfo(texto: string): { titulo?: string; corpo: string; laranja: boolean } {
+export function caixaInfo(texto: string): { titulo?: string; corpo: string; laranja: boolean } {
   const [primeira, ...resto] = texto.split('\n');
   const titulo = resto.length ? primeira.trim() : undefined;
   return { titulo, corpo: (resto.length ? resto.join('\n') : texto).trim(), laranja: /aten[cç][aã]o|cuidado|importante!/i.test(titulo || '') };
@@ -203,7 +203,7 @@ interface Trecho {
   b: boolean;
 }
 /** **negrito** no texto; nas listas, o rótulo antes dos dois-pontos sai em negrito. */
-function trechos(texto: string, rotuloNegrito = false): Trecho[] {
+export function trechos(texto: string, rotuloNegrito = false): Trecho[] {
   if (!texto.includes('**') && rotuloNegrito) {
     const m = texto.match(/^([^:\n]{2,45}):\s/);
     if (m) return [{ t: `${m[1]}:`, b: true }, { t: texto.slice(m[1].length + 1), b: false }];
