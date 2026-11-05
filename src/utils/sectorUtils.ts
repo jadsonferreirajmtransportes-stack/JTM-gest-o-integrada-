@@ -45,23 +45,31 @@ export interface FaturamentoRealSetor {
   porClienteChave: Record<string, number>;
   /** Quantidade de meses distintos (YYYY-MM) com pelo menos um lançamento datado. */
   mesesComDados: number;
+  /** Notas/CT-es por mês (média), no total e por cliente — só quando pedido (Rodoviário). */
+  volumeMensalMedio?: number;
+  volumePorClienteChave?: Record<string, number>;
 }
 
 /** Calcula o faturamento real do Farma Aéreo a partir dos lançamentos do Controle
  *  Financeiro (LancamentoFaturamentoAereo). Lançamentos sem `dataEmissao` entram no total
  *  geral mas não contam para a quantidade de meses (não dá pra saber a qual mês pertencem). */
 export function computeFaturamentoRealAereo(
-  lancamentos: LancamentoFaturamentoAereo[]
+  lancamentos: LancamentoFaturamentoAereo[],
+  /** Rodoviário: valorDe = Valor a Cobrar calculado ao vivo pelo tarifário (o gravado fica 0 nos
+   *  lançamentos das baixas); contarVolume = notas por mês. Sem opções, igual a antes (Aéreo). */
+  opcoes: { valorDe?: (l: LancamentoFaturamentoAereo) => number; contarVolume?: boolean } = {}
 ): FaturamentoRealSetor {
   const totalPorChave: Record<string, number> = {};
+  const volumePorChave: Record<string, number> = {};
   const meses = new Set<string>();
   let totalGeral = 0;
 
   (lancamentos || []).forEach((l) => {
-    const valor = Number(l.valorACobrar) || 0;
+    const valor = opcoes.valorDe ? opcoes.valorDe(l) || 0 : Number(l.valorACobrar) || 0;
     totalGeral += valor;
     const chave = l.clienteId || `nome:${l.clienteNome}`;
     totalPorChave[chave] = (totalPorChave[chave] || 0) + valor;
+    volumePorChave[chave] = (volumePorChave[chave] || 0) + 1;
     if (l.dataEmissao) {
       meses.add(l.dataEmissao.slice(0, 7));
     }
@@ -73,10 +81,17 @@ export function computeFaturamentoRealAereo(
     porClienteChave[chave] = total / mesesComDados;
   });
 
+  const volume = opcoes.contarVolume
+    ? {
+        volumeMensalMedio: (lancamentos || []).length / mesesComDados,
+        volumePorClienteChave: Object.fromEntries(Object.entries(volumePorChave).map(([k, v]) => [k, v / mesesComDados])),
+      }
+    : {};
   return {
     totalMensalMedio: totalGeral / mesesComDados,
     porClienteChave,
     mesesComDados: meses.size,
+    ...volume,
   };
 }
 
@@ -396,6 +411,8 @@ export interface SectorManagerialMetrics {
    *  `computeFaturamentoRealAereo`: clienteId, ou `nome:<nome>` sem vínculo). Alimenta o
    *  ranking de "Principais Contratos" com números reais em vez do campo estimado. */
   faturamentoRealPorClienteChave?: Record<string, number>;
+  /** Notas por mês (média) por cliente, do Controle Financeiro — quando calculado. */
+  volumeRealPorClienteChave?: Record<string, number>;
 
   // Equipe & Folha
   headcountEquipe: number;
@@ -445,10 +462,10 @@ export function calcFinancialsSetor(
   const faturamentoMensalTotal = faturamentoReal
     ? faturamentoReal.totalMensalMedio
     : clientesDoSetor.reduce((acc, c) => acc + (Number(c.faturamentoMensalEstimado) || 0), 0);
-  const volumeMensalEstimado = clientesDoSetor.reduce(
-    (acc, c) => acc + (Number(c.volumeEntregasMesEstimado) || 0),
-    0
-  );
+  const volumeMensalEstimado =
+    faturamentoReal?.volumeMensalMedio !== undefined
+      ? Math.round(faturamentoReal.volumeMensalMedio)
+      : clientesDoSetor.reduce((acc, c) => acc + (Number(c.volumeEntregasMesEstimado) || 0), 0);
   const totalClientesVinculados = clientesDoSetor.length;
   const totalClientesAtivos = clientesAtivos.length;
   const ticketMedioCliente =
@@ -680,6 +697,7 @@ export function calcFinancialsSetor(
     usaFaturamentoReal,
     mesesComDadosReais: faturamentoReal?.mesesComDados,
     faturamentoRealPorClienteChave: faturamentoReal?.porClienteChave,
+    volumeRealPorClienteChave: faturamentoReal?.volumePorClienteChave,
     headcountEquipe,
     totalSalariosBase,
     totalGratificacoes,

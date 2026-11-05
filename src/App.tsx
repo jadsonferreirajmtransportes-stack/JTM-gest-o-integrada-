@@ -1710,7 +1710,7 @@ export default function App() {
         clientes,
         colaboradores,
         custosOperacionais,
-        computeFaturamentoRealAereo(lancamentosFarmaRodoviario)
+        computeFaturamentoRealAereo(lancamentosFarmaRodoviario, { valorDe: (l) => computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome)), contarVolume: true })
       ),
     [clientes, colaboradores, custosOperacionais, lancamentosFarmaRodoviario]
   );

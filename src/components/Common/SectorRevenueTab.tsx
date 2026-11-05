@@ -287,7 +287,9 @@ export const SectorRevenueTab: React.FC<SectorRevenueTabProps> = ({
                           {formatCurrency(fat)}
                         </div>
                         <div className="text-[10px] text-slate-400">
-                          {c.volumeEntregasMesEstimado || 0} volumes/mês
+                          {metrics.volumeRealPorClienteChave
+                            ? `${Math.round(metrics.volumeRealPorClienteChave[c.id || `nome:${c.nomeFantasia}`] ?? 0)} notas/mês`
+                            : `${c.volumeEntregasMesEstimado || 0} volumes/mês`}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-center">

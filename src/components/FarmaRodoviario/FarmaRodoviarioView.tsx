@@ -36,7 +36,7 @@ import { SectorRevenueTab } from '../Common/SectorRevenueTab';
 import { SectorCostsTab } from '../Common/SectorCostsTab';
 import { CustoOperacionalFormModal } from '../Cost/CustoOperacionalFormModal';
 import { FaturamentoAereoView } from '../FarmaAereo/FaturamentoAereoView';
-import { pertenceAoFarmaAereo } from '../FarmaAereo/faturamentoAereoUtils';
+import { computeValorACobrar, findClienteById, pertenceAoFarmaAereo } from '../FarmaAereo/faturamentoAereoUtils';
 import {
   calcFinancialsSetor,
   computeFaturamentoRealAereo,
@@ -150,8 +150,8 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
     [faturasAereo, clientes]
   );
   const faturamentoReal = useMemo(
-    () => computeFaturamentoRealAereo(lancamentosDoSetor),
-    [lancamentosDoSetor]
+    () => computeFaturamentoRealAereo(lancamentosDoSetor, { valorDe: (l) => computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome)), contarVolume: true }),
+    [lancamentosDoSetor, clientes]
   );
 
 
