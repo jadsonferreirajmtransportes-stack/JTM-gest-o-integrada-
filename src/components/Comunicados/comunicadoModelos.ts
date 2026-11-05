@@ -157,6 +157,47 @@ export const MODELOS_REDACAO: Record<string, ModeloRedacao> = {
     },
   },
 
+  Orientação: {
+    publicos: ['colaboradores'],
+    descricao: 'Reforço de regra ou procedimento: como fazer certo, o que não pode e por quê (ex.: onde bater o ponto).',
+    campos: [
+      { chave: 'tema', rotulo: 'Tema (vira o título)', tipo: 'texto', obrigatorio: true, placeholder: 'Ex.: Onde bater o ponto: na base ou no local do serviço' },
+      { chave: 'contexto', rotulo: 'O que precisamos reforçar', tipo: 'texto', obrigatorio: true, placeholder: 'Ex.: precisamos reforçar onde as batidas de ponto pelo celular devem ser feitas' },
+      { chave: 'certo', rotulo: 'Como fazer (o que é certo)', tipo: 'lista', obrigatorio: true, max: 6, placeholder: 'Ex.: bater o ponto de preferência na base, ao chegar e ao sair' },
+      { chave: 'errado', rotulo: 'O que não pode', tipo: 'lista', max: 6, placeholder: 'Ex.: bater a entrada em casa e só depois sair para o serviço' },
+      { chave: 'motivo', rotulo: 'Por que isso importa (opcional)', tipo: 'texto', placeholder: 'Ex.: o ponto registra o horário e o local da batida' },
+      { chave: 'seProblema', rotulo: 'Se tiver problema ou esquecer (opcional)', tipo: 'texto', placeholder: 'Ex.: avise o supervisor e peça o ajuste pelo Fale com o DP' },
+      {
+        chave: 'norma',
+        rotulo: 'Base da regra (opcional)',
+        tipo: 'opcoes',
+        opcoes: ['', 'o Regulamento Interno da JMT', 'a CLT', 'a RDC 430/2020 da ANVISA', 'o Código de Trânsito Brasileiro'],
+      },
+      { chave: 'disciplinar', rotulo: 'Lembrar que o descumprimento pode gerar medida disciplinar', tipo: 'sim_nao', padrao: false },
+      { chave: 'duvidas', rotulo: 'Dúvidas com', tipo: 'texto', placeholder: 'Ex.: o seu supervisor ou o Departamento Pessoal', padrao: '' },
+    ],
+    montar: (v, p) => {
+      const certo = v.lista('certo');
+      const errado = v.lista('errado');
+      const partes = [saudacao(p), `${inicioDeFrase(v.t('contexto'))}.`];
+      if (certo.length) partes.push(`*Como fazer:*\n${numerados(certo)}`);
+      if (errado.length) partes.push(`*O que não pode:*\n${errado.map((e) => `🚫 ${inicioDeFrase(e)}`).join('\n')}`);
+      if (v.t('motivo')) partes.push(`*Por que isso importa:* ${inicioDeFrase(v.t('motivo'))}.`);
+      if (v.t('seProblema')) partes.push(`*Se tiver algum problema:* ${inicioDeFrase(v.t('seProblema'))}.`);
+      const fechamento = [v.t('norma') ? `Essa orientação segue ${v.t('norma')}.` : '', v.sim('disciplinar') ? 'O descumprimento pode resultar em medida disciplinar, conforme o Regulamento Interno.' : '']
+        .filter(Boolean)
+        .join(' ');
+      if (fechamento) partes.push(fechamento);
+      partes.push(`Em caso de dúvidas, fale com ${meioDeFrase(v.t('duvidas') || 'o seu supervisor ou o Departamento Pessoal')}.`);
+      partes.push('Contamos com a colaboração de todos.');
+      return {
+        titulo: inicioDeFrase(v.t('tema')),
+        corpo: partes.join('\n\n'),
+        textoImagem: [certo.length ? numerados(certo) : '', errado.length ? errado.map((e) => `Não: ${meioDeFrase(e)}`).join('\n') : ''].filter(Boolean).join('\n\n') || `${inicioDeFrase(v.t('contexto'))}.`,
+      };
+    },
+  },
+
   Informativo: {
     publicos: ['colaboradores', 'clientes'],
     descricao: 'Informação geral, sem mudança de regra.',

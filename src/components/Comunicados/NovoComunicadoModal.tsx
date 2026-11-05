@@ -29,6 +29,7 @@ const ASSINATURAS = ['Departamento Pessoal', 'Diretoria', 'Gestão de Qualidade'
 
 const MODELO_POR_CATEGORIA: Record<string, ModeloImagem> = {
   Aviso: 'aviso',
+  Orientação: 'aviso',
   Informativo: 'aviso',
   Urgente: 'urgente',
   Segurança: 'seguranca',
