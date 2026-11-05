@@ -710,6 +710,9 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
       {aba === 'resumo' && (
         <>
           <div className="flex flex-wrap justify-end gap-2">
+            <div className="mr-auto">
+              <SeletorMes mes={mes} onChange={setMes} carregando={carregandoMes} />
+            </div>
             <button
               type="button"
               onClick={() => exportar('pdf-resumo', async () => gerarResumoPdf(mes, linhasResumo()))}
