@@ -551,6 +551,7 @@ const MSG: Record<string, string> = {
   data: 'Data de referência inválida.',
   notas: 'A planilha não tem notas (ou tem mais de 5.000).',
   nao_encontrada: 'Importação não encontrada.',
+  ja_existe: 'Já existe uma importação deste responsável nesse dia. Apague uma das duas antes.',
 };
 const rpc = async (nome: string, corpo: Record<string, unknown>) => {
   const { data, error } = await supabase.rpc(nome, corpo);
@@ -578,6 +579,15 @@ export async function portalBaixasAbonar(c: Cred, nota: BaixaNota, motivo: strin
     ? { ...nota, abonoMotivo: motivo, abonoObs: obs.trim() || undefined, abonadoEm: new Date().toISOString() }
     : { ...nota, abonoMotivo: undefined, abonoObs: undefined, abonadoEm: undefined, abonadoPor: undefined };
 }
+/** Troca o dia de uma importação já feita (migração 112) — gestão. */
+export async function trocarDiaUpload(uploadId: string, data: string): Promise<void> {
+  await rpc('baixas_trocar_dia', { p_upload: uploadId, p_data: data });
+}
+/** Troca o dia de uma importação já feita — link pessoal do responsável. */
+export async function portalBaixasTrocarDia(c: Cred, uploadId: string, data: string): Promise<void> {
+  await rpc('portal_baixas_trocar_dia', { ...args(c), p_upload: uploadId, p_data: data });
+}
+
 export async function portalBaixasTardia(c: Cred, nota: BaixaNota, quando: string): Promise<BaixaNota> {
   await rpc('portal_baixas_tardia', { ...args(c), p_nota: nota.id, p_quando: quando });
   return { ...nota, entregaTardiaEm: quando };

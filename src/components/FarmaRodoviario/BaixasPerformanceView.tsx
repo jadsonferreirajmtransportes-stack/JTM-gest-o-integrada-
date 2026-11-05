@@ -38,6 +38,8 @@ import {
   registrarEntregaTardia,
   salvarUploadBaixas,
   obterLinkMotorista,
+  trocarDiaUpload,
+  diaLocal,
   urlLinkMotorista,
 } from '../../utils/baixasApi';
 
@@ -773,8 +775,11 @@ export const DetalheUpload: React.FC<{
   motivosAbono?: string[];
   /** Gestão: acrescenta um motivo novo à lista (salvo nas regras). */
   onNovoMotivo?: (motivo: string) => Promise<void>;
-}> = ({ upload, usuario, onAtualizado, carregarNotas, marcarTardia, marcarAbono, motivosAbono = MOTIVOS_ABONO, onNovoMotivo }) => {
+  /** Link pessoal: troca o dia pela função do portal (gestão usa trocarDiaUpload). */
+  trocarDia?: (uploadId: string, data: string) => Promise<void>;
+}> = ({ upload, usuario, onAtualizado, carregarNotas, marcarTardia, marcarAbono, motivosAbono = MOTIVOS_ABONO, onNovoMotivo, trocarDia }) => {
   const [abonando, setAbonando] = useState<BaixaNota | null>(null);
+  const [trocandoDia, setTrocandoDia] = useState(false);
   const [registrando, setRegistrando] = useState<BaixaNota | null>(null);
   const [notas, setNotas] = useState<BaixaNota[] | null>(null);
   const [motorista, setMotorista] = useState('');
@@ -874,6 +879,22 @@ export const DetalheUpload: React.FC<{
           }}
         />
       )}
+      {trocandoDia && (
+        <TrocarDiaModal
+          atual={upload.dataReferencia}
+          notas={notas || []}
+          onClose={() => setTrocandoDia(false)}
+          onConfirmar={async (novo) => {
+            await (trocarDia || trocarDiaUpload)(upload.id, novo);
+            // O "no prazo" das entregas registradas à mão depende do dia: recarrega as notas.
+            const novas = await (carregarNotas || getNotasDoUpload)(upload.id).catch(() => notas || []);
+            setNotas(novas);
+            const c = contar(novas);
+            onAtualizado({ ...upload, dataReferencia: novo, total: c.total, entregues: c.entregues, comprovadas: c.comprovadas, noPrazo: c.noPrazo });
+            setTrocandoDia(false);
+          }}
+        />
+      )}
       {abonando && <AbonoModal nota={abonando} motivos={motivosAbono} onNovoMotivo={onNovoMotivo} onClose={() => setAbonando(null)} onConfirmar={async (motivo, obs) => {
         await aplicarAbono(abonando, motivo, obs);
         setAbonando(null);
@@ -890,6 +911,9 @@ export const DetalheUpload: React.FC<{
             <p className="text-[9px] font-black uppercase tracking-wide text-slate-400">Dia das entregas</p>
             <p className="font-black text-slate-900 flex items-center gap-1">
               <CalendarDays className="w-3.5 h-3.5 text-[#C48229]" /> {dataBr(upload.dataReferencia)}
+              <button type="button" onClick={() => setTrocandoDia(true)} className="ml-1 text-[10px] font-bold text-[#92611F] hover:underline normal-case tracking-normal" title="Trocar o dia desta importação">
+                Trocar
+              </button>
             </p>
           </div>
           <div>
@@ -1132,6 +1156,64 @@ export const DetalheUpload: React.FC<{
           </div>
         </>
       )}
+    </div>
+  );
+};
+
+/** Trocar o dia de uma importação: sugere o dia de entrega mais comum das notas. */
+const TrocarDiaModal: React.FC<{ atual: string; notas: BaixaNota[]; onClose: () => void; onConfirmar: (dia: string) => Promise<void> }> = ({ atual, notas, onClose, onConfirmar }) => {
+  const sugestao = useMemo(() => {
+    const cont = new Map<string, number>();
+    notas.forEach((n) => n.dataEntrega && cont.set(diaLocal(n.dataEntrega), (cont.get(diaLocal(n.dataEntrega)) || 0) + 1));
+    return [...cont.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  }, [notas]);
+  const [dia, setDia] = useState(sugestao && sugestao !== atual ? sugestao : atual);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const confirmar = async () => {
+    if (!dia || dia === atual) return onClose();
+    setSalvando(true);
+    setErro(null);
+    try {
+      await onConfirmar(dia);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível trocar o dia.');
+      setSalvando(false);
+    }
+  };
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3 text-xs" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal flex items-center gap-1.5">
+              <CalendarDays className="w-4 h-4 text-[#C48229]" /> Trocar o dia da importação
+            </h3>
+            <p className="text-slate-500">Hoje está em {dataBr(atual)}. Use o dia em que as entregas aconteceram.</p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 text-slate-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <label className="block">
+          <span className="text-[10px] font-black uppercase tracking-wide text-slate-500">Dia das entregas</span>
+          <input type="date" value={dia} max={new Date().toLocaleDateString('sv-SE')} onChange={(e) => setDia(e.target.value)} className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl bg-slate-50 text-sm font-semibold" />
+        </label>
+        {sugestao && sugestao !== atual && (
+          <p className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-[#7A4F17]">
+            Pelas notas, as entregas foram em <b>{dataBr(sugestao)}</b>.{' '}
+            {dia !== sugestao && (
+              <button type="button" onClick={() => setDia(sugestao)} className="font-bold underline">
+                Usar esse dia
+              </button>
+            )}
+          </p>
+        )}
+        {erro && <p className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 font-semibold">{erro}</p>}
+        <button type="button" onClick={confirmar} disabled={salvando} className="w-full py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white font-bold flex items-center justify-center gap-1.5 disabled:opacity-50">
+          {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarDays className="w-4 h-4" />} Trocar o dia
+        </button>
+      </div>
     </div>
   );
 };
