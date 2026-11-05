@@ -40,6 +40,8 @@ export interface BaixaNota {
   prazo?: string;
   entregaTardiaEm?: string;
   entregaTardiaPor?: string;
+  /** Entrega real registrada no dia da planilha = conta como no prazo (migração 110). */
+  entregaTardiaNoPrazo?: boolean;
   cnpjRemetente?: string;
   /** Valor da nota fiscal (coluna "Valor NF" da planilha) — vai para o Controle Financeiro (migração 109). */
   valorNf?: number;
@@ -72,7 +74,8 @@ export interface ContagemBaixas {
 export const notaEntregue = (n: Pick<BaixaNota, 'situacao' | 'entregaTardiaEm'>) =>
   !!n.entregaTardiaEm || !['PENDENTE', 'DEVOLUCAO', 'DEVOLUÇÃO', ''].includes((n.situacao || '').toUpperCase());
 export const notaComprovada = (n: Pick<BaixaNota, 'status'>) => (n.status || '').toUpperCase() === 'COMPROVADO';
-export const notaNoPrazo = (n: Pick<BaixaNota, 'prazo' | 'entregaTardiaEm'>) => (n.prazo || '').toUpperCase() === 'NO PRAZO' && !n.entregaTardiaEm;
+export const notaNoPrazo = (n: Pick<BaixaNota, 'prazo' | 'entregaTardiaEm' | 'entregaTardiaNoPrazo'>) =>
+  n.entregaTardiaEm ? !!n.entregaTardiaNoPrazo : (n.prazo || '').toUpperCase() === 'NO PRAZO';
 export const notaAbonada = (n: Pick<BaixaNota, 'abonoMotivo'>) => !!n.abonoMotivo;
 export const notaPendente = (n: BaixaNota) => !notaAbonada(n) && !notaEntregue(n);
 
@@ -230,6 +233,7 @@ const rowToNota = (r: any): BaixaNota => ({
   prazo: u(r.prazo),
   entregaTardiaEm: u(r.entrega_tardia_em),
   entregaTardiaPor: u(r.entrega_tardia_por),
+  entregaTardiaNoPrazo: r.entrega_tardia_no_prazo ?? undefined,
   abonoMotivo: u(r.abono_motivo),
   abonoObs: u(r.abono_obs),
   abonadoEm: u(r.abonado_em),
@@ -331,10 +335,10 @@ export async function excluirUploadBaixas(id: string): Promise<void> {
 }
 
 /** Pendente que foi entregue depois: conta como entregue, fora do prazo. Atualiza os totais da importação. */
-export async function registrarEntregaTardia(nota: BaixaNota, quando: string, por: string | undefined, notasDoUpload: BaixaNota[]): Promise<BaixaNota> {
+export async function registrarEntregaTardia(nota: BaixaNota, quando: string, por: string | undefined, notasDoUpload: BaixaNota[], diaPlanilha?: string): Promise<BaixaNota> {
   const { error } = await supabase.from('baixas_notas').update({ entrega_tardia_em: quando, entrega_tardia_por: por || null }).eq('id', nota.id);
   falhou(error, 'registrarEntregaTardia');
-  const atualizada = { ...nota, entregaTardiaEm: quando, entregaTardiaPor: por };
+  const atualizada = { ...nota, entregaTardiaEm: quando, entregaTardiaPor: por, entregaTardiaNoPrazo: diaPlanilha ? new Date(quando).toLocaleDateString('sv-SE', { timeZone: 'America/Fortaleza' }) <= diaPlanilha : false };
   const cont = contar(notasDoUpload.map((n) => (n.id === nota.id ? atualizada : n)));
   await supabase.from('baixas_uploads').update({ entregues: cont.entregues, no_prazo: cont.noPrazo }).eq('id', nota.uploadId);
   return atualizada;

@@ -817,7 +817,9 @@ export const DetalheUpload: React.FC<{
   /** quando = "AAAA-MM-DDTHH:MM" (hora de Brasília), escolhido no calendário. */
   const salvarTardia = async (n: BaixaNota, quando: string) => {
     const iso = new Date(`${quando}:00-03:00`).toISOString();
-    const nova = marcarTardia ? await marcarTardia(n, iso) : await registrarEntregaTardia(n, iso, usuario, notas || []);
+    const salva = marcarTardia ? await marcarTardia(n, iso) : await registrarEntregaTardia(n, iso, usuario, notas || [], upload.dataReferencia);
+    // No dia da planilha = no prazo (o banco marca igual, pela migração 110).
+    const nova = { ...salva, entregaTardiaNoPrazo: quando.slice(0, 10) <= upload.dataReferencia };
     const novas = (notas || []).map((x) => (x.id === n.id ? nova : x));
     setNotas(novas);
     const c = contar(novas);
@@ -1190,6 +1192,9 @@ const EntregaRealModal: React.FC<{ nota: BaixaNota; diaPlanilha: string; onClose
             Agora
           </button>
         </div>
+        <p className={`p-2 rounded-lg border ${quando.slice(0, 10) <= diaPlanilha ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-[#7A4F17]'}`}>
+          {quando.slice(0, 10) <= diaPlanilha ? 'Entregue no dia da planilha: conta como entregue e no prazo.' : 'Entregue depois do dia da planilha: conta como entregue, mas fora do prazo.'}
+        </p>
         {erro && <p className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 font-semibold">{erro}</p>}
         <button type="button" onClick={confirmar} disabled={salvando} className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center justify-center gap-1.5 disabled:opacity-50">
           {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Registrar entrega
