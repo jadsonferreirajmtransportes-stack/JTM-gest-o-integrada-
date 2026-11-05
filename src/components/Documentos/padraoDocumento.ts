@@ -23,10 +23,10 @@ export function verificarPadrao(d: DocumentoPadronizado): ProblemaPadrao[] {
   const p: ProblemaPadrao[] = [];
   if (!d.titulo.trim()) p.push({ nivel: 'erro', mensagem: 'O documento precisa de um título.' });
   if (d.blocos.length === 0) p.push({ nivel: 'erro', mensagem: 'O documento está sem conteúdo.' });
-  const oficio = d.modelo === 'oficio';
+  const oficio = d.modelo === 'oficio' || d.modelo === 'cotacao';
   if (!oficio && !d.responsavel?.trim()) p.push({ nivel: 'aviso', mensagem: 'Informe o responsável (dono do documento).' });
   if (!d.dataDocumento) p.push({ nivel: 'aviso', mensagem: 'Informe a data do documento.' });
-  if (oficio && !d.oficio?.destinatario?.trim()) p.push({ nivel: 'aviso', mensagem: 'Ofício/carta: informe o destinatário.' });
+  if (oficio && !d.oficio?.destinatario?.trim()) p.push({ nivel: 'aviso', mensagem: d.modelo === 'cotacao' ? 'Cotação: informe o cliente.' : 'Ofício/carta: informe o destinatário.' });
   if (oficio && !d.blocos.some((b) => b.tipo === 'assinaturas')) p.push({ nivel: 'aviso', mensagem: 'Ofício/carta: inclua um bloco de Assinaturas no final (quem assina).' });
   if (!d.aprovadoPor?.trim()) p.push({ nivel: 'aviso', mensagem: 'Informe quem aprovou — obrigatório para publicar como Vigente.' });
 

@@ -71,6 +71,40 @@ function localEData(d: DocumentoPadronizado): string {
 }
 const linhasDestinatario = (d: DocumentoPadronizado) => (d.oficio?.destinatario || '').split('\n').map((l) => l.trim()).filter(Boolean);
 const assuntoOficio = (d: DocumentoPadronizado) => d.oficio?.assunto?.trim() || d.titulo;
+
+// ---- Cotação de frete ----
+const moedaBR = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+/** "R$ 1.234,50" | "1234.5" → número (ou undefined). */
+function numeroBR(t: string): number | undefined {
+  let s = (t || '').replace(/[^\d.,-]/g, '');
+  if (!s) return undefined;
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  const n = Number(s);
+  return isFinite(n) ? n : undefined;
+}
+/** Linha de total da tabela da cotação (última coluna = valor). */
+function linhaTotalCotacao(cabecalho: string[], linhas: string[][]): string[] | undefined {
+  const k = cabecalho.length - 1;
+  if (k < 1 || !/valor|total|frete/i.test(cabecalho[k] || '')) return undefined;
+  const valores = linhas.map((l) => numeroBR(l[k] || '')).filter((v): v is number => v !== undefined);
+  if (!valores.length) return undefined;
+  return cabecalho.map((_, i) => (i === 0 ? 'Total' : i === k ? moedaBR(valores.reduce((s, v) => s + v, 0)) : ''));
+}
+function quadroCotacao(d: DocumentoPadronizado): [string, string][] {
+  const [cliente, ...contato] = linhasDestinatario(d);
+  const dias = d.oficio?.validadeDias || 15;
+  const base = d.dataDocumento || new Date().toLocaleDateString('sv-SE');
+  const ate = new Date(`${base}T12:00:00`);
+  ate.setDate(ate.getDate() + dias);
+  return [
+    ['Cliente', cliente || '—'],
+    ['Contato', contato.join(' · ') || '—'],
+    ['Cotação nº', d.codigo || '(gerado ao salvar)'],
+    ['Data', dataBr(base)],
+    ['Validade', `${dias} dias (até ${ate.toLocaleDateString('pt-BR')})`],
+    ['Pagamento', d.oficio?.pagamento?.trim() || 'A combinar'],
+  ];
+}
 const referenciaOficio = (d: DocumentoPadronizado) => (d.tipo === 'Ofício' ? `Ofício nº ${d.codigo || '(gerado ao salvar)'}` : d.codigo ? `Ref.: ${d.codigo}` : '');
 const enderecoEmpresa = () => `${EMPRESA_REGULAMENTO.endereco} — CEP ${EMPRESA_REGULAMENTO.cep} — ${EMPRESA_REGULAMENTO.cidadeUF}`;
 
@@ -234,7 +268,8 @@ export async function gerarPdfDocumento(
   const altura = doc.internal.pageSize.getHeight();
   const MARGEM = 20;
   const larguraTexto = largura - 2 * MARGEM;
-  const oficio = d.modelo === 'oficio';
+  const cotacao = d.modelo === 'cotacao';
+  const oficio = d.modelo === 'oficio' || cotacao;
   const info = d.modelo === 'informativo';
   const TOPO = oficio ? 36 : 32;
   const blocos = info ? normalizarInformativo(d.blocos) : d.blocos;
@@ -353,6 +388,45 @@ export async function gerarPdfDocumento(
 
   if (info) {
     if (!temCapaPropria(blocos)) capaInfo(etiquetaInfo(d.oficio?.publico), d.titulo, subtituloCapa(d));
+  } else if (cotacao) {
+    // Cotação: título, número e quadro (cliente, contato, data, validade, pagamento).
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17);
+    doc.setTextColor(...TEXTO);
+    doc.text('COTAÇÃO DE FRETE', MARGEM, y + 2);
+    doc.setFontSize(10);
+    doc.setTextColor(...BRONZE);
+    doc.text(`Nº ${d.codigo || 'RASCUNHO'}`, largura - MARGEM, y + 2, { align: 'right' });
+    y += 6;
+    if (d.titulo.trim() && !/^cota[cç][aã]o de frete$/i.test(d.titulo.trim())) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(...CINZA);
+      doc.text(d.titulo, MARGEM, y + 2, { maxWidth: larguraTexto });
+      y += 6;
+    }
+    y += 3;
+    const quadro = quadroCotacao(d);
+    const alturaLinha = 10.5;
+    const alturaFaixa = 4 + alturaLinha * 2 + 1;
+    doc.setFillColor(...AREIA);
+    doc.rect(MARGEM, y, larguraTexto, alturaFaixa, 'F');
+    doc.setFillColor(...BRONZE);
+    doc.rect(MARGEM, y, 1.2, alturaFaixa, 'F');
+    const larguraColuna = (larguraTexto - 8) / 3;
+    quadro.forEach(([rotulo, valor], i) => {
+      const x = MARGEM + 6 + (i % 3) * larguraColuna;
+      const yLinha = y + 6 + Math.floor(i / 3) * alturaLinha;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(...BRONZE);
+      doc.text(rotulo.toUpperCase(), x, yLinha);
+      doc.setFontSize(9);
+      doc.setTextColor(...TEXTO);
+      const v = doc.splitTextToSize(valor, larguraColuna - 3) as string[];
+      doc.text(v.length > 1 ? `${v[0].replace(/\s+\S*$/, '')}…` : v[0] || '—', x, yLinha + 4.2);
+    });
+    y += alturaFaixa + 9;
   } else if (oficio) {
     // Ofício / carta: referência e local/data, destinatário e assunto.
     doc.setFont('helvetica', 'bold');
@@ -506,6 +580,9 @@ export async function gerarPdfDocumento(
         margin: { left: MARGEM, right: MARGEM, top: TOPO, bottom: 26 },
         head: [b.cabecalho],
         body: b.linhas,
+        ...(cotacao && linhaTotalCotacao(b.cabecalho, b.linhas)
+          ? { foot: [linhaTotalCotacao(b.cabecalho, b.linhas)!], footStyles: { fillColor: FUNDO_CABECALHO, textColor: TEXTO, fontStyle: 'bold' as const }, showFoot: 'lastPage' as const }
+          : {}),
         theme: 'grid',
         styles: { fontSize: b.cabecalho.length > 6 ? 7 : 8.5, cellPadding: 1.6, textColor: CORPO, lineColor: [225, 225, 225], lineWidth: 0.15 },
         headStyles: { fillColor: FUNDO_CABECALHO, textColor: TEXTO, fontStyle: 'bold' },
@@ -827,7 +904,8 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
       children: [new Paragraph({ children: [new TextRun({ text: t, bold: cabecalho, font: FONTE, size: 18, color: cabecalho ? '111111' : '333333' })] })],
     });
 
-  const oficio = d.modelo === 'oficio';
+  const cotacao = d.modelo === 'cotacao';
+  const oficio = d.modelo === 'oficio' || cotacao;
   const info = d.modelo === 'informativo';
   const NAVY_HEX = '111111';
   const AZUL_HEX = BRONZE_HEX;
@@ -866,6 +944,48 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
     ? temCapaPropria(blocos)
       ? []
       : capaWord(etiquetaInfo(d.oficio?.publico), d.titulo, subtituloCapa(d), false)
+    : cotacao
+    ? [
+        new Paragraph({
+          tabStops: [{ type: TabStopType.RIGHT, position: 9600 }],
+          spacing: { after: 160 },
+          children: [
+            new TextRun({ text: 'COTAÇÃO DE FRETE', bold: true, font: FONTE, size: 34, color: '111111' }),
+            new TextRun({ text: `\tNº ${d.codigo || 'RASCUNHO'}`, bold: true, font: FONTE, size: 20, color: BRONZE_HEX }),
+          ],
+        }),
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+            bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+            right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+            left: { style: BorderStyle.SINGLE, size: 24, color: BRONZE_HEX },
+            insideHorizontal: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+            insideVertical: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+          },
+          rows: [0, 3].map(
+            (inicio) =>
+              new TableRow({
+                children: quadroCotacao(d)
+                  .slice(inicio, inicio + 3)
+                  .map(
+                    ([rotulo, valor]) =>
+                      new TableCell({
+                        width: { size: 33, type: WidthType.PERCENTAGE },
+                        shading: { fill: 'FAF6EE', type: ShadingType.CLEAR, color: 'auto' },
+                        margins: { top: 90, bottom: 90, left: 160, right: 80 },
+                        children: [
+                          new Paragraph({ children: [new TextRun({ text: rotulo.toUpperCase(), bold: true, font: FONTE, size: 13, color: BRONZE_HEX })] }),
+                          new Paragraph({ spacing: { before: 30 }, children: [new TextRun({ text: valor, bold: true, font: FONTE, size: 18, color: '111111' })] }),
+                        ],
+                      })
+                  ),
+              })
+          ),
+        }),
+        new Paragraph({ text: '', spacing: { after: 200 } }),
+      ]
     : oficio
     ? [
         new Paragraph({
@@ -1019,6 +1139,7 @@ export async function gerarDocxDocumento(d: DocumentoPadronizado): Promise<File>
           rows: [
             new TableRow({ tableHeader: true, children: b.cabecalho.map((c) => celula(c, true)) }),
             ...b.linhas.map((l) => new TableRow({ children: l.map((c) => celula(c)) })),
+            ...(cotacao && linhaTotalCotacao(b.cabecalho, b.linhas) ? [new TableRow({ children: linhaTotalCotacao(b.cabecalho, b.linhas)!.map((c) => celula(c, true)) })] : []),
           ],
         })
       );

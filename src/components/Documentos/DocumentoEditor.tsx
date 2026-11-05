@@ -356,6 +356,14 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
                   atualizar(
                     e.target.value === 'oficio'
                       ? { modelo: 'oficio', oficio: { ...d.oficio, local: d.oficio?.local ?? EMPRESA_REGULAMENTO.cidadeUF, destinatario: d.oficio?.destinatario ?? '', assunto: d.oficio?.assunto ?? '' } }
+                      : e.target.value === 'cotacao'
+                        ? {
+                            modelo: 'cotacao',
+                            tipo: d.blocos.length ? d.tipo : 'Cotação',
+                            titulo: d.titulo.trim() ? d.titulo : 'Cotação de frete',
+                            oficio: { ...d.oficio, destinatario: d.oficio?.destinatario ?? '', validadeDias: d.oficio?.validadeDias ?? 15, pagamento: d.oficio?.pagamento ?? '' },
+                            ...(d.blocos.length ? {} : { blocos: blocosCotacao() }),
+                          }
                       : e.target.value === 'informativo'
                         ? { modelo: 'informativo', oficio: { ...d.oficio, publico: d.oficio?.publico ?? '', subtitulo: d.oficio?.subtitulo ?? '' } }
                         : { modelo: undefined }
@@ -365,6 +373,7 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
               >
                 <option value="padrao">Padrão JMT (documento controlado)</option>
                 <option value="oficio">Ofício / carta timbrada</option>
+                <option value="cotacao">Cotação de frete (financeiro, timbrado)</option>
                 <option value="informativo">Informativo (orientações para a equipe)</option>
               </select>
             </div>
@@ -384,6 +393,40 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
                   <p>• <b>Título</b> (nível 1) = começa uma nova página com título grande. Escreva "ROTINA DE COLETA / Devoluções sem dúvida" para ter a etiqueta em cima; o parágrafo logo abaixo vira a frase cinza.</p>
                   <p>• <b>Destaque</b> = caixa colorida; a 1ª linha é o título da caixa (com "ATENÇÃO" a caixa fica laranja).</p>
                   <p>• Em listas, o texto antes dos dois-pontos sai em negrito ("Pagamento: ..."). Use **assim** para negritar no meio do texto.</p>
+                </div>
+              </div>
+            )}
+            {d.modelo === 'cotacao' && (
+              <div className="space-y-2 p-2.5 rounded-xl bg-amber-50/60 border border-amber-200">
+                <p className="text-[10px] text-[#7A4F17]">Papel timbrado da JMT com o quadro da cotação. Preencha os valores na tabela — o total é somado sozinho.</p>
+                <div>
+                  <label className={rotulo}>Cliente</label>
+                  <textarea
+                    data-texto-livre
+                    rows={3}
+                    value={d.oficio?.destinatario || ''}
+                    disabled={somenteLeitura}
+                    onChange={(e) => atualizar({ oficio: { ...d.oficio, destinatario: e.target.value } })}
+                    className={campo}
+                    placeholder={'Nome da empresa\nA/C Nome do contato'}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className={rotulo}>Validade (dias)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={d.oficio?.validadeDias ?? 15}
+                      disabled={somenteLeitura}
+                      onChange={(e) => atualizar({ oficio: { ...d.oficio, validadeDias: Math.max(1, Number(e.target.value) || 15) } })}
+                      className={campo}
+                    />
+                  </div>
+                  <div>
+                    <label className={rotulo}>Pagamento</label>
+                    <input data-texto-livre value={d.oficio?.pagamento || ''} disabled={somenteLeitura} onChange={(e) => atualizar({ oficio: { ...d.oficio, pagamento: e.target.value } })} className={campo} placeholder="Ex.: 28 dias" />
+                  </div>
                 </div>
               </div>
             )}
@@ -601,6 +644,29 @@ const MenuInserir: React.FC<{ onEscolher: (t: BlocoDocumento['tipo']) => void; o
     )}
   </div>
 );
+
+/** Conteúdo inicial da cotação de frete (só quando o documento ainda está vazio). */
+function blocosCotacao(): BlocoDocumento[] {
+  return [
+    { id: novoIdBloco(), tipo: 'paragrafo', texto: 'Prezados, conforme solicitado, apresentamos nossa proposta de valores para o transporte descrito abaixo.' },
+    { id: novoIdBloco(), tipo: 'titulo', nivel: 1, texto: 'Valores' },
+    { id: novoIdBloco(), tipo: 'tabela', cabecalho: ['Origem', 'Destino', 'Modal', 'Peso (kg)', 'Volumes', 'Valor (R$)'], linhas: [['Parnamirim/RN', '', 'Rodoviário', '', '', '']] },
+    { id: novoIdBloco(), tipo: 'titulo', nivel: 1, texto: 'Condições' },
+    {
+      id: novoIdBloco(),
+      tipo: 'lista',
+      ordenada: false,
+      itens: [
+        'Prazo de entrega: conforme a rota, a combinar na confirmação.',
+        'Valores sujeitos à conferência de peso e volumes na coleta.',
+        'Seguro e taxas: inclusos nos valores acima, salvo indicação em contrário.',
+        'Impostos: conforme a legislação vigente.',
+      ],
+    },
+    { id: novoIdBloco(), tipo: 'paragrafo', texto: 'Ficamos à disposição para qualquer esclarecimento.' },
+    { id: novoIdBloco(), tipo: 'assinaturas', comData: false, pessoas: [{ papel: '', nome: '', cargo: 'Departamento Financeiro' }] },
+  ];
+}
 
 /** Textarea que cresce com o conteúdo. */
 const TextoAuto: React.FC<{ valor: string; onChange: (v: string) => void; className: string; placeholder?: string; disabled?: boolean }> = ({ valor, onChange, className, placeholder, disabled }) => (
