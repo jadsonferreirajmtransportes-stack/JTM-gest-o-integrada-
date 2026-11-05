@@ -1008,14 +1008,18 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
             await anularBatida(anulando.id, motivo, currentUser?.nome);
             setBatidas((prev) => prev.map((b) => (b.id === anulando.id ? { ...b, anulado: true, anuladoMotivo: motivo, anuladoPor: currentUser?.nome } : b)));
           }}
-          onMover={async (dias, motivo) => {
-            // Mesma hora em outra data, e continua na linha (dia de trabalho) em que estava —
-            // ex.: entrada 19:59 e as batidas de 00:00, 01:02 e 07:50 são da madrugada seguinte.
+          linhaAtual={espelhoSel.find((d) => d.batidas.some((x) => x.id === anulando.id))?.data || anulando.diaTrabalho || dataLocal(anulando.registradoEm)}
+          onMover={async (dias, motivo, levarLinha) => {
+            // Mesma hora em outra data. levarLinha = a batida passa para a linha (dia do espelho)
+            // da nova data; sem isso, continua na linha em que estava — ex.: entrada 19:59 e as
+            // batidas de 00:00, 01:02 e 07:50 são da madrugada seguinte do mesmo turno.
+            // dias = 0: só troca de linha (vai para a linha do dia da própria batida).
             const linha = espelhoSel.find((d) => d.batidas.some((x) => x.id === anulando.id))?.data || anulando.diaTrabalho || dataLocal(anulando.registradoEm);
             const novaData = somarDias(dataLocal(anulando.registradoEm), dias);
-            const rotulo = dias > 0 ? 'dia seguinte' : 'dia anterior';
-            const nova = await incluirBatidaAjuste(anulando.colaboradorId, `${novaData}T${horaLocal(anulando.registradoEm)}`, `Horário corrigido para o ${rotulo}: ${motivo}`, currentUser?.nome, linha);
-            const motivoAnulacao = `Substituída — data corrigida para ${dataBr(novaData)}: ${motivo}`;
+            const novaLinha = dias === 0 ? novaData : levarLinha ? somarDias(linha, dias) : linha;
+            const rotulo = dias === 0 ? `linha do dia ${dataBr(novaLinha)}` : dias > 0 ? 'dia seguinte' : 'dia anterior';
+            const nova = await incluirBatidaAjuste(anulando.colaboradorId, `${novaData}T${horaLocal(anulando.registradoEm)}`, `${dias === 0 ? 'Batida passada para a' : 'Horário corrigido para o'} ${rotulo}: ${motivo}`, currentUser?.nome, novaLinha);
+            const motivoAnulacao = dias === 0 ? `Substituída — passada para a linha do dia ${dataBr(novaLinha)}: ${motivo}` : `Substituída — data corrigida para ${dataBr(novaData)}: ${motivo}`;
             await anularBatida(anulando.id, motivoAnulacao, currentUser?.nome);
             setBatidas((prev) => [...prev.map((b) => (b.id === anulando.id ? { ...b, anulado: true, anuladoMotivo: motivoAnulacao, anuladoPor: currentUser?.nome } : b)), nova]);
           }}
@@ -1228,28 +1232,35 @@ const AnularModal: React.FC<{
   raioPadrao?: number;
   onClose: () => void;
   onAnular: (motivo: string) => Promise<void>;
-  onMover?: (dias: 1 | -1, motivo: string) => Promise<void>;
-}> = ({ batida, nome, raioPadrao = 300, onClose, onAnular, onMover }) => {
+  onMover?: (dias: 1 | -1 | 0, motivo: string, levarLinha: boolean) => Promise<void>;
+  /** Linha (dia do espelho) em que a batida aparece hoje. */
+  linhaAtual?: string;
+}> = ({ batida, nome, raioPadrao = 300, onClose, onAnular, onMover, linhaAtual }) => {
   const [motivo, setMotivo] = useState('');
   const [anular, setAnular] = useState(false);
-  const [mover, setMover] = useState<1 | -1 | null>(null);
+  const [mover, setMover] = useState<1 | -1 | 0 | null>(null);
+  // Dia anterior: em geral a batida inteira é do outro dia (vai junto para a linha dele).
+  // Dia seguinte: em geral é a madrugada do mesmo turno (fica na linha da entrada).
+  const [levarLinha, setLevarLinha] = useState(false);
+  const diaDaBatida = dataLocal(batida.registradoEm);
+  const foraDaLinha = !!linhaAtual && linhaAtual !== diaDaBatida;
   const { salvando, erro, executar } = useAcao();
   const temGps = batida.latitude !== undefined && batida.longitude !== undefined;
   const longe = batida.distanciaM !== undefined && batida.distanciaM > raioPadrao;
   const distancia = (m: number) => (m >= 1000 ? `${(m / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km` : `${Math.round(m)} m`);
   return (
     <Moldura
-      titulo={anular ? 'Anular batida' : mover ? `Mover para o ${mover > 0 ? 'dia seguinte' : 'dia anterior'}` : 'Detalhes da batida'}
+      titulo={anular ? 'Anular batida' : mover === 0 ? `Passar para a linha do dia ${dataBr(diaDaBatida)}` : mover ? `Mover para o ${mover > 0 ? 'dia seguinte' : 'dia anterior'}` : 'Detalhes da batida'}
       subtitulo={`${nome} — ${dataBr(dataLocal(batida.registradoEm))} às ${horaLocal(batida.registradoEm)}`}
       onClose={onClose}
       rodape={
-        mover ? (
+        mover !== null ? (
           <>
             <button type="button" onClick={() => setMover(null)} className={botaoSecundario}>Voltar</button>
             <button
               type="button"
               disabled={salvando || motivo.trim().length < 5}
-              onClick={() => executar(() => onMover!(mover, motivo.trim()), onClose)}
+              onClick={() => executar(() => onMover!(mover, motivo.trim(), levarLinha), onClose)}
               className="px-4 py-2 bg-[#C48229] hover:bg-[#92611F] text-white rounded-xl font-bold flex items-center gap-2 disabled:opacity-50"
             >
               {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Mover
@@ -1267,10 +1278,15 @@ const AnularModal: React.FC<{
             <button type="button" onClick={onClose} className={botaoSecundario}>Fechar</button>
             {!batida.anulado && onMover && (
               <>
-                <button type="button" onClick={() => { setMover(-1); setMotivo(''); }} className={botaoSecundario} title="A batida é do dia anterior (mesma hora)">
+                {foraDaLinha && (
+                  <button type="button" onClick={() => { setMover(0); setMotivo('Batida estava na linha do dia errado'); }} className={botaoSecundario} title="A batida está na linha de outro dia — passa para a linha do dia em que foi registrada">
+                    Passar para a linha de {dataBr(diaDaBatida).slice(0, 5)}
+                  </button>
+                )}
+                <button type="button" onClick={() => { setMover(-1); setLevarLinha(true); setMotivo(''); }} className={botaoSecundario} title="A batida é do dia anterior (mesma hora)">
                   ← Dia anterior
                 </button>
-                <button type="button" onClick={() => { setMover(1); setMotivo('Batida da madrugada seguinte (virada do turno)'); }} className={botaoSecundario} title="A batida é do dia seguinte (mesma hora) — ex.: madrugada de um turno que começou à noite">
+                <button type="button" onClick={() => { setMover(1); setLevarLinha(false); setMotivo('Batida da madrugada seguinte (virada do turno)'); }} className={botaoSecundario} title="A batida é do dia seguinte (mesma hora) — ex.: madrugada de um turno que começou à noite">
                   Dia seguinte →
                 </button>
               </>
@@ -1306,7 +1322,7 @@ const AnularModal: React.FC<{
           batida.origem !== 'ajuste' && <p className="text-[#92611F]">Sem localização: o celular não liberou o GPS na hora da batida.</p>
         )}
       </div>
-      {temGps && !anular && !mover && (
+      {temGps && !anular && mover === null && (
         <div className="space-y-1.5">
           <iframe
             title="Local da batida"
@@ -1321,12 +1337,30 @@ const AnularModal: React.FC<{
           <p className="text-[10px] text-slate-400">Localização registrada só no momento da batida — dado pessoal (LGPD): use apenas para conferência do ponto.</p>
         </div>
       )}
-      {mover && !batida.anulado && (
+      {mover !== null && !batida.anulado && (
         <div className="space-y-2">
-          <p className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[#92611F]">
-            A batida de <b>{horaLocal(batida.registradoEm)}</b> passa para <b>{dataBr(somarDias(dataLocal(batida.registradoEm), mover))}</b>, no mesmo horário, e continua na
-            linha deste dia de trabalho (ex.: entrada às 19:59 e saídas na madrugada seguinte). A original fica riscada no histórico.
-          </p>
+          {mover === 0 ? (
+            <p className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[#92611F]">
+              A batida de <b>{dataBr(diaDaBatida)} às {horaLocal(batida.registradoEm)}</b> sai da linha de <b>{linhaAtual ? dataBr(linhaAtual) : '—'}</b> e passa para a linha de{' '}
+              <b>{dataBr(diaDaBatida)}</b> no espelho. A original fica riscada no histórico.
+            </p>
+          ) : (
+            <>
+              <p className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[#92611F]">
+                A batida de <b>{horaLocal(batida.registradoEm)}</b> passa para <b>{dataBr(somarDias(diaDaBatida, mover))}</b>, no mesmo horário. A original fica riscada no histórico.
+              </p>
+              <label className="flex items-start gap-2 p-2.5 rounded-xl border border-slate-200 cursor-pointer">
+                <input type="checkbox" checked={levarLinha} onChange={(e) => setLevarLinha(e.target.checked)} className="mt-0.5" />
+                <span>
+                  <b>Mostrar na linha de {dataBr(somarDias(linhaAtual || diaDaBatida, mover))}</b> no espelho.
+                  <span className="block text-slate-500">
+                    Desmarque se a batida é a continuação do turno desta linha (ex.: entrada às 19:59 e saídas na madrugada seguinte) — aí ela fica na linha de{' '}
+                    {linhaAtual ? dataBr(linhaAtual) : '—'}.
+                  </span>
+                </span>
+              </label>
+            </>
+          )}
           <label className="font-bold text-slate-600 block">Motivo (fica registrado)</label>
           <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={2} className={campo} placeholder="Ex.: batida da madrugada seguinte (virada do turno)" />
         </div>
