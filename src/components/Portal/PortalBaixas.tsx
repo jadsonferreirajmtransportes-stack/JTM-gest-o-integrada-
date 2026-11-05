@@ -109,7 +109,7 @@ export const PortalBaixas: React.FC<{ credenciais: CredenciaisPortal }> = ({ cre
             </p>
           )}
           <label className="block">
-            <span className="font-bold text-slate-700">Data de referência</span>
+            <span className="font-bold text-slate-700">Dia das entregas <span className="font-normal text-slate-400">(sugerido pela data de entrega da planilha)</span></span>
             <input type="date" value={lido.data} onChange={(e) => setLido({ ...lido, data: e.target.value })} className="mt-1 w-full p-3 border border-slate-300 rounded-xl text-sm" />
           </label>
           <p className="text-[11px] text-slate-500">Se você já importou esse dia, a importação anterior é substituída.</p>

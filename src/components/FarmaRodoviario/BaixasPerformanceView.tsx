@@ -887,7 +887,7 @@ export const DetalheUpload: React.FC<{
             </p>
           </div>
           <div>
-            <p className="text-[9px] font-black uppercase tracking-wide text-slate-400">Data referência</p>
+            <p className="text-[9px] font-black uppercase tracking-wide text-slate-400">Dia das entregas</p>
             <p className="font-black text-slate-900 flex items-center gap-1">
               <CalendarDays className="w-3.5 h-3.5 text-[#C48229]" /> {dataBr(upload.dataReferencia)}
             </p>
@@ -1393,7 +1393,7 @@ const ImportarBaixasModal: React.FC<{
               </datalist>
             </label>
             <label className="block">
-              <span className="font-bold text-slate-700">Data de referência</span>
+              <span className="font-bold text-slate-700">Dia das entregas <span className="font-normal text-slate-400">(sugerido pela data de entrega da planilha)</span></span>
               <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="mt-1 w-full p-2.5 border border-slate-300 rounded-lg text-sm" />
             </label>
             <label className="block">

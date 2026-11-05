@@ -116,7 +116,7 @@ export const diaLocal = (iso?: string) => (iso ? new Date(Date.parse(iso) - 3 * 
 
 export interface PlanilhaBaixas {
   notas: Omit<BaixaNota, 'id' | 'uploadId'>[];
-  /** Data sugerida para a referência (do nome do arquivo ou a emissão mais comum). */
+  /** Data sugerida para a referência: o dia da entrega mais comum (sem entregas: nome do arquivo ou emissão). */
   dataSugerida?: string;
 }
 
@@ -182,14 +182,16 @@ export function lerPlanilhaBaixas(dados: ArrayBuffer, nomeArquivo: string): Plan
       prazo: txt(l, c.prazo)?.toUpperCase(),
     }));
   if (!notas.length) throw new Error('A planilha não tem nenhuma nota.');
-  // Nome do arquivo "(30-10-2026  até  30-10-2026) Relatório de documentos.xlsx".
-  const m = nomeArquivo.match(/(\d{2})-(\d{2})-(\d{4})\s*at[ée]\s*(\d{2})-(\d{2})-(\d{4})/i);
-  let dataSugerida = m ? `${m[6]}-${m[5]}-${m[4]}` : undefined;
-  if (!dataSugerida) {
+  // Data de referência = o DIA DA ENTREGA (a data mais comum nas entregas da planilha). Sem
+  // nenhuma entrega, vale o fim do período do nome do arquivo ("(30-10-2026 até 30-10-2026)
+  // Relatório de documentos.xlsx", que é o filtro de emissão) e, por último, a emissão mais comum.
+  const maisComum = (datas: (string | undefined)[]) => {
     const cont = new Map<string, number>();
-    notas.forEach((n) => n.dataEmissao && cont.set(diaLocal(n.dataEmissao), (cont.get(diaLocal(n.dataEmissao)) || 0) + 1));
-    dataSugerida = [...cont.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
-  }
+    datas.forEach((d) => d && cont.set(diaLocal(d), (cont.get(diaLocal(d)) || 0) + 1));
+    return [...cont.entries()].sort((a, b) => b[1] - a[1] || b[0].localeCompare(a[0]))[0]?.[0];
+  };
+  const m = nomeArquivo.match(/(\d{2})-(\d{2})-(\d{4})\s*at[ée]\s*(\d{2})-(\d{2})-(\d{4})/i);
+  const dataSugerida = maisComum(notas.map((n) => n.dataEntrega)) || (m ? `${m[6]}-${m[5]}-${m[4]}` : undefined) || maisComum(notas.map((n) => n.dataEmissao));
   return { notas, dataSugerida };
 }
 
