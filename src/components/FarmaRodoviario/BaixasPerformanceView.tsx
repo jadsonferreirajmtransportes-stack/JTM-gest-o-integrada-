@@ -775,6 +775,7 @@ export const DetalheUpload: React.FC<{
   onNovoMotivo?: (motivo: string) => Promise<void>;
 }> = ({ upload, usuario, onAtualizado, carregarNotas, marcarTardia, marcarAbono, motivosAbono = MOTIVOS_ABONO, onNovoMotivo }) => {
   const [abonando, setAbonando] = useState<BaixaNota | null>(null);
+  const [registrando, setRegistrando] = useState<BaixaNota | null>(null);
   const [notas, setNotas] = useState<BaixaNota[] | null>(null);
   const [motorista, setMotorista] = useState('');
   const [empresa, setEmpresa] = useState('');
@@ -812,21 +813,15 @@ export const DetalheUpload: React.FC<{
   );
   const paginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
 
-  const tardia = async (n: BaixaNota) => {
-    const padrao = new Date().toLocaleString('sv-SE').slice(0, 16).replace(' ', 'T');
-    const v = window.prompt(`Registrar a entrega tardia da NF ${n.numero}.\nData e hora da entrega (AAAA-MM-DD HH:MM):`, padrao.replace('T', ' '));
-    if (!v) return;
-    const iso = new Date(`${v.trim().replace(' ', 'T')}:00-03:00`);
-    if (isNaN(iso.getTime())) return alert('Data inválida. Use o formato AAAA-MM-DD HH:MM.');
-    try {
-      const nova = marcarTardia ? await marcarTardia(n, iso.toISOString()) : await registrarEntregaTardia(n, iso.toISOString(), usuario, notas || []);
-      const novas = (notas || []).map((x) => (x.id === n.id ? nova : x));
-      setNotas(novas);
-      const c = contar(novas);
-      onAtualizado({ ...upload, entregues: c.entregues, noPrazo: c.noPrazo });
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Não foi possível registrar.');
-    }
+  const tardia = (n: BaixaNota) => setRegistrando(n);
+  /** quando = "AAAA-MM-DDTHH:MM" (hora de Brasília), escolhido no calendário. */
+  const salvarTardia = async (n: BaixaNota, quando: string) => {
+    const iso = new Date(`${quando}:00-03:00`).toISOString();
+    const nova = marcarTardia ? await marcarTardia(n, iso) : await registrarEntregaTardia(n, iso, usuario, notas || []);
+    const novas = (notas || []).map((x) => (x.id === n.id ? nova : x));
+    setNotas(novas);
+    const c = contar(novas);
+    onAtualizado({ ...upload, entregues: c.entregues, noPrazo: c.noPrazo });
   };
 
   /** Abona (motivo preenchido) ou desfaz o abono (motivo vazio). */
@@ -866,6 +861,17 @@ export const DetalheUpload: React.FC<{
 
   return (
     <div className="space-y-4 min-w-0">
+      {registrando && (
+        <EntregaRealModal
+          nota={registrando}
+          diaPlanilha={upload.dataReferencia}
+          onClose={() => setRegistrando(null)}
+          onConfirmar={async (quando) => {
+            await salvarTardia(registrando, quando);
+            setRegistrando(null);
+          }}
+        />
+      )}
       {abonando && <AbonoModal nota={abonando} motivos={motivosAbono} onNovoMotivo={onNovoMotivo} onClose={() => setAbonando(null)} onConfirmar={async (motivo, obs) => {
         await aplicarAbono(abonando, motivo, obs);
         setAbonando(null);
@@ -1076,7 +1082,7 @@ export const DetalheUpload: React.FC<{
                           {pend && (
                             <span className="flex flex-col items-start gap-0.5 mt-1 whitespace-nowrap">
                               <button type="button" onClick={() => tardia(n)} className="text-[10px] font-bold text-[#92611F] hover:underline normal-case tracking-normal">
-                                ✓ Registrar entrega tardia
+                                ✓ Registrar entrega real
                               </button>
                               <button type="button" onClick={() => setAbonando(n)} className="text-[10px] font-bold text-slate-600 hover:underline normal-case tracking-normal">
                                 ⊘ Abonar
@@ -1124,6 +1130,71 @@ export const DetalheUpload: React.FC<{
           </div>
         </>
       )}
+    </div>
+  );
+};
+
+/** Registrar a entrega real (o motorista entregou, mas a baixa não foi feita na hora): data e
+ *  hora escolhidas no calendário — por padrão o dia da planilha, nunca no futuro. */
+const EntregaRealModal: React.FC<{ nota: BaixaNota; diaPlanilha: string; onClose: () => void; onConfirmar: (quando: string) => Promise<void> }> = ({ nota, diaPlanilha, onClose, onConfirmar }) => {
+  const agora = new Date().toLocaleString('sv-SE').slice(0, 16).replace(' ', 'T');
+  const horaAgora = agora.slice(11, 16);
+  const padrao = `${diaPlanilha}T${horaAgora}` > agora ? agora : `${diaPlanilha}T${horaAgora}`;
+  const [quando, setQuando] = useState(padrao);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const confirmar = async () => {
+    if (!quando || isNaN(new Date(`${quando}:00-03:00`).getTime())) return setErro('Escolha a data e a hora da entrega.');
+    if (quando > agora) return setErro('A entrega não pode ser no futuro.');
+    setSalvando(true);
+    setErro(null);
+    try {
+      await onConfirmar(quando);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível registrar.');
+      setSalvando(false);
+    }
+  };
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-3 text-xs" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Registrar entrega real
+            </h3>
+            <p className="text-slate-500">
+              NF {nota.numero}
+              {nota.destinatario ? ` — ${nota.destinatario}` : ''}. Informe quando o motorista entregou de verdade.
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 text-slate-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <label className="block">
+          <span className="text-[10px] font-black uppercase tracking-wide text-slate-500">Data e hora reais da entrega</span>
+          <input
+            type="datetime-local"
+            value={quando}
+            max={agora}
+            onChange={(e) => setQuando(e.target.value)}
+            className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl bg-slate-50 text-sm font-semibold"
+          />
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          <button type="button" onClick={() => setQuando(padrao)} className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-600">
+            Dia da planilha ({diaPlanilha.slice(8, 10)}/{diaPlanilha.slice(5, 7)})
+          </button>
+          <button type="button" onClick={() => setQuando(agora)} className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white font-bold text-slate-600">
+            Agora
+          </button>
+        </div>
+        {erro && <p className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 font-semibold">{erro}</p>}
+        <button type="button" onClick={confirmar} disabled={salvando} className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center justify-center gap-1.5 disabled:opacity-50">
+          {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Registrar entrega
+        </button>
+      </div>
     </div>
   );
 };
