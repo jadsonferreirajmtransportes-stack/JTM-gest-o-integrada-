@@ -10,6 +10,7 @@ import {
   apagarMensagemDp,
   editarMensagemDp,
   ehAudio,
+  ehImagem,
   reagirComoDp,
   SolicitacaoDp,
   StatusSolicitacao,
@@ -32,6 +33,23 @@ export const AudioAnexo: React.FC<{ anexo: AnexoSolicitacao }> = ({ anexo }) => 
     linkAnexo(anexo.caminho).then(setUrl).catch(() => undefined);
   }, [anexo.url, anexo.caminho]);
   return url ? <audio controls preload="none" src={url} className="mt-1.5 w-56 max-w-full h-9" /> : <p className="mt-1.5 text-[11px] opacity-70">Carregando áudio...</p>;
+};
+
+/** Foto anexada: miniatura (busca o link na hora — o espaço dos anexos é privado); clique abre. */
+export const ImagemAnexo: React.FC<{ anexo: AnexoSolicitacao }> = ({ anexo }) => {
+  const [url, setUrl] = useState(anexo.url || '');
+  const [falhou, setFalhou] = useState(false);
+  useEffect(() => {
+    if (anexo.url || !anexo.caminho) return;
+    linkAnexo(anexo.caminho).then(setUrl).catch(() => setFalhou(true));
+  }, [anexo.url, anexo.caminho]);
+  if (falhou) return <p className="mt-1.5 text-[11px] opacity-70">{anexo.nome}</p>;
+  if (!url) return <div className="mt-1.5 w-48 h-32 rounded-lg bg-slate-100 animate-pulse" />;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="mt-1.5 block" title={`Abrir ${anexo.nome}`}>
+      <img src={url} alt={anexo.nome} className="max-w-[240px] max-h-60 rounded-lg border border-slate-200 object-contain bg-white" />
+    </a>
+  );
 };
 
 // Uma demanda do "Fale com o DP" aberta dentro do Chat da gestão (079). Lê e grava nas
@@ -303,6 +321,8 @@ export const ConversaDemanda: React.FC<{
                 )}
                 {m.anexos.map((a, i) => ehAudio(a) ? (
                   <AudioAnexo key={i} anexo={a} />
+                ) : ehImagem(a) ? (
+                  <ImagemAnexo key={i} anexo={a} />
                 ) : (
                   <button
                     key={i}

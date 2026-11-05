@@ -96,6 +96,35 @@ export interface MensagemSolicitacao {
   minhasReacoes?: string[];
 }
 
+/** Anexo de imagem (foto/print)? */
+export const ehImagem = (a: Pick<AnexoSolicitacao, 'tipo' | 'nome'>) => (a.tipo || '').startsWith('image/') || /\.(jpe?g|png|webp|gif|heic)$/i.test(a.nome || '');
+
+/** Foto/print → JPEG leve (até 1600px), o formato que o espaço dos anexos aceita. PDF, áudio e
+ *  imagens que o navegador não consegue abrir (ex.: HEIC no Chrome) seguem como estão. */
+export async function prepararImagem(arquivo: File): Promise<File> {
+  const tipo = (arquivo.type || '').split(';')[0];
+  if (!tipo.startsWith('image/') || tipo === 'image/heic' || tipo === 'image/heif') return arquivo;
+  const aceito = /^image\/(jpeg|png|webp)$/.test(tipo);
+  if (aceito && arquivo.size <= 1.5 * 1024 * 1024) return arquivo;
+  try {
+    const bitmap = await createImageBitmap(arquivo);
+    const escala = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * escala);
+    canvas.height = Math.round(bitmap.height * escala);
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, 'image/jpeg', 0.85));
+    if (!blob) return arquivo;
+    const nome = (arquivo.name || 'foto').replace(/\.[a-z0-9]+$/i, '') + '.jpg';
+    return new File([blob], nome, { type: 'image/jpeg' });
+  } catch {
+    return arquivo;
+  }
+}
+
 /** Anexo de áudio (gravado no Chat)? */
 export const ehAudio = (a: AnexoSolicitacao) => (a.tipo || '').startsWith('audio/');
 
@@ -131,9 +160,10 @@ const MENSAGENS: Record<string, string> = {
 const LIMITE_MB = 8;
 
 /** Envia um anexo do colaborador para a pasta do link dele (espaço privado). */
-export async function enviarAnexoPortal(token: string, arquivo: File): Promise<AnexoSolicitacao> {
+export async function enviarAnexoPortal(token: string, original: File): Promise<AnexoSolicitacao> {
+  const arquivo = await prepararImagem(original);
   if (arquivo.size > LIMITE_MB * 1024 * 1024) throw new Error(`"${arquivo.name}" passa de ${LIMITE_MB}MB.`);
-  if (!/^(image\/(jpeg|png|webp|heic)|application\/pdf)$/.test(arquivo.type)) throw new Error(`"${arquivo.name}": envie foto (JPG/PNG) ou PDF.`);
+  if (!/^(image\/(jpeg|png|webp|heic)|application\/pdf)$/.test(arquivo.type)) throw new Error(`"${arquivo.name}": envie foto (JPG/PNG/HEIC) ou PDF.`);
   const nomeSeguro = arquivo.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(-60);
   const caminho = `${token}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${nomeSeguro}`;
   const { error } = await supabase.storage.from('solicitacoes').upload(caminho, arquivo, { contentType: arquivo.type, upsert: false });
@@ -294,7 +324,8 @@ export async function responderComoDp(
   atendente?: string
 ): Promise<MensagemSolicitacao> {
   const anexos: AnexoSolicitacao[] = [];
-  for (const arq of arquivos.slice(0, 3)) {
+  for (const original of arquivos.slice(0, 3)) {
+    const arq = await prepararImagem(original);
     const nomeSeguro = arq.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(-60);
     const caminho = `dp/${s.id}/${Date.now()}-${nomeSeguro}`;
     // Tipo sem parâmetros ("audio/webm;codecs=opus" → "audio/webm"): é o que o espaço aceita.

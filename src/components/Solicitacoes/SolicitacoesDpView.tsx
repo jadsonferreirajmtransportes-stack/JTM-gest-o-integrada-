@@ -20,10 +20,10 @@ import { linkUnicoDe } from '../../utils/linkUnico';
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { calcPeriodoAquisitivo, calcPrazoLimiteGozo } from '../../utils/formatters';
 import { estiloStatus, resumoDados } from '../Portal/PortalSolicitacoes';
-import { AudioAnexo } from '../Chat/ConversaDemanda';
+import { AudioAnexo, ImagemAnexo } from '../Chat/ConversaDemanda';
 import { AcoesMensagemChat, ReacoesMensagem } from '../Chat/MensagemChatAcoes';
 import { GravadorAudio, nomeAudio } from '../Chat/AudioChat';
-import { apagarMensagemDp, editarMensagemDp, ehAudio, reagirComoDp } from '../../utils/solicitacoesApi';
+import { apagarMensagemDp, editarMensagemDp, ehAudio, ehImagem, reagirComoDp } from '../../utils/solicitacoesApi';
 
 type Filtro = 'pendentes' | 'respondidas' | 'encerradas' | 'todas';
 
@@ -464,6 +464,8 @@ const SolicitacaoDpModal: React.FC<{
                     )}
                     {m.anexos.map((a, i) => ehAudio(a) ? (
                       <AudioAnexo key={i} anexo={a} />
+                    ) : ehImagem(a) ? (
+                      <ImagemAnexo key={i} anexo={a} />
                     ) : (
                       <button key={i} type="button" onClick={() => abrirAnexo(a.caminho, a.url)} className="mt-1 flex items-center gap-1.5 text-xs font-bold text-[#92611F] hover:underline">
                         <Paperclip className="w-3.5 h-3.5" /> {a.nome} <ExternalLink className="w-3 h-3" />
@@ -493,7 +495,7 @@ const SolicitacaoDpModal: React.FC<{
           {erro && <p className="text-rose-700 font-semibold">{erro}</p>}
           <div className="flex flex-wrap items-center gap-2">
             <label className="inline-flex items-center gap-1.5 px-3 py-2 border border-dashed border-slate-300 rounded-lg font-bold text-[#92611F] cursor-pointer">
-              <Paperclip className="w-3.5 h-3.5" /> Anexar (ex.: declaração em PDF)
+              <Paperclip className="w-3.5 h-3.5" /> Foto ou PDF
               <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={(e) => { setArquivos((p) => [...p, ...Array.from(e.target.files || [])].slice(0, 3)); e.target.value = ''; }} />
             </label>
             <GravadorAudio onEnviar={enviarAudio} desabilitado={enviando} />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, ChevronLeft, Plus, Send, Paperclip, X, MessageSquareText, CheckCircle2, Clock, FileText, Download, SmilePlus } from 'lucide-react';
+import { Loader2, ChevronLeft, Plus, Send, Paperclip, X, MessageSquareText, CheckCircle2, Clock, FileText, Download, SmilePlus, Camera, ImageIcon } from 'lucide-react';
 import type { CredenciaisPortal } from '../../utils/educacaoApi';
 import {
   AnexoSolicitacao,
@@ -10,6 +10,7 @@ import {
   TIPOS_SOLICITACAO,
   TipoSolicitacao,
   enviarAnexoPortal,
+  ehImagem,
   portalAbrirSolicitacao,
   portalResponderSolicitacao,
   portalSolicitacao,
@@ -161,46 +162,77 @@ export const PortalSolicitacoes: React.FC<{ credenciais: CredenciaisPortal; soli
 };
 
 /** Escolhe arquivos e envia para a pasta do link (até 3). */
-const SeletorAnexos: React.FC<{ token: string; anexos: AnexoSolicitacao[]; onChange: (a: AnexoSolicitacao[]) => void }> = ({ token, anexos, onChange }) => {
+const SeletorAnexos: React.FC<{ token: string; anexos: AnexoSolicitacao[]; onChange: (a: AnexoSolicitacao[]) => void; /** Imagens coladas (Ctrl+V) na caixa de texto. */ colados?: File[] }> = ({ token, anexos, onChange, colados }) => {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const escolher = async (lista: FileList | null) => {
+  // Miniatura das fotos escolhidas (só neste aparelho, enquanto escreve).
+  const [previas, setPrevias] = useState<Record<string, string>>({});
+  const escolher = async (lista: FileList | File[] | null) => {
     if (!lista?.length) return;
     setErro(null);
     setEnviando(true);
     const novos: AnexoSolicitacao[] = [];
+    const novasPrevias: Record<string, string> = {};
     for (const arq of Array.from(lista).slice(0, 3 - anexos.length)) {
       try {
-        novos.push(await enviarAnexoPortal(token, arq));
+        const a = await enviarAnexoPortal(token, arq);
+        novos.push(a);
+        if (arq.type.startsWith('image/') && a.caminho) novasPrevias[a.caminho] = URL.createObjectURL(arq);
       } catch (err) {
         setErro(err instanceof Error ? err.message : 'Não foi possível enviar o arquivo.');
       }
     }
     setEnviando(false);
+    setPrevias((p) => ({ ...p, ...novasPrevias }));
     if (novos.length) onChange([...anexos, ...novos]);
   };
+  useEffect(() => {
+    if (colados?.length) escolher(colados);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colados]);
+  const botao = `inline-flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs font-bold text-[#92611F] bg-white ${enviando ? 'opacity-60' : 'cursor-pointer'}`;
   return (
     <div className="space-y-1.5">
-      {anexos.map((a, i) => (
-        <div key={a.caminho || i} className="flex items-center gap-2 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-          <FileText className="w-3.5 h-3.5 text-slate-400" />
-          <span className="flex-1 truncate">{a.nome}</span>
-          <button type="button" onClick={() => onChange(anexos.filter((_, k) => k !== i))} className="p-0.5 text-slate-400 hover:text-rose-600" title="Tirar">
-            <X className="w-3.5 h-3.5" />
-          </button>
+      {anexos.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {anexos.map((a, i) => (
+            <div key={a.caminho || i} className="relative">
+              {a.caminho && previas[a.caminho] ? (
+                <img src={previas[a.caminho]} alt={a.nome} className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
+              ) : (
+                <div className="flex items-center gap-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 max-w-[200px]">
+                  {ehImagem(a) ? <ImageIcon className="w-3.5 h-3.5 text-slate-400" /> : <FileText className="w-3.5 h-3.5 text-slate-400" />}
+                  <span className="truncate">{a.nome}</span>
+                </div>
+              )}
+              <button type="button" onClick={() => onChange(anexos.filter((_, k) => k !== i))} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white border border-slate-300 text-slate-500 hover:text-rose-600 flex items-center justify-center" title="Tirar">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
       {anexos.length < 3 && (
-        <label className={`inline-flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs font-bold text-[#92611F] bg-white ${enviando ? 'opacity-60' : 'cursor-pointer'}`}>
-          {enviando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
-          {enviando ? 'Enviando...' : 'Anexar foto ou PDF'}
-          <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" multiple className="hidden" disabled={enviando} onChange={(e) => { escolher(e.target.files); e.target.value = ''; }} />
-        </label>
+        <div className="flex flex-wrap gap-2">
+          <label className={botao}>
+            {enviando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+            {enviando ? 'Enviando...' : 'Foto / imagem'}
+            <input type="file" accept="image/*" multiple className="hidden" disabled={enviando} onChange={(e) => { escolher(e.target.files); e.target.value = ''; }} />
+          </label>
+          <label className={botao}>
+            <Paperclip className="w-3.5 h-3.5" /> PDF
+            <input type="file" accept="application/pdf" multiple className="hidden" disabled={enviando} onChange={(e) => { escolher(e.target.files); e.target.value = ''; }} />
+          </label>
+        </div>
       )}
       {erro && <p className="text-[11px] text-rose-700 font-semibold">{erro}</p>}
     </div>
   );
 };
+
+/** Imagem colada (Ctrl+V / colar do celular) na caixa de texto → anexo. */
+const imagensColadas = (e: React.ClipboardEvent): File[] =>
+  Array.from<File>(e.clipboardData?.files ?? []).filter((f) => f.type.startsWith('image/'));
 
 const NovaSolicitacao: React.FC<{ credenciais: CredenciaisPortal; onVoltar: () => void; onCriada: (id: string) => void }> = ({ credenciais, onVoltar, onCriada }) => {
   const [tipo, setTipo] = useState<TipoSolicitacao | null>(null);
@@ -493,6 +525,7 @@ const SolicitacaoAberta: React.FC<{ credenciais: CredenciaisPortal; id: string; 
   const [erro, setErro] = useState<string | null>(null);
   const [texto, setTexto] = useState('');
   const [anexos, setAnexos] = useState<AnexoSolicitacao[]>([]);
+  const [colados, setColados] = useState<File[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [escolhendoEmoji, setEscolhendoEmoji] = useState<string | null>(null);
 
@@ -581,13 +614,17 @@ const SolicitacaoAberta: React.FC<{ credenciais: CredenciaisPortal; id: string; 
                         {m.anexos.map((a, i) =>
                           a.url && ehAudio(a) ? (
                             <audio key={i} controls preload="none" src={a.url} className="w-60 max-w-full h-10" />
+                          ) : a.url && ehImagem(a) ? (
+                            <a key={i} href={a.url} target="_blank" rel="noopener noreferrer" className="block">
+                              <img src={a.url} alt={a.nome} className="max-w-[220px] max-h-56 rounded-lg border border-slate-200 object-contain bg-white" />
+                            </a>
                           ) : a.url ? (
                             <a key={i} href={a.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-bold text-[#92611F]">
                               <Download className="w-3.5 h-3.5" /> {a.nome}
                             </a>
                           ) : (
                             <p key={i} className="flex items-center gap-1.5 text-xs text-slate-500">
-                              <Paperclip className="w-3.5 h-3.5" /> {a.nome}
+                              {ehImagem(a) ? <ImageIcon className="w-3.5 h-3.5" /> : <Paperclip className="w-3.5 h-3.5" />} {a.nome}
                             </p>
                           )
                         )}
@@ -639,8 +676,21 @@ const SolicitacaoAberta: React.FC<{ credenciais: CredenciaisPortal; id: string; 
             </p>
           ) : (
             <form onSubmit={responder} className="bg-white rounded-2xl border border-slate-200 p-3 space-y-2 shadow-xs">
-              <textarea value={texto} onChange={(e) => setTexto(e.target.value.slice(0, 3000))} rows={3} placeholder="Escreva uma mensagem para o DP..." className="w-full p-3 border border-slate-300 rounded-xl text-sm" />
-              <SeletorAnexos token={credenciais.token} anexos={anexos} onChange={setAnexos} />
+              <textarea
+                value={texto}
+                onChange={(e) => setTexto(e.target.value.slice(0, 3000))}
+                onPaste={(e) => {
+                  const imgs = imagensColadas(e);
+                  if (imgs.length) {
+                    e.preventDefault();
+                    setColados(imgs);
+                  }
+                }}
+                rows={3}
+                placeholder="Escreva uma mensagem para o DP..."
+                className="w-full p-3 border border-slate-300 rounded-xl text-sm"
+              />
+              <SeletorAnexos token={credenciais.token} anexos={anexos} onChange={setAnexos} colados={colados} />
               {erro && <p className="text-xs text-rose-700 font-semibold">{erro}</p>}
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-slate-400 flex items-center gap-1">
