@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronRight, Download, FileText, Loader2, XCircle } from 'lucide-react';
 import { JmtLogo } from '../Brand/JmtLogo';
-import { CienciaPublica, abrirCiencia, responderCiencia } from '../../utils/cienciaLinkApi';
+import { CienciaPublica, abrirCiencia, lerConfig, responderCiencia } from '../../utils/cienciaLinkApi';
+import { AssinaturaDigitalPad } from '../Epi/AssinaturaDigitalPad';
 import type { BlocoDocumento, DocumentoPadronizado } from '../../utils/documentosPadronizadosApi';
 import { caixaInfo, normalizarInformativo, parteInfo, trechos } from './gerarDocumento';
 
@@ -159,6 +160,18 @@ export const CienciaLinkView: React.FC<{ token?: string }> = ({ token }) => {
   const [erroEnvio, setErroEnvio] = useState<string | null>(null);
   const [cienteEm, setCienteEm] = useState('');
   const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [assinatura, setAssinatura] = useState<string | null>(null);
+  const [leuAteFim, setLeuAteFim] = useState(false);
+  const fimRef = React.useRef<HTMLDivElement>(null);
+  const config = lerConfig(dados?.config);
+
+  // Leitura completa: o "continuar" só libera quando o fim do documento aparece na tela.
+  useEffect(() => {
+    if (etapa !== 'ler' || !fimRef.current || leuAteFim) return;
+    const obs = new IntersectionObserver((e) => e.some((x) => x.isIntersecting) && setLeuAteFim(true), { threshold: 0.5 });
+    obs.observe(fimRef.current);
+    return () => obs.disconnect();
+  }, [etapa, dados, leuAteFim]);
 
   useEffect(() => {
     if (!token) return;
@@ -199,13 +212,14 @@ export const CienciaLinkView: React.FC<{ token?: string }> = ({ token }) => {
     if (!token || !dados) return;
     if (nome.trim().split(/\s+/).length < 2) return setErroEnvio('Escreva o nome completo.');
     if (!cpfValido(cpf)) return setErroEnvio('CPF inválido. Confira os números.');
-    if (soDigitos(telefone).length < 10) return setErroEnvio('Informe o telefone com DDD.');
+    if (config.pedirTelefone && soDigitos(telefone).length < 10) return setErroEnvio('Informe o telefone com DDD.');
+    if (config.assinatura && !assinatura) return setErroEnvio('Assine no quadro com o dedo.');
     if (!ciente) return setErroEnvio('Marque "Li e estou ciente" para confirmar.');
     setEnviando(true);
     setErroEnvio(null);
     try {
-      const r = await responderCiencia({ token, nome: nome.trim(), cpf, telefone, respostas: respostas.map((x) => x ?? -1), tentativas: Math.max(1, tentativas) });
-      if (r.erro) setErroEnvio(r.erro === 'respostas' ? 'Alguma resposta do questionário não está certa. Volte e confira.' : r.erro === 'cpf' ? 'CPF inválido.' : 'Não foi possível confirmar. Tente de novo.');
+      const r = await responderCiencia({ token, nome: nome.trim(), cpf, telefone, respostas: respostas.map((x) => x ?? -1), tentativas: Math.max(1, tentativas), assinatura: config.assinatura ? assinatura : null, leuAteFim: config.leituraCompleta ? leuAteFim : undefined });
+      if (r.erro) setErroEnvio(r.erro === 'assinatura' ? 'Assine no quadro com o dedo.' : r.erro === 'telefone' ? 'Informe o telefone com DDD.' : r.erro === 'respostas' ? 'Alguma resposta do questionário não está certa. Volte e confira.' : r.erro === 'cpf' ? 'CPF inválido.' : 'Não foi possível confirmar. Tente de novo.');
       else {
         setCienteEm(r.cienteEm || new Date().toISOString());
         setEtapa('pronto');
@@ -267,7 +281,9 @@ export const CienciaLinkView: React.FC<{ token?: string }> = ({ token }) => {
               <>
                 <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
                   <DocumentoEmTela doc={dados.documento} />
+                  <div ref={fimRef} className="h-1" />
                 </div>
+                {config.leituraCompleta && !leuAteFim && <p className="text-xs text-[#92611F] font-semibold text-center">Leia até o fim do documento para continuar.</p>}
                 <div className="flex flex-col sm:flex-row gap-2">
                   <button type="button" onClick={baixarPdf} disabled={gerandoPdf} className="px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm font-bold normal-case tracking-normal flex items-center justify-center gap-1.5">
                     {gerandoPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 text-[#C48229]" />} Baixar em PDF
@@ -278,7 +294,8 @@ export const CienciaLinkView: React.FC<{ token?: string }> = ({ token }) => {
                       setEtapa(perguntas.length ? 'perguntas' : 'confirmar');
                       window.scrollTo(0, 0);
                     }}
-                    className="flex-1 px-4 py-3 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-sm font-bold normal-case tracking-normal"
+                    disabled={config.leituraCompleta && !leuAteFim}
+                    className="disabled:opacity-50 flex-1 px-4 py-3 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-sm font-bold normal-case tracking-normal"
                   >
                     Li o documento — continuar
                   </button>
@@ -358,11 +375,17 @@ export const CienciaLinkView: React.FC<{ token?: string }> = ({ token }) => {
                     <label className="text-xs font-bold text-slate-600">CPF</label>
                     <input value={cpf} onChange={(e) => setCpf(mascaraCpf(e.target.value))} inputMode="numeric" placeholder="000.000.000-00" className={campo} />
                   </div>
-                  <div>
+                  <div className={config.pedirTelefone ? '' : 'hidden'}>
                     <label className="text-xs font-bold text-slate-600">Telefone (WhatsApp)</label>
                     <input value={telefone} onChange={(e) => setTelefone(e.target.value)} inputMode="tel" placeholder="(84) 99999-9999" className={campo} autoComplete="tel" />
                   </div>
                 </div>
+                {config.assinatura && (
+                  <div>
+                    <label className="text-xs font-bold text-slate-600">Assinatura (desenhe com o dedo)</label>
+                    <AssinaturaDigitalPad onChange={setAssinatura} />
+                  </div>
+                )}
                 <label className="flex items-start gap-2 p-3 rounded-xl bg-[#FBF6EE] border border-amber-200 cursor-pointer text-sm">
                   <input type="checkbox" checked={ciente} onChange={(e) => setCiente(e.target.checked)} className="mt-0.5" />
                   <span>

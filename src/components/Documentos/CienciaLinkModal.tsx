@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { CheckCircle2, Copy, FileSpreadsheet, Link2, Loader2, MessageCircle, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import type { DocumentoPadronizado } from '../../utils/documentosPadronizadosApi';
 import {
+  CONFIG_PADRAO,
+  ConfigCiencia,
   LinkCiencia,
   PerguntaCiencia,
   RespostaCiencia,
@@ -19,6 +21,7 @@ const mascararCpf = (cpf: string) => (cpf.length === 11 ? `***.${cpf.slice(3, 6)
 export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuario?: string; onClose: () => void }> = ({ documento, usuario, onClose }) => {
   const [link, setLink] = useState<LinkCiencia | null | undefined>(undefined);
   const [perguntas, setPerguntas] = useState<PerguntaCiencia[]>([]);
+  const [config, setConfig] = useState<ConfigCiencia>(CONFIG_PADRAO);
   const [respostas, setRespostas] = useState<RespostaCiencia[]>([]);
   const [aba, setAba] = useState<'perguntas' | 'quem'>('perguntas');
   const [salvando, setSalvando] = useState(false);
@@ -30,6 +33,7 @@ export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuar
       .then((l) => {
         setLink(l);
         setPerguntas(l?.perguntas.length ? l.perguntas : [novaPerguntaCiencia()]);
+        if (l) setConfig(l.config);
         if (l) {
           setAba('quem');
           getRespostasCiencia(l.id).then(setRespostas).catch(() => undefined);
@@ -42,6 +46,7 @@ export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuar
   }, [documento.id]);
 
   const problema = (): string | null => {
+    if (!config.questionario) return null;
     for (const [i, p] of perguntas.entries()) {
       if (!p.texto.trim()) return `Escreva a pergunta ${i + 1}.`;
       const opcoes = p.opcoes.map((o) => o.trim());
@@ -58,10 +63,10 @@ export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuar
     setErro(null);
     try {
       const limpas = perguntas.map((q) => ({ ...q, texto: q.texto.trim(), opcoes: q.opcoes.map((o) => o.trim()), explicacao: q.explicacao?.trim() || undefined }));
-      const salvo = await salvarLinkCiencia(documento, limpas, link || null, { ...opcoes, por: usuario });
+      const salvo = await salvarLinkCiencia(documento, config.questionario ? limpas : perguntas, config, link || null, { ...opcoes, por: usuario });
       setLink(salvo);
       setPerguntas(salvo.perguntas);
-      setAviso(!link ? 'Link criado. Copie ou mande pelo WhatsApp.' : opcoes.atualizarDocumento ? 'O link agora mostra a versão atual do documento.' : opcoes.ativo === false ? 'Link desativado.' : opcoes.ativo ? 'Link reativado.' : 'Perguntas salvas.');
+      setAviso(!link ? 'Link criado. Copie ou mande pelo WhatsApp.' : opcoes.atualizarDocumento ? 'O link agora mostra a versão atual do documento.' : opcoes.ativo === false ? 'Link desativado.' : opcoes.ativo ? 'Link reativado.' : 'Configuração salva.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível salvar.');
     } finally {
@@ -84,10 +89,10 @@ export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuar
     const ExcelJS = (await import('exceljs')).default;
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Ciência');
-    ws.addRow(['Nome', 'CPF', 'Telefone', 'Ciente em', 'Tentativas no questionário', 'Versão do documento']);
+    ws.addRow(['Nome', 'CPF', 'Telefone', 'Ciente em', 'Tentativas no questionário', 'Versão do documento', 'Assinou', 'Leu até o fim']);
     ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF92611F' } };
-    respostas.forEach((r) => ws.addRow([r.nome, r.cpf, r.telefone || '', new Date(r.cienteEm).toLocaleString('pt-BR'), r.tentativas, r.versao ?? '']));
+    respostas.forEach((r) => ws.addRow([r.nome, r.cpf, r.telefone || '', new Date(r.cienteEm).toLocaleString('pt-BR'), r.totalPerguntas ? r.tentativas : '', r.versao ?? '', r.assinatura ? 'Sim' : '', r.leuAteFim ? 'Sim' : '']));
     ws.columns.forEach((c, i) => (c.width = [36, 16, 18, 20, 14, 12][i] || 14));
     const buf = await wb.xlsx.writeBuffer();
     const a = document.createElement('a');
@@ -156,7 +161,7 @@ export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuar
                 {(
                   [
                     ['quem', `Quem confirmou (${respostas.length})`],
-                    ['perguntas', `Questionário (${perguntas.length})`],
+                    ['perguntas', 'Como declarar ciência'],
                   ] as const
                 ).map(([id, rot]) => (
                   <button key={id} type="button" onClick={() => setAba(id)} className={`px-3 py-1.5 rounded-lg font-bold normal-case tracking-normal ${aba === id ? 'bg-[#C48229] text-white' : 'text-slate-600'}`}>
@@ -185,6 +190,7 @@ export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuar
                           <th className="p-2">Telefone</th>
                           <th className="p-2">Ciente em</th>
                           <th className="p-2 text-center">Tentativas</th>
+                          <th className="p-2">Assinatura</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -200,7 +206,11 @@ export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuar
                               {new Date(r.cienteEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
                               {r.versao && r.versao !== link.versao ? <span className="block text-[10px] text-amber-700">versão {r.versao}</span> : null}
                             </td>
-                            <td className="p-2 text-center">{r.tentativas}</td>
+                            <td className="p-2 text-center">
+                              {r.totalPerguntas ? r.tentativas : '—'}
+                              {r.leuAteFim ? <span className="block text-[10px] text-emerald-700">leu até o fim</span> : null}
+                            </td>
+                            <td className="p-2">{r.assinatura ? <img src={r.assinatura} alt="Assinatura" className="h-8 max-w-[110px] object-contain bg-white border border-slate-200 rounded" /> : '—'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -209,8 +219,28 @@ export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuar
                 )
               ) : (
                 <>
-                  <p className="text-slate-500">Marque a resposta certa de cada pergunta. Se a pessoa errar, ela vê a explicação e precisa acertar todas antes de confirmar.</p>
-                  {perguntas.map((p, i) => (
+                  <div className="border border-amber-200 bg-[#FCFAF6] rounded-xl p-3 space-y-2">
+                    <p className="font-black text-slate-800">Como a pessoa declara a ciência</p>
+                    <p className="text-[11px] text-slate-500">Sempre: nome completo, CPF e a caixa "Li e estou ciente". Some as formas abaixo (pode marcar várias):</p>
+                    {(
+                      [
+                        ['questionario', 'Questionário', 'Perguntas com resposta certa; se errar, vê a explicação e refaz.'],
+                        ['assinatura', 'Assinatura no celular', 'Assina com o dedo na tela; a assinatura fica guardada no registro.'],
+                        ['leituraCompleta', 'Leitura até o fim', 'Só libera o "continuar" depois de rolar o documento inteiro.'],
+                        ['pedirTelefone', 'Pedir telefone (WhatsApp)', 'Guarda o telefone junto com a confirmação.'],
+                      ] as [keyof ConfigCiencia, string, string][]
+                    ).map(([k, rot, desc]) => (
+                      <label key={k} className="flex items-start gap-2 cursor-pointer">
+                        <input type="checkbox" checked={config[k]} onChange={(e) => setConfig((c) => ({ ...c, [k]: e.target.checked }))} className="mt-0.5" />
+                        <span>
+                          <b className="text-slate-800">{rot}</b>
+                          <span className="block text-[11px] text-slate-500">{desc}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {config.questionario && <p className="text-slate-500">Marque a resposta certa de cada pergunta. Se a pessoa errar, ela vê a explicação e precisa acertar todas antes de confirmar.</p>}
+                  {config.questionario && perguntas.map((p, i) => (
                     <div key={p.id} className="border border-slate-200 rounded-xl p-3 space-y-2">
                       <div className="flex items-start gap-2">
                         <span className="font-black text-[#92611F] pt-1.5">{i + 1}.</span>
@@ -245,10 +275,10 @@ export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuar
                       <input value={p.explicacao || ''} onChange={(e) => mudar(i, { explicacao: e.target.value })} placeholder="Explicação para quem errar (opcional)" className={`${campo} ml-5 w-[calc(100%-1.25rem)]`} />
                     </div>
                   ))}
-                  <button type="button" onClick={() => setPerguntas((l) => [...l, novaPerguntaCiencia()])} className="px-3 py-1.5 rounded-lg border border-dashed border-slate-300 font-bold text-[#92611F] flex items-center gap-1.5">
+                  {config.questionario && <button type="button" onClick={() => setPerguntas((l) => [...l, novaPerguntaCiencia()])} className="px-3 py-1.5 rounded-lg border border-dashed border-slate-300 font-bold text-[#92611F] flex items-center gap-1.5">
                     <Plus className="w-3.5 h-3.5" /> Adicionar pergunta
-                  </button>
-                  {perguntas.length === 0 && <p className="text-amber-700">Sem perguntas: a pessoa só lê e confirma.</p>}
+                  </button>}
+                  {config.questionario && perguntas.length === 0 && <p className="text-amber-700">Sem perguntas: a pessoa só lê e confirma.</p>}
                 </>
               )}
             </div>
@@ -258,7 +288,7 @@ export const CienciaLinkModal: React.FC<{ documento: DocumentoPadronizado; usuar
               {aviso && !erro && <p className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-semibold">{aviso}</p>}
               {(!link || aba === 'perguntas') && (
                 <button type="button" onClick={() => salvar()} disabled={salvando} className="w-full py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white font-bold flex items-center justify-center gap-1.5 disabled:opacity-50">
-                  {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />} {link ? 'Salvar perguntas' : 'Criar o link'}
+                  {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />} {link ? 'Salvar' : 'Criar o link'}
                 </button>
               )}
             </div>

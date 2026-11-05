@@ -18,6 +18,20 @@ export interface PerguntaCiencia {
   explicacao?: string;
 }
 
+/** Formas de declarar ciência (combináveis). Nome + CPF + "li e estou ciente" valem sempre. */
+export interface ConfigCiencia {
+  /** Questionário com resposta certa antes de confirmar. */
+  questionario: boolean;
+  /** Assinatura desenhada com o dedo no celular. */
+  assinatura: boolean;
+  /** Só libera o "continuar" depois de rolar o documento até o fim. */
+  leituraCompleta: boolean;
+  /** Pede o telefone (WhatsApp). */
+  pedirTelefone: boolean;
+}
+export const CONFIG_PADRAO: ConfigCiencia = { questionario: true, assinatura: false, leituraCompleta: false, pedirTelefone: true };
+export const lerConfig = (c?: Partial<ConfigCiencia> | null): ConfigCiencia => ({ ...CONFIG_PADRAO, ...(c || {}) });
+
 export interface LinkCiencia {
   id: string;
   documentoId: string;
@@ -26,6 +40,7 @@ export interface LinkCiencia {
   titulo: string;
   documento: DocumentoNoLink;
   perguntas: PerguntaCiencia[];
+  config: ConfigCiencia;
   ativo: boolean;
   criadoEm: string;
   criadoPor?: string;
@@ -45,6 +60,9 @@ export interface RespostaCiencia {
   tentativas: number;
   versao?: number;
   cienteEm: string;
+  assinatura?: string;
+  leuAteFim?: boolean;
+  navegador?: string;
 }
 
 function falhou(error: { message: string } | null, contexto: string) {
@@ -80,6 +98,7 @@ const deLinha = (r: any): LinkCiencia => ({
   titulo: r.titulo,
   documento: r.documento,
   perguntas: r.perguntas || [],
+  config: lerConfig(r.config),
   ativo: r.ativo,
   criadoEm: r.criado_em,
   criadoPor: r.criado_por || undefined,
@@ -97,6 +116,7 @@ export async function getLinkCiencia(documentoId: string): Promise<LinkCiencia |
 export async function salvarLinkCiencia(
   d: DocumentoPadronizado,
   perguntas: PerguntaCiencia[],
+  config: ConfigCiencia,
   atual: LinkCiencia | null,
   opcoes: { atualizarDocumento?: boolean; ativo?: boolean; por?: string } = {}
 ): Promise<LinkCiencia> {
@@ -105,6 +125,7 @@ export async function salvarLinkCiencia(
   const linha: Record<string, unknown> = atual
     ? {
         perguntas,
+        config,
         titulo: d.titulo,
         ativo: opcoes.ativo ?? atual.ativo,
         atualizado_em: agora,
@@ -118,6 +139,7 @@ export async function salvarLinkCiencia(
         titulo: d.titulo,
         documento: copiaDoDocumento(d),
         perguntas,
+        config,
         ativo: true,
         criado_em: agora,
         criado_por: opcoes.por || null,
@@ -141,6 +163,9 @@ export async function getRespostasCiencia(linkId: string): Promise<RespostaCienc
     tentativas: r.tentativas,
     versao: r.versao ?? undefined,
     cienteEm: r.ciente_em,
+    assinatura: r.assinatura || undefined,
+    leuAteFim: r.leu_ate_fim ?? undefined,
+    navegador: r.navegador || undefined,
   }));
 }
 
@@ -151,13 +176,14 @@ export interface CienciaPublica {
   documento: DocumentoNoLink;
   perguntas: PerguntaCiencia[];
   versao: number;
+  config?: Partial<ConfigCiencia>;
 }
 export async function abrirCiencia(token: string): Promise<CienciaPublica> {
   const { data, error } = await supabase.rpc('ciencia_link_abrir', { p_token: token });
   falhou(error, 'abrirCiencia');
   return data as CienciaPublica;
 }
-export async function responderCiencia(p: { token: string; nome: string; cpf: string; telefone: string; respostas: number[]; tentativas: number }): Promise<{ ok?: boolean; erro?: string; cienteEm?: string }> {
+export async function responderCiencia(p: { token: string; nome: string; cpf: string; telefone: string; respostas: number[]; tentativas: number; assinatura?: string | null; leuAteFim?: boolean }): Promise<{ ok?: boolean; erro?: string; cienteEm?: string }> {
   const { data, error } = await supabase.rpc('ciencia_link_responder', {
     p_token: p.token,
     p_nome: p.nome,
@@ -166,6 +192,8 @@ export async function responderCiencia(p: { token: string; nome: string; cpf: st
     p_respostas: p.respostas.map(String),
     p_tentativas: p.tentativas,
     p_navegador: navigator.userAgent.slice(0, 300),
+    p_assinatura: p.assinatura || null,
+    p_leu_ate_fim: p.leuAteFim ?? null,
   });
   falhou(error, 'responderCiencia');
   return data as { ok?: boolean; erro?: string; cienteEm?: string };

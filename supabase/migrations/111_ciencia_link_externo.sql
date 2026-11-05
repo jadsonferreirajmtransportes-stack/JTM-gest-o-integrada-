@@ -4,6 +4,8 @@
 -- confirma "li e estou ciente" com nome, CPF e telefone. A gestão vê quem confirmou.
 -- O documento fica "congelado" no link (cópia da versão do momento) — editar o documento depois
 -- não muda o que as pessoas leem, até clicar em "Atualizar o documento do link".
+-- Formas de declarar ciência (config do link, combináveis): questionário, assinatura desenhada no
+-- celular, leitura obrigatória até o fim e telefone; sempre nome + CPF + "li e estou ciente".
 -- Rodar no dev e na produção ANTES de publicar.
 
 create table if not exists documentos_ciencia_link (
@@ -14,6 +16,7 @@ create table if not exists documentos_ciencia_link (
   titulo text not null,
   documento jsonb not null,          -- cópia: titulo, tipo, codigo, versao, dataDocumento, modelo, oficio, blocos
   perguntas jsonb not null default '[]'::jsonb, -- [{id, texto, opcoes[], correta, explicacao}]
+  config jsonb not null default '{}'::jsonb,      -- {questionario, assinatura, leituraCompleta, pedirTelefone}
   ativo boolean not null default true,
   criado_em timestamptz not null default now(),
   criado_por text,
@@ -37,11 +40,19 @@ create table if not exists documentos_ciencia_respostas (
   versao integer,
   ciente_em timestamptz not null default now(),
   navegador text,
+  assinatura text,                   -- PNG (data URL) quando o link pede assinatura desenhada
+  leu_ate_fim boolean,
   unique (link_id, cpf)
 );
 alter table documentos_ciencia_respostas enable row level security;
 drop policy if exists documentos_ciencia_respostas_auth on documentos_ciencia_respostas;
 create policy documentos_ciencia_respostas_auth on documentos_ciencia_respostas for all to authenticated using (true) with check (true);
+
+-- (Se uma versão anterior desta migração já tiver rodado.)
+alter table documentos_ciencia_link add column if not exists config jsonb not null default '{}'::jsonb;
+alter table documentos_ciencia_respostas add column if not exists assinatura text;
+alter table documentos_ciencia_respostas add column if not exists leu_ate_fim boolean;
+drop function if exists ciencia_link_responder(text, text, text, text, jsonb, integer, text);
 
 -- Abre o link (sem login): documento e perguntas.
 create or replace function ciencia_link_abrir(p_token text)
@@ -52,7 +63,8 @@ security definer
 set search_path = public
 as $$
   select case when l.id is null then jsonb_build_object('erro', 'link')
-    else jsonb_build_object('titulo', l.titulo, 'documento', l.documento, 'perguntas', l.perguntas, 'versao', l.versao) end
+    else jsonb_build_object('titulo', l.titulo, 'documento', l.documento, 'versao', l.versao, 'config', l.config,
+      'perguntas', case when coalesce((l.config->>'questionario')::boolean, true) then l.perguntas else '[]'::jsonb end) end
   from (select 1) x
   left join documentos_ciencia_link l on l.token = p_token and l.ativo and length(coalesce(p_token, '')) >= 16
 $$;
@@ -61,7 +73,7 @@ grant execute on function ciencia_link_abrir(text) to anon, authenticated;
 
 -- Confirma a ciência. Confere as respostas (todas precisam estar certas). Uma por CPF: quem
 -- confirmar de novo (ex.: documento atualizado) substitui a anterior.
-create or replace function ciencia_link_responder(p_token text, p_nome text, p_cpf text, p_telefone text, p_respostas jsonb, p_tentativas integer, p_navegador text)
+create or replace function ciencia_link_responder(p_token text, p_nome text, p_cpf text, p_telefone text, p_respostas jsonb, p_tentativas integer, p_navegador text, p_assinatura text default null, p_leu_ate_fim boolean default null)
 returns jsonb
 language plpgsql
 security definer
@@ -79,7 +91,11 @@ begin
   if l.id is null or length(coalesce(p_token, '')) < 16 then return jsonb_build_object('erro', 'link'); end if;
   if length(btrim(coalesce(p_nome, ''))) < 3 then return jsonb_build_object('erro', 'nome'); end if;
   if length(v_cpf) <> 11 then return jsonb_build_object('erro', 'cpf'); end if;
-  v_total := jsonb_array_length(l.perguntas);
+  if coalesce((l.config->>'pedirTelefone')::boolean, true) and length(regexp_replace(coalesce(p_telefone, ''), '\D', '', 'g')) < 10 then return jsonb_build_object('erro', 'telefone'); end if;
+  if coalesce((l.config->>'assinatura')::boolean, false) and (p_assinatura is null or p_assinatura not like 'data:image/png;base64,%' or length(p_assinatura) > 400000) then
+    return jsonb_build_object('erro', 'assinatura');
+  end if;
+  v_total := case when coalesce((l.config->>'questionario')::boolean, true) then jsonb_array_length(l.perguntas) else 0 end;
   if v_total > 0 then
     if jsonb_typeof(p_respostas) <> 'array' or jsonb_array_length(p_respostas) <> v_total then return jsonb_build_object('erro', 'respostas'); end if;
     for i in 0 .. v_total - 1 loop
@@ -87,17 +103,18 @@ begin
     end loop;
     if v_acertos < v_total then return jsonb_build_object('erro', 'respostas'); end if;
   end if;
-  insert into documentos_ciencia_respostas (id, link_id, nome, cpf, telefone, respostas, acertos, total_perguntas, tentativas, versao, ciente_em, navegador)
+  insert into documentos_ciencia_respostas (id, link_id, nome, cpf, telefone, respostas, acertos, total_perguntas, tentativas, versao, ciente_em, navegador, assinatura, leu_ate_fim)
   values ('cie-' || replace(gen_random_uuid()::text, '-', ''), l.id, left(btrim(p_nome), 120), v_cpf, left(nullif(btrim(coalesce(p_telefone, '')), ''), 30),
-    coalesce(p_respostas, '[]'::jsonb), v_acertos, v_total, greatest(coalesce(p_tentativas, 1), 1), l.versao, v_em, left(p_navegador, 300))
+    coalesce(p_respostas, '[]'::jsonb), v_acertos, v_total, greatest(coalesce(p_tentativas, 1), 1), l.versao, v_em, left(p_navegador, 300),
+    case when coalesce((l.config->>'assinatura')::boolean, false) then p_assinatura end, p_leu_ate_fim)
   on conflict (link_id, cpf) do update set
     nome = excluded.nome, telefone = excluded.telefone, respostas = excluded.respostas, acertos = excluded.acertos,
     total_perguntas = excluded.total_perguntas, tentativas = excluded.tentativas, versao = excluded.versao,
-    ciente_em = excluded.ciente_em, navegador = excluded.navegador;
+    ciente_em = excluded.ciente_em, navegador = excluded.navegador, assinatura = excluded.assinatura, leu_ate_fim = excluded.leu_ate_fim;
   return jsonb_build_object('ok', true, 'cienteEm', v_em);
 end;
 $$;
-revoke all on function ciencia_link_responder(text, text, text, text, jsonb, integer, text) from public;
-grant execute on function ciencia_link_responder(text, text, text, text, jsonb, integer, text) to anon, authenticated;
+revoke all on function ciencia_link_responder(text, text, text, text, jsonb, integer, text, text, boolean) from public;
+grant execute on function ciencia_link_responder(text, text, text, text, jsonb, integer, text, text, boolean) to anon, authenticated;
 
 notify pgrst, 'reload schema';
