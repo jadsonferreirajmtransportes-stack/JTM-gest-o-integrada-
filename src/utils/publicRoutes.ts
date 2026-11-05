@@ -38,6 +38,9 @@ export function isRotaPublica(): boolean {
     formParam === 'portal' ||
     formParam === 'ponto' ||
     formParam === 'comunicado' ||
-    formParam === 'formulario'
+    formParam === 'formulario' ||
+    // Link do motorista (Performance das baixas) e Ciência por link (pessoas de fora).
+    formParam === 'motorista' ||
+    formParam === 'ciencia'
   );
 }
