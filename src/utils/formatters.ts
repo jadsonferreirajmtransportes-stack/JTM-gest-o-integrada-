@@ -364,7 +364,8 @@ function contarDiasUteisNaIntersecao(
   aInicio: string,
   aFim: string,
   bInicio: string,
-  bFim: string
+  bFim: string,
+  feriados: Set<string> = new Set()
 ): number {
   const inicio = new Date(aInicio + 'T00:00:00');
   if (isNaN(inicio.getTime())) return 0;
@@ -374,7 +375,7 @@ function contarDiasUteisNaIntersecao(
   const cursor = new Date(inicio);
   while (cursor <= fimValido) {
     const iso = cursor.toISOString().slice(0, 10);
-    if (iso >= bInicio && iso <= bFim) {
+    if (iso >= bInicio && iso <= bFim && !feriados.has(iso)) {
       const weekday = cursor.getDay();
       if (weekday !== 0 && weekday !== 6) total++;
     }
@@ -415,8 +416,11 @@ export function calcFaltasEmPeriodo(
   ocorrencias: Ocorrencia[],
   colaboradorId: string,
   dataInicio: string,
-  dataTermino: string
+  dataTermino: string,
+  feriados: FeriadoEmpresa[] = []
 ): number {
+  // Falta num feriado não desconta de novo: o feriado já saiu dos dias úteis.
+  const datasFeriados = new Set(feriados.map((f) => f.data));
   let total = 0;
   ocorrencias
     .filter((o) => o.colaboradorId === colaboradorId && TIPOS_OCORRENCIA_FALTA.has(o.tipo))
@@ -430,7 +434,7 @@ export function calcFaltasEmPeriodo(
         const dia = new Date(inicio);
         dia.setDate(dia.getDate() + i);
         const iso = dia.toISOString().slice(0, 10);
-        if (iso < dataInicio || iso > dataTermino) continue;
+        if (iso < dataInicio || iso > dataTermino || datasFeriados.has(iso)) continue;
         const weekday = dia.getDay();
         if (weekday !== 0 && weekday !== 6) total++;
       }
@@ -454,8 +458,11 @@ export function calcDiasFeriasEmPeriodo(
   feriasList: ProgramacaoFerias[],
   colaboradorId: string,
   dataInicio: string,
-  dataTermino: string
+  dataTermino: string,
+  feriados: FeriadoEmpresa[] = []
 ): number {
+  // Férias num feriado não descontam de novo: o feriado já saiu dos dias úteis.
+  const datasFeriados = new Set(feriados.map((f) => f.data));
   let total = 0;
   feriasList
     .filter((f) => f.colaboradorId === colaboradorId && STATUS_FERIAS_COM_DATA.has(f.status))
@@ -463,12 +470,12 @@ export function calcDiasFeriasEmPeriodo(
       if (f.fracionamento && f.fracionamento.length > 0) {
         f.fracionamento.forEach((etapa) => {
           if (!etapa.dataInicio || !etapa.dataFim) return;
-          total += contarDiasUteisNaIntersecao(etapa.dataInicio, etapa.dataFim, dataInicio, dataTermino);
+          total += contarDiasUteisNaIntersecao(etapa.dataInicio, etapa.dataFim, dataInicio, dataTermino, datasFeriados);
         });
         return;
       }
       if (!f.dataInicio || !f.dataFim) return;
-      total += contarDiasUteisNaIntersecao(f.dataInicio, f.dataFim, dataInicio, dataTermino);
+      total += contarDiasUteisNaIntersecao(f.dataInicio, f.dataFim, dataInicio, dataTermino, datasFeriados);
     });
   return total;
 }

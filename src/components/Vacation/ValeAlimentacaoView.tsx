@@ -27,6 +27,7 @@ import {
   QuinzenaValeAlimentacao,
   LancamentoValeAlimentacao,
   UsuarioLogin,
+  FeriadoEmpresa,
 } from '../../types';
 import { criarDocumentoAssinatura, getDocumentosAssinatura } from '../../utils/documentosAssinaturaApi';
 import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
@@ -63,6 +64,8 @@ interface ValeAlimentacaoViewProps {
   onSincronizarFaltas: (quinzenaId: string) => void;
   onSaveLancamento: (lancamento: LancamentoValeAlimentacao) => void;
   onDeleteLancamento: (id: string) => void;
+  /** Feriados cadastrados (2.18): saem dos dias úteis da quinzena. */
+  feriados?: FeriadoEmpresa[];
   currentUser?: UsuarioLogin;
 }
 
@@ -81,6 +84,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
   onSincronizarFaltas,
   onSaveLancamento,
   onDeleteLancamento,
+  feriados = [],
   currentUser,
 }) => {
   const quinzenasOrdenadas = useMemo(
@@ -172,7 +176,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
 
   const handleFaltasChange = (l: LancamentoValeAlimentacao, faltas: number) => {
     const quantidadeDiarias =
-      calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, faltas, l.diasFerias || 0) + (l.diariasExtras || 0);
+      calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, faltas, l.diasFerias || 0, feriados) + (l.diariasExtras || 0);
     const valorDisponibilizado = calcValorDisponibilizadoVA(quantidadeDiarias, l.valorDiaria);
     onSaveLancamento({
       ...l,
@@ -185,7 +189,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
 
   const handleDiasFeriasChange = (l: LancamentoValeAlimentacao, diasFerias: number) => {
     const quantidadeDiarias =
-      calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, l.faltas, diasFerias) + (l.diariasExtras || 0);
+      calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, l.faltas, diasFerias, feriados) + (l.diariasExtras || 0);
     const valorDisponibilizado = calcValorDisponibilizadoVA(quantidadeDiarias, l.valorDiaria);
     onSaveLancamento({
       ...l,
@@ -198,7 +202,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
 
   const handleDiariasExtrasChange = (l: LancamentoValeAlimentacao, diariasExtras: number) => {
     const quantidadeDiarias =
-      calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, l.faltas, l.diasFerias || 0) + diariasExtras;
+      calcQuantidadeDiariasVA(l.dataInicio, l.dataTermino, l.faltas, l.diasFerias || 0, feriados) + diariasExtras;
     const valorDisponibilizado = calcValorDisponibilizadoVA(quantidadeDiarias, l.valorDiaria);
     onSaveLancamento({
       ...l,
@@ -370,7 +374,11 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
         {quinzenaAtual && (
           <>
             <span className="text-[11px] text-slate-500">
-              {calcDiasUteisPeriodo(quinzenaAtual.dataInicio, quinzenaAtual.dataTermino)} dias úteis no período
+              {calcDiasUteisPeriodo(quinzenaAtual.dataInicio, quinzenaAtual.dataTermino, feriados)} dias úteis no período
+              {(() => {
+                const f = feriados.filter((x) => x.data >= quinzenaAtual.dataInicio && x.data <= quinzenaAtual.dataTermino && ![0, 6].includes(new Date(`${x.data}T12:00:00`).getDay()));
+                return f.length ? ` (sem ${f.map((x) => `${x.data.slice(8, 10)}/${x.data.slice(5, 7)} ${x.descricao}`).join(', ')})` : ' (nenhum feriado cadastrado no período)';
+              })()}
             </span>
             {quinzenaVigente?.id === quinzenaAtual.id && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
@@ -585,13 +593,15 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
                   ocorrencias,
                   l.colaboradorId,
                   l.dataInicio,
-                  l.dataTermino
+                  l.dataTermino,
+                  feriados
                 );
                 const diasFeriasCalculado = calcDiasFeriasEmPeriodo(
                   feriasList,
                   l.colaboradorId,
                   l.dataInicio,
-                  l.dataTermino
+                  l.dataTermino,
+                  feriados
                 );
                 const divergeDeOcorrencias = faltasOcorrencias !== l.faltas;
                 const divergeDeFerias = diasFeriasCalculado !== (l.diasFerias || 0);

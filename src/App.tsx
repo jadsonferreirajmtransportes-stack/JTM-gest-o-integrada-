@@ -2331,8 +2331,8 @@ export default function App() {
       // Puxa automaticamente das Ocorrências (Falta / Falta justificada / Falta injustificada) e
       // da Programação de Férias o que já cai dentro do período da quinzena — evita digitar de
       // novo o que já foi registrado em outra tela. Continua editável manualmente depois.
-      const faltas = calcFaltasEmPeriodo(ocorrencias, c.id, quinzena.dataInicio, quinzena.dataTermino);
-      const diasFerias = calcDiasFeriasEmPeriodo(feriasList, c.id, quinzena.dataInicio, quinzena.dataTermino);
+      const faltas = calcFaltasEmPeriodo(ocorrencias, c.id, quinzena.dataInicio, quinzena.dataTermino, feriados);
+      const diasFerias = calcDiasFeriasEmPeriodo(feriasList, c.id, quinzena.dataInicio, quinzena.dataTermino, feriados);
       const quantidadeDiarias = calcQuantidadeDiariasVA(
         quinzena.dataInicio,
         quinzena.dataTermino,
@@ -2369,12 +2369,13 @@ export default function App() {
     const atualizados = lancamentosVA
       .filter((l) => l.quinzenaId === quinzenaId)
       .map((l) => {
-        const faltas = calcFaltasEmPeriodo(ocorrencias, l.colaboradorId, quinzena.dataInicio, quinzena.dataTermino);
+        const faltas = calcFaltasEmPeriodo(ocorrencias, l.colaboradorId, quinzena.dataInicio, quinzena.dataTermino, feriados);
         const diasFerias = calcDiasFeriasEmPeriodo(
           feriasList,
           l.colaboradorId,
           quinzena.dataInicio,
-          quinzena.dataTermino
+          quinzena.dataTermino,
+          feriados
         );
         // O valor da diária vem "congelado" do cadastro do colaborador no momento em que o
         // lançamento foi gerado — se a cota foi editada depois, sincronizar aqui também traz
@@ -3836,6 +3837,7 @@ export default function App() {
               onSincronizarFaltas={handleSincronizarFaltasVA}
               onSaveLancamento={handleSaveLancamentoVA}
               onDeleteLancamento={handleDeleteLancamentoVA}
+              feriados={feriados}
               currentUser={currentUser}
             />
           )}
