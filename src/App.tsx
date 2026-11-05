@@ -3667,7 +3667,7 @@ export default function App() {
           {/* ========================================================================= */}
           {/* MODULE: COMUNICADOS */}
           {/* ========================================================================= */}
-          {(activeGlobalModule === 'documentos' || activeSection === 'documentos') && <DocumentosView currentUser={currentUser} colaboradores={colaboradores} />}
+          {(activeGlobalModule === 'documentos' || activeSection === 'documentos') && <DocumentosView currentUser={currentUser} colaboradores={colaboradores} clientes={clientes} />}
 
           {(activeGlobalModule === 'comunicados' || activeSection === 'comunicados') && (
             <ComunicadosView

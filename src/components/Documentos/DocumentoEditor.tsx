@@ -50,11 +50,13 @@ import { BlocoAssinaturas } from './BlocoAssinaturas';
 import { BlocoChecklist } from './BlocoChecklist';
 import { EnviarAssinaturaDocumentoModal } from './EnviarAssinaturaDocumentoModal';
 import { CienciaDocumentoModal } from './CienciaDocumentoModal';
-import type { Colaborador } from '../../types';
+import type { Cliente, Colaborador } from '../../types';
+import { CalculadoraFreteModal, FreteCalculado } from '../Clients/CalculadoraFreteModal';
 
 interface DocumentoEditorProps {
   documento: DocumentoPadronizado;
   colaboradores?: Colaborador[];
+  clientes?: Cliente[];
   avisosImportacao?: string[];
   usuario?: string;
   onVoltar: () => void;
@@ -142,7 +144,8 @@ const STATUS_ESTILO: Record<string, string> = {
 
 /** Editor do documento padronizado: dados de controle, crivo do padrão JMT, blocos de conteúdo
  *  e saída em PDF/Word/Excel. Publicar = versão Vigente guardada no histórico. */
-export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, colaboradores = [], avisosImportacao = [], usuario, onVoltar, onSalvo }) => {
+export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, colaboradores = [], clientes = [], avisosImportacao = [], usuario, onVoltar, onSalvo }) => {
+  const [calculadoraAberta, setCalculadoraAberta] = useState(false);
   const [enviandoAssinatura, setEnviandoAssinatura] = useState(false);
   const [enviandoVias, setEnviandoVias] = useState(false);
   const [d, setD] = useState<DocumentoPadronizado>(documento);
@@ -342,6 +345,16 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
         </div>
       )}
 
+      {calculadoraAberta && (
+        <CalculadoraFreteModal
+          clientes={clientes}
+          onClose={() => setCalculadoraAberta(false)}
+          onUsar={(f) => {
+            atualizar(linhaDaCalculadora(d, f));
+            setCalculadoraAberta(false);
+          }}
+        />
+      )}
       <div className="flex-1 overflow-hidden grid lg:grid-cols-[300px_1fr]">
         {/* Coluna de dados + crivo */}
         <aside className="overflow-y-auto border-r border-slate-200 bg-white p-4 space-y-4 text-xs">
@@ -399,6 +412,15 @@ export const DocumentoEditor: React.FC<DocumentoEditorProps> = ({ documento, col
             {d.modelo === 'cotacao' && (
               <div className="space-y-2 p-2.5 rounded-xl bg-amber-50/60 border border-amber-200">
                 <p className="text-[10px] text-[#7A4F17]">Papel timbrado da JMT com o quadro da cotação. Preencha os valores na tabela — o total é somado sozinho.</p>
+                {!somenteLeitura && (
+                  <button
+                    type="button"
+                    onClick={() => setCalculadoraAberta(true)}
+                    className="w-full px-3 py-2 rounded-lg bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold normal-case tracking-normal"
+                  >
+                    Calcular frete (tabela do cliente)
+                  </button>
+                )}
                 <div>
                   <label className={rotulo}>Cliente</label>
                   <textarea
@@ -644,6 +666,30 @@ const MenuInserir: React.FC<{ onEscolher: (t: BlocoDocumento['tipo']) => void; o
     )}
   </div>
 );
+
+/** Frete calculado → nova linha na tabela de valores da cotação (troca a linha de exemplo vazia)
+ *  e o cliente no quadro, se ainda estiver em branco. */
+function linhaDaCalculadora(d: DocumentoPadronizado, f: FreteCalculado): Partial<DocumentoPadronizado> {
+  const num = (v?: number, casas = 2) => (v ? v.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }) : '');
+  const linha = ['Parnamirim/RN', f.destino, f.modal, num(f.pesoKg, 1).replace(/,0$/, ''), f.volumes ? String(f.volumes) : '', num(f.total)];
+  const vazia = (l: string[]) => !l[1]?.trim() && !l[5]?.trim();
+  let achou = false;
+  const blocos = d.blocos.map((b) => {
+    if (achou || b.tipo !== 'tabela' || !/valor/i.test(b.cabecalho[b.cabecalho.length - 1] || '')) return b;
+    achou = true;
+    const ajustada = b.cabecalho.length === 6 ? linha : [...linha.slice(0, b.cabecalho.length - 1), linha[5]];
+    const linhas = b.linhas.filter((l) => !vazia(l));
+    return { ...b, linhas: [...linhas, ajustada] };
+  });
+  const novos: BlocoDocumento[] = achou
+    ? blocos
+    : [...blocos, { id: novoIdBloco(), tipo: 'tabela', cabecalho: ['Origem', 'Destino', 'Modal', 'Peso (kg)', 'Volumes', 'Valor (R$)'], linhas: [linha] }];
+  const nomeCliente = f.cliente.nomeFantasia || f.cliente.razaoSocial;
+  return {
+    blocos: novos,
+    ...(d.oficio?.destinatario?.trim() ? {} : { oficio: { ...d.oficio, destinatario: nomeCliente } }),
+  };
+}
 
 /** Conteúdo inicial da cotação de frete (só quando o documento ainda está vazio). */
 function blocosCotacao(): BlocoDocumento[] {

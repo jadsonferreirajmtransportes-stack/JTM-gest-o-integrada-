@@ -17,11 +17,22 @@ const numero = (v: string) => {
   return Number.isFinite(n) ? n : 0;
 };
 
+/** O que a calculadora devolve para a Cotação de frete (Padronização de documentos). */
+export interface FreteCalculado {
+  cliente: Cliente;
+  destino: string;
+  modal: string;
+  pesoKg?: number;
+  volumes?: number;
+  total: number;
+  prazo?: string;
+}
+
 /** Calculadora de frete para a equipe: escolhe o cliente, o modal, a cidade de destino e o peso
  *  e vê o frete pela TABELA DO CLIENTE — o mesmo cálculo do "Valor a Cobrar" do Controle
  *  Financeiro (detalharTarifaPorPeso), para a cotação bater com a cobrança. Peso cubado e custos
  *  extras são opcionais e aparecem separados no detalhamento. */
-export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInicialId?: string; onClose: () => void }> = ({ clientes, clienteInicialId, onClose }) => {
+export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInicialId?: string; onClose: () => void; /** Mostra "Usar na cotação". */ onUsar?: (f: FreteCalculado) => void }> = ({ clientes, clienteInicialId, onClose, onUsar }) => {
   const comTabela = useMemo(
     () =>
       clientes
@@ -401,6 +412,25 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
                     </li>
                   ))}
                 </ul>
+                {onUsar && cliente && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUsar({
+                        cliente,
+                        destino: tarifaCidade ? `${tarifaCidade.cidade}${tarifaCidade.uf ? `/${tarifaCidade.uf}` : ''}` : cidade,
+                        modal: modo === 'dedicado' ? 'Dedicado' : modal,
+                        pesoKg: modo === 'dedicado' ? undefined : pesoCalculo || undefined,
+                        volumes: usarCubagem ? volumes.reduce((s, v) => s + (v.quantidade || 0), 0) || undefined : undefined,
+                        total: resultado.total,
+                        prazo: tarifaCidade?.prazo,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 normal-case tracking-normal"
+                  >
+                    <Plus className="w-4 h-4" /> Usar na cotação
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={copiar}
