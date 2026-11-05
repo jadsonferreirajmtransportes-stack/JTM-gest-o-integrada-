@@ -97,6 +97,8 @@ interface FaturamentoAereoViewProps {
   modalPadrao?: string;
   /** Situação das entregas (Performance das baixas) por NF — só no Farma Rodoviário. */
   situacoesEntrega?: Map<string, SituacaoEntregaNF>;
+  /** Mostra o valor da NF embaixo do número (Farma Rodoviário — vem da planilha de baixas). */
+  mostrarValorNF?: boolean;
 }
 
 const KpiCard: React.FC<{
@@ -212,6 +214,7 @@ interface LancamentoRowProps {
   onDelete: () => void;
   /** Situação da entrega pela NF (só quando há o cruzamento com as baixas). */
   situacaoEntrega?: SituacaoEntregaNF | 'sem';
+  mostrarValorNF?: boolean;
 }
 
 /** Uma linha de lançamento (CT-e), reaproveitada tanto dentro de uma fatura expandida
@@ -229,6 +232,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
   onFieldChange,
   onDelete,
   situacaoEntrega,
+  mostrarValorNF,
 }) => {
   const [detalheAberto, setDetalheAberto] = useState(false);
   const valorCalculado = computeValorACobrar(l, cliente);
@@ -267,6 +271,11 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
         >
           {l.notaFiscal || l.numeroCte || '—'}
         </button>
+        {mostrarValorNF && (
+          <span className="block text-[10px] text-slate-500 font-semibold" title="Valor da nota fiscal">
+            {l.valorNF ? `NF ${formatCurrency(l.valorNF)}` : 'NF sem valor'}
+          </span>
+        )}
         {situacaoEntrega && (
           <button
             type="button"
@@ -482,6 +491,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
   tituloSetor = 'Farma Aéreo',
   modalPadrao,
   situacoesEntrega,
+  mostrarValorNF,
 }) => {
   // O mesmo CT-e nunca pode entrar duas vezes na lista: com id repetido o React se perde e
   // deixa linhas "fantasma" na tabela (aparecem e não somem ao mudar a busca).
@@ -2086,6 +2096,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                                       destacado={l.id === destaqueId}
                                       lancamento={l}
                                       situacaoEntrega={situacaoDoLancamento(l, situacoesEntrega)}
+                    mostrarValorNF={mostrarValorNF}
                                       cliente={clienteDaFatura || findClienteById(clientes, l.clienteId, l.clienteNome)}
                                       showRemoverDaFatura
                                       onFieldChange={handleFieldChangeFactory(l)}
@@ -2264,6 +2275,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                     destacado={l.id === destaqueId || bateNumeroExato(l, buscaSemFaturaAdiada)}
                     lancamento={l}
                     situacaoEntrega={situacaoDoLancamento(l, situacoesEntrega)}
+                    mostrarValorNF={mostrarValorNF}
                     cliente={findClienteById(clientes, l.clienteId, l.clienteNome)}
                     showCliente
                     showSelecao

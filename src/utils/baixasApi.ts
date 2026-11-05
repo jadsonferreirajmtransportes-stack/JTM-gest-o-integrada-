@@ -41,6 +41,8 @@ export interface BaixaNota {
   entregaTardiaEm?: string;
   entregaTardiaPor?: string;
   cnpjRemetente?: string;
+  /** Valor da nota fiscal (coluna "Valor NF" da planilha) — vai para o Controle Financeiro (migração 109). */
+  valorNf?: number;
   /** Abono: pendência que não conta contra ninguém (expedição, local fechado...). */
   abonoMotivo?: string;
   abonoObs?: string;
@@ -136,8 +138,27 @@ export function lerPlanilhaBaixas(dados: ArrayBuffer, nomeArquivo: string): Plan
     emissao: col('DATA EMISSAO'),
     entrega: col('DATA ENTREGA'),
     prazo: col('PRAZO'),
+    // Valor da nota: "VALOR NF", "VALOR NOTA", "VALOR DA NOTA FISCAL"... (ou "VALOR MERCADORIA"/"VALOR").
+    valorNf: (() => {
+      const achar = (teste: (h: string) => boolean) => cab.findIndex((h) => typeof h === 'string' && teste(h));
+      const i = achar((h) => /^(VALOR|VLR)/.test(h) && /\b(NF|NFE|NOTA)\b/.test(h));
+      if (i >= 0) return i;
+      const j = achar((h) => /^(VALOR|VLR)/.test(h) && /MERCADORIA|PRODUTO/.test(h));
+      return j >= 0 ? j : achar((h) => h === 'VALOR' || h === 'VALOR TOTAL');
+    })(),
   };
   const txt = (l: unknown[], i: number) => (i >= 0 ? String(l[i] ?? '').trim() : '') || undefined;
+  /** 1234.5 | "1.234,50" | "R$ 1.234,50" → número. */
+  const valor = (l: unknown[], i: number): number | undefined => {
+    if (i < 0) return undefined;
+    const v = l[i];
+    if (typeof v === 'number') return isFinite(v) && v > 0 ? v : undefined;
+    let s = String(v ?? '').replace(/[^\d.,-]/g, '');
+    if (!s) return undefined;
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    const n = Number(s);
+    return isFinite(n) && n > 0 ? n : undefined;
+  };
   const notas = linhas
     .slice(iCab + 1)
     .filter((l) => txt(l, c.numero))
@@ -147,6 +168,7 @@ export function lerPlanilhaBaixas(dados: ArrayBuffer, nomeArquivo: string): Plan
       situacao: txt(l, c.situacao)?.toUpperCase(),
       remetente: txt(l, c.remetente),
       cnpjRemetente: txt(l, c.cnpjRemetente),
+      valorNf: valor(l, c.valorNf),
       destinatario: txt(l, c.destinatario),
       cidade: txt(l, c.cidade),
       transportadora: txt(l, c.transportadora),
@@ -289,6 +311,7 @@ export async function salvarUploadBaixas(p: {
     data_entrega: n.dataEntrega ?? null,
     prazo: n.prazo ?? null,
     cnpj_remetente: n.cnpjRemetente ?? null,
+    valor_nf: n.valorNf ?? null,
   }));
   for (let k = 0; k < linhas.length; k += 500) {
     const { error } = await supabase.from('baixas_notas').insert(linhas.slice(k, k + 500));

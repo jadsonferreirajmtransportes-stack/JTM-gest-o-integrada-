@@ -368,6 +368,7 @@ export const FarmaRodoviarioView: React.FC<FarmaRodoviarioViewProps> = ({
           onDeleteLancamento={onDeleteLancamentoFaturamentoAereo}
           tituloSetor="Farma Rodoviário"
           situacoesEntrega={situacoesEntrega}
+          mostrarValorNF
           modalPadrao="Rodoviário"
         />
       )}
