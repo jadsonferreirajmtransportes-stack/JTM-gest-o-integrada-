@@ -266,6 +266,7 @@ function rowToFatura(r: any): FaturaAereo {
     dataEnvio: u(r.data_envio),
     numeroNF: u(r.numero_nf),
     observacao: u(r.observacao),
+    ajustes: Array.isArray(r.ajustes) && r.ajustes.length ? r.ajustes : undefined,
     modal: u(r.modal),
     criadoEm: r.criado_em,
     atualizadoEm: u(r.atualizado_em),
@@ -281,6 +282,8 @@ export function faturaToRow(f: FaturaAereo) {
     data_envio: n(f.dataEnvio),
     numero_nf: n(f.numeroNF),
     observacao: n(f.observacao),
+    // Só manda quando a fatura tem ajuste (antes da migração 116 a coluna não existe).
+    ...(f.ajustes !== undefined ? { ajustes: f.ajustes.length ? f.ajustes : null } : {}),
     modal: n(f.modal),
     criado_em: f.criadoEm || new Date().toISOString(),
     atualizado_em: new Date().toISOString(),

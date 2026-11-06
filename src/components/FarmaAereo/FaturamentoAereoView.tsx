@@ -25,7 +25,7 @@ import {
   CalendarRange,
   Landmark,
 } from 'lucide-react';
-import { Cliente, LancamentoFaturamentoAereo, FaturaAereo } from '../../types';
+import { AjusteFatura, Cliente, LancamentoFaturamentoAereo, FaturaAereo } from '../../types';
 import { formatCurrency, formatDateBR } from '../../utils/formatters';
 import {
   computeResumoFatura,
@@ -100,6 +100,75 @@ interface FaturamentoAereoViewProps {
   /** Mostra o valor da NF embaixo do número (Farma Rodoviário — vem da planilha de baixas). */
   mostrarValorNF?: boolean;
 }
+
+/** Acréscimos e descontos na fatura — entram no total e no valor em aberto, sem mexer nos CT-es. */
+const AjustesFatura: React.FC<{ fatura: FaturaAereo; onSalvar: (ajustes: AjusteFatura[]) => void }> = ({ fatura, onSalvar }) => {
+  const ajustes = fatura.ajustes || [];
+  const [abrindo, setAbrindo] = useState(false);
+  const [tipo, setTipo] = useState<'acrescimo' | 'desconto'>('desconto');
+  const [descricao, setDescricao] = useState('');
+  const [valor, setValor] = useState('');
+  const total = ajustes.reduce((s, a) => s + a.valor, 0);
+  const adicionar = () => {
+    const v = Number(valor.replace(/\./g, '').replace(',', '.'));
+    if (!descricao.trim() || !v || v <= 0) return alert('Informe a descrição e um valor maior que zero.');
+    onSalvar([...ajustes, { id: `aj-${Date.now()}`, descricao: descricao.trim(), valor: tipo === 'desconto' ? -v : v }]);
+    setDescricao('');
+    setValor('');
+    setAbrindo(false);
+  };
+  return (
+    <div className="mb-3 bg-white border border-slate-200 rounded-xl p-3 text-xs" data-texto-livre="true">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-slate-400">Acréscimos e descontos</span>
+        {!abrindo && (
+          <button type="button" onClick={() => setAbrindo(true)} className="text-indigo-500 font-bold inline-flex items-center gap-1">
+            <Plus className="w-3 h-3" /> Adicionar
+          </button>
+        )}
+      </div>
+      {ajustes.length > 0 && (
+        <div className="mt-1.5 space-y-1">
+          {ajustes.map((a) => (
+            <div key={a.id} className="flex items-center justify-between gap-2">
+              <span className="text-slate-700 truncate">
+                <b className={a.valor < 0 ? 'text-rose-700' : 'text-emerald-700'}>{a.valor < 0 ? 'Desconto' : 'Acréscimo'}</b> — {a.descricao}
+              </span>
+              <span className="flex items-center gap-2 shrink-0">
+                <b className={a.valor < 0 ? 'text-rose-700' : 'text-emerald-700'}>{a.valor < 0 ? '− ' : '+ '}{formatCurrency(Math.abs(a.valor))}</b>
+                <button
+                  type="button"
+                  onClick={() => window.confirm(`Tirar "${a.descricao}" da fatura?`) && onSalvar(ajustes.filter((x) => x.id !== a.id))}
+                  className="p-1 text-slate-300 hover:text-rose-600"
+                  title="Tirar"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            </div>
+          ))}
+          {ajustes.length > 1 && (
+            <p className="text-right text-slate-500">
+              Total dos ajustes: <b>{total < 0 ? '− ' : '+ '}{formatCurrency(Math.abs(total))}</b>
+            </p>
+          )}
+        </div>
+      )}
+      {abrindo && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <select value={tipo} onChange={(e) => setTipo(e.target.value as 'acrescimo' | 'desconto')} className="px-2 py-1.5 border border-slate-200 rounded-lg bg-white">
+            <option value="desconto">Desconto (−)</option>
+            <option value="acrescimo">Acréscimo (+)</option>
+          </select>
+          <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição (ex.: desconto negociado)" className="flex-1 min-w-[180px] px-2 py-1.5 border border-slate-200 rounded-lg" />
+          <input value={valor} onChange={(e) => setValor(e.target.value)} inputMode="decimal" placeholder="R$ 0,00" className="w-28 px-2 py-1.5 border border-slate-200 rounded-lg text-right" />
+          <button type="button" onClick={adicionar} className="px-3 py-1.5 rounded-lg bg-[#C48229] text-white font-bold">Adicionar</button>
+          <button type="button" onClick={() => setAbrindo(false)} className="px-2 py-1.5 text-slate-500">Cancelar</button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const KpiCard: React.FC<{
   label: string;
@@ -1560,7 +1629,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
             if (!marcadas.length) return <span className="text-[11px] text-slate-400">Marque as faturas para ver o total delas.</span>;
             const soma = marcadas.reduce(
               (acc, f) => {
-                const r = computeResumoFatura(f.id, lancamentos, clientes);
+                const r = computeResumoFatura(f.id, lancamentos, clientes, f);
                 return { cobrado: acc.cobrado + r.valorTotalCobrado, pago: acc.pago + r.valorPago };
               },
               { cobrado: 0, pago: 0 }
@@ -1604,7 +1673,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
         ) : (
           <div className="divide-y divide-slate-100">
             {(somenteMarcadas && faturasMarcadas.size ? faturasFiltradas.filter((f) => faturasMarcadas.has(f.id)) : faturasFiltradas).map((fatura) => {
-              const resumo = computeResumoFatura(fatura.id, lancamentos, clientes);
+              const resumo = computeResumoFatura(fatura.id, lancamentos, clientes, fatura);
               const statusCfg = STATUS_FATURA_CONFIG[resumo.status];
               const isExpanded = expandedFaturaId === fatura.id;
               const lancamentosDaFatura = lancamentos.filter((l) => l.faturaId === fatura.id);
@@ -1964,6 +2033,8 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
                           </button>
                         )}
                       </div>
+
+                      <AjustesFatura fatura={fatura} onSalvar={(ajustes) => onUpdateFatura?.({ ...fatura, ajustes, atualizadoEm: new Date().toISOString() })} />
 
                       {lancamentosDaFatura.length === 0 ? (
                         <p className="text-[11px] text-slate-400 py-2">Nenhum lançamento vinculado.</p>

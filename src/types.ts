@@ -1272,6 +1272,13 @@ export interface LancamentoFaturamentoAereo {
 }
 
 /** Fatura que agrupa um conjunto de lançamentos (CT-es) de um cliente/período. */
+export interface AjusteFatura {
+  id: string;
+  descricao: string;
+  /** Positivo acrescenta; negativo desconta. */
+  valor: number;
+}
+
 export interface FaturaAereo {
   id: string;
   clienteId?: string;
@@ -1281,6 +1288,8 @@ export interface FaturaAereo {
   dataEnvio?: string;
   numeroNF?: string;
   observacao?: string;
+  /** Acréscimos (+) e descontos (−) na fatura, fora das linhas dos CT-es (migração 116). */
+  ajustes?: AjusteFatura[];
   /** 'Aéreo' | 'Rodoviário' — mesmo campo livre de LancamentoFaturamentoAereo.modal, usado pra
    *  separar o Controle Financeiro de cada setor (ver faturamentoAereoUtils.ehModalRodoviario).
    *  Ausente = trata como Aéreo (compatibilidade com faturas já existentes, todas aéreas). */

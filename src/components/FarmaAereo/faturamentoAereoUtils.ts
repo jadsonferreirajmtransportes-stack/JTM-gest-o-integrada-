@@ -377,16 +377,19 @@ export interface ResumoFaturaAereo {
 }
 
 /** Réplica das colunas calculadas da tabela FATURAS no Coda. */
+/** Soma dos acréscimos/descontos da fatura. */
+export const totalAjustesFatura = (f?: Pick<FaturaAereo, 'ajustes'>) => (f?.ajustes || []).reduce((s, a) => s + (Number(a.valor) || 0), 0);
+
 export function computeResumoFatura(
   faturaId: string,
   lancamentos: LancamentoFaturamentoAereo[],
-  clientes: Cliente[] = []
+  clientes: Cliente[] = [],
+  /** A própria fatura — para somar os acréscimos/descontos dela. */
+  fatura?: Pick<FaturaAereo, 'ajustes'>
 ): ResumoFaturaAereo {
   const doFatura = lancamentos.filter((l) => l.faturaId === faturaId);
-  const valorTotalCobrado = doFatura.reduce(
-    (sum, l) => sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome)),
-    0
-  );
+  const valorTotalCobrado =
+    doFatura.reduce((sum, l) => sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome)), 0) + totalAjustesFatura(fatura);
   const pagos = doFatura.filter((l) => l.confirmacaoPagamento);
   const valorPago = pagos.reduce((sum, l) => sum + (l.valorRecebido || 0), 0);
   const valorEmAberto = valorTotalCobrado - valorPago;
@@ -455,10 +458,9 @@ export function computeResumoGeral(
   faturas: FaturaAereo[],
   clientes: Cliente[] = []
 ): ResumoGeralFaturamentoAereo {
-  const totalFaturado = lancamentos.reduce(
-    (sum, l) => sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome)),
-    0
-  );
+  const totalFaturado =
+    lancamentos.reduce((sum, l) => sum + computeValorACobrar(l, findClienteById(clientes, l.clienteId, l.clienteNome)), 0) +
+    faturas.reduce((s, f) => s + totalAjustesFatura(f), 0);
   const pagos = lancamentos.filter((l) => l.confirmacaoPagamento);
   const totalPago = pagos.reduce((sum, l) => sum + (l.valorRecebido || 0), 0);
 
@@ -1346,16 +1348,32 @@ export async function exportarFaturaParaExcel(
     });
   });
 
-  // Linha de TOTAL (negrito, em bronze escuro, na coluna do valor final de cada modelo)
-  const linhaTotal = linhaCabecalho + 1 + lancamentosDaFatura.length;
   const colValorACobrarIdx = colunas.findIndex((c) => c.key === template.colunaTotal) + 1;
+  // Acréscimos e descontos da fatura (fora das linhas dos CT-es), logo antes do total.
+  const ajustes = fatura.ajustes || [];
+  ajustes.forEach((a, i) => {
+    const r = sheet.getRow(linhaCabecalho + 1 + lancamentosDaFatura.length + i);
+    if (colValorACobrarIdx > 1) sheet.mergeCells(r.number, 1, r.number, colValorACobrarIdx - 1);
+    const rot = r.getCell(1);
+    rot.value = `${a.valor < 0 ? 'DESCONTO' : 'ACRÉSCIMO'}: ${(a.descricao || '').toUpperCase()}`;
+    rot.font = { bold: true, size: 10, name: 'Arial', color: { argb: COR_PRETO } };
+    rot.alignment = { horizontal: 'right' };
+    const v = r.getCell(colValorACobrarIdx);
+    v.value = Number(a.valor) || 0;
+    v.numFmt = '#,##0.00';
+    v.font = { bold: true, size: 10, name: 'Arial', color: { argb: COR_PRETO } };
+    v.border = BORDA_FINA;
+  });
+
+  // Linha de TOTAL (negrito, em bronze escuro, na coluna do valor final de cada modelo)
+  const linhaTotal = linhaCabecalho + 1 + lancamentosDaFatura.length + ajustes.length;
   const totalRow = sheet.getRow(linhaTotal);
   if (colValorACobrarIdx > 1) sheet.mergeCells(linhaTotal, 1, linhaTotal, colValorACobrarIdx - 1);
   const totalLabelCell = totalRow.getCell(1);
   totalLabelCell.value = 'TOTAL DA FATURA';
   totalLabelCell.font = { bold: true, size: 11, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' };
   totalLabelCell.alignment = { horizontal: 'right' };
-  const totalGeral = lancamentosDaFatura.reduce((sum, l) => sum + computeValorACobrar(l, cliente), 0);
+  const totalGeral = lancamentosDaFatura.reduce((sum, l) => sum + computeValorACobrar(l, cliente), 0) + totalAjustesFatura(fatura);
   const totalValorCell = totalRow.getCell(colValorACobrarIdx);
   totalValorCell.value = totalGeral;
   totalValorCell.numFmt = '#,##0.00';
