@@ -32,7 +32,16 @@ export interface FreteCalculado {
  *  e vê o frete pela TABELA DO CLIENTE — o mesmo cálculo do "Valor a Cobrar" do Controle
  *  Financeiro (detalharTarifaPorPeso), para a cotação bater com a cobrança. Peso cubado e custos
  *  extras são opcionais e aparecem separados no detalhamento. */
-export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInicialId?: string; onClose: () => void; /** Mostra "Usar na cotação". */ onUsar?: (f: FreteCalculado) => void }> = ({ clientes, clienteInicialId, onClose, onUsar }) => {
+export const CalculadoraFreteModal: React.FC<{
+  clientes: Cliente[];
+  clienteInicialId?: string;
+  /** Já abre com os dados da nota (ex.: Custos extras). */
+  inicial?: { modal?: 'Aéreo' | 'Rodoviário'; cidade?: string; pesoKg?: number; valorNF?: number };
+  onClose: () => void;
+  /** Mostra o botão "Usar ..." (cotação, custo extra). */
+  onUsar?: (f: FreteCalculado) => void;
+  rotuloUsar?: string;
+}> = ({ clientes, clienteInicialId, inicial, onClose, onUsar, rotuloUsar = 'Usar na cotação' }) => {
   const comTabela = useMemo(
     () =>
       clientes
@@ -41,10 +50,10 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
     [clientes]
   );
   const [clienteId, setClienteId] = useState(clienteInicialId && comTabela.some((c) => c.id === clienteInicialId) ? clienteInicialId : '');
-  const [modal, setModal] = useState<'Aéreo' | 'Rodoviário'>('Aéreo');
-  const [cidade, setCidade] = useState('');
-  const [peso, setPeso] = useState('');
-  const [valorNF, setValorNF] = useState('');
+  const [modal, setModal] = useState<'Aéreo' | 'Rodoviário'>(inicial?.modal || 'Aéreo');
+  const [cidade, setCidade] = useState(inicial?.cidade || '');
+  const [peso, setPeso] = useState(inicial?.pesoKg ? String(inicial.pesoKg).replace('.', ',') : '');
+  const [valorNF, setValorNF] = useState(inicial?.valorNF ? String(inicial.valorNF).replace('.', ',') : '');
   const [usarCubagem, setUsarCubagem] = useState(false);
   const [fatorCubagem, setFatorCubagem] = useState('300');
   const [volumes, setVolumes] = useState<Volume[]>([{ id: 'v1', quantidade: 1, comprimento: 0, largura: 0, altura: 0 }]);
@@ -443,7 +452,7 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
                     }
                     className="w-full px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 normal-case tracking-normal"
                   >
-                    <Plus className="w-4 h-4" /> Usar na cotação
+                    <Plus className="w-4 h-4" /> {rotuloUsar}
                   </button>
                 )}
                 <button

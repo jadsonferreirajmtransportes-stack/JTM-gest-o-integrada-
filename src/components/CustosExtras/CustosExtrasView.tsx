@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check, CheckCircle2, FileSpreadsheet, Loader2, Mail, Pencil, Plus, Receipt, RotateCcw, Search, Settings2, Trash2, X, XCircle } from 'lucide-react';
+import { Calculator, Check, CheckCircle2, FileSpreadsheet, Loader2, Mail, Pencil, Plus, Receipt, RotateCcw, Search, Settings2, Trash2, X, XCircle } from 'lucide-react';
 import type { Cliente, LancamentoFaturamentoAereo, UsuarioLogin } from '../../types';
 import { CustoExtra, ModeloPlanilhaCusto, STATUS_CUSTO_EXTRA, StatusCustoExtra, excluirCustoExtra, getCustosExtras, getModelosPlanilha, novoIdCustoExtra, salvarCustosExtras } from '../../utils/custosExtrasApi';
 import { obterUrlArquivo } from '../../utils/arquivosStorage';
@@ -7,6 +7,7 @@ import { formatCurrency } from '../../utils/formatters';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { CustoParaPlanilha, gerarPlanilhaPeloModelo, gerarPlanilhaValidacao } from './planilhaCustosExtras';
 import { ModeloPlanilhaModal } from './ModeloPlanilhaModal';
+import { CalculadoraFreteModal } from '../Clients/CalculadoraFreteModal';
 
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—');
 const hoje = () => new Date().toLocaleDateString('sv-SE');
@@ -398,6 +399,7 @@ const CustoExtraModal: React.FC<{
   const [descricao, setDescricao] = useState(inicial?.descricao || '');
   const [valor, setValor] = useState(inicial ? String(inicial.valor).replace('.', ',') : '');
   const [data, setData] = useState(inicial?.dataOcorrencia || hoje());
+  const [calculadora, setCalculadora] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -447,7 +449,9 @@ const CustoExtraModal: React.FC<{
   };
 
   const campo = 'w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white';
+  const clienteCalc = cliente?.id || inicial?.clienteId;
   return (
+    <>
     <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-lg p-5 space-y-3 text-xs" onClick={(e) => e.stopPropagation()} data-texto-livre="true">
         <div className="flex items-start justify-between">
@@ -520,7 +524,12 @@ const CustoExtraModal: React.FC<{
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="font-bold text-slate-600">Valor (R$)</label>
+            <div className="flex items-center justify-between">
+              <label className="font-bold text-slate-600">Valor (R$)</label>
+              <button type="button" onClick={() => setCalculadora(true)} className="text-[11px] font-bold text-[#92611F] hover:underline flex items-center gap-1" title="Calcular pela tabela de frete do cliente">
+                <Calculator className="w-3.5 h-3.5" /> Calculadora
+              </button>
+            </div>
             <input value={valor} onChange={(e) => setValor(e.target.value)} inputMode="decimal" placeholder="0,00" className={`${campo} mt-1 text-right font-bold`} />
           </div>
           <div>
@@ -534,6 +543,32 @@ const CustoExtraModal: React.FC<{
         </button>
       </div>
     </div>
+    {calculadora && (
+      <CalculadoraFreteModal
+        clientes={clientes}
+        clienteInicialId={clienteCalc}
+        inicial={
+          lanc
+            ? {
+                modal: /rodo/i.test(lanc.modal || '') ? 'Rodoviário' : lanc.modal ? 'Aéreo' : undefined,
+                cidade: lanc.cidadeDestino,
+                pesoKg: lanc.pesoTaxado || lanc.pesoKg,
+                valorNF: lanc.valorNF,
+              }
+            : { cidade: inicial?.cidade }
+        }
+        rotuloUsar="Usar no custo extra"
+        onClose={() => setCalculadora(false)}
+        onUsar={(f) => {
+          setValor(f.total.toFixed(2).replace('.', ','));
+          if (!tipo.trim()) setTipo(f.modal === 'Dedicado' ? 'Dedicado' : `Frete ${f.modal}`);
+          if (!descricao.trim())
+            setDescricao(`Calculado pela tabela do cliente: ${f.modal} para ${f.destino}${f.pesoKg ? `, ${String(f.pesoKg).replace('.', ',')} kg` : ''}.`);
+          setCalculadora(false);
+        }}
+      />
+    )}
+    </>
   );
 };
 
