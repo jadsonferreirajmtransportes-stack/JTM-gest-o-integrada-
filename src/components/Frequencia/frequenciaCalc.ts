@@ -45,6 +45,25 @@ export function diasDoMes(mes: string): string[] {
   const total = new Date(Date.UTC(a, m, 0)).getUTCDate();
   return Array.from({ length: total }, (_, i) => `${mes}-${String(i + 1).padStart(2, '0')}`);
 }
+/** A jornada prevê trabalho nesse dia? Semanal = dias da semana; 12x36 = dia sim, dia não a partir do início da escala. */
+export function jornadaPreveDia(j: JornadaPonto, data: string): boolean {
+  if (j.escala === '12x36') {
+    if (!j.inicioEscala) return false;
+    const dias = Math.round((Date.parse(`${data}T12:00:00Z`) - Date.parse(`${j.inicioEscala.slice(0, 10)}T12:00:00Z`)) / 86400000);
+    return ((dias % 2) + 2) % 2 === 0;
+  }
+  return j.diasSemana.includes(diaDaSemana(data));
+}
+
+/** Texto dos dias da jornada ("Seg, Ter..." ou "12x36 — dia sim, dia não"). */
+export function descreverDiasJornada(j: JornadaPonto): string {
+  if (j.escala === '12x36') {
+    const d = j.inicioEscala ? `${j.inicioEscala.slice(8, 10)}/${j.inicioEscala.slice(5, 7)}/${j.inicioEscala.slice(0, 4)}` : '—';
+    return `escala 12x36 — dia sim, dia não (trabalha em ${d})`;
+  }
+  return j.diasSemana.map((d) => NOMES_DIA[d]).join(', ');
+}
+
 const hm = (h: string) => {
   const [a, b] = h.split(':').map(Number);
   return a * 60 + b;
@@ -85,7 +104,7 @@ export function diaDeTrabalho(iso: string, j?: JornadaPonto): string {
     return t < inicio ? inicio - t : t > fim ? t - fim : 0;
   };
   const ordenados = [...dentro].sort(
-    (a, b) => distancia(a) - distancia(b) || Number(j.diasSemana.includes(diaDaSemana(b))) - Number(j.diasSemana.includes(diaDaSemana(a)))
+    (a, b) => distancia(a) - distancia(b) || Number(jornadaPreveDia(j, b)) - Number(jornadaPreveDia(j, a))
   );
   return ordenados[0] || data;
 }
@@ -144,7 +163,7 @@ const FATOR_NOTURNO = 60 / 52.5;
 /** Divide trechos [início, fim] (minutos locais absolutos) em minutos diurnos e noturnos de
  *  relógio. Prorrogação (Súmula 60): se o trecho noturno da jornada foi cumprido (6h ou mais
  *  entre 22h e 5h), o que for trabalhado depois das 5h, na mesma jornada, também é noturno. */
-export function dividirDiurnoNoturno(trechos: [number, number][]): { diurno: number; noturno: number } {
+export function dividirDiurnoNoturno(trechos: [number, number][], comProrrogacao = true): { diurno: number; noturno: number } {
   let total = 0;
   let noturno = 0;
   let fimDaNoite: number | null = null;
@@ -171,7 +190,7 @@ export function dividirDiurnoNoturno(trechos: [number, number][]): { diurno: num
       fimDaNoite = fim;
     }
   });
-  if (fimDaNoite !== null && maiorNoite >= 6 * 60) {
+  if (comProrrogacao && fimDaNoite !== null && maiorNoite >= 6 * 60) {
     const limite = fimDaNoite as number;
     for (const [a, b] of trechos) if (b > limite) noturno += b - Math.max(a, limite);
   }
@@ -250,7 +269,8 @@ export function montarEspelho(
     // com batida (ex.: folha manual lançada) ou justificativa segue a jornada normalmente.
     const temRegistro = batidas.length > 0 || !!justificativa;
     const feriado = feriados?.get(data);
-    const previsto = !feriado && !!jornada && jornada.diasSemana.includes(diaDaSemana(data)) && (!foraDoPeriodo || temRegistro);
+    const escala12x36 = jornada?.escala === '12x36';
+    const previsto = (!feriado || escala12x36) && !!jornada && jornadaPreveDia(jornada, data) && (!foraDoPeriodo || temRegistro);
     const previstoMin = previsto && jornada ? minutosPrevistos(jornada) : 0;
 
     let trabalhadoMin = 0;
@@ -270,16 +290,16 @@ export function montarEspelho(
     if (foraDoPeriodo && batidas.length === 0) situacao = 'Fora do período';
     else if (justificativa) situacao = justificativa.abona ? 'Justificado' : 'Falta';
     else if (data > hoje) situacao = 'Futuro';
-    else if (batidas.length === 0) situacao = feriado ? 'Feriado' : previsto && data < hoje ? 'Falta' : previsto ? 'Em andamento' : 'Folga';
+    else if (batidas.length === 0) situacao = feriado && !previsto ? 'Feriado' : previsto && data < hoje ? 'Falta' : previsto ? 'Em andamento' : 'Folga';
     else if (!completo) situacao = data === hoje ? 'Em andamento' : 'Incompleto';
     else if (!previsto) situacao = 'Extra';
     else if (jornada && atrasoMin > jornada.toleranciaMin) situacao = 'Atraso';
     else situacao = 'OK';
 
     // Apuração em horas computadas (noturno reduzido), sem banco de horas.
-    const real = dividirDiurnoNoturno(trechosDasBatidas(batidas));
+    const real = dividirDiurnoNoturno(trechosDasBatidas(batidas), !escala12x36);
     const feito = computado(real);
-    const plano = previsto && jornada ? computado(dividirDiurnoNoturno(trechosDaJornada(jornada, data))) : { diurno: 0, noturno: 0 };
+    const plano = previsto && jornada ? computado(dividirDiurnoNoturno(trechosDaJornada(jornada, data), !escala12x36)) : { diurno: 0, noturno: 0 };
     const totalFeito = feito.diurno + feito.noturno;
     const totalPlano = plano.diurno + plano.noturno;
     const apurar = situacao !== 'Futuro' && situacao !== 'Em andamento' && situacao !== 'Fora do período';

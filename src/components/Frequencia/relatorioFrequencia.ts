@@ -14,7 +14,7 @@ import autoTable from 'jspdf-autotable';
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 import type { BatidaPonto, JornadaPonto } from '../../utils/frequenciaApi';
-import { somarResumos, DiaEspelho, LIMITE_ATRASOS_MES, NOMES_DIA, ResumoFrequencia, dataLocal, diaDaSemana, formatarMinutos, horaLocal } from './frequenciaCalc';
+import { somarResumos, DiaEspelho, LIMITE_ATRASOS_MES, NOMES_DIA, ResumoFrequencia, descreverDiasJornada, dataLocal, diaDaSemana, formatarMinutos, horaLocal } from './frequenciaCalc';
 import { nomeMes } from './espelhoPdf';
 
 const BRONZE = 'FFC48229';
@@ -24,7 +24,7 @@ const bordas = { top: borda, bottom: borda, left: borda, right: borda };
 const dataBr = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
 const nomeSeguro = (t: string) => t.replace(/[^\p{L}\p{N}]+/gu, '_');
 const jornadaTexto = (j?: JornadaPonto) =>
-  j ? `${j.nome} — ${j.entrada}${j.saidaIntervalo ? ` às ${j.saidaIntervalo} / ${j.voltaIntervalo}` : ''} às ${j.saida} (${j.diasSemana.map((d) => NOMES_DIA[d]).join(', ')})` : 'Não definida';
+  j ? `${j.nome} — ${j.entrada}${j.saidaIntervalo ? ` às ${j.saidaIntervalo} / ${j.voltaIntervalo}` : ''} às ${j.saida} (${descreverDiasJornada(j)})` : 'Não definida';
 
 export interface ColaboradorRelatorio {
   nomeCompleto: string;

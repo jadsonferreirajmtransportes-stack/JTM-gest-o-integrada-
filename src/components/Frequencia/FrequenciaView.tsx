@@ -59,6 +59,7 @@ import {
   DiaEspelho,
   LIMITE_ATRASOS_MES,
   NOMES_DIA,
+  descreverDiasJornada,
   ResumoFrequencia,
   SituacaoDia,
   diaDaSemana,
@@ -828,7 +829,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
                     <p className="font-bold text-slate-800">{j.nome}</p>
                     <p className="text-slate-500">
                       {j.entrada}
-                      {j.saidaIntervalo ? `–${j.saidaIntervalo} / ${j.voltaIntervalo}` : ''}–{j.saida} · {j.diasSemana.map((d) => NOMES_DIA[d]).join(', ')} · tolerância {j.toleranciaMin} min
+                      {j.saidaIntervalo ? `–${j.saidaIntervalo} / ${j.voltaIntervalo}` : ''}–{j.saida} · {descreverDiasJornada(j)} · tolerância {j.toleranciaMin} min
                     </p>
                     <p className="text-slate-400">{Array.from(jornadaDe.values()).filter((v) => v === j.id).length} colaborador(es)</p>
                   </div>
@@ -1402,7 +1403,7 @@ const JornadaModal: React.FC<{
             </button>
           )}
           <button type="button" onClick={onClose} className={botaoSecundario}>Cancelar</button>
-          <button type="button" disabled={salvando || !j.nome.trim() || j.diasSemana.length === 0} onClick={() => executar(() => onSalvar({ ...j, nome: j.nome.trim() }), onClose)} className={botaoPrimario}>
+          <button type="button" disabled={salvando || !j.nome.trim() || (j.escala === '12x36' ? !j.inicioEscala : j.diasSemana.length === 0)} onClick={() => executar(() => onSalvar({ ...j, nome: j.nome.trim() }), onClose)} className={botaoPrimario}>
             {salvando && <Loader2 className="w-4 h-4 animate-spin" />} Salvar
           </button>
         </>
@@ -1412,6 +1413,41 @@ const JornadaModal: React.FC<{
         <label className="font-bold text-slate-600 block mb-1">Nome</label>
         <input value={j.nome} onChange={(e) => atualizar({ nome: e.target.value })} className={campo} />
       </div>
+      <div>
+        <span className="font-bold text-slate-600 block mb-1">Escala</span>
+        <div className="flex gap-1">
+          {(
+            [
+              ['semanal', 'Dias da semana'],
+              ['12x36', '12x36 (dia sim, dia não)'],
+            ] as const
+          ).map(([valor, rotulo]) => (
+            <button
+              key={valor}
+              type="button"
+              onClick={() =>
+                atualizar(
+                  valor === '12x36' && j.escala !== '12x36' && !jornada
+                    ? { escala: valor, entrada: '07:00', saidaIntervalo: undefined, voltaIntervalo: undefined, saida: '19:00' }
+                    : { escala: valor }
+                )
+              }
+              className={`flex-1 py-1.5 rounded-lg border font-bold ${(j.escala || 'semanal') === valor ? 'bg-[#C48229] text-white border-[#C48229]' : 'bg-white text-slate-500 border-slate-200'}`}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </div>
+      </div>
+      {j.escala === '12x36' ? (
+        <div>
+          <label className="font-bold text-slate-600 block mb-1">Um dia em que esta turma trabalha</label>
+          <input type="date" value={j.inicioEscala || ''} onChange={(e) => atualizar({ inicioEscala: e.target.value || undefined })} className={campo} />
+          <p className="text-slate-500 mt-1">
+            A partir dele: trabalha um dia, folga o outro (sábado, domingo e feriado entram normalmente na escala). Se há duas turmas que se revezam, crie duas jornadas — ex.: "12x36 Turma A" e "12x36 Turma B" — com dias seguidos.
+          </p>
+        </div>
+      ) : (
       <div>
         <span className="font-bold text-slate-600 block mb-1">Dias</span>
         <div className="flex gap-1">
@@ -1427,6 +1463,7 @@ const JornadaModal: React.FC<{
           ))}
         </div>
       </div>
+      )}
       <div className="grid grid-cols-4 gap-2">
         {(
           [

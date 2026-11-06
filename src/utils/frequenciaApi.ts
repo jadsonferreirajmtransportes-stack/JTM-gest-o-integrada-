@@ -19,6 +19,10 @@ export interface JornadaPonto {
   saida: string;
   toleranciaMin: number;
   ativo: boolean;
+  /** 'semanal' = nos diasSemana; '12x36' = dia sim, dia não a partir de inicioEscala (118). */
+  escala?: 'semanal' | '12x36';
+  /** 12x36: um dia em que a turma trabalha (YYYY-MM-DD). */
+  inicioEscala?: string;
 }
 
 export interface LocalPonto {
@@ -95,6 +99,8 @@ function rowToJornada(r: any): JornadaPonto {
     saida: hhmm(r.saida)!,
     toleranciaMin: Number(r.tolerancia_min ?? 15),
     ativo: r.ativo !== false,
+    escala: r.escala === '12x36' ? '12x36' : 'semanal',
+    inicioEscala: u(r.inicio_escala ?? null) || undefined,
   };
 }
 export async function getJornadas(): Promise<JornadaPonto[]> {
@@ -114,6 +120,8 @@ export async function saveJornada(j: JornadaPonto): Promise<JornadaPonto> {
     saida: registro.saida,
     tolerancia_min: registro.toleranciaMin,
     ativo: registro.ativo,
+    escala: registro.escala || 'semanal',
+    inicio_escala: registro.escala === '12x36' ? registro.inicioEscala || null : null,
   });
   assertNoError(error, 'saveJornada');
   return registro;

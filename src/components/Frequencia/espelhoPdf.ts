@@ -11,7 +11,7 @@ import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 import type { CampoAssinaturaPdf } from '../../utils/documentosAssinaturaApi';
 import type { JornadaPonto } from '../../utils/frequenciaApi';
-import { DiaEspelho, NOMES_DIA, ResumoFrequencia, diaDaSemana, formatarMinutos, horaLocal } from './frequenciaCalc';
+import { DiaEspelho, NOMES_DIA, descreverDiasJornada, ResumoFrequencia, diaDaSemana, formatarMinutos, horaLocal } from './frequenciaCalc';
 
 const BRONZE: [number, number, number] = [196, 130, 41];
 const TEXTO: [number, number, number] = [17, 17, 17];
@@ -65,7 +65,7 @@ export function gerarEspelhoPdf(params: {
   y += 4.5;
   doc.text(
     jornada
-      ? `Jornada: ${jornada.nome} — ${jornada.entrada}${jornada.saidaIntervalo ? ` às ${jornada.saidaIntervalo} / ${jornada.voltaIntervalo}` : ''} às ${jornada.saida} (${jornada.diasSemana.map((d) => NOMES_DIA[d]).join(', ')})`
+      ? `Jornada: ${jornada.nome} — ${jornada.entrada}${jornada.saidaIntervalo ? ` às ${jornada.saidaIntervalo} / ${jornada.voltaIntervalo}` : ''} às ${jornada.saida} (${descreverDiasJornada(jornada)})`
       : 'Jornada: não definida',
     MARGEM,
     y
