@@ -64,6 +64,20 @@ export const EmailResumoModal: React.FC<{
   const abrirEmail = () => {
     window.open(`mailto:${email || ''}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(texto)}`);
   };
+  /** Abre o Gmail do navegador (nova aba) com destinatário e assunto, e deixa o e-mail com as tabelas
+   *  copiado: é só clicar no corpo e colar (Ctrl+V). */
+  const abrirGmail = async () => {
+    const html = htmlResumoEmail(empresa, itens, envioId, texto);
+    let copiou = true;
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([texto], { type: 'text/plain' }) })]);
+    } catch {
+      copiou = false;
+    }
+    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email || '')}&su=${encodeURIComponent(assunto)}${copiou ? '' : `&body=${encodeURIComponent(texto)}`}`;
+    window.open(url, '_blank', 'noopener');
+    avisar(copiou ? 'Gmail aberto em outra aba: clique no corpo do e-mail e cole (Ctrl+V). Depois cole a imagem e anexe a planilha.' : 'Gmail aberto em outra aba já com o texto. Cole a imagem e anexe a planilha.');
+  };
   /** Copia o e-mail com as tabelas CT-E | NF (cola formatado no Gmail/Outlook). */
   const copiarComTabelas = async () => {
     const html = htmlResumoEmail(empresa, itens, envioId, texto);
@@ -147,8 +161,11 @@ export const EmailResumoModal: React.FC<{
                 <button type="button" onClick={copiarTexto} className={`${botao} border border-slate-200 text-slate-700 hover:bg-slate-50`}>
                   <Copy className="w-4 h-4" /> Só o texto
                 </button>
-                <button type="button" onClick={abrirEmail} className={`${botao} bg-emerald-700 hover:bg-emerald-800 text-white`} title="Abre o programa de e-mail com o assunto e o texto (cole a imagem e anexe a planilha)">
-                  <Mail className="w-4 h-4" /> Abrir e-mail
+                <button type="button" onClick={abrirGmail} className={`${botao} bg-emerald-700 hover:bg-emerald-800 text-white`} title="Abre o Gmail deste navegador com o destinatário e o assunto; o texto com as tabelas fica copiado para colar">
+                  <Mail className="w-4 h-4" /> Abrir no Gmail
+                </button>
+                <button type="button" onClick={abrirEmail} className={`${botao} border border-slate-200 text-slate-700 hover:bg-slate-50`} title="Abre o programa de e-mail do computador (Outlook etc.)">
+                  Outro programa
                 </button>
               </div>
             </div>
