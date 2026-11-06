@@ -39,6 +39,7 @@ function rowToSolicitacaoCompra(r: any): SolicitacaoCompra {
     solicitanteNome: r.solicitante_nome,
     solicitanteLogin: u(r.solicitante_login),
     solicitanteContato: u(r.solicitante_contato),
+    colaboradorId: u(r.colaborador_id),
     status: r.status ?? 'Pendente',
     aprovadoPor: u(r.aprovado_por),
     motivoRecusa: u(r.motivo_recusa),
@@ -88,7 +89,7 @@ export async function getSolicitacoesCompra(): Promise<SolicitacaoCompra[]> {
     .select(
       'id, grupo_id, item, quantidade, setor, justificativa, valor_estimado, fornecedor_sugerido, urgencia, ' +
         'prazo_necessario, anexo_nome, solicitante_nome, solicitante_login, solicitante_contato, status, ' +
-        'aprovado_por, motivo_recusa, criado_em, atualizado_em'
+        'aprovado_por, motivo_recusa, criado_em, atualizado_em, colaborador_id'
     )
     .order('criado_em', { ascending: false });
   assertNoError(error, 'getSolicitacoesCompra');
@@ -126,4 +127,66 @@ export async function criarSolicitacaoCompraPublica(item: SolicitacaoCompra): Pr
 export async function deleteSolicitacaoCompra(id: string): Promise<void> {
   const { error } = await supabase.from('solicitacoes_compra').delete().eq('id', id);
   assertNoError(error, 'deleteSolicitacaoCompra');
+}
+
+// ---------------------------------------------------------------------------
+// Compras pelo link pessoal (migração 114): quem pode pedir e o portal
+// ---------------------------------------------------------------------------
+type CredPortal = { token: string; cpf: string; nascimento: string };
+const argsPortal = (c: CredPortal) => ({ p_token: c.token, p_cpf: c.cpf, p_nascimento: c.nascimento });
+
+/** Colaboradores que veem "Compras" no link pessoal. */
+export async function getSolicitantesCompras(): Promise<string[]> {
+  const { data, error } = await supabase.from('compras_solicitantes').select('colaborador_id');
+  assertNoError(error, 'getSolicitantesCompras (rode a migração 114 no Supabase, se ainda não rodou)');
+  return (data ?? []).map((r: any) => r.colaborador_id);
+}
+/** Troca a lista inteira de quem pode pedir compras pelo portal. */
+export async function salvarSolicitantesCompras(ids: string[]): Promise<void> {
+  const atuais = await getSolicitantesCompras();
+  const sair = atuais.filter((id) => !ids.includes(id));
+  if (sair.length) {
+    const { error } = await supabase.from('compras_solicitantes').delete().in('colaborador_id', sair);
+    assertNoError(error, 'salvarSolicitantesCompras (remover)');
+  }
+  const entrar = ids.filter((id) => !atuais.includes(id));
+  if (entrar.length) {
+    const { error } = await supabase.from('compras_solicitantes').insert(entrar.map((colaborador_id) => ({ colaborador_id })));
+    assertNoError(error, 'salvarSolicitantesCompras');
+  }
+}
+
+export interface PedidoCompraPortal {
+  id: string;
+  grupoId?: string;
+  item: string;
+  quantidade: number;
+  urgencia: string;
+  prazo?: string;
+  status: string;
+  motivoRecusa?: string;
+  criadoEm: string;
+}
+export async function portalComprasEstado(c: CredPortal): Promise<{ permitido: boolean; nome?: string; pedidos: PedidoCompraPortal[] }> {
+  const { data, error } = await supabase.rpc('portal_compras_estado', argsPortal(c));
+  assertNoError(error, 'portalComprasEstado');
+  return { permitido: !!data?.permitido, nome: data?.nome, pedidos: data?.pedidos ?? [] };
+}
+export async function portalComprasSolicitar(
+  c: CredPortal,
+  p: { itens: { item: string; quantidade: number; valorEstimado?: number }[]; setor?: string; justificativa?: string; fornecedor?: string; urgencia: string; prazo?: string; contato?: string }
+): Promise<string> {
+  const { data, error } = await supabase.rpc('portal_compras_solicitar', {
+    ...argsPortal(c),
+    p_itens: p.itens,
+    p_setor: p.setor || null,
+    p_justificativa: p.justificativa || null,
+    p_fornecedor: p.fornecedor || null,
+    p_urgencia: p.urgencia,
+    p_prazo: p.prazo || null,
+    p_contato: p.contato || null,
+  });
+  assertNoError(error, 'portalComprasSolicitar');
+  if (data?.erro) throw new Error(data.erro === 'sem_acesso' ? 'Esta área não está liberada para você.' : 'Informe ao menos um item.');
+  return data?.protocolo || '';
 }

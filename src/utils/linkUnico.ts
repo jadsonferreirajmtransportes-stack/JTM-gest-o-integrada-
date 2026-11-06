@@ -24,6 +24,7 @@ export type DestinoPortal =
   | 'qualidade'
   | 'sugestoes'
   | 'baixas'
+  | 'compras'
   | 'treinamentos'
   | 'jornal'
   | `jornal:${string}`;

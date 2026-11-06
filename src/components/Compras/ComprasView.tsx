@@ -14,8 +14,10 @@ import {
   Clock,
   PackageCheck,
   FileDown,
+  Users,
 } from 'lucide-react';
-import { SolicitacaoCompra, StatusSolicitacaoCompra, UrgenciaSolicitacaoCompra, UsuarioLogin } from '../../types';
+import { Colaborador, SolicitacaoCompra, StatusSolicitacaoCompra, UrgenciaSolicitacaoCompra, UsuarioLogin } from '../../types';
+import { SolicitantesComprasModal } from './SolicitantesComprasModal';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { ComprasListaPdfModal } from './ComprasListaPdfModal';
 import { getAnexoSolicitacaoCompra } from '../../utils/comprasApi';
@@ -32,6 +34,8 @@ interface ComprasViewProps {
   onRecusar: (item: SolicitacaoCompra, motivo?: string) => void;
   onMarcarComprado: (item: SolicitacaoCompra) => void;
   onOpenLinkModal: () => void;
+  /** Para escolher quem pode pedir compras pelo link pessoal. */
+  colaboradores?: Colaborador[];
 }
 
 const STATUS_ORDEM: StatusSolicitacaoCompra[] = ['Pendente', 'Aprovado', 'Comprado', 'Recusado'];
@@ -89,10 +93,11 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
   onAprovar,
   onRecusar,
   onMarcarComprado,
-  onOpenLinkModal,
+  colaboradores = [],
 }) => {
   const [filtroStatus, setFiltroStatus] = useState<StatusSolicitacaoCompra | 'Todas'>('Pendente');
   const [showPdfModal, setShowPdfModal] = useState(false);
+  const [solicitantesAberto, setSolicitantesAberto] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -234,6 +239,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {solicitantesAberto && <SolicitantesComprasModal colaboradores={colaboradores} onClose={() => setSolicitantesAberto(false)} />}
       <div className="hidden lg:block bg-white rounded-3xl p-4 sm:p-8 shadow-sm relative overflow-hidden">
         <div className="hidden sm:flex absolute right-0 top-0 bottom-0 opacity-100 pointer-events-none items-center pr-8">
           <ShoppingCart className="w-56 h-56 text-orange-50" />
@@ -293,11 +299,11 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
             </button>
             <button
               type="button"
-              onClick={onOpenLinkModal}
+              onClick={() => setSolicitantesAberto(true)}
               className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5"
             >
-              <Link2 className="w-3.5 h-3.5" />
-              <span>Link Público</span>
+              <Users className="w-3.5 h-3.5" />
+              <span>Solicitantes (link pessoal)</span>
             </button>
           </AcoesTela>
         </div>
@@ -419,7 +425,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
                         {renderBadges(s)}
                         {!s.solicitanteLogin && (
                           <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-orange-50 text-orange-700 border border-orange-200 rounded">
-                            Link público
+                            {s.colaboradorId ? 'Link pessoal' : 'Link público'}
                           </span>
                         )}
                       </div>
@@ -456,7 +462,7 @@ export const ComprasView: React.FC<ComprasViewProps> = ({
                     </span>
                     {!primeiro.solicitanteLogin && (
                       <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 bg-orange-50 text-orange-700 border border-orange-200 rounded">
-                        Link público
+                        {primeiro.colaboradorId ? 'Link pessoal' : 'Link público'}
                       </span>
                     )}
                     <p className="text-[11px] text-slate-500 mt-0.5">

@@ -3677,6 +3677,7 @@ export default function App() {
               onRecusar={handleRecusarSolicitacaoCompra}
               onMarcarComprado={handleMarcarCompradoSolicitacaoCompra}
               onOpenLinkModal={() => setIsComprasLinkModalOpen(true)}
+              colaboradores={colaboradores}
             />
           )}
 

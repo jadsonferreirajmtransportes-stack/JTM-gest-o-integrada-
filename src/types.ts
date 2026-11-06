@@ -221,6 +221,8 @@ export interface SolicitacaoCompra {
   solicitanteNome: string;
   solicitanteLogin?: string;
   solicitanteContato?: string;
+  /** Pedido feito pelo link pessoal (migração 114). */
+  colaboradorId?: string;
   status: StatusSolicitacaoCompra;
   aprovadoPor?: string;
   motivoRecusa?: string;
