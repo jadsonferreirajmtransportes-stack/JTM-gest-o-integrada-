@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MessageSquare, X, Send, ArrowLeft, Maximize2, Users, User } from 'lucide-react';
+import { MessageSquare, X, Send, ArrowLeft, Maximize2, Users, User, Paperclip, Loader2 } from 'lucide-react';
 import { ConversaChat, MensagemChat, UsuarioLogin } from '../../types';
 import { getMensagens, assinarMensagensNovas, AnexoMensagemChat, editarMensagem, apagarMensagem, reagirMensagem } from '../../utils/chatApi';
 import { AcoesMensagemChat, BarraRespondendo, CitacaoMensagem, EditorMensagemChat, MensagemApagada, ReacoesMensagem } from './MensagemChatAcoes';
 import { AudioDaMensagem, GravadorAudio, nomeAudio } from './AudioChat';
 import { enviarArquivo } from '../../utils/arquivosStorage';
+import { AnexoDaMensagem } from './AnexoChat';
+import { prepararImagem } from '../../utils/solicitacoesApi';
 
 interface FloatingChatWidgetProps {
   usuarios: UsuarioLogin[];
@@ -116,6 +118,9 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [respondendo, setRespondendo] = useState<MensagemChat | null>(null);
   const [gravandoAudio, setGravandoAudio] = useState(false);
+  const arquivoRef = useRef<HTMLInputElement>(null);
+  const [enviandoAnexo, setEnviandoAnexo] = useState(false);
+  const [erroAnexo, setErroAnexo] = useState<string | null>(null);
   useEffect(() => setRespondendo(null), [conversaAbertaId]);
 
   const salvarEdicao = async (m: MensagemChat, novoTexto: string) => {
@@ -169,6 +174,25 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
   const handleAbrir = (id: string) => {
     setConversaAbertaId(id);
     onAbrirConversa(id);
+  };
+
+  /** Anexo (imagem, PDF, documento): vai para o Storage e sai na hora, junto com o texto digitado. */
+  const enviarAnexo = async (original: File) => {
+    if (!conversaAbertaId) return;
+    setErroAnexo(null);
+    const arquivo = await prepararImagem(original);
+    if (arquivo.size > 10 * 1024 * 1024) return setErroAnexo(`"${arquivo.name}" passa de 10MB.`);
+    setEnviandoAnexo(true);
+    try {
+      const ref = await enviarArquivo(arquivo, 'chat/anexos');
+      onEnviarMensagem(conversaAbertaId, texto.trim(), { url: ref, nome: arquivo.name || 'imagem.png', tipo: arquivo.type || 'application/octet-stream' }, respondendo?.id);
+      setRespondendo(null);
+      setTexto('');
+    } catch (e) {
+      setErroAnexo(e instanceof Error ? e.message : 'Não foi possível enviar o anexo.');
+    } finally {
+      setEnviandoAnexo(false);
+    }
   };
 
   const handleEnviar = () => {
@@ -331,8 +355,8 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                       m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>
                     )}
                     {!m.apagada && m.anexoTipo?.startsWith('audio/') && <AudioDaMensagem mensagem={m} propria={propria} />}
-                    {!m.apagada && !m.anexoTipo?.startsWith('audio/') && (m.anexoUrl || m.temAnexo) && !m.texto && (
-                      <p className="italic opacity-80">📎 {m.anexoNome || 'Anexo'}</p>
+                    {!m.apagada && !m.anexoTipo?.startsWith('audio/') && (m.anexoUrl || m.temAnexo) && (
+                      <AnexoDaMensagem mensagem={m} ehImagem={!!m.anexoTipo?.startsWith('image/')} propria={propria} onAbrir={(url) => window.open(url, '_blank', 'noopener')} />
                     )}
                     {!m.apagada && (
                       <ReacoesMensagem compacto reacoes={m.reacoes} currentUserId={currentUserId} usuarios={usuarios} propria={propria} onReagir={(e) => handleReagir(m, e)} />
@@ -350,7 +374,32 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
           </div>
 
           {respondendo && <BarraRespondendo compacto mensagem={respondendo} usuarios={usuarios} onCancelar={() => setRespondendo(null)} />}
+          {erroAnexo && <p className="mx-2 mb-1 text-[10px] text-rose-600 font-medium">{erroAnexo}</p>}
           <div className="p-2 border-t border-slate-100 flex items-center gap-1.5 shrink-0">
+            {!gravandoAudio && (
+              <>
+                <input
+                  ref={arquivoRef}
+                  type="file"
+                  accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = '';
+                    if (f) enviarAnexo(f);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => arquivoRef.current?.click()}
+                  disabled={enviandoAnexo}
+                  className="p-1.5 text-slate-400 hover:text-[#C48229] hover:bg-slate-100 rounded-lg shrink-0 disabled:opacity-50"
+                  title="Anexar imagem, PDF ou documento (também dá para colar um print)"
+                >
+                  {enviandoAnexo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
+                </button>
+              </>
+            )}
             <GravadorAudio
               compacto
               onAtivo={setGravandoAudio}
@@ -366,6 +415,13 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
               data-no-uppercase="true"
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
+              onPaste={(e) => {
+                const img = Array.from<File>(e.clipboardData?.files ?? []).find((f) => f.type.startsWith('image/'));
+                if (img) {
+                  e.preventDefault();
+                  enviarAnexo(img);
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
