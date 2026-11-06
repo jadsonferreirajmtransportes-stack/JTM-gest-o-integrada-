@@ -247,7 +247,24 @@ export function montarEspelho(
     .forEach((b) => {
       const ms = Date.parse(b.registradoEm);
       const qtdDia = diaAtual !== null ? porDia.get(diaAtual)?.length || 0 : 0;
-      const esperandoSaida = diaAtual !== null && qtdDia % 2 === 1 && ms - ultimaMs <= LIMITE_PAR_MS;
+      // Mas uma batida que é, na verdade, a ENTRADA do dia seguinte não fecha o par de ontem —
+      // senão uma batida esquecida (ex.: dia só com 12:17, 13:16, 18:21) faz a entrada da manhã
+      // seguinte virar a "saída" e o mês inteiro escorrega um dia.
+      const pareceEntradaDeOutroDia = (() => {
+        if (diaAtual === null) return false;
+        if (jornada) {
+          const dia = diaDeTrabalho(b.registradoEm, jornada);
+          if (dia === diaAtual || !jornadaPreveDia(jornada, dia)) return false;
+          // Perto do horário de entrada da jornada daquele dia (1h30 antes até 3h depois).
+          const inicio = janelaPrevista(jornada, dia).inicio;
+          const t = minutosLocais(b.registradoEm);
+          return t >= inicio - 90 && t <= inicio + 180;
+        }
+        // Sem jornada: o dia já teve intervalo (3ª batida em aberto) e a próxima vem em outro dia,
+        // mais de 10h depois — é um dia novo, não a saída.
+        return qtdDia >= 3 && dataLocal(b.registradoEm) !== diaAtual && ms - ultimaMs > 10 * 3600 * 1000;
+      })();
+      const esperandoSaida = diaAtual !== null && qtdDia % 2 === 1 && ms - ultimaMs <= LIMITE_PAR_MS && !pareceEntradaDeOutroDia;
       // Sem jornada (não há horário para comparar): a volta de um intervalo de até 3h, num dia
       // que ainda não fechou as 4 batidas, continua no mesmo dia (ex.: noturno 00:00 → 01:00).
       const voltaDoIntervalo = !jornada && diaAtual !== null && qtdDia % 2 === 0 && qtdDia < 4 && ms - ultimaMs <= 3 * 3600 * 1000;
