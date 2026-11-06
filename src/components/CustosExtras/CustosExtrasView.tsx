@@ -7,6 +7,7 @@ import { formatCurrency } from '../../utils/formatters';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { CustoParaPlanilha, gerarPlanilhaPeloModelo, gerarPlanilhaValidacao } from './planilhaCustosExtras';
 import { ModeloPlanilhaModal } from './ModeloPlanilhaModal';
+import { EmailResumoModal } from './EmailResumoModal';
 import { CalculadoraFreteModal } from '../Clients/CalculadoraFreteModal';
 import { TIPOS_CUSTO_EXTRA, pertenceAoFarmaAereo } from '../FarmaAereo/faturamentoAereoUtils';
 import { ImportFaturamentoAereoModal } from '../FarmaAereo/ImportFaturamentoAereoModal';
@@ -45,6 +46,7 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
   const [formatoDe, setFormatoDe] = useState<{ chave: string; nome: string } | null>(null);
   const [escolhendoFormato, setEscolhendoFormato] = useState(false);
   const [menuImportar, setMenuImportar] = useState(false);
+  const [emailDe, setEmailDe] = useState<{ empresa: string; itens: CustoParaPlanilha[]; envioId: string; email?: string; planilha?: string } | null>(null);
   const [importarSetor, setImportarSetor] = useState<'aereo' | 'rodoviario' | null>(null);
 
   useEffect(() => {
@@ -194,13 +196,19 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
       }
       const cli = itensPlanilha[0].clienteId ? clientePorId.get(itensPlanilha[0].clienteId) : undefined;
       const email = cli?.emailPrincipal || '';
-      if (window.confirm(`Planilha "${arq.name}" baixada.\n\nAbrir um e-mail${email ? ` para ${email}` : ''} já com o assunto? (anexe a planilha baixada)`)) {
-        const total = itensPlanilha.reduce((s, c) => s + c.valor, 0);
-        const pedido = modelo ? 'Por favor, confiram e nos respondam este e-mail com a validação.' : 'Por favor, preencham a coluna "De acordo?" com S ou N e nos respondam este e-mail.';
-        const corpo = `Prezados,\n\nSegue em anexo a planilha de custos extras (${envioId}) para validação: ${itensPlanilha.length} item(ns), total de ${formatCurrency(total)}.\n\n${pedido}\n\nAtenciosamente,\nFinanceiro — JM Transportes`;
-        window.open(`mailto:${email}?subject=${encodeURIComponent(`Validação de custos extras — ${itensPlanilha[0].clienteNome} (${envioId})`)}&body=${encodeURIComponent(corpo)}`);
-      }
+      // Imagem do resumo + texto para o corpo do e-mail.
+      setEmailDe({ empresa: itensPlanilha[0].clienteNome, itens: paraPlanilha(itensPlanilha), envioId, email, planilha: arq.name });
     });
+
+  /** Só a imagem e o texto do e-mail (sem baixar planilha nem mudar a situação). */
+  const abrirEmail = (lista: CustoExtra[]) => {
+    const aEnviar = lista.filter((c) => c.status === 'Pendente');
+    const itensEmail = aEnviar.length ? aEnviar : lista.filter((c) => c.status === 'Enviado');
+    if (!itensEmail.length) return setErro('Não há custos a enviar ou aguardando validação nesta empresa.');
+    const cli = itensEmail[0].clienteId ? clientePorId.get(itensEmail[0].clienteId) : undefined;
+    const envioId = itensEmail.every((c) => c.envioId && c.envioId === itensEmail[0].envioId) ? (itensEmail[0].envioId as string) : `CE-${hoje().replace(/-/g, '')}`;
+    setEmailDe({ empresa: itensEmail[0].clienteNome, itens: paraPlanilha(itensEmail), envioId, email: cli?.emailPrincipal || '' });
+  };
 
   return (
     <div className="space-y-4" data-texto-livre="true">
@@ -321,6 +329,16 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
                     {ocupado === `env-${chave}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
                     {pendentes ? `Planilha para validação (${pendentes})` : 'Baixar planilha de novo'}
                     <Mail className="w-3.5 h-3.5 opacity-80" />
+                  </button>
+                )}
+                {(pendentes > 0 || aguardando > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => abrirEmail(lista)}
+                    className="px-3 py-2 rounded-xl border border-emerald-200 bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-bold flex items-center gap-1.5"
+                    title="Imagem do resumo e texto prontos para o corpo do e-mail"
+                  >
+                    <Mail className="w-4 h-4" /> Imagem e texto do e-mail
                   </button>
                 )}
                 </div>
@@ -455,6 +473,16 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
           titulo={`Importar relatório — ${importarSetor === 'aereo' ? 'Farma Aéreo' : 'Farma Rodoviário'} (Excel/XLS)`}
           subtitulo="Os CT-es entram no Controle Financeiro e ficam disponíveis para atrelar custos extras"
           modalPadrao={importarSetor === 'rodoviario' ? 'Rodoviário' : undefined}
+        />
+      )}
+      {emailDe && (
+        <EmailResumoModal
+          empresa={emailDe.empresa}
+          itens={emailDe.itens}
+          envioId={emailDe.envioId}
+          email={emailDe.email}
+          planilhaBaixada={emailDe.planilha}
+          onClose={() => setEmailDe(null)}
         />
       )}
       {escolhendoFormato && (
