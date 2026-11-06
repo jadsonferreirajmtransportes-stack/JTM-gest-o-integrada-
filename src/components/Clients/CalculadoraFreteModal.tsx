@@ -28,6 +28,8 @@ export interface FreteCalculado {
   prazo?: string;
   /** Detalhamento do cálculo (frete, ad valorem, extras...). */
   linhas?: { label: string; valor: number }[];
+  /** Só os custos extras marcados (sem tarifa/excedente). */
+  soCustoExtra?: boolean;
 }
 
 /** Calculadora de frete para a equipe: escolhe o cliente, o modal, a cidade de destino e o peso
@@ -43,7 +45,9 @@ export const CalculadoraFreteModal: React.FC<{
   /** Mostra o botão "Usar ..." (cotação, custo extra). */
   onUsar?: (f: FreteCalculado) => void;
   rotuloUsar?: string;
-}> = ({ clientes, clienteInicialId, inicial, onClose, onUsar, rotuloUsar = 'Usar na cotação' }) => {
+  /** Custos extras: escolher se vai só o custo extra marcado ou somado com a tarifa/excedente. */
+  escolherParcela?: boolean;
+}> = ({ clientes, clienteInicialId, inicial, onClose, onUsar, rotuloUsar = 'Usar na cotação', escolherParcela }) => {
   const comTabela = useMemo(
     () =>
       clientes
@@ -69,6 +73,8 @@ export const CalculadoraFreteModal: React.FC<{
   const [valorKmManual, setValorKmManual] = useState('');
   const [km, setKm] = useState('');
   const [idaEVolta, setIdaEVolta] = useState(false);
+  /** O que vai para o custo extra: só os custos extras marcados ou tudo (tarifa + excedente + extras). */
+  const [parcela, setParcela] = useState<'extras' | 'tudo'>('extras');
   const [pedagio, setPedagio] = useState('');
 
   const cliente = comTabela.find((c) => c.id === clienteId);
@@ -113,13 +119,15 @@ export const CalculadoraFreteModal: React.FC<{
         },
       ];
       if (valorPedagio) linhas.push({ label: 'Pedágio', valor: valorPedagio });
-      linhas.push(...extrasMarcadosLinhas());
-      return { linhas, total: linhas.reduce((s, l) => s + l.valor, 0) };
+      const extras = extrasMarcadosLinhas();
+      linhas.push(...extras);
+      return { linhas, total: linhas.reduce((s, l) => s + l.valor, 0), qtdBase: linhas.length - extras.length };
     }
     const base = detalharTarifaPorPeso({ cidadeDestino: cidade, pesoKg: pesoCalculo, valorNF: nf || undefined, valorPrestacao: undefined, modal }, cliente);
     if (!base) return null;
-    const linhas: LinhaValorACobrar[] = [...base, ...extrasMarcadosLinhas()];
-    return { linhas, total: linhas.reduce((s, l) => s + l.valor, 0) };
+    const extras = extrasMarcadosLinhas();
+    const linhas: LinhaValorACobrar[] = [...base, ...extras];
+    return { linhas, total: linhas.reduce((s, l) => s + l.valor, 0), qtdBase: base.length };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cliente, tabela, cidade, pesoCalculo, nf, modal, extrasMarcados, incluirDescarga, incluirGris, tarifaCidade, modo, valorKm, kmTotal, valorPedagio, veiculoId, idaEVolta]);
 
@@ -226,7 +234,10 @@ export const CalculadoraFreteModal: React.FC<{
                   <button
                     key={m}
                     type="button"
-                    onClick={() => setModo(m)}
+                    onClick={() => {
+                      setModo(m);
+                      setParcela(m === 'dedicado' ? 'tudo' : 'extras');
+                    }}
                     className={`px-3 py-2 rounded-lg border text-xs font-bold flex items-center justify-center gap-1.5 normal-case tracking-normal ${modo === m ? 'bg-[#C48229] border-[#C48229] text-white' : 'bg-white border-slate-200 text-slate-500'}`}
                   >
                     {icone} {rotuloModo}
@@ -431,29 +442,64 @@ export const CalculadoraFreteModal: React.FC<{
                   </p>
                 )}
                 <ul className="divide-y divide-slate-200 border-t border-b border-slate-200">
-                  {resultado.linhas.map((l, i) => (
-                    <li key={i} className="py-1.5 flex justify-between gap-3 text-xs">
-                      <span className="text-slate-600">{l.label}</span>
-                      <span className="font-semibold text-slate-800 whitespace-nowrap">{formatCurrency(l.valor)}</span>
-                    </li>
-                  ))}
+                  {resultado.linhas.map((l, i) => {
+                    const fora = !!escolherParcela && parcela === 'extras' && i < resultado.qtdBase;
+                    return (
+                      <li key={i} className={`py-1.5 flex justify-between gap-3 text-xs ${fora ? 'opacity-40 line-through' : ''}`}>
+                        <span className="text-slate-600">{l.label}</span>
+                        <span className="font-semibold text-slate-800 whitespace-nowrap">{formatCurrency(l.valor)}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
+                {escolherParcela && onUsar && cliente && (
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 space-y-2">
+                    <p className="text-[11px] font-bold text-slate-500 uppercase">O que vai para o custo extra</p>
+                    <div className="grid grid-cols-2 gap-1">
+                      {(
+                        [
+                          ['extras', 'Só o custo extra'],
+                          ['tudo', 'Tarifa + excedente + custo extra'],
+                        ] as const
+                      ).map(([v, rotulo]) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setParcela(v)}
+                          className={`px-2 py-1.5 rounded-lg border text-[11px] font-bold normal-case tracking-normal ${parcela === v ? 'bg-[#C48229] text-white border-[#C48229]' : 'bg-white text-slate-500 border-slate-200'}`}
+                        >
+                          {rotulo}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-700">
+                      Valor do custo extra:{' '}
+                      <b className="text-slate-900">{formatCurrency(parcela === 'extras' ? resultado.linhas.slice(resultado.qtdBase).reduce((s, l) => s + l.valor, 0) : resultado.total)}</b>
+                    </p>
+                    {parcela === 'extras' && resultado.qtdBase === resultado.linhas.length && (
+                      <p className="text-[11px] text-amber-700 font-semibold">Marque ao lado o(s) custo(s) extra(s) que se aplicam.</p>
+                    )}
+                  </div>
+                )}
                 {onUsar && cliente && (
                   <button
                     type="button"
-                    onClick={() =>
+                    disabled={!!escolherParcela && parcela === 'extras' && resultado.qtdBase === resultado.linhas.length}
+                    onClick={() => {
+                      const linhasUsadas = escolherParcela && parcela === 'extras' ? resultado.linhas.slice(resultado.qtdBase) : resultado.linhas;
                       onUsar({
                         cliente,
                         destino: tarifaCidade ? `${tarifaCidade.cidade}${tarifaCidade.uf ? `/${tarifaCidade.uf}` : ''}` : cidade,
                         modal: modo === 'dedicado' ? 'Dedicado' : modal,
                         pesoKg: modo === 'dedicado' ? undefined : pesoCalculo || undefined,
                         volumes: usarCubagem ? volumes.reduce((s, v) => s + (v.quantidade || 0), 0) || undefined : undefined,
-                        total: resultado.total,
+                        total: linhasUsadas.reduce((s, l) => s + l.valor, 0),
                         prazo: tarifaCidade?.prazo,
-                        linhas: resultado.linhas.map((l) => ({ label: l.label, valor: l.valor })),
-                      })
-                    }
-                    className="w-full px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 normal-case tracking-normal"
+                        linhas: linhasUsadas.map((l) => ({ label: l.label, valor: l.valor })),
+                        soCustoExtra: !!escolherParcela && parcela === 'extras',
+                      });
+                    }}
+                    className="w-full px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 normal-case tracking-normal disabled:opacity-50"
                   >
                     <Plus className="w-4 h-4" /> {rotuloUsar}
                   </button>

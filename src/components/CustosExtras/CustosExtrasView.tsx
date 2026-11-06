@@ -771,11 +771,16 @@ const CustoExtraModal: React.FC<{
               : { cidade: inicial?.cidade }
           }
           rotuloUsar={(escolhidas.length || inicial) && !travado ? 'Registrar no custo extra' : 'Usar no custo extra'}
+          escolherParcela
           onClose={() => setCalculadora(false)}
           onUsar={(f) => {
-            const novoTipo = tipo.trim() || (f.modal === 'Dedicado' ? (compartilhado ? 'Dedicado Compartilhado' : 'Dedicado Integral') : `Frete ${f.modal}`);
+            const unicoExtra = f.soCustoExtra && f.linhas?.length === 1 ? f.linhas[0].label : '';
+            const novoTipo =
+              tipo.trim() || unicoExtra || (f.modal === 'Dedicado' ? (compartilhado ? 'Dedicado Compartilhado' : 'Dedicado Integral') : f.soCustoExtra ? 'Custo extra' : `Frete ${f.modal}`);
             const detalhe = (f.linhas || []).map((l) => `${l.label}: ${formatCurrency(l.valor)}`).join('; ');
-            const calculo = `Calculado pela tabela do cliente: ${f.modal} para ${f.destino}${f.pesoKg ? `, ${String(f.pesoKg).replace('.', ',')} kg` : ''}${detalhe ? ` (${detalhe})` : ''}.`;
+            const calculo = f.soCustoExtra
+              ? `Custo extra pela tabela do cliente (${f.destino}): ${detalhe}.`
+              : `Calculado pela tabela do cliente: ${f.modal} para ${f.destino}${f.pesoKg ? `, ${String(f.pesoKg).replace('.', ',')} kg` : ''}${detalhe ? ` (${detalhe})` : ''}.`;
             const novaDescricao = descricao.trim() ? `${descricao.trim()}\n${calculo}` : calculo;
             setValor(f.total.toFixed(2).replace('.', ','));
             setTipo(novoTipo);
