@@ -119,6 +119,7 @@ export type CampoPlanilha =
   | 'tipo'
   | 'descricao'
   | 'valor'
+  | 'volumes'
   | 'cliente'
   | 'referencia'
   | 'nada';
@@ -132,11 +133,14 @@ export const CAMPOS_PLANILHA: { campo: CampoPlanilha; rotulo: string }[] = [
   { campo: 'tipo', rotulo: 'Tipo do custo' },
   { campo: 'descricao', rotulo: 'Descrição / motivo' },
   { campo: 'valor', rotulo: 'Valor (R$)' },
+  { campo: 'volumes', rotulo: 'Volumes (do CT-e)' },
   { campo: 'cliente', rotulo: 'Nome da empresa' },
   { campo: 'referencia', rotulo: 'Referência do envio' },
 ];
 export interface ColunaModelo {
   coluna: number; // 1 = coluna A
+  /** Só no formato "ficha" (formulário): linha do rótulo/valor. */
+  linha?: number;
   titulo: string;
   campo: CampoPlanilha;
 }

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Download, FileSpreadsheet, Loader2, RotateCcw, Upload, X } from 'lucide-react';
-import { CAMPOS_PLANILHA, CampoPlanilha, CustoExtra, ModeloPlanilhaCusto, excluirModeloPlanilha, salvarModeloPlanilha } from '../../utils/custosExtrasApi';
+import { CAMPOS_PLANILHA, CampoPlanilha, ModeloPlanilhaCusto, excluirModeloPlanilha, salvarModeloPlanilha } from '../../utils/custosExtrasApi';
 import { enviarArquivo, obterUrlArquivo, removerArquivo } from '../../utils/arquivosStorage';
 import { baixarBlob } from '../../utils/downloadUtils';
-import { LeituraModelo, gerarPlanilhaPeloModelo, letraColuna, lerModeloPlanilha } from './planilhaCustosExtras';
+import { CustoParaPlanilha, LayoutModelo, LeituraModelo, gerarPlanilhaPeloModelo, layoutDoModelo, letraColuna, lerModeloPlanilha } from './planilhaCustosExtras';
 
 const LIMITE_MB = 10;
 
@@ -12,7 +12,7 @@ export const ModeloPlanilhaModal: React.FC<{
   chave: string;
   empresa: string;
   modelo?: ModeloPlanilhaCusto;
-  itensTeste: CustoExtra[];
+  itensTeste: CustoParaPlanilha[];
   usuario?: string;
   onClose: () => void;
   onSalvo: (m: ModeloPlanilhaCusto | null) => void;
@@ -33,10 +33,12 @@ export const ModeloPlanilhaModal: React.FC<{
         const r = await fetch(await obterUrlArquivo(modelo.arquivoRef));
         if (!r.ok) throw new Error('Não consegui baixar a planilha do modelo.');
         const buf = await r.arrayBuffer();
-        const l = await lerModeloPlanilha(buf, modelo.aba, modelo.linhaCabecalho);
-        const salvo = new Map(modelo.colunas.map((c) => [c.coluna, c.campo]));
+        const layout = layoutDoModelo(modelo);
+        const l = await lerModeloPlanilha(buf, modelo.aba, modelo.linhaCabecalho || undefined, layout);
+        const chave = (c: { coluna: number; linha?: number }) => `${c.linha || 0}:${c.coluna}`;
+        const salvo = new Map(modelo.colunas.map((c) => [chave(c), c.campo]));
         setBuffer(buf);
-        setLeitura({ ...l, colunas: l.colunas.map((c) => ({ ...c, campo: salvo.get(c.coluna) ?? c.campo })) });
+        setLeitura({ ...l, colunas: l.colunas.map((c) => ({ ...c, campo: salvo.get(chave(c)) ?? c.campo })) });
       } catch (e) {
         setErro(e instanceof Error ? e.message : 'Não consegui abrir o modelo.');
       } finally {
@@ -64,18 +66,19 @@ export const ModeloPlanilhaModal: React.FC<{
     }
   };
 
-  const reler = async (aba: string, linha?: number) => {
+  const reler = async (aba: string, linha?: number, layout?: LayoutModelo) => {
     if (!buffer) return;
     setErro(null);
     try {
-      setLeitura(await lerModeloPlanilha(buffer, aba, linha));
+      setLeitura(await lerModeloPlanilha(buffer, aba, linha, layout || leitura?.layout));
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não consegui ler a planilha.');
     }
   };
 
-  const mudarCampo = (coluna: number, campo: CampoPlanilha) =>
-    setLeitura((l) => (l ? { ...l, colunas: l.colunas.map((c) => (c.coluna === coluna ? { ...c, campo } : c)) } : l));
+  const mudarCampo = (alvo: { coluna: number; linha?: number }, campo: CampoPlanilha) =>
+    setLeitura((l) => (l ? { ...l, colunas: l.colunas.map((c) => (c.coluna === alvo.coluna && c.linha === alvo.linha ? { ...c, campo } : c)) } : l));
+  const ficha = leitura?.layout === 'ficha';
 
   const ligadas = leitura?.colunas.filter((c) => c.campo !== 'nada').length || 0;
 
@@ -83,7 +86,10 @@ export const ModeloPlanilhaModal: React.FC<{
     if (!buffer || !leitura) return;
     setErro(null);
     try {
-      const arq = await gerarPlanilhaPeloModelo(leitura, buffer, empresa, itensTeste, 'TESTE');
+      const exemplo: CustoParaPlanilha[] = [
+        { id: 'teste', clienteNome: empresa, notaFiscal: '123456', numeroCte: '7890', destinatario: 'DESTINATÁRIO EXEMPLO', cidade: 'CIDADE EXEMPLO', dataOcorrencia: new Date().toLocaleDateString('sv-SE'), tipo: 'Custo exemplo', descricao: 'Exemplo de motivo', valor: 100, volumes: 1, status: 'Pendente', lancadoNoCte: false, criadoEm: '' },
+      ];
+      const arq = await gerarPlanilhaPeloModelo(leitura, buffer, empresa, itensTeste.length ? itensTeste : exemplo, 'TESTE');
       baixarBlob(arq, arq.name.replace('.xlsx', '_TESTE.xlsx'));
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não consegui gerar o teste.');
@@ -103,8 +109,8 @@ export const ModeloPlanilhaModal: React.FC<{
         arquivoRef: ref,
         arquivoNome: nomeArquivo || undefined,
         aba: leitura.aba,
-        linhaCabecalho: leitura.linhaCabecalho,
-        colunas: leitura.colunas,
+        linhaCabecalho: ficha ? 0 : leitura.linhaCabecalho,
+        colunas: ficha ? leitura.colunas : leitura.colunas.map(({ linha: _l, ...c }) => c),
         atualizadoEm: new Date().toISOString(),
       };
       await salvarModeloPlanilha(novo, usuario);
@@ -169,6 +175,26 @@ export const ModeloPlanilhaModal: React.FC<{
 
           {leitura && !carregando && (
             <>
+              <div>
+                <span className="text-xs text-slate-600 block mb-1">Jeito da planilha</span>
+                <div className="flex gap-1">
+                  {(
+                    [
+                      ['tabela', 'Tabela — um custo por linha'],
+                      ['ficha', 'Formulário — um custo por folha'],
+                    ] as const
+                  ).map(([valor, rotulo]) => (
+                    <button
+                      key={valor}
+                      type="button"
+                      onClick={() => valor !== leitura.layout && reler(leitura.aba, undefined, valor)}
+                      className={`flex-1 py-1.5 px-2 rounded-lg border text-xs font-bold ${leitura.layout === valor ? 'bg-[#C48229] text-white border-[#C48229]' : 'bg-white text-slate-500 border-slate-200'}`}
+                    >
+                      {rotulo}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="flex flex-wrap gap-3">
                 {leitura.abas.length > 1 && (
                   <label className="text-xs text-slate-600">
@@ -180,6 +206,7 @@ export const ModeloPlanilhaModal: React.FC<{
                     </select>
                   </label>
                 )}
+                {!ficha && (
                 <label className="text-xs text-slate-600">
                   Linha dos títulos
                   <input
@@ -191,30 +218,36 @@ export const ModeloPlanilhaModal: React.FC<{
                     className="block mt-1 w-24 px-2 py-1.5 border border-slate-200 rounded-lg"
                   />
                 </label>
-                <p className="text-[11px] text-slate-500 self-end pb-1">Os custos entram a partir da linha {leitura.linhaCabecalho + 1}.</p>
+                )}
+                <p className="text-[11px] text-slate-500 self-end pb-1">
+                  {ficha ? 'Cada custo sai numa folha própria, copiando este formulário (1º, 2º, 3º...).' : `Os custos entram a partir da linha ${leitura.linhaCabecalho + 1}.`}
+                </p>
               </div>
 
               {leitura.colunas.length === 0 ? (
-                <p className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">Não há títulos nessa linha. Ajuste o número da linha dos títulos.</p>
+                <p className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">{ficha ? 'Não achei rótulos com espaço para o valor à direita. Tente "Tabela".' : 'Não há títulos nessa linha. Ajuste o número da linha dos títulos.'}</p>
               ) : (
                 <div className="border border-slate-200 rounded-xl overflow-hidden">
                   <table className="w-full text-xs">
                     <thead className="bg-slate-50 text-left text-slate-500">
                       <tr>
-                        <th className="p-2 w-12">Col.</th>
-                        <th className="p-2">Título na planilha do cliente</th>
+                        <th className="p-2 w-12">{ficha ? 'Célula' : 'Col.'}</th>
+                        <th className="p-2">{ficha ? 'Rótulo no formulário do cliente' : 'Título na planilha do cliente'}</th>
                         <th className="p-2 w-56">O que vai nela</th>
                       </tr>
                     </thead>
                     <tbody>
                       {leitura.colunas.map((c) => (
-                        <tr key={c.coluna} className="border-t border-slate-100">
-                          <td className="p-2 font-bold text-slate-400">{letraColuna(c.coluna)}</td>
+                        <tr key={`${c.linha || 0}:${c.coluna}`} className="border-t border-slate-100">
+                          <td className="p-2 font-bold text-slate-400">
+                            {letraColuna(c.coluna)}
+                            {c.linha || ''}
+                          </td>
                           <td className="p-2 text-slate-800">{c.titulo}</td>
                           <td className="p-2">
                             <select
                               value={c.campo}
-                              onChange={(e) => mudarCampo(c.coluna, e.target.value as CampoPlanilha)}
+                              onChange={(e) => mudarCampo(c, e.target.value as CampoPlanilha)}
                               className={`w-full px-2 py-1.5 border rounded-lg bg-white ${c.campo === 'nada' ? 'border-slate-200 text-slate-400' : 'border-[#C48229] text-slate-900 font-semibold'}`}
                             >
                               {CAMPOS_PLANILHA.map((o) => (
@@ -231,7 +264,7 @@ export const ModeloPlanilhaModal: React.FC<{
                 </div>
               )}
               <p className="text-[11px] text-slate-500">
-                Colunas que o cliente preenche (ex.: "De acordo?", "Observação") ficam em branco. Confira e, se quiser, baixe um teste com os custos desta empresa antes de salvar.
+                O que o sistema não tem (ex.: "De acordo?", tipo de veículo, ajudante) fica em branco para preencher à mão. Confira e, se quiser, baixe um teste com os custos desta empresa antes de salvar.
               </p>
             </>
           )}
@@ -248,7 +281,7 @@ export const ModeloPlanilhaModal: React.FC<{
             )}
           </div>
           <div className="flex gap-2">
-            {leitura && itensTeste.length > 0 && (
+            {leitura && (
               <button type="button" disabled={salvando || !ligadas} onClick={testar} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 disabled:opacity-50">
                 <Download className="w-4 h-4" /> Baixar teste
               </button>

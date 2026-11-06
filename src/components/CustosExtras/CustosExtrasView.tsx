@@ -5,7 +5,7 @@ import { CustoExtra, ModeloPlanilhaCusto, STATUS_CUSTO_EXTRA, StatusCustoExtra, 
 import { obterUrlArquivo } from '../../utils/arquivosStorage';
 import { formatCurrency } from '../../utils/formatters';
 import { baixarBlob } from '../../utils/downloadUtils';
-import { gerarPlanilhaPeloModelo, gerarPlanilhaValidacao } from './planilhaCustosExtras';
+import { CustoParaPlanilha, gerarPlanilhaPeloModelo, gerarPlanilhaValidacao } from './planilhaCustosExtras';
 import { ModeloPlanilhaModal } from './ModeloPlanilhaModal';
 
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—');
@@ -37,7 +37,8 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
   const [recusando, setRecusando] = useState<CustoExtra | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [modelos, setModelos] = useState<Map<string, ModeloPlanilhaCusto>>(new Map());
-  const [formatoDe, setFormatoDe] = useState<{ chave: string; lista: CustoExtra[] } | null>(null);
+  const [formatoDe, setFormatoDe] = useState<{ chave: string; nome: string } | null>(null);
+  const [escolhendoFormato, setEscolhendoFormato] = useState(false);
 
   useEffect(() => {
     getModelosPlanilha()
@@ -93,6 +94,9 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
     return true;
   };
 
+  const paraPlanilha = (lista: CustoExtra[]): CustoParaPlanilha[] =>
+    lista.map((c) => ({ ...c, volumes: c.lancamentoId ? lancPorId.get(c.lancamentoId)?.volumes : undefined }));
+
   const executar = async (chave: string, fn: () => Promise<void>) => {
     setOcupado(chave);
     setErro(null);
@@ -139,7 +143,7 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
       if (modelo) {
         const r = await fetch(await obterUrlArquivo(modelo.arquivoRef));
         if (!r.ok) throw new Error('Não consegui baixar a planilha modelo desta empresa. Confira em "Formato da planilha".');
-        arq = await gerarPlanilhaPeloModelo(modelo, await r.arrayBuffer(), itensPlanilha[0].clienteNome, itensPlanilha, envioId);
+        arq = await gerarPlanilhaPeloModelo(modelo, await r.arrayBuffer(), itensPlanilha[0].clienteNome, paraPlanilha(itensPlanilha), envioId);
       } else arq = await gerarPlanilhaValidacao(itensPlanilha[0].clienteNome, itensPlanilha, envioId);
       baixarBlob(arq, arq.name);
       if (aEnviar.length) {
@@ -168,9 +172,14 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
             <p className="text-xs text-slate-500">Atrele o custo a uma nota, mande a planilha para a empresa validar e lance no CT-e quando aprovado.</p>
           </div>
         </div>
-        <button type="button" onClick={() => setEditando('novo')} className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-1.5">
-          <Plus className="w-4 h-4" /> Novo custo extra
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => setEscolhendoFormato(true)} className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5">
+            <Settings2 className="w-4 h-4" /> Planilhas das empresas
+          </button>
+          <button type="button" onClick={() => setEditando('novo')} className="px-4 py-2 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white text-xs font-bold flex items-center gap-1.5">
+            <Plus className="w-4 h-4" /> Novo custo extra
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -218,7 +227,7 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
                 <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setFormatoDe({ chave, lista })}
+                  onClick={() => setFormatoDe({ chave, nome: lista[0].clienteNome })}
                   className="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5"
                   title="Usar a planilha no formato que esta empresa pede"
                 >
@@ -334,9 +343,9 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
       {formatoDe && (
         <ModeloPlanilhaModal
           chave={formatoDe.chave}
-          empresa={formatoDe.lista[0].clienteNome}
+          empresa={formatoDe.nome}
           modelo={modelos.get(formatoDe.chave)}
-          itensTeste={formatoDe.lista}
+          itensTeste={paraPlanilha((itens || []).filter((c) => chaveEmpresa(c) === formatoDe.chave && (c.status === 'Pendente' || c.status === 'Enviado')))}
           usuario={currentUser?.nome}
           onClose={() => setFormatoDe(null)}
           onSalvo={(m) => {
@@ -347,6 +356,17 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
               return novo;
             });
             setFormatoDe(null);
+          }}
+        />
+      )}
+      {escolhendoFormato && (
+        <EscolherEmpresaModal
+          clientes={clientes}
+          modelos={modelos}
+          onClose={() => setEscolhendoFormato(false)}
+          onEscolher={(chave, nome) => {
+            setEscolhendoFormato(false);
+            setFormatoDe({ chave, nome });
           }}
         />
       )}
@@ -541,6 +561,58 @@ const RecusaModal: React.FC<{ custo: CustoExtra; onClose: () => void; onConfirma
         >
           Registrar recusa
         </button>
+      </div>
+    </div>
+  );
+};
+
+/** Escolher a empresa para cadastrar/ver o formato da planilha (mesmo sem custo lançado). */
+const EscolherEmpresaModal: React.FC<{
+  clientes: Cliente[];
+  modelos: Map<string, ModeloPlanilhaCusto>;
+  onClose: () => void;
+  onEscolher: (chave: string, nome: string) => void;
+}> = ({ clientes, modelos, onClose, onEscolher }) => {
+  const [busca, setBusca] = useState('');
+  const lista = useMemo(() => {
+    const t = busca.trim().toLowerCase();
+    return clientes
+      .filter((c) => !t || [c.nomeFantasia, c.razaoSocial, c.cnpj].some((x) => (x || '').toLowerCase().includes(t)))
+      .sort((a, b) => Number(modelos.has(b.id)) - Number(modelos.has(a.id)) || (a.nomeFantasia || a.razaoSocial).localeCompare(b.nomeFantasia || b.razaoSocial));
+  }, [clientes, modelos, busca]);
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-3" data-texto-livre="true">
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-black text-slate-900 normal-case">Planilhas das empresas</h2>
+            <p className="text-xs text-slate-500">Escolha a empresa para cadastrar a planilha no formato dela. Sem formato, vai a planilha padrão JMT.</p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-4 border-b border-slate-100">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <input autoFocus value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar empresa..." className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-xs" />
+          </div>
+        </div>
+        <div className="overflow-y-auto divide-y divide-slate-100">
+          {lista.map((c) => {
+            const nome = c.nomeFantasia || c.razaoSocial;
+            const m = modelos.get(c.id);
+            return (
+              <button key={c.id} type="button" onClick={() => onEscolher(c.id, nome)} className="w-full px-5 py-2.5 text-left hover:bg-amber-50/50 flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-slate-800 truncate">{nome}</span>
+                <span className={`shrink-0 px-2 py-0.5 rounded-full border text-[10px] font-bold ${m ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                  {m ? 'Formato do cliente' : 'Padrão JMT'}
+                </span>
+              </button>
+            );
+          })}
+          {lista.length === 0 && <p className="p-6 text-center text-xs text-slate-500">Nenhuma empresa encontrada.</p>}
+        </div>
       </div>
     </div>
   );
