@@ -1189,6 +1189,45 @@ async function exportarFaturaCargoBrasilParaExcel(
     fatura
   );
 
+  // Acréscimos e descontos da fatura (migração 116): aba RESUMO com Capital + Interior + ajustes.
+  const ajustes = fatura.ajustes || [];
+  if (ajustes.length) {
+    const ws = workbook.addWorksheet('RESUMO', { views: [{ showGridLines: false }] });
+    ws.columns = [{ width: 52 }, { width: 18 }];
+    const titulo = ws.getRow(1).getCell(1);
+    titulo.value = `RESUMO DA FATURA ${fatura.numeroFatura || ''}`.trim();
+    titulo.font = { bold: true, size: 12, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' };
+    const cab = ws.getRow(3);
+    ['DESCRIÇÃO', 'R$ VALOR'].forEach((t, i) => {
+      const c = cab.getCell(i + 1);
+      c.value = t;
+      c.font = { bold: true, size: 10, color: { argb: COR_BRANCO }, name: 'Arial' };
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COR_BRONZE } };
+      c.border = BORDA_FINA;
+    });
+    const soma = (ls: LancamentoFaturamentoAereo[]) => ls.reduce((s, l) => s + computeValorACobrar(l, cliente), 0);
+    const linhas: [string, number][] = [
+      [`CAPITAL (${capital.length} CT-e)`, soma(capital)],
+      [`INTERIOR (${interior.length} CT-e)`, soma(interior)],
+      ...ajustes.map((a) => [`${a.valor < 0 ? 'DESCONTO' : 'ACRÉSCIMO'}: ${(a.descricao || '').toUpperCase()}`, Number(a.valor) || 0] as [string, number]),
+    ];
+    linhas.forEach(([rotulo, valor], i) => {
+      const r = ws.getRow(4 + i);
+      r.getCell(1).value = rotulo;
+      r.getCell(2).value = valor;
+      r.getCell(2).numFmt = '#,##0.00';
+      [1, 2].forEach((k) => {
+        r.getCell(k).font = { size: 10, color: { argb: COR_PRETO }, name: 'Arial' };
+        r.getCell(k).border = BORDA_FINA;
+      });
+    });
+    const tot = ws.getRow(4 + linhas.length);
+    tot.getCell(1).value = 'TOTAL DA FATURA';
+    tot.getCell(2).value = linhas.reduce((s, [, v]) => s + v, 0);
+    tot.getCell(2).numFmt = '#,##0.00';
+    [1, 2].forEach((k) => (tot.getCell(k).font = { bold: true, size: 11, color: { argb: COR_BRONZE_ESCURO }, name: 'Arial' }));
+  }
+
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
