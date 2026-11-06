@@ -200,6 +200,13 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
       setEmailDe({ empresa: itensPlanilha[0].clienteNome, itens: paraPlanilha(itensPlanilha), envioId, email, planilha: arq.name });
     });
 
+  /** Imagem e texto do e-mail de um custo só (não muda a situação dele). */
+  const abrirEmailDoCusto = (c: CustoExtra) => {
+    const cli = c.clienteId ? clientePorId.get(c.clienteId) : undefined;
+    const envioId = c.envioId || `CE-${(c.dataOcorrencia || hoje()).replace(/-/g, '')}-${c.id.slice(-4).toUpperCase()}`;
+    setEmailDe({ empresa: c.clienteNome, itens: paraPlanilha([c]), envioId, email: cli?.emailPrincipal || '' });
+  };
+
   /** Só a imagem e o texto do e-mail (sem baixar planilha nem mudar a situação). */
   const abrirEmail = (lista: CustoExtra[]) => {
     const aEnviar = lista.filter((c) => c.status === 'Pendente');
@@ -403,6 +410,9 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
                             )}
                             <button type="button" disabled={!!ocupado} onClick={() => baixarDoCusto(c)} className="p-1.5 rounded-lg text-emerald-700 hover:bg-emerald-50" title="Baixar a planilha só deste custo">
                               {ocupado === `pl-${c.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+                            </button>
+                            <button type="button" onClick={() => abrirEmailDoCusto(c)} className="p-1.5 rounded-lg text-emerald-700 hover:bg-emerald-50" title="Imagem e texto do e-mail só deste custo">
+                              <Mail className="w-4 h-4" />
                             </button>
                             {(c.status === 'Aprovado' || c.status === 'Recusado') && (
                               <button type="button" disabled={!!ocupado} onClick={() => desfazer(c)} className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100" title="Desfazer a validação">
