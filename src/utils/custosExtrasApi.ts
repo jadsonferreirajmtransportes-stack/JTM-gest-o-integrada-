@@ -135,12 +135,15 @@ export type CampoPlanilha =
   | 'cte'
   | 'destinatario'
   | 'cidade'
+  | 'uf'
+  | 'remetente'
   | 'tipo'
   | 'descricao'
   | 'valor'
   | 'volumes'
   | 'cliente'
   | 'referencia'
+  | 'texto'
   | 'nada';
 export const CAMPOS_PLANILHA: { campo: CampoPlanilha; rotulo: string }[] = [
   { campo: 'nada', rotulo: 'Deixar em branco' },
@@ -149,17 +152,25 @@ export const CAMPOS_PLANILHA: { campo: CampoPlanilha; rotulo: string }[] = [
   { campo: 'cte', rotulo: 'CT-e' },
   { campo: 'destinatario', rotulo: 'Destinatário' },
   { campo: 'cidade', rotulo: 'Cidade' },
+  { campo: 'uf', rotulo: 'UF (do CT-e)' },
+  { campo: 'remetente', rotulo: 'Remetente (do CT-e)' },
   { campo: 'tipo', rotulo: 'Tipo do custo' },
   { campo: 'descricao', rotulo: 'Descrição / motivo' },
   { campo: 'valor', rotulo: 'Valor (R$)' },
   { campo: 'volumes', rotulo: 'Volumes (do CT-e)' },
   { campo: 'cliente', rotulo: 'Nome da empresa' },
   { campo: 'referencia', rotulo: 'Referência do envio' },
+  { campo: 'texto', rotulo: 'Texto fixo (escrever)...' },
 ];
 export interface ColunaModelo {
   coluna: number; // 1 = coluna A
   /** Só no formato "ficha" (formulário): linha do rótulo/valor. */
   linha?: number;
+  /** Ficha: coluna do próprio rótulo e se o dado vai no lugar dele (ex.: título "OPERAÇÃO X"). */
+  colunaRotulo?: number;
+  noRotulo?: boolean;
+  /** campo 'texto': o texto fixo que vai na célula (ex.: "JMT - Fulano"). */
+  texto?: string;
   titulo: string;
   campo: CampoPlanilha;
 }

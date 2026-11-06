@@ -114,8 +114,10 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
   const paraPlanilha = (lista: CustoExtra[]): CustoParaPlanilha[] =>
     lista.map((c) => {
       const ids = c.notas?.length ? c.notas.map((n) => n.lancamentoId) : c.lancamentoId ? [c.lancamentoId] : [];
-      const vols = ids.map((id) => lancPorId.get(id)?.volumes).filter((v): v is number => typeof v === 'number');
-      return { ...c, volumes: vols.length ? vols.reduce((s, v) => s + v, 0) : undefined };
+      const ls = ids.map((id) => lancPorId.get(id)).filter((l): l is LancamentoFaturamentoAereo => !!l);
+      const vols = ls.map((l) => l.volumes).filter((v): v is number => typeof v === 'number');
+      const juntar = (xs: (string | undefined)[]) => [...new Set(xs.filter(Boolean))].join(' / ') || undefined;
+      return { ...c, volumes: vols.length ? vols.reduce((s, v) => s + v, 0) : undefined, uf: juntar(ls.map((l) => l.estadoDestino)), remetente: juntar(ls.map((l) => l.remetenteLab)) };
     });
 
   const executar = async (chave: string, fn: () => Promise<void>) => {

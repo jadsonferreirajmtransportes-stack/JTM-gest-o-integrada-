@@ -108,15 +108,19 @@ type Pasta = Awaited<ReturnType<typeof abrirPasta>>;
 type Folha = Pasta['worksheets'][number];
 export type LayoutModelo = 'tabela' | 'ficha';
 /** Custo com dados extras do CT-e que algumas planilhas pedem. */
-export type CustoParaPlanilha = CustoExtra & { volumes?: number };
+export type CustoParaPlanilha = CustoExtra & { volumes?: number; uf?: string; remetente?: string };
 
 const semAcento = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
 /** Palpite do campo pelo título/rótulo (o financeiro confere e ajusta). */
 export function adivinharCampo(titulo: string): CampoPlanilha {
   const t = semAcento(titulo).replace(/:$/, '').trim();
-  if (!t) return 'nada';
-  if (/(de acordo|aprova|aceite|valida|resposta|observ|\bobs\b|veiculo|ajudante|paletiza|abertura|quantidade|placa|motorista)/.test(t)) return 'nada';
+  // Rótulo comprido é texto de instrução/rodapé, não campo.
+  if (!t || t.length > 50) return 'nada';
+  if (/(de acordo|aprova|aceite|valida|resposta|observ|\bobs\b|veiculo|ajudante|paletiza|abertura|quantidade|placa|motorista|representante|sigla)/.test(t)) return 'nada';
+  if (/^uf$|\buf\b|^estado/.test(t)) return 'uf';
+  if (/(remetente|embarcador|laboratorio)/.test(t)) return 'remetente';
+  if (/(descri|motivo|justific|detalhe|historico)/.test(t)) return 'descricao';
   if (/(ct-?e|conhecimento)/.test(t)) return 'cte';
   if (/(^nf|\bnf\b|nf-?e|nota)/.test(t)) return 'nf';
   if (/(data|\bdt\b|\bdia\b)/.test(t)) return 'data';
@@ -124,9 +128,8 @@ export function adivinharCampo(titulo: string): CampoPlanilha {
   if (/(valor|vlr|r\$|total)/.test(t)) return 'valor';
   if (/(destinat|recebedor|cliente final|consignat)/.test(t)) return 'destinatario';
   if (/(cidade|municipio|destino|local)/.test(t)) return 'cidade';
-  if (/(descri|motivo|justific|detalhe|historico)/.test(t)) return 'descricao';
-  if (/(tipo|ocorrencia|servico|natureza|custo|despesa|taxa)/.test(t)) return 'tipo';
-  if (/(remetente|embarcador|empresa|cliente|tomador)/.test(t)) return 'cliente';
+  if (/(tipo|ocorrencia|servico|natureza|\bcusto\b|despesa|taxa)/.test(t)) return 'tipo';
+  if (/(empresa|cliente|tomador)/.test(t)) return 'cliente';
   if (/(referencia|protocolo|lote|envio)/.test(t)) return 'referencia';
   return 'nada';
 }
@@ -195,7 +198,8 @@ function camposDaFicha(ws: Folha): ColunaModelo[] {
         break;
       }
     }
-    if (!rotulo || /^\d+\s*[ºª°]$/.test(rotulo.texto)) continue;
+    // Numeração ("1º") e textos longos de instrução/rodapé não são campos — nunca mexer neles.
+    if (!rotulo || /^\d+\s*[ºª°]$/.test(rotulo.texto) || rotulo.texto.length > 60) continue;
     let colValor = 0;
     for (let c = rotulo.col + 1; c <= ultimaCol; c++) {
       const cel = row.getCell(c);
@@ -204,7 +208,15 @@ function camposDaFicha(ws: Folha): ColunaModelo[] {
       break;
     }
     if (!colValor) continue;
-    campos.push({ coluna: colValor, linha: r, titulo: rotulo.texto.replace(/\s*:\s*$/, ''), campo: adivinharCampo(rotulo.texto) });
+    const operacao = /^opera[cç][aã]o\b/i.test(rotulo.texto);
+    campos.push({
+      coluna: colValor,
+      linha: r,
+      colunaRotulo: rotulo.col,
+      titulo: rotulo.texto.replace(/\s*:\s*$/, ''),
+      campo: operacao ? 'destinatario' : adivinharCampo(rotulo.texto),
+      noRotulo: operacao || undefined,
+    });
   }
   return campos;
 }
@@ -244,8 +256,10 @@ export const letraColuna = (n: number) => {
 
 const dataExcel = (iso?: string) => (iso ? new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10), 12)) : null);
 const numeroOuTexto = (v?: string) => (v && /^\d{1,15}$/.test(v) ? Number(v) : v || '');
-function valorDoCampo(x: CustoParaPlanilha, campo: CampoPlanilha, empresa: string, envioId: string): string | number | Date | null {
+function valorDoCampo(x: CustoParaPlanilha, campo: CampoPlanilha, empresa: string, envioId: string, texto?: string): string | number | Date | null {
   switch (campo) {
+    case 'texto':
+      return texto || '';
     case 'data':
       return dataExcel(x.dataOcorrencia);
     case 'nf':
@@ -256,6 +270,10 @@ function valorDoCampo(x: CustoParaPlanilha, campo: CampoPlanilha, empresa: strin
       return x.destinatario || '';
     case 'cidade':
       return x.cidade || '';
+    case 'uf':
+      return x.uf || '';
+    case 'remetente':
+      return x.remetente || '';
     case 'tipo':
       return x.tipo;
     case 'descricao':
@@ -273,7 +291,7 @@ function valorDoCampo(x: CustoParaPlanilha, campo: CampoPlanilha, empresa: strin
   }
 }
 function escreverCampo(ws: Folha, linha: number, m: ColunaModelo, valor: string | number | Date | null) {
-  const cel = ws.getRow(linha).getCell(m.coluna);
+  const cel = ws.getRow(linha).getCell(m.noRotulo && m.colunaRotulo ? m.colunaRotulo : m.coluna);
   // O Excel/exceljs pode compartilhar o mesmo estilo entre células: copia antes de mexer no formato.
   cel.style = JSON.parse(JSON.stringify(cel.style || {}));
   cel.value = valor;
@@ -337,7 +355,10 @@ export async function gerarPlanilhaPeloModelo(
       const folha = folhas[k];
       // Campos sem dado ficam em branco (apaga o exemplo); numeração "1º" no topo acompanha.
       modelo.colunas.forEach((m) => {
-        if (m.linha) escreverCampo(folha, m.linha, m, m.campo === 'nada' ? null : valorDoCampo(x, m.campo, empresa, envioId));
+        if (!m.linha) return;
+        // "No lugar do rótulo" sem dado: deixa o rótulo como está.
+        if (m.noRotulo && m.campo === 'nada') return;
+        escreverCampo(folha, m.linha, m, m.campo === 'nada' ? null : valorDoCampo(x, m.campo, empresa, envioId, m.texto));
       });
       for (let r = 1; r <= Math.min(5, folha.rowCount); r++) {
         folha.getRow(r).eachCell((cel) => {
@@ -400,7 +421,7 @@ export async function gerarPlanilhaPeloModelo(
     estilos.forEach((st, c) => {
       row.getCell(c).style = JSON.parse(st);
     });
-    mapeadas.forEach((m) => escreverCampo(ws, inicio + k, m, valorDoCampo(x, m.campo, empresa, envioId)));
+    mapeadas.forEach((m) => escreverCampo(ws, inicio + k, { ...m, noRotulo: false }, valorDoCampo(x, m.campo, empresa, envioId, m.texto)));
     row.commit();
   });
 

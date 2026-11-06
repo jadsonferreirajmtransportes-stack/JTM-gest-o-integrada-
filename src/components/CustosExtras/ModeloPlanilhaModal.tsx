@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Download, FileSpreadsheet, Loader2, RotateCcw, Upload, X } from 'lucide-react';
-import { CAMPOS_PLANILHA, CampoPlanilha, ModeloPlanilhaCusto, excluirModeloPlanilha, salvarModeloPlanilha } from '../../utils/custosExtrasApi';
+import { CAMPOS_PLANILHA, CampoPlanilha, ColunaModelo, ModeloPlanilhaCusto, excluirModeloPlanilha, salvarModeloPlanilha } from '../../utils/custosExtrasApi';
 import { enviarArquivo, obterUrlArquivo, removerArquivo } from '../../utils/arquivosStorage';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { CustoParaPlanilha, LayoutModelo, LeituraModelo, gerarPlanilhaPeloModelo, layoutDoModelo, letraColuna, lerModeloPlanilha } from './planilhaCustosExtras';
@@ -36,9 +36,15 @@ export const ModeloPlanilhaModal: React.FC<{
         const layout = layoutDoModelo(modelo);
         const l = await lerModeloPlanilha(buf, modelo.aba, modelo.linhaCabecalho || undefined, layout);
         const chave = (c: { coluna: number; linha?: number }) => `${c.linha || 0}:${c.coluna}`;
-        const salvo = new Map(modelo.colunas.map((c) => [chave(c), c.campo]));
+        const salvo = new Map<string, ColunaModelo>(modelo.colunas.map((c) => [chave(c), c]));
         setBuffer(buf);
-        setLeitura({ ...l, colunas: l.colunas.map((c) => ({ ...c, campo: salvo.get(chave(c)) ?? c.campo })) });
+        setLeitura({
+          ...l,
+          colunas: l.colunas.map((c) => {
+            const s = salvo.get(chave(c));
+            return s ? { ...c, campo: s.campo, noRotulo: s.noRotulo, texto: s.texto } : c;
+          }),
+        });
       } catch (e) {
         setErro(e instanceof Error ? e.message : 'Não consegui abrir o modelo.');
       } finally {
@@ -76,8 +82,9 @@ export const ModeloPlanilhaModal: React.FC<{
     }
   };
 
-  const mudarCampo = (alvo: { coluna: number; linha?: number }, campo: CampoPlanilha) =>
-    setLeitura((l) => (l ? { ...l, colunas: l.colunas.map((c) => (c.coluna === alvo.coluna && c.linha === alvo.linha ? { ...c, campo } : c)) } : l));
+  const mudarColuna = (alvo: { coluna: number; linha?: number }, p: Partial<ColunaModelo>) =>
+    setLeitura((l) => (l ? { ...l, colunas: l.colunas.map((c) => (c.coluna === alvo.coluna && c.linha === alvo.linha ? { ...c, ...p } : c)) } : l));
+  const mudarCampo = (alvo: { coluna: number; linha?: number }, campo: CampoPlanilha) => mudarColuna(alvo, { campo });
   const ficha = leitura?.layout === 'ficha';
 
   const ligadas = leitura?.colunas.filter((c) => c.campo !== 'nada').length || 0;
@@ -256,6 +263,20 @@ export const ModeloPlanilhaModal: React.FC<{
                                 </option>
                               ))}
                             </select>
+                            {c.campo === 'texto' && (
+                              <input
+                                value={c.texto || ''}
+                                onChange={(e) => mudarColuna(c, { texto: e.target.value })}
+                                placeholder="Ex.: JMT - Nome do representante"
+                                className="mt-1 w-full px-2 py-1.5 border border-[#C48229] rounded-lg"
+                              />
+                            )}
+                            {ficha && c.campo !== 'nada' && c.colunaRotulo && (
+                              <label className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-500">
+                                <input type="checkbox" checked={!!c.noRotulo} onChange={(e) => mudarColuna(c, { noRotulo: e.target.checked || undefined })} className="accent-[#C48229]" />
+                                Escrever no lugar deste texto (ex.: título)
+                              </label>
+                            )}
                           </td>
                         </tr>
                       ))}
