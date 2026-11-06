@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { X, Printer, Download, Loader2 } from 'lucide-react';
 import { SolicitacaoCompra } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -19,8 +19,25 @@ interface ComprasListaPdfModalProps {
 /** PDF/impressão da lista de compras — mesmo padrão de EpiPrintModal.tsx (Baixar PDF via
  *  html2canvas+jsPDF, Imprimir via window.print()) e cabeçalho/rodapé institucional
  *  (PrintDocumentChrome) já usado nos demais documentos do sistema. */
-export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ itens, filtroLabel, onClose }) => {
+export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ itens: todos, filtroLabel, onClose }) => {
   const [baixando, setBaixando] = useState(false);
+  // Escolha do que entra no PDF/impressão (começa com tudo o que está na tela).
+  const [marcados, setMarcados] = useState<Set<string>>(() => new Set(todos.map((s) => s.id)));
+  const itens = useMemo(() => todos.filter((s) => marcados.has(s.id)), [todos, marcados]);
+  const grupos = useMemo(() => {
+    const m = new Map<string, SolicitacaoCompra[]>();
+    todos.forEach((s) => {
+      const k = s.grupoId || s.id;
+      m.set(k, [...(m.get(k) || []), s]);
+    });
+    return [...m.entries()];
+  }, [todos]);
+  const alternar = (ids: string[], marcar: boolean) =>
+    setMarcados((atual) => {
+      const n = new Set(atual);
+      ids.forEach((id) => (marcar ? n.add(id) : n.delete(id)));
+      return n;
+    });
 
   const totalEstimado = itens.reduce((soma, s) => soma + (s.valorEstimado || 0), 0);
 
@@ -50,7 +67,7 @@ export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ iten
             <button
               type="button"
               onClick={handleBaixarPdf}
-              disabled={baixando}
+              disabled={baixando || itens.length === 0}
               className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-60"
             >
               {baixando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
@@ -71,6 +88,40 @@ export const ComprasListaPdfModal: React.FC<ComprasListaPdfModalProps> = ({ iten
         </div>
 
         <div className="overflow-y-auto flex-1">
+          <div className="p-4 border-b border-slate-100 bg-slate-50/70 text-xs space-y-2 print:hidden">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-bold text-slate-700">Escolha o que entra no PDF ({itens.length} de {todos.length})</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => alternar(todos.map((s) => s.id), true)} className="text-[11px] font-bold text-[#92611F]">Marcar todos</button>
+                <button type="button" onClick={() => alternar(todos.map((s) => s.id), false)} className="text-[11px] font-bold text-slate-500">Desmarcar todos</button>
+              </div>
+            </div>
+            <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+              {grupos.map(([chave, lista]) => {
+                const todosMarcados = lista.every((s) => marcados.has(s.id));
+                const algum = lista.some((s) => marcados.has(s.id));
+                return (
+                  <div key={chave} className="bg-white border border-slate-200 rounded-lg p-2">
+                    {lista.length > 1 && (
+                      <label className="flex items-center gap-2 font-bold text-slate-800 cursor-pointer">
+                        <input type="checkbox" checked={todosMarcados} ref={(el) => { if (el) el.indeterminate = algum && !todosMarcados; }} onChange={(e) => alternar(lista.map((s) => s.id), e.target.checked)} className="accent-[#C48229]" />
+                        Pedido de {lista.length} itens — {lista[0].solicitanteNome} ({formatDate(lista[0].criadoEm.slice(0, 10))})
+                      </label>
+                    )}
+                    {lista.map((s) => (
+                      <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-slate-700 ${lista.length > 1 ? 'pl-5 mt-1' : ''}`}>
+                        <input type="checkbox" checked={marcados.has(s.id)} onChange={(e) => alternar([s.id], e.target.checked)} className="accent-[#C48229]" />
+                        <span className="truncate">
+                          {s.quantidade}x {s.item}
+                          {lista.length === 1 ? <span className="text-slate-400"> — {s.solicitanteNome} ({formatDate(s.criadoEm.slice(0, 10))})</span> : null}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           {/* Cores em hex literal, não classes de paleta (ex.: text-slate-900), de propósito:
               a paleta do Tailwind v4 usa oklch() nas variáveis de cor, e o html2canvas (que o
               "Baixar PDF" usa pra capturar este elemento — ver pdfExportUtils.ts) não sabe
