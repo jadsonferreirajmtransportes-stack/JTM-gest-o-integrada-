@@ -3047,16 +3047,16 @@ export default function App() {
   }
 
   // IF Public Purchase Request (Compras) portal is active (via direct link or test button)
+  // O link público de compras foi desligado (2026-11-06, migração 115): os pedidos agora são
+  // feitos pelo link pessoal de quem a gestão liberou (Compras → Solicitantes).
   if (isComprasPortalView || activeSection === 'formulario_compras') {
     return (
-      <PublicPurchaseRequestPortal
-        onSuccessSubmit={handleCriarSolicitacaoCompraPublica}
-        onAdminBack={() => {
-          setIsComprasPortalView(false);
-          setActiveGlobalModule('compras');
-          setActiveSection('compras');
-        }}
-      />
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 text-center">
+        <div className="max-w-sm bg-white rounded-2xl border border-slate-200 p-6 space-y-2">
+          <p className="text-base font-black text-slate-900 normal-case">Este link de compras foi desativado</p>
+          <p className="text-sm text-slate-600">Os pedidos de compra agora são feitos pelo seu <b>link pessoal</b>, em Mais → Compras. Se a opção não aparecer para você, fale com o seu supervisor.</p>
+        </div>
+      </div>
     );
   }
 
