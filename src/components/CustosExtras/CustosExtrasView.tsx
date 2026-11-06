@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check, CheckCircle2, FileSpreadsheet, Loader2, Mail, Pencil, Plus, Receipt, RotateCcw, Search, Trash2, X, XCircle } from 'lucide-react';
+import { Check, CheckCircle2, FileSpreadsheet, Loader2, Mail, Pencil, Plus, Receipt, RotateCcw, Search, Settings2, Trash2, X, XCircle } from 'lucide-react';
 import type { Cliente, LancamentoFaturamentoAereo, UsuarioLogin } from '../../types';
-import { CustoExtra, STATUS_CUSTO_EXTRA, StatusCustoExtra, excluirCustoExtra, getCustosExtras, novoIdCustoExtra, salvarCustosExtras } from '../../utils/custosExtrasApi';
+import { CustoExtra, ModeloPlanilhaCusto, STATUS_CUSTO_EXTRA, StatusCustoExtra, excluirCustoExtra, getCustosExtras, getModelosPlanilha, novoIdCustoExtra, salvarCustosExtras } from '../../utils/custosExtrasApi';
+import { obterUrlArquivo } from '../../utils/arquivosStorage';
 import { formatCurrency } from '../../utils/formatters';
 import { baixarBlob } from '../../utils/downloadUtils';
-import { gerarPlanilhaValidacao } from './planilhaCustosExtras';
+import { gerarPlanilhaPeloModelo, gerarPlanilhaValidacao } from './planilhaCustosExtras';
+import { ModeloPlanilhaModal } from './ModeloPlanilhaModal';
 
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—');
 const hoje = () => new Date().toLocaleDateString('sv-SE');
@@ -34,8 +36,13 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
   const [editando, setEditando] = useState<CustoExtra | 'novo' | null>(null);
   const [recusando, setRecusando] = useState<CustoExtra | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
+  const [modelos, setModelos] = useState<Map<string, ModeloPlanilhaCusto>>(new Map());
+  const [formatoDe, setFormatoDe] = useState<{ chave: string; lista: CustoExtra[] } | null>(null);
 
   useEffect(() => {
+    getModelosPlanilha()
+      .then((ms) => setModelos(new Map(ms.map((m) => [m.clienteChave, m]))))
+      .catch(() => undefined);
     getCustosExtras()
       .then(setItens)
       .catch((e) => {
@@ -127,7 +134,13 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
       const itensPlanilha = aEnviar.length ? aEnviar : lista.filter((c) => c.status === 'Enviado');
       if (!itensPlanilha.length) return setErro('Não há custos a enviar para esta empresa.');
       const envioId = aEnviar.length ? `CE-${hoje().replace(/-/g, '')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}` : itensPlanilha[0].envioId || `CE-${hoje().replace(/-/g, '')}`;
-      const arq = await gerarPlanilhaValidacao(itensPlanilha[0].clienteNome, itensPlanilha, envioId);
+      const modelo = modelos.get(chave);
+      let arq: File;
+      if (modelo) {
+        const r = await fetch(await obterUrlArquivo(modelo.arquivoRef));
+        if (!r.ok) throw new Error('Não consegui baixar a planilha modelo desta empresa. Confira em "Formato da planilha".');
+        arq = await gerarPlanilhaPeloModelo(modelo, await r.arrayBuffer(), itensPlanilha[0].clienteNome, itensPlanilha, envioId);
+      } else arq = await gerarPlanilhaValidacao(itensPlanilha[0].clienteNome, itensPlanilha, envioId);
       baixarBlob(arq, arq.name);
       if (aEnviar.length) {
         const agora = new Date().toISOString();
@@ -137,7 +150,8 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
       const email = cli?.emailPrincipal || '';
       if (window.confirm(`Planilha "${arq.name}" baixada.\n\nAbrir um e-mail${email ? ` para ${email}` : ''} já com o assunto? (anexe a planilha baixada)`)) {
         const total = itensPlanilha.reduce((s, c) => s + c.valor, 0);
-        const corpo = `Prezados,\n\nSegue em anexo a planilha de custos extras (${envioId}) para validação: ${itensPlanilha.length} item(ns), total de ${formatCurrency(total)}.\n\nPor favor, preencham a coluna "De acordo?" com S ou N e nos respondam este e-mail.\n\nAtenciosamente,\nFinanceiro — JM Transportes`;
+        const pedido = modelo ? 'Por favor, confiram e nos respondam este e-mail com a validação.' : 'Por favor, preencham a coluna "De acordo?" com S ou N e nos respondam este e-mail.';
+        const corpo = `Prezados,\n\nSegue em anexo a planilha de custos extras (${envioId}) para validação: ${itensPlanilha.length} item(ns), total de ${formatCurrency(total)}.\n\n${pedido}\n\nAtenciosamente,\nFinanceiro — JM Transportes`;
         window.open(`mailto:${email}?subject=${encodeURIComponent(`Validação de custos extras — ${itensPlanilha[0].clienteNome} (${envioId})`)}&body=${encodeURIComponent(corpo)}`);
       }
     });
@@ -201,6 +215,16 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
                     {lista.length} custo(s) · {formatCurrency(lista.reduce((s, c) => s + c.valor, 0))}
                   </p>
                 </div>
+                <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormatoDe({ chave, lista })}
+                  className="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5"
+                  title="Usar a planilha no formato que esta empresa pede"
+                >
+                  <Settings2 className="w-4 h-4" />
+                  {modelos.has(chave) ? 'Formato do cliente' : 'Formato padrão JMT'}
+                </button>
                 {(pendentes > 0 || aguardando > 0) && (
                   <button
                     type="button"
@@ -214,6 +238,7 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
                     <Mail className="w-3.5 h-3.5 opacity-80" />
                   </button>
                 )}
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs min-w-[860px]">
@@ -303,6 +328,25 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
             await gravar([{ ...c, criadoPor: c.criadoPor || currentUser?.nome }]);
             setEditando(null);
             if (status !== 'Todos' && status !== c.status) setStatus(c.status);
+          }}
+        />
+      )}
+      {formatoDe && (
+        <ModeloPlanilhaModal
+          chave={formatoDe.chave}
+          empresa={formatoDe.lista[0].clienteNome}
+          modelo={modelos.get(formatoDe.chave)}
+          itensTeste={formatoDe.lista}
+          usuario={currentUser?.nome}
+          onClose={() => setFormatoDe(null)}
+          onSalvo={(m) => {
+            setModelos((atual) => {
+              const novo = new Map(atual);
+              if (m) novo.set(formatoDe.chave, m);
+              else novo.delete(formatoDe.chave);
+              return novo;
+            });
+            setFormatoDe(null);
           }}
         />
       )}

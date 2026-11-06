@@ -106,3 +106,80 @@ export async function excluirCustoExtra(id: string): Promise<void> {
   const { error } = await supabase.from('custos_extras').delete().eq('id', id);
   falhou(error, 'Excluir custo extra');
 }
+
+// ---------------------------------------------------------------------------
+// Formato da planilha por empresa (a planilha do próprio cliente como modelo)
+// ---------------------------------------------------------------------------
+export type CampoPlanilha =
+  | 'data'
+  | 'nf'
+  | 'cte'
+  | 'destinatario'
+  | 'cidade'
+  | 'tipo'
+  | 'descricao'
+  | 'valor'
+  | 'cliente'
+  | 'referencia'
+  | 'nada';
+export const CAMPOS_PLANILHA: { campo: CampoPlanilha; rotulo: string }[] = [
+  { campo: 'nada', rotulo: 'Deixar em branco' },
+  { campo: 'data', rotulo: 'Data' },
+  { campo: 'nf', rotulo: 'Nota fiscal (NF)' },
+  { campo: 'cte', rotulo: 'CT-e' },
+  { campo: 'destinatario', rotulo: 'Destinatário' },
+  { campo: 'cidade', rotulo: 'Cidade' },
+  { campo: 'tipo', rotulo: 'Tipo do custo' },
+  { campo: 'descricao', rotulo: 'Descrição / motivo' },
+  { campo: 'valor', rotulo: 'Valor (R$)' },
+  { campo: 'cliente', rotulo: 'Nome da empresa' },
+  { campo: 'referencia', rotulo: 'Referência do envio' },
+];
+export interface ColunaModelo {
+  coluna: number; // 1 = coluna A
+  titulo: string;
+  campo: CampoPlanilha;
+}
+export interface ModeloPlanilhaCusto {
+  clienteChave: string;
+  clienteNome: string;
+  arquivoRef: string;
+  arquivoNome?: string;
+  aba?: string;
+  linhaCabecalho: number;
+  colunas: ColunaModelo[];
+  atualizadoEm?: string;
+}
+
+export async function getModelosPlanilha(): Promise<ModeloPlanilhaCusto[]> {
+  const { data, error } = await supabase.from('custos_extras_modelos').select('*');
+  falhou(error, 'Modelos de planilha');
+  return (data ?? []).map((r: any) => ({
+    clienteChave: r.cliente_chave,
+    clienteNome: r.cliente_nome,
+    arquivoRef: r.arquivo_ref,
+    arquivoNome: u(r.arquivo_nome),
+    aba: u(r.aba),
+    linhaCabecalho: r.linha_cabecalho,
+    colunas: r.colunas || [],
+    atualizadoEm: u(r.atualizado_em),
+  }));
+}
+export async function salvarModeloPlanilha(m: ModeloPlanilhaCusto, por?: string): Promise<void> {
+  const { error } = await supabase.from('custos_extras_modelos').upsert({
+    cliente_chave: m.clienteChave,
+    cliente_nome: m.clienteNome,
+    arquivo_ref: m.arquivoRef,
+    arquivo_nome: m.arquivoNome || null,
+    aba: m.aba || null,
+    linha_cabecalho: m.linhaCabecalho,
+    colunas: m.colunas,
+    atualizado_em: new Date().toISOString(),
+    atualizado_por: por || null,
+  });
+  falhou(error, 'Salvar modelo de planilha');
+}
+export async function excluirModeloPlanilha(chave: string): Promise<void> {
+  const { error } = await supabase.from('custos_extras_modelos').delete().eq('cliente_chave', chave);
+  falhou(error, 'Excluir modelo de planilha');
+}
