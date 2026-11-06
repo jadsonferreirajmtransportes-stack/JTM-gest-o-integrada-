@@ -64,12 +64,12 @@ export function notasPorDestinatario(itens: CustoResumo[]): { destinatario: stri
   return [...grupos.entries()].map(([destinatario, notas]) => ({ destinatario, notas }));
 }
 
-/** Assunto no padrão da equipe: "TDE - DESTINO A / DESTINO B - 05/11/2026" ou "CUSTO ADICIONAL - EMPRESA - data". */
+/** Assunto no padrão da equipe, com o cliente: "TDE (UNICARGO) - DESTINO A / DESTINO B - 05/11/2026". */
 export function assuntoEmail(empresa: string, itens: CustoResumo[]): string {
   const sigla = unicos(itens.map((x) => siglaDoCusto(x.tipo))).join(' / ');
   const destinos = notasPorDestinatario(itens).map((g) => g.destinatario.split(/\s+/).slice(0, 3).join(' '));
-  const quem = destinos.length && destinos.length <= 3 ? destinos.join(' / ') : empresa;
-  return `${sigla} - ${quem} - ${dataDosCustos(itens)}`.toUpperCase();
+  const quem = destinos.length && destinos.length <= 3 ? destinos.join(' / ') : `${itens.length} CUSTOS`;
+  return `${sigla} (${empresa}) - ${quem} - ${dataDosCustos(itens)}`.toUpperCase();
 }
 
 /** Texto para o corpo do e-mail, no padrão que a equipe já usa. */
