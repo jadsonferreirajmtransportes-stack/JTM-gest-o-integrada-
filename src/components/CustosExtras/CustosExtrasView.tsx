@@ -426,7 +426,7 @@ const CustoExtraModal: React.FC<{
   const [descricao, setDescricao] = useState(inicial?.descricao || '');
   const [valor, setValor] = useState(inicial ? String(inicial.valor).replace('.', ',') : '');
   const [data, setData] = useState(inicial?.dataOcorrencia || hoje());
-  const [rateio, setRateio] = useState<RateioCustoExtra>(inicial?.rateio || 'igual');
+  const [rateio, setRateio] = useState<RateioCustoExtra>(inicial?.rateio === 'manual' ? 'manual' : 'igual');
   const [partesManuais, setPartesManuais] = useState<Record<string, string>>(() =>
     Object.fromEntries((inicial?.notas || []).map((n) => [n.lancamentoId, String(n.valor).replace('.', ',')]))
   );
@@ -459,7 +459,7 @@ const CustoExtraModal: React.FC<{
   const partes = (total: number): number[] => {
     if (!compartilhado) return [total];
     if (rateio === 'manual') return escolhidas.map((l) => numero(partesManuais[l.id] || ''));
-    const pesos = escolhidas.map((l) => (rateio === 'peso' ? l.pesoTaxado || l.pesoKg || 0 : rateio === 'valorNF' ? l.valorNF || 0 : 1));
+    const pesos = escolhidas.map(() => 1);
     const soma = pesos.reduce((s, p) => s + p, 0);
     const base = soma > 0 ? pesos : escolhidas.map(() => 1);
     const somaBase = soma > 0 ? soma : escolhidas.length;
@@ -606,13 +606,11 @@ const CustoExtraModal: React.FC<{
           {compartilhado && (
             <div>
               <label className="font-bold text-slate-600">Como dividir o valor entre as notas</label>
-              <div className="mt-1 grid grid-cols-4 gap-1">
+              <div className="mt-1 grid grid-cols-2 gap-1">
                 {(
                   [
-                    ['igual', 'Igual'],
-                    ['peso', 'Pelo peso'],
-                    ['valorNF', 'Pelo valor NF'],
-                    ['manual', 'À mão'],
+                    ['igual', `Igual por nota (÷ ${escolhidas.length})`],
+                    ['manual', 'À mão (exceção)'],
                   ] as [RateioCustoExtra, string][]
                 ).map(([v, r]) => (
                   <button
