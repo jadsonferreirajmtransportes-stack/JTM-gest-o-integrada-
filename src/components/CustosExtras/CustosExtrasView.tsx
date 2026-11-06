@@ -22,6 +22,8 @@ const ESTILO: Record<StatusCustoExtra, string> = {
 };
 const ROTULO: Record<StatusCustoExtra, string> = { Pendente: 'A enviar', Enviado: 'Aguardando validação', Aprovado: 'Aprovado', Recusado: 'Recusado' };
 const chaveEmpresa = (c: Pick<CustoExtra, 'clienteId' | 'clienteNome'>) => c.clienteId || `nome:${c.clienteNome}`;
+/** Data da operação da nota: o dia da entrega (conclusão) ou, sem ele, a emissão do CT-e. */
+const dataDaOperacao = (l: LancamentoFaturamentoAereo) => (l.dataConclusao || l.dataEmissao || '').slice(0, 10) || undefined;
 
 interface Props {
   currentUser?: UsuarioLogin | null;
@@ -119,8 +121,13 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
       const ls = ids.map((id) => lancPorId.get(id)).filter((l): l is LancamentoFaturamentoAereo => !!l);
       const vols = ls.map((l) => l.volumes).filter((v): v is number => typeof v === 'number');
       const juntar = (xs: (string | undefined)[]) => [...new Set(xs.filter(Boolean))].join(' / ') || undefined;
+      // Data: a da operação (última data das notas). Se a data do custo foi escolhida à mão
+      // (diferente do dia em que ele foi lançado), vale a escolhida.
+      const operacao = ls.map(dataDaOperacao).filter((d): d is string => !!d).sort().pop();
+      const dataEscolhida = c.dataOcorrencia && c.dataOcorrencia !== (c.criadoEm || '').slice(0, 10);
       return {
         ...c,
+        dataOcorrencia: dataEscolhida ? c.dataOcorrencia : operacao || c.dataOcorrencia,
         volumes: vols.length ? vols.reduce((s, v) => s + v, 0) : undefined,
         uf: juntar(ls.map((l) => l.estadoDestino)),
         remetente: juntar(ls.map((l) => l.remetenteLab)),
@@ -541,6 +548,14 @@ const CustoExtraModal: React.FC<{
   const [descricao, setDescricao] = useState(inicial?.descricao || '');
   const [valor, setValor] = useState(inicial ? String(inicial.valor).replace('.', ',') : '');
   const [data, setData] = useState(inicial?.dataOcorrencia || hoje());
+  // Custo já salvo com a data trocada à mão mantém a dele; com a data do dia do lançamento, passa a seguir as notas.
+  const [dataManual, setDataManual] = useState(!!inicial?.dataOcorrencia && inicial.dataOcorrencia !== (inicial.criadoEm || "").slice(0, 10));
+  // Data da operação = a das notas escolhidas (até o financeiro trocar à mão).
+  useEffect(() => {
+    if (dataManual) return;
+    const d = escolhidas.map(dataDaOperacao).filter((x): x is string => !!x).sort().pop();
+    if (d) setData(d);
+  }, [escolhidas, dataManual]);
   // Destino do custo: em branco = o das notas; dá para escrever outro (ex.: custo compartilhado com um destino só).
   const [destinatarioTxt, setDestinatarioTxt] = useState(inicial?.destinatario || '');
   const [cidadeTxt, setCidadeTxt] = useState(inicial?.cidade || '');
@@ -845,8 +860,16 @@ const CustoExtraModal: React.FC<{
               <input value={valor} onChange={(e) => setValor(e.target.value)} disabled={travado} inputMode="decimal" placeholder="0,00" className={`${campo} mt-1 text-right font-bold`} />
             </div>
             <div>
-              <label className="font-bold text-slate-600">Data</label>
-              <input type="date" value={data} onChange={(e) => setData(e.target.value)} className={`${campo} mt-1`} />
+              <label className="font-bold text-slate-600">Data da operação</label>
+              <input
+                type="date"
+                value={data}
+                onChange={(e) => {
+                  setData(e.target.value);
+                  setDataManual(true);
+                }}
+                className={`${campo} mt-1`}
+              />
             </div>
           </div>
           {erro && <p className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 font-semibold">{erro}</p>}

@@ -68,7 +68,11 @@ export function notasPorDestinatario(itens: CustoResumo[]): { destinatario: stri
 export function assuntoEmail(empresa: string, itens: CustoResumo[]): string {
   const sigla = unicos(itens.map((x) => siglaDoCusto(x.tipo))).join(' / ');
   // Até 3 destinatários: até 3 palavras de cada; mais que isso: só o primeiro nome de cada.
-  const nomes = notasPorDestinatario(itens).map((g) => g.destinatario.split(/\s+/));
+  // O Destino do custo compartilhado guarda os nomes juntos ("A / B / C"): separa cada um.
+  const nomes = unicos([
+    ...notasPorDestinatario(itens).flatMap((g) => g.destinatario.split(/\s*\/\s*/)),
+    ...itens.flatMap((x) => (x.destinatario || '').split(/\s*\/\s*/)),
+  ].map((n) => n.trim().toUpperCase())).map((n) => n.split(/\s+/));
   const quem = nomes.map((n) => n.slice(0, nomes.length <= 3 ? 3 : 1).join(' ')).join(' / ');
   return `${sigla} (${empresa}) - ${quem} - ${dataDosCustos(itens)}`.toUpperCase();
 }
