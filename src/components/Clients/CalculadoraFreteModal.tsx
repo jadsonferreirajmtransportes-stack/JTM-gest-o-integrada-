@@ -58,8 +58,9 @@ export const CalculadoraFreteModal: React.FC<{
   const [clienteId, setClienteId] = useState(clienteInicialId && comTabela.some((c) => c.id === clienteInicialId) ? clienteInicialId : '');
   const [modal, setModal] = useState<'Aéreo' | 'Rodoviário'>(inicial?.modal || 'Aéreo');
   const [cidade, setCidade] = useState(inicial?.cidade || '');
-  const [peso, setPeso] = useState(inicial?.pesoKg ? String(inicial.pesoKg).replace('.', ',') : '');
-  const [valorNF, setValorNF] = useState(inicial?.valorNF ? String(inicial.valorNF).replace('.', ',') : '');
+  const decimal = (v?: number) => (v ? String(Math.round(v * 100) / 100).replace('.', ',') : '');
+  const [peso, setPeso] = useState(decimal(inicial?.pesoKg));
+  const [valorNF, setValorNF] = useState(decimal(inicial?.valorNF));
   const [usarCubagem, setUsarCubagem] = useState(false);
   const [fatorCubagem, setFatorCubagem] = useState('300');
   const [volumes, setVolumes] = useState<Volume[]>([{ id: 'v1', quantidade: 1, comprimento: 0, largura: 0, altura: 0 }]);
@@ -423,14 +424,21 @@ export const CalculadoraFreteModal: React.FC<{
 
           {/* Resultado */}
           <div className="p-5 bg-slate-50/70 space-y-3">
-            <p className="text-[11px] font-bold text-slate-500 uppercase">Frete calculado</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase">
+              {escolherParcela && parcela === 'extras' && resultado ? 'Custo extra calculado' : 'Frete calculado'}
+            </p>
             {faltando || !resultado ? (
               <p className="text-xs text-slate-500 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" /> {faltando || 'Não foi possível calcular com a tabela deste cliente.'}
               </p>
             ) : (
               <>
-                <p className="text-3xl font-black text-slate-900">{formatCurrency(resultado.total)}</p>
+                <p className="text-3xl font-black text-slate-900">
+                  {formatCurrency(escolherParcela && parcela === 'extras' ? resultado.linhas.slice(resultado.qtdBase).reduce((s, l) => s + l.valor, 0) : resultado.total)}
+                </p>
+                {escolherParcela && parcela === 'extras' && (
+                  <p className="text-[11px] text-slate-500">Frete completo (tarifa + excedente + extras): {formatCurrency(resultado.total)}</p>
+                )}
                 {tarifaCidade?.prazo && (
                   <p className="text-xs font-semibold text-[#92611F] flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" /> Prazo: {tarifaCidade.prazo}
