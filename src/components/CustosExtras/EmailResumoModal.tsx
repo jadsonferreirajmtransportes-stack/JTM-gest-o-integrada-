@@ -4,6 +4,36 @@ import type { CustoExtra } from '../../utils/custosExtrasApi';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { assuntoEmail, htmlResumoEmail, imagemResumoEmail, textoResumoEmail } from './resumoEmail';
 
+/** Copia o e-mail formatado (com as tabelas). Primeiro pelo "copiar" do próprio navegador sobre um
+ *  bloco com o HTML (funciona em qualquer navegador, na hora do clique); se não der, pela API nova. */
+async function copiarHtml(html: string, texto: string): Promise<boolean> {
+  const bloco = document.createElement('div');
+  bloco.contentEditable = 'true';
+  bloco.innerHTML = html;
+  bloco.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;background:#fff';
+  document.body.appendChild(bloco);
+  try {
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(bloco);
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+    const ok = document.execCommand('copy');
+    sel?.removeAllRanges();
+    if (ok) return true;
+  } catch {
+    /* tenta a API nova */
+  } finally {
+    bloco.remove();
+  }
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([texto], { type: 'text/plain' }) })]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Imagem do resumo + texto pronto para o corpo do e-mail de validação. */
 export const EmailResumoModal: React.FC<{
   empresa: string;
@@ -18,6 +48,7 @@ export const EmailResumoModal: React.FC<{
   const [texto, setTexto] = useState(() => textoResumoEmail(empresa, itens, envioId));
   const [assunto, setAssunto] = useState(() => assuntoEmail(empresa, itens));
   const [aviso, setAviso] = useState<string | null>(null);
+  const [colar, setColar] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,26 +98,17 @@ export const EmailResumoModal: React.FC<{
   /** Abre o Gmail do navegador (nova aba) com destinatário e assunto, e deixa o e-mail com as tabelas
    *  copiado: é só clicar no corpo e colar (Ctrl+V). */
   const abrirGmail = async () => {
-    const html = htmlResumoEmail(empresa, itens, envioId, texto);
-    let copiou = true;
-    try {
-      await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([texto], { type: 'text/plain' }) })]);
-    } catch {
-      copiou = false;
-    }
+    // O Gmail só recebe texto simples pelo link: as tabelas vão pela área de transferência.
+    const copiou = await copiarHtml(htmlResumoEmail(empresa, itens, envioId, texto), texto);
     const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email || '')}&su=${encodeURIComponent(assunto)}${copiou ? '' : `&body=${encodeURIComponent(texto)}`}`;
     window.open(url, '_blank', 'noopener');
-    avisar(copiou ? 'Gmail aberto em outra aba: clique no corpo do e-mail e cole (Ctrl+V). Depois cole a imagem e anexe a planilha.' : 'Gmail aberto em outra aba já com o texto. Cole a imagem e anexe a planilha.');
+    if (copiou) setColar(true);
+    else setErro('Este navegador não deixou copiar as tabelas: o Gmail abriu só com o texto. Use "Copiar com tabelas" e cole no corpo do e-mail.');
   };
   /** Copia o e-mail com as tabelas CT-E | NF (cola formatado no Gmail/Outlook). */
   const copiarComTabelas = async () => {
-    const html = htmlResumoEmail(empresa, itens, envioId, texto);
-    try {
-      await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([texto], { type: 'text/plain' }) })]);
-      avisar('E-mail com tabelas copiado — cole (Ctrl+V) no corpo do e-mail.');
-    } catch {
-      await copiarTexto();
-    }
+    if (await copiarHtml(htmlResumoEmail(empresa, itens, envioId, texto), texto)) avisar('E-mail com tabelas copiado — cole (Ctrl+V) no corpo do e-mail.');
+    else await copiarTexto();
   };
   const copiarAssunto = async () => {
     try {
@@ -172,6 +194,19 @@ export const EmailResumoModal: React.FC<{
             <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={12} className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono" />
           </div>
 
+          {colar && (
+            <div className="p-4 bg-amber-50 border-2 border-[#C48229] rounded-xl text-sm text-slate-800 space-y-1">
+              <p className="font-black text-[#92611F]">Gmail aberto em outra aba. Falta colar o corpo:</p>
+              <p>
+                1. No Gmail, clique dentro do corpo do e-mail e aperte <b>Ctrl+V</b> — entram o texto e as tabelas CT-E | NF.
+              </p>
+              <p>2. (Opcional) Volte aqui, clique em <b>Copiar imagem</b> e cole embaixo.</p>
+              <p>3. Anexe a planilha baixada e envie.</p>
+              <button type="button" onClick={() => setColar(false)} className="text-xs font-bold text-[#92611F] hover:underline">
+                Entendi
+              </button>
+            </div>
+          )}
           {aviso && (
             <p className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-semibold flex items-center gap-1.5">
               <Check className="w-4 h-4" /> {aviso}
