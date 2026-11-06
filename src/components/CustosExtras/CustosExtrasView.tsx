@@ -344,7 +344,7 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
                           )}
                         </td>
                         <td className="p-2.5 max-w-[180px]">
-                          <span className="block truncate">{c.destinatario || '—'}</span>
+                          <span className="block break-words">{c.destinatario || '—'}</span>
                           <span className="block text-[10px] text-slate-400">{c.cidade}</span>
                         </td>
                         <td className="p-2.5 max-w-[240px]">
@@ -495,6 +495,9 @@ const CustoExtraModal: React.FC<{
   const [descricao, setDescricao] = useState(inicial?.descricao || '');
   const [valor, setValor] = useState(inicial ? String(inicial.valor).replace('.', ',') : '');
   const [data, setData] = useState(inicial?.dataOcorrencia || hoje());
+  // Destino do custo: em branco = o das notas; dá para escrever outro (ex.: custo compartilhado com um destino só).
+  const [destinatarioTxt, setDestinatarioTxt] = useState(inicial?.destinatario || '');
+  const [cidadeTxt, setCidadeTxt] = useState(inicial?.cidade || '');
   const [rateio, setRateio] = useState<RateioCustoExtra>(inicial?.rateio === 'manual' ? 'manual' : 'igual');
   const [partesManuais, setPartesManuais] = useState<Record<string, string>>(() =>
     Object.fromEntries((inicial?.notas || []).map((n) => [n.lancamentoId, String(n.valor).replace('.', ',')]))
@@ -562,8 +565,8 @@ const CustoExtraModal: React.FC<{
             clienteNome: cliente?.nomeFantasia || lanc.clienteNome || 'Sem cliente',
             notaFiscal: unicos(escolhidas.map((l) => l.notaFiscal)),
             numeroCte: unicos(escolhidas.map((l) => l.numeroCte)),
-            destinatario: unicos(escolhidas.map((l) => l.destinatario)),
-            cidade: unicos(escolhidas.map((l) => l.cidadeDestino)),
+            destinatario: destinatarioTxt.trim() || unicos(escolhidas.map((l) => l.destinatario)),
+            cidade: cidadeTxt.trim() || unicos(escolhidas.map((l) => l.cidadeDestino)),
             notas: compartilhado
               ? escolhidas.map((l, i) => ({ lancamentoId: l.id, notaFiscal: l.notaFiscal, numeroCte: l.numeroCte, destinatario: l.destinatario, cidade: l.cidadeDestino, valor: valores[i] }))
               : undefined,
@@ -747,6 +750,40 @@ const CustoExtraModal: React.FC<{
               <p className="mt-1 text-[11px] text-slate-500">Ao aprovar, o CT-e passa a ter este tipo: o Valor a Cobrar dele vira o valor do custo (como no Controle Financeiro).</p>
             )}
           </div>
+          {escolhidas.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between">
+                <label className="font-bold text-slate-600">Destino</label>
+                {(destinatarioTxt || cidadeTxt) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDestinatarioTxt('');
+                      setCidadeTxt('');
+                    }}
+                    className="text-[11px] font-bold text-[#92611F] hover:underline"
+                  >
+                    Usar o das notas
+                  </button>
+                )}
+              </div>
+              <div className="mt-1 grid grid-cols-3 gap-2">
+                <input
+                  value={destinatarioTxt}
+                  onChange={(e) => setDestinatarioTxt(e.target.value)}
+                  placeholder={[...new Set(escolhidas.map((l) => l.destinatario).filter(Boolean))].join(' / ') || 'Destinatário'}
+                  className={`${campo} col-span-2`}
+                />
+                <input
+                  value={cidadeTxt}
+                  onChange={(e) => setCidadeTxt(e.target.value)}
+                  placeholder={[...new Set(escolhidas.map((l) => l.cidadeDestino).filter(Boolean))].join(' / ') || 'Cidade'}
+                  className={campo}
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-slate-500">Em branco, vai o destino das notas (em cinza). Escreva para trocar — ex.: o destino da entrega dedicada.</p>
+            </div>
+          )}
           <div>
             <label className="font-bold text-slate-600">Descrição (o que aconteceu)</label>
             <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={2} className={`${campo} mt-1`} placeholder="Ex.: destinatário fechado na 1ª tentativa, reentrega no dia seguinte" />
