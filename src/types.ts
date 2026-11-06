@@ -914,6 +914,15 @@ export interface ContatoCliente {
  * Uma linha da tabela de tarifa por cidade/praça (Tarifa Base), no mesmo formato usado nos
  * tarifários reais da JMT no Coda: CIDADE, RAIO, ATÉ 10KG, KG EXCEDENTE, KM.
  */
+/** % Ad Valorem de uma região de destino (ex.: Multimais: Alto Oeste 2,5%, Natal 1,5%). */
+export interface RegiaoAdValorem {
+  id: string;
+  regiao: string;
+  percentual: number;
+  /** Cidades de destino desta região. */
+  cidades: string[];
+}
+
 export interface FaixaTarifaCidade {
   id: string;
   cidade: string;
@@ -979,6 +988,8 @@ export interface TabelaPrecoFrete {
    * PRECIFICAÇÃO E RENTABILIDADE — base de cálculo "conforme tarifário de cada cliente".
    */
   percentualAdValoremNF?: number;
+  /** Ad Valorem por região de destino: a cidade da entrega define o %. Cidade fora das regiões usa `percentualAdValoremNF`. */
+  adValoremPorRegiao?: RegiaoAdValorem[];
   condicaoPagamento: string; // Ex: 'Faturamento Quinzenal (15 dias)', 'Faturamento Mensal (30 dias)'
   diaFechamento?: number;
   observacoesTarifa?: string;

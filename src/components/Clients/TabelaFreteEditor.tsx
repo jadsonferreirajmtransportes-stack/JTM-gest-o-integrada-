@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DollarSign, FileSpreadsheet, Plus, Trash2 } from 'lucide-react';
 import { ImportarTarifarioModal } from './ImportarTarifarioModal';
 import { ListaTarifasCidade } from './ListaTarifasCidade';
-import { TabelaPrecoFrete, CustoExtraTarifa } from '../../types';
+import { TabelaPrecoFrete, CustoExtraTarifa, RegiaoAdValorem } from '../../types';
 
 interface TabelaFreteEditorProps {
   titulo: string;
@@ -15,6 +15,80 @@ interface TabelaFreteEditorProps {
  *  de cliente pra poder ser reaproveitado também na tabela específica do Rodoviário (ver
  *  Cliente.tabelaFreteRodoviario, hoje só usada pela LUFT). Totalmente controlado: não guarda
  *  nada internamente, só lê `value` e devolve o objeto inteiro atualizado em `onChange`. */
+/** Cidades digitadas/coladas: uma por linha ou separadas por vírgula/ponto e vírgula. */
+const listaCidades = (texto: string) =>
+  texto
+    .split(/[\n,;]+/)
+    .map((c) => c.trim())
+    .filter(Boolean);
+
+/** Ad Valorem por região de destino: nome, % e as cidades de cada região. */
+const RegioesAdValorem: React.FC<{ regioes: RegiaoAdValorem[]; onChange: (r: RegiaoAdValorem[]) => void }> = ({ regioes, onChange }) => {
+  const [textos, setTextos] = useState<Record<string, string>>({});
+  const mudar = (id: string, p: Partial<RegiaoAdValorem>) => onChange(regioes.map((r) => (r.id === id ? { ...r, ...p } : r)));
+  const repetidas = (() => {
+    const vistas = new Map<string, string>();
+    const dup: string[] = [];
+    regioes.forEach((r) =>
+      (r.cidades || []).forEach((c) => {
+        const k = c.trim().toLowerCase();
+        if (vistas.has(k) && vistas.get(k) !== r.id) dup.push(c);
+        vistas.set(k, r.id);
+      })
+    );
+    return dup;
+  })();
+  return (
+    <div className="mt-3 border border-slate-200 rounded-xl p-3 space-y-2 bg-slate-50/60">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-bold text-slate-700">% por região de destino (opcional)</p>
+          <p className="text-[10px] text-slate-500">Quando o % muda conforme a cidade da entrega. A cidade do CT-e/nota define a região.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onChange([...regioes, { id: `reg-${Date.now()}`, regiao: '', percentual: 0, cidades: [] }])}
+          className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold text-[#92611F] flex items-center gap-1 shrink-0"
+        >
+          <Plus className="w-3.5 h-3.5" /> Região
+        </button>
+      </div>
+      {regioes.map((r) => (
+        <div key={r.id} className="bg-white border border-slate-200 rounded-lg p-2.5 space-y-2">
+          <div className="flex gap-2 items-center">
+            <input value={r.regiao} onChange={(e) => mudar(r.id, { regiao: e.target.value })} placeholder="Nome da região (ex.: Alto Oeste)" className="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold" />
+            <div className="flex items-center gap-1">
+              <input type="number" step="0.01" value={r.percentual || ''} onChange={(e) => mudar(r.id, { percentual: Number(e.target.value) })} placeholder="2,5" className="w-20 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-right" />
+              <span className="text-xs font-bold text-slate-500">%</span>
+            </div>
+            <button type="button" onClick={() => onChange(regioes.filter((x) => x.id !== r.id))} className="p-1.5 text-slate-400 hover:text-rose-600" title="Tirar a região">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <textarea
+            data-texto-livre
+            rows={2}
+            value={textos[r.id] ?? (r.cidades || []).join(', ')}
+            onChange={(e) => setTextos((t) => ({ ...t, [r.id]: e.target.value }))}
+            onBlur={(e) => {
+              mudar(r.id, { cidades: listaCidades(e.target.value) });
+              setTextos((t) => {
+                const n = { ...t };
+                delete n[r.id];
+                return n;
+              });
+            }}
+            placeholder="Cidades desta região — uma por linha ou separadas por vírgula (pode colar da tabela do cliente)"
+            className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px]"
+          />
+          <p className="text-[10px] text-slate-400">{(r.cidades || []).length} cidade(s)</p>
+        </div>
+      ))}
+      {repetidas.length > 0 && <p className="text-[10px] text-rose-700 font-semibold">Cidade em mais de uma região (vale a primeira): {[...new Set(repetidas)].slice(0, 6).join(', ')}</p>}
+    </div>
+  );
+};
+
 export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, value, onChange }) => {
   const modeloPrecificacao = value.modeloPrecificacao || 'tarifa_base';
   const tarifasPorCidade = value.tarifasPorCidade || [];
@@ -213,7 +287,9 @@ export const TabelaFreteEditor: React.FC<TabelaFreteEditorProps> = ({ titulo, va
           />
           <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
             Percentual cobrado sobre o valor declarado na Nota Fiscal do serviço/mercadoria transportada.
+            {(value.adValoremPorRegiao || []).length > 0 && ' Com regiões cadastradas abaixo, este é o % das cidades que não estão em nenhuma região.'}
           </p>
+          <RegioesAdValorem regioes={value.adValoremPorRegiao || []} onChange={(r) => onChange({ ...value, adValoremPorRegiao: r.length ? r : undefined })} />
         </div>
       )}
 

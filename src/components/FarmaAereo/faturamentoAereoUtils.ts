@@ -86,6 +86,13 @@ function percentualAdValorem(t: TabelaPrecoFrete): number {
   return ehAdValorem(t) ? t.percentualAdValoremNF || t.valorBase || 0 : 0;
 }
 
+/** Região de Ad Valorem da cidade de destino (quando o cliente tem % por região). */
+export function regiaoAdValorem(tabela: TabelaPrecoFrete | undefined, cidade?: string) {
+  if (!tabela?.adValoremPorRegiao?.length || !cidade) return undefined;
+  const alvo = normalizeCidade(cidade);
+  return tabela.adValoremPorRegiao.find((r) => (r.cidades || []).some((c) => normalizeCidade(c) === alvo));
+}
+
 function buscarTarifaCidade(cliente: Cliente | undefined, cidade?: string, modal?: string) {
   if (!cliente || !cidade) return undefined;
   const alvo = normalizeCidade(cidade);
@@ -117,12 +124,14 @@ export function detalharTarifaPorPeso(
   const peso = l.pesoKg ?? 0;
 
   if (ehAdValorem(tabela)) {
-    const percentual = percentualAdValorem(tabela);
+    // % da região da cidade de destino (quando houver); senão o % geral.
+    const regiao = regiaoAdValorem(tabela, l.cidadeDestino);
+    const percentual = regiao ? regiao.percentual : percentualAdValorem(tabela);
     if (!percentual) return undefined;
     const base = l.valorPrestacao ?? l.valorNF ?? 0;
     const minimo = tabela.freteMinimo ?? 0;
     const semMinimo = (percentual / 100) * base;
-    const sobre = `${percentual}% sobre ${l.valorPrestacao !== undefined ? 'a prestação' : 'a NF'} de ${formatCurrency(base)}`;
+    const sobre = `${percentual}%${regiao ? ` (região ${regiao.regiao})` : ''} sobre ${l.valorPrestacao !== undefined ? 'a prestação' : 'a NF'} de ${formatCurrency(base)}`;
     if (minimo > semMinimo) {
       return [{ label: `Mínimo de ${formatCurrency(minimo)} (${sobre} = ${formatCurrency(semMinimo)}, ficaria menor)`, valor: minimo }];
     }
@@ -202,7 +211,9 @@ export function explicarValorACobrar(
       : !tabela
         ? 'cliente sem tarifário cadastrado'
         : ehAdValorem(tabela)
-          ? 'tarifário em % Ad Valorem sem o percentual'
+          ? tabela.adValoremPorRegiao?.length
+            ? `cidade "${l.cidadeDestino || '—'}" não está em nenhuma região do Ad Valorem e não há % geral`
+            : 'tarifário em % Ad Valorem sem o percentual'
           : `cidade "${l.cidadeDestino || '—'}" não está no tarifário do cliente`;
     return {
       linhas: [{ label: `Valor informado — não deu para calcular: ${motivo}`, valor }],

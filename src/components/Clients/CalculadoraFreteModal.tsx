@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { X, Calculator, Copy, CheckCircle2, AlertTriangle, Plane, Truck, Clock, MapPin, Plus, Trash2, Package, Car } from 'lucide-react';
 import { Cliente, CustoExtraTarifa } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
-import { LinhaValorACobrar, detalharTarifaPorPeso, normalizeCidade, tabelaFreteParaModal } from '../FarmaAereo/faturamentoAereoUtils';
+import { LinhaValorACobrar, detalharTarifaPorPeso, normalizeCidade, regiaoAdValorem, tabelaFreteParaModal } from '../FarmaAereo/faturamentoAereoUtils';
 
 interface Volume {
   id: string;
@@ -274,6 +274,21 @@ export const CalculadoraFreteModal: React.FC<{ clientes: Cliente[]; clienteInici
                     {m === 'Aéreo' ? <Plane className="w-3.5 h-3.5" /> : <Truck className="w-3.5 h-3.5" />} {m}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {cliente && ehAdValorem && (tabela?.adValoremPorRegiao?.length || 0) > 0 && (
+              <div>
+                <label className={rotulo}>Cidade de destino (define a região do Ad Valorem)</label>
+                <input list="calc-frete-cidades-regiao" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Digite para buscar..." className={campo} />
+                <datalist id="calc-frete-cidades-regiao">
+                  {(tabela?.adValoremPorRegiao || []).flatMap((r) => (r.cidades || []).map((c) => <option key={`${r.id}-${c}`} value={c}>{`${r.regiao} — ${r.percentual}%`}</option>))}
+                </datalist>
+                {cidade && (
+                  <p className="mt-1.5 text-[11px] text-slate-500">
+                    {regiaoAdValorem(tabela, cidade) ? `Região ${regiaoAdValorem(tabela, cidade)!.regiao}: ${regiaoAdValorem(tabela, cidade)!.percentual}%` : 'Cidade fora das regiões — usa o % geral do cliente.'}
+                  </p>
+                )}
               </div>
             )}
 
