@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Calculator, Check, CheckCircle2, FileSpreadsheet, Loader2, Mail, Pencil, Plus, Receipt, RotateCcw, Search, Settings2, Trash2, X, XCircle } from 'lucide-react';
 import type { Cliente, LancamentoFaturamentoAereo, UsuarioLogin } from '../../types';
-import { CustoExtra, ModeloPlanilhaCusto, STATUS_CUSTO_EXTRA, StatusCustoExtra, excluirCustoExtra, getCustosExtras, getModelosPlanilha, novoIdCustoExtra, salvarCustosExtras } from '../../utils/custosExtrasApi';
+import { CustoExtra, ModeloPlanilhaCusto, RateioCustoExtra, STATUS_CUSTO_EXTRA, StatusCustoExtra, excluirCustoExtra, getCustosExtras, getModelosPlanilha, novoIdCustoExtra, salvarCustosExtras } from '../../utils/custosExtrasApi';
 import { obterUrlArquivo } from '../../utils/arquivosStorage';
 import { formatCurrency } from '../../utils/formatters';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { CustoParaPlanilha, gerarPlanilhaPeloModelo, gerarPlanilhaValidacao } from './planilhaCustosExtras';
 import { ModeloPlanilhaModal } from './ModeloPlanilhaModal';
 import { CalculadoraFreteModal } from '../Clients/CalculadoraFreteModal';
+import { TIPOS_CUSTO_EXTRA } from '../FarmaAereo/faturamentoAereoUtils';
 
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—');
 const hoje = () => new Date().toLocaleDateString('sv-SE');
@@ -86,17 +87,31 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
     });
   };
 
-  /** Soma (ou tira) o valor no "Custo extra" do CT-e. */
+  /** Soma (ou tira) o valor no "Custo extra" do(s) CT-e(s) — custo compartilhado: a parte de cada nota.
+   *  Tipo do Controle Financeiro (Dedicado, TDE...) vai junto para o CT-e, como se fosse lançado lá. */
   const ajustarCte = async (c: CustoExtra, sinal: 1 | -1) => {
-    const l = c.lancamentoId ? lancPorId.get(c.lancamentoId) : undefined;
-    if (!l) return false;
-    const novo = Math.round(((l.custoExtra || 0) + sinal * c.valor) * 100) / 100;
-    await onUpdateLancamento({ ...l, custoExtra: novo || undefined, atualizadoEm: new Date().toISOString() } as LancamentoFaturamentoAereo);
-    return true;
+    const partes = c.notas?.length ? c.notas.map((n) => ({ id: n.lancamentoId, valor: n.valor })) : c.lancamentoId ? [{ id: c.lancamentoId, valor: c.valor }] : [];
+    const tipoFin = (TIPOS_CUSTO_EXTRA as string[]).includes(c.tipo) ? (c.tipo as LancamentoFaturamentoAereo['tipoCustoExtra']) : undefined;
+    let algum = false;
+    for (const p of partes) {
+      const l = lancPorId.get(p.id);
+      if (!l) continue;
+      const novo = Math.round(((l.custoExtra || 0) + sinal * p.valor) * 100) / 100;
+      let tipoCustoExtra = l.tipoCustoExtra;
+      if (tipoFin && sinal === 1 && !tipoCustoExtra) tipoCustoExtra = tipoFin;
+      if (tipoFin && sinal === -1 && !novo && tipoCustoExtra === tipoFin) tipoCustoExtra = undefined;
+      await onUpdateLancamento({ ...l, custoExtra: novo || undefined, tipoCustoExtra, atualizadoEm: new Date().toISOString() } as LancamentoFaturamentoAereo);
+      algum = true;
+    }
+    return algum;
   };
 
   const paraPlanilha = (lista: CustoExtra[]): CustoParaPlanilha[] =>
-    lista.map((c) => ({ ...c, volumes: c.lancamentoId ? lancPorId.get(c.lancamentoId)?.volumes : undefined }));
+    lista.map((c) => {
+      const ids = c.notas?.length ? c.notas.map((n) => n.lancamentoId) : c.lancamentoId ? [c.lancamentoId] : [];
+      const vols = ids.map((id) => lancPorId.get(id)?.volumes).filter((v): v is number => typeof v === 'number');
+      return { ...c, volumes: vols.length ? vols.reduce((s, v) => s + v, 0) : undefined };
+    });
 
   const executar = async (chave: string, fn: () => Promise<void>) => {
     setOcupado(chave);
@@ -270,6 +285,11 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
                         <td className="p-2.5">
                           <b className="text-slate-900">{c.notaFiscal || '—'}</b>
                           <span className="block text-[10px] text-slate-400">CT-e {c.numeroCte || '—'}</span>
+                          {c.notas && c.notas.length > 1 && (
+                            <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded bg-sky-50 border border-sky-200 text-sky-800 text-[10px] font-bold" title={c.notas.map((n) => `NF ${n.notaFiscal || '—'}: ${formatCurrency(n.valor)}`).join('\n')}>
+                              Compartilhado · {c.notas.length} notas
+                            </span>
+                          )}
                         </td>
                         <td className="p-2.5 max-w-[180px]">
                           <span className="block truncate">{c.destinatario || '—'}</span>
@@ -385,7 +405,9 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
   );
 };
 
-/** Lançar/editar um custo extra: escolhe a nota (pela NF ou CT-e), o tipo (do tarifário do cliente ou outro) e o valor. */
+/** Lançar/editar um custo extra: escolhe a(s) nota(s) (pela NF ou CT-e), o tipo (o mesmo do Controle
+ *  Financeiro, do tarifário do cliente ou outro) e o valor. Com mais de uma nota o custo é
+ *  compartilhado e o valor é dividido entre elas (igual, pelo peso, pelo valor da NF ou à mão). */
 const CustoExtraModal: React.FC<{
   inicial: CustoExtra | null;
   lancamentos: LancamentoFaturamentoAereo[];
@@ -393,48 +415,90 @@ const CustoExtraModal: React.FC<{
   onClose: () => void;
   onSalvar: (c: CustoExtra) => Promise<void>;
 }> = ({ inicial, lancamentos, clientes, onClose, onSalvar }) => {
-  const [lanc, setLanc] = useState<LancamentoFaturamentoAereo | undefined>(inicial?.lancamentoId ? lancamentos.find((l) => l.id === inicial.lancamentoId) : undefined);
-  const [busca, setBusca] = useState(inicial?.notaFiscal || '');
+  const lancPorId = useMemo(() => new Map(lancamentos.map((l) => [l.id, l])), [lancamentos]);
+  const [escolhidas, setEscolhidas] = useState<LancamentoFaturamentoAereo[]>(() => {
+    const ids = inicial?.notas?.length ? inicial.notas.map((n) => n.lancamentoId) : inicial?.lancamentoId ? [inicial.lancamentoId] : [];
+    return ids.map((id) => lancPorId.get(id)).filter((l): l is LancamentoFaturamentoAereo => !!l);
+  });
+  const [busca, setBusca] = useState('');
   const [tipo, setTipo] = useState(inicial?.tipo || '');
+  const [outroTipo, setOutroTipo] = useState(false);
   const [descricao, setDescricao] = useState(inicial?.descricao || '');
   const [valor, setValor] = useState(inicial ? String(inicial.valor).replace('.', ',') : '');
   const [data, setData] = useState(inicial?.dataOcorrencia || hoje());
+  const [rateio, setRateio] = useState<RateioCustoExtra>(inicial?.rateio || 'igual');
+  const [partesManuais, setPartesManuais] = useState<Record<string, string>>(() =>
+    Object.fromEntries((inicial?.notas || []).map((n) => [n.lancamentoId, String(n.valor).replace('.', ',')]))
+  );
   const [calculadora, setCalculadora] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  const lanc = escolhidas[0];
+  const compartilhado = escolhidas.length > 1;
+  const cliente = lanc?.clienteId ? clientes.find((c) => c.id === lanc.clienteId) : undefined;
+
   const resultados = useMemo(() => {
     const t = busca.trim().replace(/^0+/, '').toLowerCase();
-    if (t.length < 3 || lanc) return [];
+    if (t.length < 3) return [];
+    const ja = new Set(escolhidas.map((l) => l.id));
     return lancamentos
+      .filter((l) => !ja.has(l.id) && (!lanc || (l.clienteId || l.clienteNome) === (lanc.clienteId || lanc.clienteNome)))
       .filter((l) => [l.notaFiscal, l.numeroCte].some((x) => (x || '').replace(/^0+/, '').toLowerCase().includes(t)))
       .slice(0, 8);
-  }, [busca, lancamentos, lanc]);
+  }, [busca, lancamentos, escolhidas, lanc]);
 
-  const cliente = lanc?.clienteId ? clientes.find((c) => c.id === lanc.clienteId) : undefined;
   const opcoesTarifa = (cliente?.tabelaFrete?.custosExtras || []).filter((c) => c.tipoCobranca !== 'Valor/KM');
   const nomeOpcao = (c: (typeof opcoesTarifa)[number]) => [c.categoria, c.grupoDestinatario, c.itemDescricao].filter(Boolean).join(' — ');
+  const tipoNaLista = (TIPOS_CUSTO_EXTRA as string[]).includes(tipo) || opcoesTarifa.some((o) => nomeOpcao(o) === tipo);
+  const mostrarTextoTipo = outroTipo || (!!tipo && !tipoNaLista);
+
+  const numero = (s: string) => Number(s.replace(/\./g, '').replace(',', '.')) || 0;
+
+  /** Parte de cada nota no valor total (centavos que sobram vão para a última). */
+  const partes = (total: number): number[] => {
+    if (!compartilhado) return [total];
+    if (rateio === 'manual') return escolhidas.map((l) => numero(partesManuais[l.id] || ''));
+    const pesos = escolhidas.map((l) => (rateio === 'peso' ? l.pesoTaxado || l.pesoKg || 0 : rateio === 'valorNF' ? l.valorNF || 0 : 1));
+    const soma = pesos.reduce((s, p) => s + p, 0);
+    const base = soma > 0 ? pesos : escolhidas.map(() => 1);
+    const somaBase = soma > 0 ? soma : escolhidas.length;
+    const lista = base.map((p) => Math.floor(((total * p) / somaBase) * 100) / 100);
+    lista[lista.length - 1] = Math.round((total - lista.slice(0, -1).reduce((s, v) => s + v, 0)) * 100) / 100;
+    return lista;
+  };
+  const totalDigitado = numero(valor);
+  const partesAtuais = partes(totalDigitado);
+  const somaManual = rateio === 'manual' ? partesAtuais.reduce((s, v) => s + v, 0) : totalDigitado;
 
   /** `direto` = vem da calculadora: grava com esses dados sem esperar o "Salvar". */
   const salvar = async (direto?: { valor: number; tipo: string; descricao: string }) => {
-    const v = direto ? direto.valor : Number(valor.replace(/\./g, '').replace(',', '.'));
+    const v = direto ? direto.valor : totalDigitado;
     const tipoFinal = (direto ? direto.tipo : tipo).trim();
     const descricaoFinal = (direto ? direto.descricao : descricao).trim();
-    if (!lanc && !inicial) return setErro('Escolha a nota (busque pela NF ou pelo CT-e).');
+    if (!escolhidas.length && !inicial) return setErro('Escolha a nota (busque pela NF ou pelo CT-e).');
     if (!tipoFinal) return setErro('Informe o tipo do custo extra.');
     if (!v || v <= 0) return setErro('Informe o valor.');
+    const valores = partes(v);
+    if (compartilhado && rateio === 'manual' && Math.abs(valores.reduce((s, x) => s + x, 0) - v) > 0.009)
+      return setErro(`A soma das partes (${formatCurrency(valores.reduce((s, x) => s + x, 0))}) precisa dar o valor total (${formatCurrency(v)}).`);
     setSalvando(true);
     setErro(null);
     try {
-      const base = lanc
+      const unicos = (xs: (string | undefined)[]) => [...new Set(xs.filter(Boolean))].join(' / ') || undefined;
+      const base = escolhidas.length
         ? {
             lancamentoId: lanc.id,
             clienteId: lanc.clienteId,
             clienteNome: cliente?.nomeFantasia || lanc.clienteNome || 'Sem cliente',
-            notaFiscal: lanc.notaFiscal,
-            numeroCte: lanc.numeroCte,
-            destinatario: lanc.destinatario,
-            cidade: lanc.cidadeDestino,
+            notaFiscal: unicos(escolhidas.map((l) => l.notaFiscal)),
+            numeroCte: unicos(escolhidas.map((l) => l.numeroCte)),
+            destinatario: unicos(escolhidas.map((l) => l.destinatario)),
+            cidade: unicos(escolhidas.map((l) => l.cidadeDestino)),
+            notas: compartilhado
+              ? escolhidas.map((l, i) => ({ lancamentoId: l.id, notaFiscal: l.notaFiscal, numeroCte: l.numeroCte, destinatario: l.destinatario, cidade: l.cidadeDestino, valor: valores[i] }))
+              : undefined,
+            rateio: compartilhado ? rateio : undefined,
           }
         : {};
       await onSalvar({
@@ -453,130 +517,226 @@ const CustoExtraModal: React.FC<{
 
   const campo = 'w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white';
   const clienteCalc = cliente?.id || inicial?.clienteId;
+  const travado = !!inicial?.lancadoNoCte;
   return (
     <>
-    <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-lg p-5 space-y-3 text-xs" onClick={(e) => e.stopPropagation()} data-texto-livre="true">
-        <div className="flex items-start justify-between">
-          <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal">{inicial ? 'Editar custo extra' : 'Novo custo extra'}</h3>
-          <button type="button" onClick={onClose} className="p-1 text-slate-400">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+      <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4" onClick={onClose}>
+        <div className="bg-white rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-5 space-y-3 text-xs" onClick={(e) => e.stopPropagation()} data-texto-livre="true">
+          <div className="flex items-start justify-between">
+            <h3 className="text-sm font-black text-slate-900 normal-case tracking-normal">{inicial ? 'Editar custo extra' : 'Novo custo extra'}</h3>
+            <button type="button" onClick={onClose} className="p-1 text-slate-400">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-        <div>
-          <label className="font-bold text-slate-600">Nota (NF ou CT-e)</label>
-          {lanc ? (
-            <div className="mt-1 p-2.5 rounded-lg bg-amber-50 border border-amber-200 flex items-start justify-between gap-2">
-              <div>
-                <b className="text-slate-900">NF {lanc.notaFiscal || '—'}</b> · CT-e {lanc.numeroCte || '—'}
-                <span className="block text-slate-600">
-                  {cliente?.nomeFantasia || lanc.clienteNome} → {lanc.destinatario || '—'} ({lanc.cidadeDestino || '—'})
-                </span>
-              </div>
-              <button type="button" onClick={() => setLanc(undefined)} className="text-[11px] font-bold text-[#92611F]">
-                Trocar
-              </button>
-            </div>
-          ) : (
-            <>
-              <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Digite o número da NF ou do CT-e" className={`${campo} mt-1`} autoFocus />
-              {resultados.length > 0 && (
-                <div className="mt-1 border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-48 overflow-y-auto">
-                  {resultados.map((l) => (
-                    <button key={l.id} type="button" onClick={() => setLanc(l)} className="w-full text-left p-2 hover:bg-amber-50">
-                      <b>NF {l.notaFiscal || '—'}</b> · CT-e {l.numeroCte || '—'} · {l.clienteNome}
-                      <span className="block text-[10px] text-slate-500">
-                        {l.destinatario} ({l.cidadeDestino}) · {dataBr(l.dataEmissao)}
+          <div>
+            <label className="font-bold text-slate-600">{compartilhado ? `Notas (${escolhidas.length}) — custo compartilhado` : 'Nota (NF ou CT-e)'}</label>
+            {escolhidas.length > 0 && (
+              <div className="mt-1 space-y-1">
+                {escolhidas.map((l, i) => (
+                  <div key={l.id} className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <b className="text-slate-900">NF {l.notaFiscal || '—'}</b> · CT-e {l.numeroCte || '—'}
+                      <span className="block text-slate-600 truncate">
+                        {i === 0 ? `${cliente?.nomeFantasia || l.clienteNome} → ` : ''}
+                        {l.destinatario || '—'} ({l.cidadeDestino || '—'}){l.pesoTaxado || l.pesoKg ? ` · ${String(l.pesoTaxado || l.pesoKg).replace('.', ',')} kg` : ''}
                       </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {busca.trim().length >= 3 && resultados.length === 0 && <p className="mt-1 text-[11px] text-slate-500">Nenhuma nota com esse número no Controle Financeiro.</p>}
-            </>
-          )}
-        </div>
+                    </div>
+                    {compartilhado && (
+                      <div className="shrink-0 text-right">
+                        {rateio === 'manual' ? (
+                          <input
+                            value={partesManuais[l.id] || ''}
+                            onChange={(e) => setPartesManuais((p) => ({ ...p, [l.id]: e.target.value }))}
+                            inputMode="decimal"
+                            placeholder="0,00"
+                            className="w-20 px-2 py-1 border border-slate-300 rounded text-right font-bold"
+                          />
+                        ) : (
+                          <b className="text-slate-800">{formatCurrency(partesAtuais[i] || 0)}</b>
+                        )}
+                      </div>
+                    )}
+                    {!travado && (
+                      <button type="button" onClick={() => setEscolhidas((e) => e.filter((x) => x.id !== l.id))} className="shrink-0 text-[11px] font-bold text-[#92611F]" title="Tirar esta nota">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {!travado && (
+              <>
+                <input
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  placeholder={escolhidas.length ? '+ Outra nota do mesmo cliente (custo compartilhado): NF ou CT-e' : 'Digite o número da NF ou do CT-e'}
+                  className={`${campo} mt-1`}
+                  autoFocus={!escolhidas.length}
+                />
+                {resultados.length > 0 && (
+                  <div className="mt-1 border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                    {resultados.map((l) => (
+                      <button
+                        key={l.id}
+                        type="button"
+                        onClick={() => {
+                          setEscolhidas((e) => [...e, l]);
+                          setBusca('');
+                        }}
+                        className="w-full text-left p-2 hover:bg-amber-50"
+                      >
+                        <b>NF {l.notaFiscal || '—'}</b> · CT-e {l.numeroCte || '—'} · {l.clienteNome}
+                        <span className="block text-[10px] text-slate-500">
+                          {l.destinatario} ({l.cidadeDestino}) · {dataBr(l.dataEmissao)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {busca.trim().length >= 3 && resultados.length === 0 && (
+                  <p className="mt-1 text-[11px] text-slate-500">Nenhuma nota com esse número{lanc ? ' deste cliente' : ''} no Controle Financeiro.</p>
+                )}
+              </>
+            )}
+            {travado && <p className="mt-1 text-[11px] text-slate-500">O valor já está no CT-e: para trocar as notas, desfaça a aprovação antes.</p>}
+          </div>
 
-        <div>
-          <label className="font-bold text-slate-600">Tipo do custo extra</label>
-          {opcoesTarifa.length > 0 && (
+          {compartilhado && (
+            <div>
+              <label className="font-bold text-slate-600">Como dividir o valor entre as notas</label>
+              <div className="mt-1 grid grid-cols-4 gap-1">
+                {(
+                  [
+                    ['igual', 'Igual'],
+                    ['peso', 'Pelo peso'],
+                    ['valorNF', 'Pelo valor NF'],
+                    ['manual', 'À mão'],
+                  ] as [RateioCustoExtra, string][]
+                ).map(([v, r]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    disabled={travado}
+                    onClick={() => {
+                      if (v === 'manual' && rateio !== 'manual')
+                        setPartesManuais(Object.fromEntries(escolhidas.map((l, i) => [l.id, (partesAtuais[i] || 0).toFixed(2).replace('.', ',')])));
+                      setRateio(v);
+                    }}
+                    className={`py-1.5 rounded-lg border font-bold ${rateio === v ? 'bg-[#C48229] text-white border-[#C48229]' : 'bg-white text-slate-500 border-slate-200'}`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+              {rateio === 'manual' && Math.abs(somaManual - totalDigitado) > 0.009 && (
+                <p className="mt-1 text-[11px] text-amber-700 font-semibold">
+                  As partes somam {formatCurrency(somaManual)}; o total é {formatCurrency(totalDigitado)}.
+                </p>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label className="font-bold text-slate-600">Tipo do custo extra</label>
             <select
-              value=""
+              value={mostrarTextoTipo ? '__outro' : tipo}
               onChange={(e) => {
-                const o = opcoesTarifa.find((x) => x.id === e.target.value);
-                if (!o) return;
-                setTipo(nomeOpcao(o));
-                if (o.valor) setValor(String(o.valor).replace('.', ','));
+                const v = e.target.value;
+                if (v === '__outro') {
+                  setOutroTipo(true);
+                  if (tipoNaLista) setTipo('');
+                  return;
+                }
+                setOutroTipo(false);
+                setTipo(v);
+                const o = opcoesTarifa.find((x) => nomeOpcao(x) === v);
+                if (o?.valor) setValor(String(o.valor).replace('.', ','));
               }}
               className={`${campo} mt-1`}
             >
-              <option value="">Escolher do tarifário do cliente...</option>
-              {opcoesTarifa.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {nomeOpcao(o)} {o.valor ? `— ${formatCurrency(o.valor)}` : ''}
-                </option>
-              ))}
+              <option value="">Escolha o tipo...</option>
+              <optgroup label="Tipos do Controle Financeiro">
+                {TIPOS_CUSTO_EXTRA.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </optgroup>
+              {opcoesTarifa.length > 0 && (
+                <optgroup label="Tarifário do cliente">
+                  {opcoesTarifa.map((o) => (
+                    <option key={o.id} value={nomeOpcao(o)}>
+                      {nomeOpcao(o)} {o.valor ? `— ${formatCurrency(o.valor)}` : ''}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              <option value="__outro">Outro (escrever)...</option>
             </select>
-          )}
-          <input value={tipo} onChange={(e) => setTipo(e.target.value)} placeholder="Ex.: Reentrega, Paletização, Taxa de espera" className={`${campo} mt-1`} />
-        </div>
-        <div>
-          <label className="font-bold text-slate-600">Descrição (o que aconteceu)</label>
-          <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={2} className={`${campo} mt-1`} placeholder="Ex.: destinatário fechado na 1ª tentativa, reentrega no dia seguinte" />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
+            {mostrarTextoTipo && <input value={tipo} onChange={(e) => setTipo(e.target.value)} placeholder="Ex.: Reentrega, Paletização, Taxa de espera" className={`${campo} mt-1`} autoFocus />}
+            {/dedicado|fleury/i.test(tipo) && (TIPOS_CUSTO_EXTRA as string[]).includes(tipo) && (
+              <p className="mt-1 text-[11px] text-slate-500">Ao aprovar, o CT-e passa a ter este tipo: o Valor a Cobrar dele vira o valor do custo (como no Controle Financeiro).</p>
+            )}
+          </div>
           <div>
-            <div className="flex items-center justify-between">
-              <label className="font-bold text-slate-600">Valor (R$)</label>
-              <button type="button" onClick={() => setCalculadora(true)} className="text-[11px] font-bold text-[#92611F] hover:underline flex items-center gap-1" title="Calcular pela tabela de frete do cliente">
-                <Calculator className="w-3.5 h-3.5" /> Calculadora
-              </button>
+            <label className="font-bold text-slate-600">Descrição (o que aconteceu)</label>
+            <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={2} className={`${campo} mt-1`} placeholder="Ex.: destinatário fechado na 1ª tentativa, reentrega no dia seguinte" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <div className="flex items-center justify-between">
+                <label className="font-bold text-slate-600">{compartilhado ? 'Valor total (R$)' : 'Valor (R$)'}</label>
+                <button type="button" onClick={() => setCalculadora(true)} className="text-[11px] font-bold text-[#92611F] hover:underline flex items-center gap-1" title="Calcular pela tabela de frete do cliente">
+                  <Calculator className="w-3.5 h-3.5" /> Calculadora
+                </button>
+              </div>
+              <input value={valor} onChange={(e) => setValor(e.target.value)} disabled={travado} inputMode="decimal" placeholder="0,00" className={`${campo} mt-1 text-right font-bold`} />
             </div>
-            <input value={valor} onChange={(e) => setValor(e.target.value)} inputMode="decimal" placeholder="0,00" className={`${campo} mt-1 text-right font-bold`} />
+            <div>
+              <label className="font-bold text-slate-600">Data</label>
+              <input type="date" value={data} onChange={(e) => setData(e.target.value)} className={`${campo} mt-1`} />
+            </div>
           </div>
-          <div>
-            <label className="font-bold text-slate-600">Data</label>
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} className={`${campo} mt-1`} />
-          </div>
+          {erro && <p className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 font-semibold">{erro}</p>}
+          <button type="button" onClick={() => salvar()} disabled={salvando} className="w-full py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white font-bold flex items-center justify-center gap-1.5 disabled:opacity-50">
+            {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Salvar
+          </button>
         </div>
-        {erro && <p className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 font-semibold">{erro}</p>}
-        <button type="button" onClick={() => salvar()} disabled={salvando} className="w-full py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white font-bold flex items-center justify-center gap-1.5 disabled:opacity-50">
-          {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Salvar
-        </button>
       </div>
-    </div>
-    {calculadora && (
-      <CalculadoraFreteModal
-        clientes={clientes}
-        clienteInicialId={clienteCalc}
-        inicial={
-          lanc
-            ? {
-                modal: /rodo/i.test(lanc.modal || '') ? 'Rodoviário' : lanc.modal ? 'Aéreo' : undefined,
-                cidade: lanc.cidadeDestino,
-                pesoKg: lanc.pesoTaxado || lanc.pesoKg,
-                valorNF: lanc.valorNF,
-              }
-            : { cidade: inicial?.cidade }
-        }
-        rotuloUsar={lanc || inicial ? 'Registrar no custo extra' : 'Usar no custo extra'}
-        onClose={() => setCalculadora(false)}
-        onUsar={(f) => {
-          const novoTipo = tipo.trim() || (f.modal === 'Dedicado' ? 'Dedicado' : `Frete ${f.modal}`);
-          const detalhe = (f.linhas || []).map((l) => `${l.label}: ${formatCurrency(l.valor)}`).join('; ');
-          const calculo = `Calculado pela tabela do cliente: ${f.modal} para ${f.destino}${f.pesoKg ? `, ${String(f.pesoKg).replace('.', ',')} kg` : ''}${detalhe ? ` (${detalhe})` : ''}.`;
-          const novaDescricao = descricao.trim() ? `${descricao.trim()}\n${calculo}` : calculo;
-          setValor(f.total.toFixed(2).replace('.', ','));
-          setTipo(novoTipo);
-          setDescricao(novaDescricao);
-          setCalculadora(false);
-          // Com a nota escolhida, já registra o custo; sem nota, só preenche e pede a nota.
-          if (lanc || inicial) salvar({ valor: Math.round(f.total * 100) / 100, tipo: novoTipo, descricao: novaDescricao });
-          else setErro('Valor calculado. Agora escolha a nota (NF ou CT-e) e clique em Salvar.');
-        }}
-      />
-    )}
+      {calculadora && (
+        <CalculadoraFreteModal
+          clientes={clientes}
+          clienteInicialId={clienteCalc}
+          inicial={
+            lanc
+              ? {
+                  modal: /rodo/i.test(lanc.modal || '') ? 'Rodoviário' : lanc.modal ? 'Aéreo' : undefined,
+                  cidade: lanc.cidadeDestino,
+                  pesoKg: escolhidas.reduce((s, l) => s + (l.pesoTaxado || l.pesoKg || 0), 0) || undefined,
+                  valorNF: escolhidas.reduce((s, l) => s + (l.valorNF || 0), 0) || undefined,
+                }
+              : { cidade: inicial?.cidade }
+          }
+          rotuloUsar={(escolhidas.length || inicial) && !travado ? 'Registrar no custo extra' : 'Usar no custo extra'}
+          onClose={() => setCalculadora(false)}
+          onUsar={(f) => {
+            const novoTipo = tipo.trim() || (f.modal === 'Dedicado' ? (compartilhado ? 'Dedicado Compartilhado' : 'Dedicado Integral') : `Frete ${f.modal}`);
+            const detalhe = (f.linhas || []).map((l) => `${l.label}: ${formatCurrency(l.valor)}`).join('; ');
+            const calculo = `Calculado pela tabela do cliente: ${f.modal} para ${f.destino}${f.pesoKg ? `, ${String(f.pesoKg).replace('.', ',')} kg` : ''}${detalhe ? ` (${detalhe})` : ''}.`;
+            const novaDescricao = descricao.trim() ? `${descricao.trim()}\n${calculo}` : calculo;
+            setValor(f.total.toFixed(2).replace('.', ','));
+            setTipo(novoTipo);
+            setDescricao(novaDescricao);
+            setCalculadora(false);
+            // Com a nota escolhida, já registra o custo; sem nota (ou rateio à mão), só preenche.
+            if ((escolhidas.length || inicial) && !travado && !(compartilhado && rateio === 'manual'))
+              salvar({ valor: Math.round(f.total * 100) / 100, tipo: novoTipo, descricao: novaDescricao });
+            else if (!escolhidas.length && !inicial) setErro('Valor calculado. Agora escolha a nota (NF ou CT-e) e clique em Salvar.');
+          }}
+        />
+      )}
     </>
   );
 };

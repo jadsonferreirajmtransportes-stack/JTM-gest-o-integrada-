@@ -9,6 +9,17 @@ import { supabase } from './supabaseClient';
 export type StatusCustoExtra = 'Pendente' | 'Enviado' | 'Aprovado' | 'Recusado';
 export const STATUS_CUSTO_EXTRA: StatusCustoExtra[] = ['Pendente', 'Enviado', 'Aprovado', 'Recusado'];
 
+/** Uma das notas de um custo compartilhado e a parte do valor que cabe a ela. */
+export interface NotaCustoExtra {
+  lancamentoId: string;
+  notaFiscal?: string;
+  numeroCte?: string;
+  destinatario?: string;
+  cidade?: string;
+  valor: number;
+}
+export type RateioCustoExtra = 'igual' | 'peso' | 'valorNF' | 'manual';
+
 export interface CustoExtra {
   id: string;
   lancamentoId?: string;
@@ -28,6 +39,10 @@ export interface CustoExtra {
   validadoEm?: string;
   validadoPor?: string;
   motivoRecusa?: string;
+  /** Custo compartilhado (119): todas as notas e a parte de cada uma. Os campos notaFiscal/numeroCte
+   *  acima ficam com os números juntos ("123 / 456") para a lista, a busca e as planilhas. */
+  notas?: NotaCustoExtra[];
+  rateio?: RateioCustoExtra;
   /** O valor já foi somado ao "Custo extra" do CT-e (evita somar duas vezes). */
   lancadoNoCte: boolean;
   criadoPor?: string;
@@ -60,6 +75,8 @@ const deLinha = (r: any): CustoExtra => ({
   validadoEm: u(r.validado_em),
   validadoPor: u(r.validado_por),
   motivoRecusa: u(r.motivo_recusa),
+  notas: Array.isArray(r.notas) && r.notas.length ? r.notas : undefined,
+  rateio: u(r.rateio ?? null),
   lancadoNoCte: !!r.lancado_no_cte,
   criadoPor: u(r.criado_por),
   criadoEm: r.criado_em,
@@ -84,6 +101,8 @@ const paraLinha = (c: CustoExtra) => ({
   validado_em: n(c.validadoEm),
   validado_por: n(c.validadoPor),
   motivo_recusa: n(c.motivoRecusa),
+  notas: c.notas?.length ? c.notas : null,
+  rateio: c.notas?.length ? c.rateio || null : null,
   lancado_no_cte: c.lancadoNoCte,
   criado_por: n(c.criadoPor),
   criado_em: c.criadoEm,
