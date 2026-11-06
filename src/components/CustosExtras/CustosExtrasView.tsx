@@ -152,6 +152,24 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
       setItens((a) => (a || []).filter((x) => x.id !== c.id));
     });
 
+  /** Planilha no formato da empresa (o dela, se cadastrado; senão a padrão JMT). */
+  const gerarArquivo = async (chave: string, lista: CustoExtra[], envioId: string): Promise<File> => {
+    const modelo = modelos.get(chave);
+    if (!modelo) return gerarPlanilhaValidacao(lista[0].clienteNome, lista, envioId);
+    const r = await fetch(await obterUrlArquivo(modelo.arquivoRef));
+    if (!r.ok) throw new Error('Não consegui baixar a planilha modelo desta empresa. Confira em "Formato do cliente".');
+    return gerarPlanilhaPeloModelo(modelo, await r.arrayBuffer(), lista[0].clienteNome, paraPlanilha(lista), envioId);
+  };
+
+  /** Planilha só deste custo (não muda a situação dele). */
+  const baixarDoCusto = (c: CustoExtra) =>
+    executar(`pl-${c.id}`, async () => {
+      const envioId = c.envioId || `CE-${(c.dataOcorrencia || hoje()).replace(/-/g, '')}-${c.id.slice(-4).toUpperCase()}`;
+      const arq = await gerarArquivo(chaveEmpresa(c), [c], envioId);
+      const nf = (c.notaFiscal || '').split(/[\s/,]+/).filter(Boolean)[0];
+      baixarBlob(arq, nf ? arq.name.replace(/\.xlsx$/, `_NF${nf}.xlsx`) : arq.name);
+    });
+
   /** Planilha de validação da empresa: os "a enviar" dela (ou, se não houver, os aguardando). */
   const enviarParaValidacao = (chave: string, lista: CustoExtra[]) =>
     executar(`env-${chave}`, async () => {
@@ -160,12 +178,7 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
       if (!itensPlanilha.length) return setErro('Não há custos a enviar para esta empresa.');
       const envioId = aEnviar.length ? `CE-${hoje().replace(/-/g, '')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}` : itensPlanilha[0].envioId || `CE-${hoje().replace(/-/g, '')}`;
       const modelo = modelos.get(chave);
-      let arq: File;
-      if (modelo) {
-        const r = await fetch(await obterUrlArquivo(modelo.arquivoRef));
-        if (!r.ok) throw new Error('Não consegui baixar a planilha modelo desta empresa. Confira em "Formato da planilha".');
-        arq = await gerarPlanilhaPeloModelo(modelo, await r.arrayBuffer(), itensPlanilha[0].clienteNome, paraPlanilha(itensPlanilha), envioId);
-      } else arq = await gerarPlanilhaValidacao(itensPlanilha[0].clienteNome, itensPlanilha, envioId);
+      const arq = await gerarArquivo(chave, itensPlanilha, envioId);
       baixarBlob(arq, arq.name);
       if (aEnviar.length) {
         const agora = new Date().toISOString();
@@ -362,6 +375,9 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
                                 </button>
                               </>
                             )}
+                            <button type="button" disabled={!!ocupado} onClick={() => baixarDoCusto(c)} className="p-1.5 rounded-lg text-emerald-700 hover:bg-emerald-50" title="Baixar a planilha só deste custo">
+                              {ocupado === `pl-${c.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+                            </button>
                             {(c.status === 'Aprovado' || c.status === 'Recusado') && (
                               <button type="button" disabled={!!ocupado} onClick={() => desfazer(c)} className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100" title="Desfazer a validação">
                                 <RotateCcw className="w-4 h-4" />
