@@ -33,7 +33,11 @@ export function gerarFaturaPdf(fatura: FaturaAereo, lancamentos: LancamentoFatur
     (a, b) => (a.dataEmissao || '').localeCompare(b.dataEmissao || '') || (a.numeroCte || '').localeCompare(b.numeroCte || '', 'pt-BR', { numeric: true })
   );
   const valores = linhas.map((l) => computeValorACobrar(l, cliente));
-  const total = valores.reduce((s, v) => s + v, 0);
+  const totalCtes = valores.reduce((s, v) => s + v, 0);
+  // Acréscimos e descontos da fatura (migração 116), fora das linhas dos CT-es.
+  const ajustes = fatura.ajustes || [];
+  const total = totalCtes + ajustes.reduce((s, a) => s + (Number(a.valor) || 0), 0);
+  const custoExtraTotal = linhas.reduce((s, l) => s + (l.custoExtra || 0), 0);
   // Reforma tributária: CBS/IBS contidos no valor (alíquota da data de emissão de cada CT-e).
   const tributos = linhas.reduce(
     (s, l, i) => {
@@ -139,22 +143,29 @@ export function gerarFaturaPdf(fatura: FaturaAereo, lancamentos: LancamentoFatur
       l.destinatario || '—',
       [l.cidadeDestino, l.estadoDestino].filter(Boolean).join('/') || '—',
       num(l.pesoKg),
-      l.tipoCustoExtra || '',
+      // Valor do custo extra (e o tipo, quando não é o padrão da tarifa).
+      [l.custoExtra ? moeda(l.custoExtra) : '', l.tipoCustoExtra || ''].filter(Boolean).join('\n'),
       moeda(valores[i]),
     ]),
-    foot: [['', '', '', '', 'Total', num(pesoTotal), '', moeda(total)]],
+    foot: [['', '', '', '', 'Total', num(pesoTotal), custoExtraTotal ? moeda(custoExtraTotal) : '', moeda(totalCtes)]],
     theme: 'grid',
     styles: { font: 'helvetica', fontSize: 7.3, cellPadding: 1.5, textColor: CORPO, lineColor: [225, 225, 225], lineWidth: 0.15, overflow: 'linebreak' },
     headStyles: { fillColor: [248, 240, 228], textColor: TEXTO, fontStyle: 'bold' },
     footStyles: { fillColor: [248, 240, 228], textColor: TEXTO, fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [252, 250, 247] },
-    columnStyles: { 0: { cellWidth: 17 }, 1: { cellWidth: 16 }, 2: { cellWidth: 18 }, 4: { cellWidth: 28 }, 5: { cellWidth: 15, halign: 'right' }, 6: { cellWidth: 24 }, 7: { cellWidth: 22, halign: 'right' } },
+    columnStyles: { 0: { cellWidth: 17 }, 1: { cellWidth: 16 }, 2: { cellWidth: 18 }, 4: { cellWidth: 28 }, 5: { cellWidth: 15, halign: 'right' }, 6: { cellWidth: 24, halign: 'right' }, 7: { cellWidth: 22, halign: 'right' } },
   });
   y = (doc as any).lastAutoTable.finalY + 6;
 
   // ---- Resumo ----
   const emAberto = Math.max(0, total - recebido);
   const resumo: [string, string, boolean][] = [
+    ...(ajustes.length
+      ? ([
+          ['Total dos CT-es', moeda(totalCtes), false],
+          ...ajustes.map((a) => [`${a.valor < 0 ? 'Desconto' : 'Acréscimo'}: ${a.descricao}`, `${a.valor < 0 ? '- ' : '+ '}${moeda(Math.abs(a.valor))}`, false]),
+        ] as [string, string, boolean][])
+      : []),
     ['Total da fatura', moeda(total), true],
     ...(tributos.cbs + tributos.ibs > 0
       ? ([
