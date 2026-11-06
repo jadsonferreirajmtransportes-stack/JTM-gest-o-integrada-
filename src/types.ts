@@ -23,6 +23,7 @@ export type GlobalModuleId =
   | 'pops'
   | 'qualidade'
   | 'sugestoes'
+  | 'custos_extras'
   | string;
 
 // Seções de dentro do módulo DP (Departamento Pessoal) que podem ser restringidas

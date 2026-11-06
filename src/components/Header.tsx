@@ -80,6 +80,7 @@ const TITULO_CURTO: Record<string, string> = {
   formularios: 'Formulários',
   qualidade: 'Qualidade',
   sugestoes: 'Sugestões',
+  custos_extras: 'Custos Extras',
 };
 
 const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = {

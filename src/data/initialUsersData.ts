@@ -210,6 +210,16 @@ export const MODULOS_SISTEMA: ModuloInfo[] = [
     categoria: 'Corporativo',
   },
   {
+    id: 'custos_extras',
+    nome: 'Custos Extras',
+    sigla: 'CEX',
+    descricao: 'Custos extras atrelados às notas (CT-es): planilha padrão para cada empresa validar por e-mail; aprovado entra no CT-e e na fatura.',
+    corBadge: 'bg-amber-100 text-amber-900 border-amber-300',
+    corBorda: 'border-[#C48229]',
+    iconeNome: 'Receipt',
+    categoria: 'Corporativo',
+  },
+  {
     id: 'sugestoes',
     nome: 'Sugestões',
     sigla: 'SUG',
