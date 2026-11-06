@@ -776,6 +776,13 @@ export async function saveQuinzenaValeAlimentacao(item: QuinzenaValeAlimentacao)
   const { error } = await supabase.from('quinzenas_va').upsert(quinzenaToRow(registro));
   assertNoError(error, 'saveQuinzenaValeAlimentacao');
 }
+/** Troca o nome da quinzena e o nome guardado nos lançamentos dela (demonstrativo, mensagens). */
+export async function renomearQuinzenaVA(id: string, nome: string): Promise<void> {
+  const { error } = await supabase.from('quinzenas_va').update({ identificacao: nome }).eq('id', id);
+  assertNoError(error, 'renomearQuinzenaVA');
+  const { error: e2 } = await supabase.from('lancamentos_va').update({ identificacao_quinzena: nome }).eq('quinzena_id', id);
+  assertNoError(e2, 'renomearQuinzenaVA (lançamentos)');
+}
 export async function deleteQuinzenaValeAlimentacao(id: string): Promise<void> {
   const { error } = await supabase.from('quinzenas_va').delete().eq('id', id);
   assertNoError(error, 'deleteQuinzenaValeAlimentacao');

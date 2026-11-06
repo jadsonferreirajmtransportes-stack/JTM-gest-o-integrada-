@@ -96,6 +96,7 @@ import {
   getQuinzenasValeAlimentacao,
   saveQuinzenaValeAlimentacao,
   deleteQuinzenaValeAlimentacao,
+  renomearQuinzenaVA,
   getLancamentosValeAlimentacao,
   saveLancamentosValeAlimentacao,
   saveLancamentoValeAlimentacao,
@@ -2311,6 +2312,12 @@ export default function App() {
     showToast('Quinzena de Vale Alimentação salva com sucesso!');
   };
 
+  const handleRenomearQuinzenaVA = async (id: string, nome: string) => {
+    await renomearQuinzenaVA(id, nome);
+    await recarregarDp('quinzenasVA', 'lancamentosVA');
+    showToast('Nome da quinzena alterado.');
+  };
+
   const handleDeleteQuinzenaVA = async (id: string) => {
     // Remove a quinzena e também os lançamentos que dependiam dela — não faz sentido manter
     // uma movimentação "órfã" sem período de referência.
@@ -3841,6 +3848,7 @@ export default function App() {
               lancamentos={lancamentosVAEquipe}
               onSaveQuinzena={handleSaveQuinzenaVA}
               onDeleteQuinzena={handleDeleteQuinzenaVA}
+              onRenomearQuinzena={handleRenomearQuinzenaVA}
               onGerarLancamentos={handleGerarLancamentosVA}
               onSincronizarFaltas={handleSincronizarFaltasVA}
               onSaveLancamento={handleSaveLancamentoVA}

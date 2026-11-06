@@ -4,6 +4,8 @@ import {
   Plus,
   Trash2,
   Calendar,
+  Pencil,
+  Check,
   Sparkles,
   Save,
   X,
@@ -60,6 +62,8 @@ interface ValeAlimentacaoViewProps {
   lancamentos: LancamentoValeAlimentacao[];
   onSaveQuinzena: (quinzena: QuinzenaValeAlimentacao) => void;
   onDeleteQuinzena: (id: string) => void;
+  /** Troca o nome da quinzena (e nos lançamentos dela). */
+  onRenomearQuinzena?: (id: string, nome: string) => Promise<void>;
   onGerarLancamentos: (quinzenaId: string) => void;
   onSincronizarFaltas: (quinzenaId: string) => void;
   onSaveLancamento: (lancamento: LancamentoValeAlimentacao) => void;
@@ -80,6 +84,7 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
   lancamentos,
   onSaveQuinzena,
   onDeleteQuinzena,
+  onRenomearQuinzena,
   onGerarLancamentos,
   onSincronizarFaltas,
   onSaveLancamento,
@@ -99,6 +104,8 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
   );
 
   const [quinzenaSelecionadaId, setQuinzenaSelecionadaId] = useState<string>('');
+  const [renomeando, setRenomeando] = useState<string | null>(null);
+  const [salvandoNome, setSalvandoNome] = useState(false);
   const quinzenaAtual =
     quinzenasOrdenadas.find((q) => q.id === quinzenaSelecionadaId) ||
     quinzenaVigente ||
@@ -358,18 +365,53 @@ export const ValeAlimentacaoView: React.FC<ValeAlimentacaoViewProps> = ({
       {/* Seletor de quinzena */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center gap-3">
         <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
-        <select
-          value={quinzenaAtual?.id || ''}
-          onChange={(e) => setQuinzenaSelecionadaId(e.target.value)}
-          className={inputCls + ' w-full sm:w-auto sm:min-w-[240px]'}
-        >
-          {quinzenasOrdenadas.length === 0 && <option value="">Nenhuma quinzena cadastrada</option>}
-          {quinzenasOrdenadas.map((q) => (
-            <option key={q.id} value={q.id}>
-              {q.identificacao} ({formatDate(q.dataInicio)} a {formatDate(q.dataTermino)})
-            </option>
-          ))}
-        </select>
+        {renomeando !== null && quinzenaAtual ? (
+          <form
+            className="flex items-center gap-1.5 w-full sm:w-auto"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const nome = renomeando.trim();
+              if (!nome || !onRenomearQuinzena) return;
+              setSalvandoNome(true);
+              try {
+                await onRenomearQuinzena(quinzenaAtual.id, nome);
+                setRenomeando(null);
+              } catch (err) {
+                alert(err instanceof Error ? err.message : 'Não foi possível alterar o nome.');
+              } finally {
+                setSalvandoNome(false);
+              }
+            }}
+          >
+            <input autoFocus data-texto-livre value={renomeando} onChange={(e) => setRenomeando(e.target.value)} className={inputCls + ' w-full sm:w-[240px]'} placeholder="Ex.: 1ª quinzena de novembro" />
+            <button type="submit" disabled={salvandoNome || !renomeando.trim()} className="p-2 rounded-lg bg-[#C48229] text-white disabled:opacity-50" title="Salvar o nome">
+              <Check className="w-4 h-4" />
+            </button>
+            <button type="button" onClick={() => setRenomeando(null)} className="p-2 rounded-lg border border-slate-200 text-slate-500" title="Cancelar">
+              <X className="w-4 h-4" />
+            </button>
+          </form>
+        ) : (
+          <>
+            <select
+              value={quinzenaAtual?.id || ''}
+              onChange={(e) => setQuinzenaSelecionadaId(e.target.value)}
+              className={inputCls + ' w-full sm:w-auto sm:min-w-[240px]'}
+            >
+              {quinzenasOrdenadas.length === 0 && <option value="">Nenhuma quinzena cadastrada</option>}
+              {quinzenasOrdenadas.map((q) => (
+                <option key={q.id} value={q.id}>
+                  {q.identificacao} ({formatDate(q.dataInicio)} a {formatDate(q.dataTermino)})
+                </option>
+              ))}
+            </select>
+            {quinzenaAtual && onRenomearQuinzena && (
+              <button type="button" onClick={() => setRenomeando(quinzenaAtual.identificacao)} className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:text-[#92611F]" title="Editar o nome da quinzena">
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </>
+        )}
 
         {quinzenaAtual && (
           <>
