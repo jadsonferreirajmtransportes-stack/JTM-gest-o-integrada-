@@ -23,7 +23,7 @@ const listaCidades = (texto: string) =>
     .filter(Boolean);
 
 /** Ad Valorem por região de destino: nome, % e as cidades de cada região. */
-const RegioesAdValorem: React.FC<{ regioes: RegiaoAdValorem[]; onChange: (r: RegiaoAdValorem[]) => void }> = ({ regioes, onChange }) => {
+export const RegioesAdValorem: React.FC<{ regioes: RegiaoAdValorem[]; onChange: (r: RegiaoAdValorem[]) => void }> = ({ regioes, onChange }) => {
   const [textos, setTextos] = useState<Record<string, string>>({});
   const mudar = (id: string, p: Partial<RegiaoAdValorem>) => onChange(regioes.map((r) => (r.id === id ? { ...r, ...p } : r)));
   const repetidas = (() => {

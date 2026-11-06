@@ -33,8 +33,9 @@ import {
   FaixaTarifaCidade,
   CustoExtraTarifa,
   TabelaPrecoFrete,
+  RegiaoAdValorem,
 } from '../../types';
-import { TabelaFreteEditor, TABELA_FRETE_PADRAO } from './TabelaFreteEditor';
+import { RegioesAdValorem, TabelaFreteEditor, TABELA_FRETE_PADRAO } from './TabelaFreteEditor';
 import { ImportarTarifarioModal } from './ImportarTarifarioModal';
 import { ListaTarifasCidade } from './ListaTarifasCidade';
 import { maskCNPJ, maskCEP, maskPhone } from '../../utils/formatters';
@@ -133,6 +134,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   const [tabelaTaxaDescarga, setTabelaTaxaDescarga] = useState(0);
   const [tabelaGrisPedagio, setTabelaGrisPedagio] = useState(0.8);
   const [tabelaAdValoremNF, setTabelaAdValoremNF] = useState(0);
+  const [tabelaRegioesAdValorem, setTabelaRegioesAdValorem] = useState<RegiaoAdValorem[]>([]);
   const [tarifasPorCidade, setTarifasPorCidade] = useState<FaixaTarifaCidade[]>([]);
   const [custosExtras, setCustosExtras] = useState<CustoExtraTarifa[]>([]);
   const [tabelaCondicaoPagamento, setTabelaCondicaoPagamento] = useState('Faturamento Quinzenal (15 dias)');
@@ -204,6 +206,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       setTabelaTaxaDescarga(initialData.tabelaFrete?.taxaDescargaAjudante || 0);
       setTabelaGrisPedagio(initialData.tabelaFrete?.percentualGrisPedagio || 0.8);
       setTabelaAdValoremNF(initialData.tabelaFrete?.percentualAdValoremNF || 0);
+      setTabelaRegioesAdValorem(initialData.tabelaFrete?.adValoremPorRegiao || []);
       setTarifasPorCidade(initialData.tabelaFrete?.tarifasPorCidade || []);
       setCustosExtras(initialData.tabelaFrete?.custosExtras || []);
       setTabelaCondicaoPagamento(initialData.tabelaFrete?.condicaoPagamento || 'Faturamento Quinzenal (15 dias)');
@@ -495,6 +498,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
         taxaDescargaAjudante: Number(tabelaTaxaDescarga) || 0,
         percentualGrisPedagio: Number(tabelaGrisPedagio) || 0,
         percentualAdValoremNF: percentualAdValoremFinal,
+        adValoremPorRegiao: tabelaModeloPrecificacao === 'ad_valorem' && tabelaRegioesAdValorem.length ? tabelaRegioesAdValorem.filter((r) => r.regiao.trim() || r.cidades.length) : undefined,
         condicaoPagamento: tabelaCondicaoPagamento,
         diaFechamento: Number(tabelaDiaFechamento) || 15,
         observacoesTarifa: tabelaObservacoes.trim() || undefined,
@@ -1235,7 +1239,9 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                     />
                     <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
                       Percentual cobrado sobre o valor declarado na Nota Fiscal do serviço/mercadoria transportada — modelo usado tanto no Farma Aéreo quanto no Farma Rodoviário.
+                      {tabelaRegioesAdValorem.length > 0 && ' Com regiões cadastradas abaixo, este é o % das cidades que não estão em nenhuma região.'}
                     </p>
+                    <RegioesAdValorem regioes={tabelaRegioesAdValorem} onChange={setTabelaRegioesAdValorem} />
                   </div>
                 )}
 
