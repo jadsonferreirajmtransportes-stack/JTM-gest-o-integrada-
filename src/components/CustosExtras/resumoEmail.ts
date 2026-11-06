@@ -67,8 +67,9 @@ export function notasPorDestinatario(itens: CustoResumo[]): { destinatario: stri
 /** Assunto no padrão da equipe, com o cliente: "TDE (UNICARGO) - DESTINO A / DESTINO B - 05/11/2026". */
 export function assuntoEmail(empresa: string, itens: CustoResumo[]): string {
   const sigla = unicos(itens.map((x) => siglaDoCusto(x.tipo))).join(' / ');
-  const destinos = notasPorDestinatario(itens).map((g) => g.destinatario.split(/\s+/).slice(0, 3).join(' '));
-  const quem = destinos.length && destinos.length <= 3 ? destinos.join(' / ') : `${itens.length} CUSTOS`;
+  // Até 3 destinatários: até 3 palavras de cada; mais que isso: só o primeiro nome de cada.
+  const nomes = notasPorDestinatario(itens).map((g) => g.destinatario.split(/\s+/));
+  const quem = nomes.map((n) => n.slice(0, nomes.length <= 3 ? 3 : 1).join(' ')).join(' / ');
   return `${sigla} (${empresa}) - ${quem} - ${dataDosCustos(itens)}`.toUpperCase();
 }
 
