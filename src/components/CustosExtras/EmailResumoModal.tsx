@@ -162,7 +162,7 @@ export const EmailResumoModal: React.FC<{
                   <Copy className="w-4 h-4" /> Só o texto
                 </button>
                 <button type="button" onClick={abrirGmail} className={`${botao} bg-emerald-700 hover:bg-emerald-800 text-white`} title="Abre o Gmail deste navegador com o destinatário e o assunto; o texto com as tabelas fica copiado para colar">
-                  <Mail className="w-4 h-4" /> Abrir no Gmail
+                  <Mail className="w-4 h-4" /> Abrir e-mail
                 </button>
                 <button type="button" onClick={abrirEmail} className={`${botao} border border-slate-200 text-slate-700 hover:bg-slate-50`} title="Abre o programa de e-mail do computador (Outlook etc.)">
                   Outro programa
