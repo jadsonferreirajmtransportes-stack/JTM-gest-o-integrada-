@@ -117,7 +117,13 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
       const ls = ids.map((id) => lancPorId.get(id)).filter((l): l is LancamentoFaturamentoAereo => !!l);
       const vols = ls.map((l) => l.volumes).filter((v): v is number => typeof v === 'number');
       const juntar = (xs: (string | undefined)[]) => [...new Set(xs.filter(Boolean))].join(' / ') || undefined;
-      return { ...c, volumes: vols.length ? vols.reduce((s, v) => s + v, 0) : undefined, uf: juntar(ls.map((l) => l.estadoDestino)), remetente: juntar(ls.map((l) => l.remetenteLab)) };
+      return {
+        ...c,
+        volumes: vols.length ? vols.reduce((s, v) => s + v, 0) : undefined,
+        uf: juntar(ls.map((l) => l.estadoDestino)),
+        remetente: juntar(ls.map((l) => l.remetenteLab)),
+        notasDetalhe: ls.map((l) => ({ cte: l.numeroCte, nf: l.notaFiscal, volumes: l.volumes, pesoKg: l.pesoTaxado || l.pesoKg, valorNF: l.valorNF })),
+      };
     });
 
   const executar = async (chave: string, fn: () => Promise<void>) => {
@@ -157,7 +163,7 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
   /** Planilha no formato da empresa (o dela, se cadastrado; senão a padrão JMT). */
   const gerarArquivo = async (chave: string, lista: CustoExtra[], envioId: string): Promise<File> => {
     const modelo = modelos.get(chave);
-    if (!modelo) return gerarPlanilhaValidacao(lista[0].clienteNome, lista, envioId);
+    if (!modelo) return gerarPlanilhaValidacao(lista[0].clienteNome, paraPlanilha(lista), envioId);
     const r = await fetch(await obterUrlArquivo(modelo.arquivoRef));
     if (!r.ok) throw new Error('Não consegui baixar a planilha modelo desta empresa. Confira em "Formato do cliente".');
     return gerarPlanilhaPeloModelo(modelo, await r.arrayBuffer(), lista[0].clienteNome, paraPlanilha(lista), envioId);

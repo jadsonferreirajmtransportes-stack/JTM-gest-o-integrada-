@@ -1,4 +1,4 @@
-// Planilha padrão JMT para a empresa validar os custos extras (enviada por e-mail).
+// Formulário padrão JMT de autorização de custo extra (enviado por e-mail para a empresa validar).
 import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 import type { CampoPlanilha, ColunaModelo, CustoExtra, ModeloPlanilhaCusto } from '../../utils/custosExtrasApi';
@@ -15,85 +15,287 @@ const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/
 export const nomeArquivoValidacao = (empresa: string, envioId: string) =>
   `Validacao_Custos_Extras_${empresa.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').slice(0, 40)}_${envioId}.xlsx`;
 
-export async function gerarPlanilhaValidacao(empresa: string, itens: CustoExtra[], envioId: string): Promise<File> {
+/** Uma nota (CT-e) do custo, com os dados do Controle Financeiro, para a tabela do formulário. */
+export interface NotaDoFormulario {
+  cte?: string;
+  nf?: string;
+  volumes?: number;
+  pesoKg?: number;
+  valorNF?: number;
+}
+type CustoDoFormulario = CustoExtra & { remetente?: string; uf?: string; notasDetalhe?: NotaDoFormulario[] };
+
+const AMARELO = 'FFFFF2B3';
+const VERMELHO = 'FFC00000';
+const MOEDA = '"R$" #,##0.00';
+const LINHAS_CUSTO = ['DEDICADO', 'REDESPACHO', 'TDE', 'AJUDANTE', 'DESCARGA', 'OUTROS'] as const;
+
+/** Em qual linha do "Detalhamento do custo" o valor entra, pelo tipo. */
+function linhaDoTipo(tipo: string): (typeof LINHAS_CUSTO)[number] {
+  const t = tipo.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  if (/\btde\b/.test(t)) return 'TDE';
+  if (/dedicado/.test(t)) return 'DEDICADO';
+  if (/redespacho/.test(t)) return 'REDESPACHO';
+  if (/ajudante/.test(t)) return 'AJUDANTE';
+  if (/descarga/.test(t)) return 'DESCARGA';
+  return 'OUTROS';
+}
+
+/** Formulário padrão JMT de autorização de custo extra: um por custo (uma aba cada), no modelo
+ *  que os clientes já usam — total em destaque, detalhamento por tipo, detalhes, trajeto,
+ *  veículo, remetente/destinatário e a tabela de CT-e/NF. Com mais de um custo, a 1ª aba é um
+ *  resumo para a empresa marcar "De acordo?" em cada um. */
+export async function gerarPlanilhaValidacao(empresa: string, itens: CustoDoFormulario[], envioId: string): Promise<File> {
   const ExcelJS = (await import('exceljs')).default;
   const wb = new ExcelJS.Workbook();
   wb.creator = EMPRESA_REGULAMENTO.razaoSocial;
-  const ws = wb.addWorksheet('Custos extras', { views: [{ showGridLines: false }] });
-  const colunas = [
-    { t: 'DATA', w: 12 },
-    { t: 'NF', w: 14 },
-    { t: 'CT-E', w: 14 },
-    { t: 'DESTINATÁRIO', w: 32 },
-    { t: 'CIDADE', w: 18 },
-    { t: 'TIPO', w: 24 },
-    { t: 'DESCRIÇÃO', w: 34 },
-    { t: 'VALOR (R$)', w: 14 },
-    { t: 'DE ACORDO? (S/N)', w: 16 },
-    { t: 'OBSERVAÇÃO DO CLIENTE', w: 32 },
-  ];
-  ws.columns = colunas.map((c) => ({ width: c.w }));
-
   const logo = wb.addImage({ base64: JMT_LOGO_BASE64.split(',')[1], extension: 'png' });
-  ws.addImage(logo, { tl: { col: 0, row: 0 }, ext: { width: 150, height: 56 } });
-  ws.getRow(1).height = 24;
-  ws.getRow(2).height = 24;
+  type Folha = ReturnType<typeof wb.addWorksheet>;
 
-  const linhaTexto = (linha: number, texto: string, opcoes: { negrito?: boolean; tamanho?: number; cor?: string } = {}) => {
-    ws.mergeCells(linha, 3, linha, colunas.length);
-    const c = ws.getRow(linha).getCell(3);
-    c.value = texto;
-    c.font = { name: 'Arial', bold: !!opcoes.negrito, size: opcoes.tamanho || 10, color: { argb: opcoes.cor || PRETO } };
-  };
-  linhaTexto(1, 'VALIDAÇÃO DE CUSTOS EXTRAS', { negrito: true, tamanho: 14, cor: BRONZE_ESCURO });
-  linhaTexto(2, `Empresa: ${empresa}`, { negrito: true, tamanho: 11 });
-  linhaTexto(3, `Referência: ${envioId} · Emitida em ${new Date().toLocaleDateString('pt-BR')}`, { cor: CINZA });
-  linhaTexto(4, 'Por favor, preencha a coluna "De acordo?" com S ou N (e a observação, se recusar) e responda este e-mail com a planilha.', { cor: CINZA });
+  const fonte = (negrito = false, tamanho = 10, cor = PRETO) => ({ name: 'Arial', bold: negrito, size: tamanho, color: { argb: cor } });
+  const preencher = (argb: string) => ({ type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb } });
 
-  const cab = ws.getRow(6);
-  colunas.forEach((c, i) => {
-    const cel = cab.getCell(i + 1);
-    cel.value = c.t;
-    cel.font = { name: 'Arial', bold: true, size: 10, color: { argb: BRANCO } };
-    cel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: i >= 8 ? BRONZE_ESCURO : BRONZE } };
-    cel.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-    cel.border = borda;
-  });
-  cab.height = 28;
-
+  if (itens.length > 1) resumo(wb.addWorksheet('Resumo', { views: [{ showGridLines: false }] }));
   itens.forEach((x, k) => {
-    const r = ws.getRow(7 + k);
-    const valores = [dataBr(x.dataOcorrencia), x.notaFiscal || '', x.numeroCte || '', x.destinatario || '', x.cidade || '', x.tipo, x.descricao || '', x.valor, '', ''];
-    valores.forEach((v, i) => {
-      const cel = r.getCell(i + 1);
-      cel.value = v;
-      cel.font = { name: 'Arial', size: 10, color: { argb: PRETO } };
-      cel.border = borda;
-      cel.alignment = { vertical: 'middle', wrapText: i === 6 || i === 3 };
-      if (i === 7) cel.numFmt = '#,##0.00';
-      if (i >= 8) cel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AREIA } };
-    });
+    const nf = (x.notaFiscal || '').split(/[\s/,]+/).filter(Boolean)[0];
+    const nome = itens.length > 1 ? `Custo ${k + 1}${nf ? ` - NF ${nf}` : ''}` : 'Formulário';
+    formulario(wb.addWorksheet(nome.slice(0, 31), { views: [{ showGridLines: false }], pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 1 } }), x, k);
   });
 
-  const lt = 7 + itens.length;
-  ws.mergeCells(lt, 1, lt, 7);
-  const rot = ws.getRow(lt).getCell(1);
-  rot.value = 'TOTAL';
-  rot.font = { name: 'Arial', bold: true, size: 11, color: { argb: BRONZE_ESCURO } };
-  rot.alignment = { horizontal: 'right' };
-  const tot = ws.getRow(lt).getCell(8);
-  tot.value = itens.reduce((s, x) => s + x.valor, 0);
-  tot.numFmt = '#,##0.00';
-  tot.font = { name: 'Arial', bold: true, size: 11, color: { argb: BRONZE_ESCURO } };
+  function cabecalho(ws: Folha, titulo: string, ultimaCol: number) {
+    ws.addImage(logo, { tl: { col: 0, row: 0 }, ext: { width: 150, height: 56 } });
+    ws.getRow(1).height = 22;
+    ws.getRow(2).height = 22;
+    ws.getRow(3).height = 14;
+    const pres = ws.getCell(1, ultimaCol - 1);
+    pres.value = 'Prestador:';
+    pres.font = fonte(true, 10);
+    pres.alignment = { horizontal: 'right' };
+    const nomePres = ws.getCell(1, ultimaCol);
+    nomePres.value = EMPRESA_REGULAMENTO.razaoSocial;
+    nomePres.font = fonte(true, 10, BRONZE_ESCURO);
+    const cnpj = ws.getCell(2, ultimaCol);
+    cnpj.value = `CNPJ ${EMPRESA_REGULAMENTO.cnpj}`;
+    cnpj.font = fonte(false, 9, CINZA);
+    ws.mergeCells(4, 1, 4, ultimaCol);
+    const t = ws.getCell(4, 1);
+    t.value = titulo;
+    t.font = fonte(true, 16, BRONZE_ESCURO);
+    t.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(4).height = 28;
+    ws.mergeCells(5, 1, 5, ultimaCol);
+    const s = ws.getCell(5, 1);
+    s.value = `Cliente: ${empresa} · Referência: ${envioId} · Emitido em ${new Date().toLocaleDateString('pt-BR')}`;
+    s.font = fonte(false, 9, CINZA);
+    s.alignment = { horizontal: 'center' };
+  }
 
-  const rod = ws.getRow(lt + 2).getCell(1);
-  rod.value = `${EMPRESA_REGULAMENTO.razaoSocial} — CNPJ ${EMPRESA_REGULAMENTO.cnpj} — ${EMPRESA_REGULAMENTO.cidadeUF}`;
-  rod.font = { name: 'Arial', bold: true, size: 9, color: { argb: BRONZE_ESCURO } };
+  function formulario(ws: Folha, x: CustoDoFormulario, k: number) {
+    ws.columns = [{ width: 36 }, { width: 24 }, { width: 22 }, { width: 14 }, { width: 24 }];
+    cabecalho(ws, 'FORMULÁRIO PARA AUTORIZAÇÃO DE CUSTO EXTRA', 5);
+    let r = 7;
+    const rotulo = (linha: number, texto: string, cor = PRETO) => {
+      const c = ws.getCell(linha, 1);
+      c.value = texto;
+      c.font = fonte(true, 10, cor);
+      c.alignment = { horizontal: 'right', vertical: 'middle' };
+    };
+    const valor = (linha: number, col: number, v: string | number | Date | null, opcoes: { moeda?: boolean; data?: boolean; negrito?: boolean; aPreencher?: boolean; ate?: number } = {}) => {
+      if (opcoes.ate && opcoes.ate > col) ws.mergeCells(linha, col, linha, opcoes.ate);
+      const c = ws.getCell(linha, col);
+      c.value = v;
+      c.font = fonte(!!opcoes.negrito, 10);
+      c.border = borda;
+      c.alignment = { vertical: 'middle', wrapText: true };
+      if (opcoes.moeda) c.numFmt = MOEDA;
+      if (opcoes.data) c.numFmt = 'dd/mm/yyyy';
+      if (opcoes.aPreencher) c.fill = preencher(AREIA);
+    };
+
+    // Total em destaque
+    rotulo(r, 'TOTAL CUSTO DA OPERAÇÃO:');
+    ws.getCell(r, 1).font = fonte(true, 13);
+    valor(r, 2, x.valor, { moeda: true, negrito: true });
+    ws.getCell(r, 2).font = fonte(true, 13);
+    ws.getCell(r, 2).fill = preencher('FFFFE066');
+    ws.getRow(r).height = 22;
+    r += 2;
+    rotulo(r, 'DATA:');
+    valor(r, 2, x.dataOcorrencia ? new Date(Date.UTC(+x.dataOcorrencia.slice(0, 4), +x.dataOcorrencia.slice(5, 7) - 1, +x.dataOcorrencia.slice(8, 10), 12)) : null, { data: true });
+    ws.getCell(r, 4).value = 'Nº';
+    ws.getCell(r, 4).font = fonte(true, 10);
+    ws.getCell(r, 4).alignment = { horizontal: 'right' };
+    valor(r, 5, `${envioId}${itens.length > 1 ? `-${k + 1}` : ''}`);
+    r += 1;
+    rotulo(r, 'NEGOCIAÇÃO EM TABELA?');
+    valor(r, 2, /tabela do cliente|tarif/i.test(`${x.descricao || ''} ${x.tipo}`) ? 'SIM' : '', { aPreencher: true });
+    r += 1;
+    rotulo(r, 'CIDADE DENTRO DA ROTA ACORDADA?');
+    valor(r, 2, '', { aPreencher: true });
+    r += 2;
+
+    // Detalhamento do custo
+    const cab = (linha: number, col: number, texto: string, ate?: number) => {
+      if (ate && ate > col) ws.mergeCells(linha, col, linha, ate);
+      const c = ws.getCell(linha, col);
+      c.value = texto;
+      c.font = fonte(true, 10, BRANCO);
+      c.fill = preencher(BRONZE);
+      c.alignment = { horizontal: 'center', vertical: 'middle' };
+      c.border = borda;
+    };
+    cab(r, 1, 'DETALHAMENTO DO CUSTO');
+    cab(r, 2, 'VALOR');
+    r += 1;
+    const linhaCusto = linhaDoTipo(x.tipo);
+    const primeira = r;
+    LINHAS_CUSTO.forEach((nome) => {
+      const c = ws.getCell(r, 1);
+      c.value = nome === 'OUTROS' && linhaCusto === 'OUTROS' ? `OUTROS — ${x.tipo}` : nome;
+      c.font = fonte(nome === linhaCusto, 10);
+      c.border = borda;
+      valor(r, 2, nome === linhaCusto ? x.valor : null, { moeda: true, negrito: nome === linhaCusto });
+      r += 1;
+    });
+    const tot = ws.getCell(r, 1);
+    tot.value = 'TOTAL';
+    tot.font = fonte(true, 10, BRONZE_ESCURO);
+    tot.alignment = { horizontal: 'right' };
+    valor(r, 2, { formula: `SUM(B${primeira}:B${r - 1})`, result: x.valor } as never, { moeda: true, negrito: true });
+    r += 2;
+
+    // Detalhes
+    ws.mergeCells(r, 1, r, 5);
+    const aviso = ws.getCell(r, 1);
+    aviso.value = 'DETALHES DO CUSTO SOLICITADO (o que aconteceu, quando e por quê):';
+    aviso.font = fonte(true, 9, VERMELHO);
+    r += 1;
+    ws.mergeCells(r, 1, r + 2, 5);
+    const det = ws.getCell(r, 1);
+    det.value = [x.tipo, x.descricao].filter(Boolean).join(' — ');
+    det.font = fonte(false, 10);
+    det.alignment = { vertical: 'top', wrapText: true };
+    det.border = borda;
+    r += 4;
+
+    // Trajeto, carga e veículo (o que o sistema não sabe fica para preencher)
+    cab(r, 2, 'KM IDA');
+    cab(r, 3, 'KM VOLTA');
+    r += 1;
+    rotulo(r, 'TRAJETO — EM KM:');
+    valor(r, 2, '', { aPreencher: true });
+    valor(r, 3, '', { aPreencher: true });
+    r += 2;
+    rotulo(r, 'TIPO DE CARGA:');
+    valor(r, 2, '', { aPreencher: true, ate: 3 });
+    r += 2;
+    cab(r, 1, 'TIPO DE VEÍCULO');
+    cab(r, 2, 'MOTORISTA', 3);
+    cab(r, 4, 'PLACA', 5);
+    r += 1;
+    valor(r, 1, '', { aPreencher: true });
+    valor(r, 2, '', { aPreencher: true, ate: 3 });
+    valor(r, 4, '', { aPreencher: true, ate: 5 });
+    r += 2;
+
+    // Remetente / destino
+    rotulo(r, 'REMETENTE:');
+    valor(r, 2, x.remetente || '', { ate: 5 });
+    r += 1;
+    rotulo(r, 'DESTINATÁRIO:');
+    valor(r, 2, x.destinatario || '', { ate: 5 });
+    r += 1;
+    rotulo(r, 'CIDADE DE DESTINO:');
+    valor(r, 2, [x.cidade, x.uf].filter(Boolean).join(' - '), { ate: 5 });
+    r += 2;
+
+    // Notas
+    ['CT-E', 'NF', 'VOLUMES', 'PESO (KG)', 'VALOR DA NOTA FISCAL'].forEach((t, i) => cab(r, i + 1, t));
+    r += 1;
+    const notas: NotaDoFormulario[] = x.notasDetalhe?.length ? x.notasDetalhe : [{ cte: x.numeroCte, nf: x.notaFiscal }];
+    notas.forEach((n) => {
+      valor(r, 1, n.cte || '');
+      valor(r, 2, n.nf || '');
+      valor(r, 3, n.volumes ?? '');
+      valor(r, 4, n.pesoKg ?? '');
+      valor(r, 5, n.valorNF ?? '', { moeda: n.valorNF !== undefined });
+      [1, 2, 3, 4].forEach((c) => (ws.getCell(r, c).alignment = { horizontal: 'center', vertical: 'middle' }));
+      if (n.pesoKg !== undefined) ws.getCell(r, 4).numFmt = '#,##0.00';
+      r += 1;
+    });
+    r += 1;
+
+    // Aprovação do cliente
+    ws.mergeCells(r, 1, r, 5);
+    const ap = ws.getCell(r, 1);
+    ap.value = 'APROVAÇÃO DO CLIENTE';
+    ap.font = fonte(true, 11, BRANCO);
+    ap.fill = preencher(BRONZE_ESCURO);
+    ap.alignment = { horizontal: 'center' };
+    r += 1;
+    rotulo(r, 'DE ACORDO? (S/N):');
+    valor(r, 2, '', { aPreencher: true });
+    ws.getCell(r, 2).fill = preencher(AMARELO);
+    r += 1;
+    rotulo(r, 'APROVADOR (NOME):');
+    valor(r, 2, '', { aPreencher: true, ate: 5 });
+    r += 1;
+    rotulo(r, 'OBSERVAÇÃO:');
+    valor(r, 2, '', { aPreencher: true, ate: 5 });
+    ws.getRow(r).height = 30;
+    r += 2;
+    ws.mergeCells(r, 1, r, 5);
+    const rod = ws.getCell(r, 1);
+    rod.value = `${EMPRESA_REGULAMENTO.razaoSocial} — CNPJ ${EMPRESA_REGULAMENTO.cnpj} — ${EMPRESA_REGULAMENTO.cidadeUF}. Responda o e-mail com este formulário preenchido.`;
+    rod.font = fonte(false, 8, CINZA);
+    rod.alignment = { horizontal: 'center', wrapText: true };
+  }
+
+  function resumo(ws: Folha) {
+    ws.columns = [{ width: 12 }, { width: 18 }, { width: 16 }, { width: 30 }, { width: 18 }, { width: 24 }, { width: 14 }, { width: 14 }, { width: 28 }];
+    cabecalho(ws, 'RESUMO DOS CUSTOS EXTRAS PARA AUTORIZAÇÃO', 9);
+    const titulos = ['DATA', 'NF', 'CT-E', 'DESTINATÁRIO', 'CIDADE', 'TIPO', 'VALOR (R$)', 'DE ACORDO? (S/N)', 'OBSERVAÇÃO DO CLIENTE'];
+    const cab = ws.getRow(7);
+    titulos.forEach((t, i) => {
+      const c = cab.getCell(i + 1);
+      c.value = t;
+      c.font = fonte(true, 10, BRANCO);
+      c.fill = preencher(i >= 7 ? BRONZE_ESCURO : BRONZE);
+      c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      c.border = borda;
+    });
+    cab.height = 28;
+    itens.forEach((x, k) => {
+      const row = ws.getRow(8 + k);
+      [dataBr(x.dataOcorrencia), x.notaFiscal || '', x.numeroCte || '', x.destinatario || '', x.cidade || '', x.tipo, x.valor, '', ''].forEach((v, i) => {
+        const c = row.getCell(i + 1);
+        c.value = v;
+        c.font = fonte(false, 10);
+        c.border = borda;
+        c.alignment = { vertical: 'middle', wrapText: i === 3 || i === 1 };
+        if (i === 6) c.numFmt = MOEDA;
+        if (i >= 7) c.fill = preencher(AREIA);
+      });
+    });
+    const lt = 8 + itens.length;
+    ws.mergeCells(lt, 1, lt, 6);
+    const rot = ws.getCell(lt, 1);
+    rot.value = 'TOTAL';
+    rot.font = fonte(true, 11, BRONZE_ESCURO);
+    rot.alignment = { horizontal: 'right' };
+    const tot = ws.getCell(lt, 7);
+    tot.value = itens.reduce((s, x) => s + x.valor, 0);
+    tot.numFmt = MOEDA;
+    tot.font = fonte(true, 11, BRONZE_ESCURO);
+    ws.mergeCells(lt + 2, 1, lt + 2, 9);
+    const obs = ws.getCell(lt + 2, 1);
+    obs.value = 'Cada custo tem o seu formulário completo nas abas seguintes.';
+    obs.font = fonte(false, 9, CINZA);
+  }
 
   const buf = await wb.xlsx.writeBuffer();
   return new File([buf], nomeArquivoValidacao(empresa, envioId), { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
-
 
 // ---------------------------------------------------------------------------
 // Planilha no formato do próprio cliente: o financeiro sobe um exemplo da planilha que a empresa
@@ -108,7 +310,7 @@ type Pasta = Awaited<ReturnType<typeof abrirPasta>>;
 type Folha = Pasta['worksheets'][number];
 export type LayoutModelo = 'tabela' | 'ficha';
 /** Custo com dados extras do CT-e que algumas planilhas pedem. */
-export type CustoParaPlanilha = CustoExtra & { volumes?: number; uf?: string; remetente?: string };
+export type CustoParaPlanilha = CustoExtra & { volumes?: number; uf?: string; remetente?: string; notasDetalhe?: NotaDoFormulario[] };
 
 const semAcento = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
