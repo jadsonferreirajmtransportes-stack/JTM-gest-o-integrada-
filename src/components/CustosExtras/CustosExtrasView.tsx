@@ -415,10 +415,13 @@ const CustoExtraModal: React.FC<{
   const opcoesTarifa = (cliente?.tabelaFrete?.custosExtras || []).filter((c) => c.tipoCobranca !== 'Valor/KM');
   const nomeOpcao = (c: (typeof opcoesTarifa)[number]) => [c.categoria, c.grupoDestinatario, c.itemDescricao].filter(Boolean).join(' — ');
 
-  const salvar = async () => {
-    const v = Number(valor.replace(/\./g, '').replace(',', '.'));
+  /** `direto` = vem da calculadora: grava com esses dados sem esperar o "Salvar". */
+  const salvar = async (direto?: { valor: number; tipo: string; descricao: string }) => {
+    const v = direto ? direto.valor : Number(valor.replace(/\./g, '').replace(',', '.'));
+    const tipoFinal = (direto ? direto.tipo : tipo).trim();
+    const descricaoFinal = (direto ? direto.descricao : descricao).trim();
     if (!lanc && !inicial) return setErro('Escolha a nota (busque pela NF ou pelo CT-e).');
-    if (!tipo.trim()) return setErro('Informe o tipo do custo extra.');
+    if (!tipoFinal) return setErro('Informe o tipo do custo extra.');
     if (!v || v <= 0) return setErro('Informe o valor.');
     setSalvando(true);
     setErro(null);
@@ -437,8 +440,8 @@ const CustoExtraModal: React.FC<{
       await onSalvar({
         ...(inicial || { id: novoIdCustoExtra(), status: 'Pendente' as const, lancadoNoCte: false, criadoEm: new Date().toISOString(), clienteNome: '' }),
         ...base,
-        tipo: tipo.trim(),
-        descricao: descricao.trim() || undefined,
+        tipo: tipoFinal,
+        descricao: descricaoFinal || undefined,
         valor: v,
         dataOcorrencia: data || undefined,
       } as CustoExtra);
@@ -538,7 +541,7 @@ const CustoExtraModal: React.FC<{
           </div>
         </div>
         {erro && <p className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 font-semibold">{erro}</p>}
-        <button type="button" onClick={salvar} disabled={salvando} className="w-full py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white font-bold flex items-center justify-center gap-1.5 disabled:opacity-50">
+        <button type="button" onClick={() => salvar()} disabled={salvando} className="w-full py-2.5 rounded-xl bg-[#C48229] hover:bg-[#92611F] text-white font-bold flex items-center justify-center gap-1.5 disabled:opacity-50">
           {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Salvar
         </button>
       </div>
@@ -557,14 +560,20 @@ const CustoExtraModal: React.FC<{
               }
             : { cidade: inicial?.cidade }
         }
-        rotuloUsar="Usar no custo extra"
+        rotuloUsar={lanc || inicial ? 'Registrar no custo extra' : 'Usar no custo extra'}
         onClose={() => setCalculadora(false)}
         onUsar={(f) => {
+          const novoTipo = tipo.trim() || (f.modal === 'Dedicado' ? 'Dedicado' : `Frete ${f.modal}`);
+          const detalhe = (f.linhas || []).map((l) => `${l.label}: ${formatCurrency(l.valor)}`).join('; ');
+          const calculo = `Calculado pela tabela do cliente: ${f.modal} para ${f.destino}${f.pesoKg ? `, ${String(f.pesoKg).replace('.', ',')} kg` : ''}${detalhe ? ` (${detalhe})` : ''}.`;
+          const novaDescricao = descricao.trim() ? `${descricao.trim()}\n${calculo}` : calculo;
           setValor(f.total.toFixed(2).replace('.', ','));
-          if (!tipo.trim()) setTipo(f.modal === 'Dedicado' ? 'Dedicado' : `Frete ${f.modal}`);
-          if (!descricao.trim())
-            setDescricao(`Calculado pela tabela do cliente: ${f.modal} para ${f.destino}${f.pesoKg ? `, ${String(f.pesoKg).replace('.', ',')} kg` : ''}.`);
+          setTipo(novoTipo);
+          setDescricao(novaDescricao);
           setCalculadora(false);
+          // Com a nota escolhida, já registra o custo; sem nota, só preenche e pede a nota.
+          if (lanc || inicial) salvar({ valor: Math.round(f.total * 100) / 100, tipo: novoTipo, descricao: novaDescricao });
+          else setErro('Valor calculado. Agora escolha a nota (NF ou CT-e) e clique em Salvar.');
         }}
       />
     )}

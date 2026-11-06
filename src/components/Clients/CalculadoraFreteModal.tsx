@@ -26,6 +26,8 @@ export interface FreteCalculado {
   volumes?: number;
   total: number;
   prazo?: string;
+  /** Detalhamento do cálculo (frete, ad valorem, extras...). */
+  linhas?: { label: string; valor: number }[];
 }
 
 /** Calculadora de frete para a equipe: escolhe o cliente, o modal, a cidade de destino e o peso
@@ -448,6 +450,7 @@ export const CalculadoraFreteModal: React.FC<{
                         volumes: usarCubagem ? volumes.reduce((s, v) => s + (v.quantidade || 0), 0) || undefined : undefined,
                         total: resultado.total,
                         prazo: tarifaCidade?.prazo,
+                        linhas: resultado.linhas.map((l) => ({ label: l.label, valor: l.valor })),
                       })
                     }
                     className="w-full px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 normal-case tracking-normal"
