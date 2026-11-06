@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calculator, Check, CheckCircle2, FileSpreadsheet, Loader2, Mail, Pencil, Plus, Receipt, RotateCcw, Search, Settings2, Trash2, X, XCircle } from 'lucide-react';
-import type { Cliente, LancamentoFaturamentoAereo, UsuarioLogin } from '../../types';
+import { Calculator, Check, CheckCircle2, ChevronDown, FileSpreadsheet, Loader2, Mail, Pencil, Plus, Receipt, RotateCcw, Search, Settings2, Trash2, UploadCloud, X, XCircle } from 'lucide-react';
+import type { Cliente, FaturaAereo, LancamentoFaturamentoAereo, UsuarioLogin } from '../../types';
 import { CustoExtra, ModeloPlanilhaCusto, RateioCustoExtra, STATUS_CUSTO_EXTRA, StatusCustoExtra, excluirCustoExtra, getCustosExtras, getModelosPlanilha, novoIdCustoExtra, salvarCustosExtras } from '../../utils/custosExtrasApi';
 import { obterUrlArquivo } from '../../utils/arquivosStorage';
 import { formatCurrency } from '../../utils/formatters';
@@ -8,7 +8,8 @@ import { baixarBlob } from '../../utils/downloadUtils';
 import { CustoParaPlanilha, gerarPlanilhaPeloModelo, gerarPlanilhaValidacao } from './planilhaCustosExtras';
 import { ModeloPlanilhaModal } from './ModeloPlanilhaModal';
 import { CalculadoraFreteModal } from '../Clients/CalculadoraFreteModal';
-import { TIPOS_CUSTO_EXTRA } from '../FarmaAereo/faturamentoAereoUtils';
+import { TIPOS_CUSTO_EXTRA, pertenceAoFarmaAereo } from '../FarmaAereo/faturamentoAereoUtils';
+import { ImportFaturamentoAereoModal } from '../FarmaAereo/ImportFaturamentoAereoModal';
 
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—');
 const hoje = () => new Date().toLocaleDateString('sv-SE');
@@ -26,10 +27,12 @@ interface Props {
   lancamentos: LancamentoFaturamentoAereo[];
   clientes: Cliente[];
   onUpdateLancamento: (l: LancamentoFaturamentoAereo) => Promise<void>;
+  /** Mesmo importador do Controle Financeiro (relatório operacional de CT-es). */
+  onImportarRelatorio?: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[]) => Promise<void> | void;
 }
 
 /** Custos extras: atrelar a uma nota, mandar para a empresa validar e lançar no CT-e quando aprovado. */
-export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, clientes, onUpdateLancamento }) => {
+export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, clientes, onUpdateLancamento, onImportarRelatorio }) => {
   const [itens, setItens] = useState<CustoExtra[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [status, setStatus] = useState<StatusCustoExtra | 'Todos'>('Pendente');
@@ -41,6 +44,8 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
   const [modelos, setModelos] = useState<Map<string, ModeloPlanilhaCusto>>(new Map());
   const [formatoDe, setFormatoDe] = useState<{ chave: string; nome: string } | null>(null);
   const [escolhendoFormato, setEscolhendoFormato] = useState(false);
+  const [menuImportar, setMenuImportar] = useState(false);
+  const [importarSetor, setImportarSetor] = useState<'aereo' | 'rodoviario' | null>(null);
 
   useEffect(() => {
     getModelosPlanilha()
@@ -189,6 +194,40 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {onImportarRelatorio && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuImportar((m) => !m)}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5"
+                title="Importar o relatório operacional de CT-es (o mesmo do Controle Financeiro)"
+              >
+                <UploadCloud className="w-4 h-4" /> Importar relatório <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+              {menuImportar && (
+                <div className="absolute right-0 z-20 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                  {(
+                    [
+                      ['aereo', 'Farma Aéreo'],
+                      ['rodoviario', 'Farma Rodoviário'],
+                    ] as const
+                  ).map(([s, rotulo]) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => {
+                        setMenuImportar(false);
+                        setImportarSetor(s);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-700 hover:bg-emerald-50"
+                    >
+                      {rotulo}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <button type="button" onClick={() => setEscolhendoFormato(true)} className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5">
             <Settings2 className="w-4 h-4" /> Planilhas das empresas
           </button>
@@ -378,6 +417,20 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
             });
             setFormatoDe(null);
           }}
+        />
+      )}
+      {onImportarRelatorio && importarSetor && (
+        <ImportFaturamentoAereoModal
+          isOpen
+          onClose={() => setImportarSetor(null)}
+          clientes={clientes}
+          lancamentosExistentes={lancamentos.filter((l) => pertenceAoFarmaAereo(l, clientes) === (importarSetor === 'aereo'))}
+          onConfirmImport={(ls, fs) => {
+            void onImportarRelatorio(ls, fs);
+          }}
+          titulo={`Importar relatório — ${importarSetor === 'aereo' ? 'Farma Aéreo' : 'Farma Rodoviário'} (Excel/XLS)`}
+          subtitulo="Os CT-es entram no Controle Financeiro e ficam disponíveis para atrelar custos extras"
+          modalPadrao={importarSetor === 'rodoviario' ? 'Rodoviário' : undefined}
         />
       )}
       {escolhendoFormato && (

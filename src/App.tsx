@@ -3714,6 +3714,7 @@ export default function App() {
               lancamentos={lancamentosFaturamentoAereo}
               clientes={clientes}
               onUpdateLancamento={handleUpdateLancamentoFaturamentoAereo}
+              onImportarRelatorio={handleImportFaturamentoAereo}
             />
           )}
 
