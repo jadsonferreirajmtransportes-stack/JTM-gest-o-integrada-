@@ -124,7 +124,7 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
         volumes: vols.length ? vols.reduce((s, v) => s + v, 0) : undefined,
         uf: juntar(ls.map((l) => l.estadoDestino)),
         remetente: juntar(ls.map((l) => l.remetenteLab)),
-        notasDetalhe: ls.map((l) => ({ cte: l.numeroCte, nf: l.notaFiscal, volumes: l.volumes, pesoKg: l.pesoTaxado || l.pesoKg, valorNF: l.valorNF })),
+        notasDetalhe: ls.map((l) => ({ cte: l.numeroCte, nf: l.notaFiscal, destinatario: l.destinatario, volumes: l.volumes, pesoKg: l.pesoTaxado || l.pesoKg, valorNF: l.valorNF })),
       };
     });
 

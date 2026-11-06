@@ -4,7 +4,7 @@ import { JMT_LOGO_BASE64 } from '../../data/jmtLogoBase64';
 import { EMPRESA_REGULAMENTO } from '../../data/regulamentoInterno';
 import type { CustoExtra } from '../../utils/custosExtrasApi';
 
-type CustoResumo = CustoExtra & { uf?: string };
+type CustoResumo = CustoExtra & { uf?: string; notasDetalhe?: { cte?: string; nf?: string; destinatario?: string }[] };
 
 const moeda = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—');
@@ -27,25 +27,100 @@ const I_MOTIVO = 7;
 const I_VALOR = 8;
 const I_ACORDO = 9;
 const I_OBS = 10;
-const NO_TEXTO = LINHAS.slice(0, I_ACORDO);
 
-/** Texto para o corpo do e-mail (vai junto com a imagem e a planilha). */
+/** Nome do custo como a equipe escreve no e-mail (ex.: "TDE - Taxa de Dificuldade de Entrega", "VEÍCULO DEDICADO"). */
+function nomeDoCusto(tipo: string): string {
+  const t = tipo.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  if (/\btde\b/.test(t)) return 'TDE - Taxa de Dificuldade de Entrega';
+  if (/dedicado/.test(t)) return 'VEÍCULO DEDICADO';
+  return tipo;
+}
+const siglaDoCusto = (tipo: string) => {
+  const n = nomeDoCusto(tipo);
+  return n.startsWith('TDE') ? 'TDE' : n === 'VEÍCULO DEDICADO' ? 'CUSTO ADICIONAL' : n.toUpperCase();
+};
+const unicos = (xs: string[]) => [...new Set(xs.filter(Boolean))];
+const saudacao = () => {
+  const h = new Date().getHours();
+  return h < 12 ? 'Bom dia!' : h < 18 ? 'Boa tarde!' : 'Boa noite!';
+};
+const dataDosCustos = (itens: CustoResumo[]) => {
+  const datas = unicos(itens.map((x) => x.dataOcorrencia || ''));
+  return datas.length === 1 ? dataBr(datas[0]) : new Date().toLocaleDateString('pt-BR');
+};
+
+/** CT-e/NF de cada destinatário (como nas tabelinhas "CTC | NF" que a equipe cola no e-mail). */
+export function notasPorDestinatario(itens: CustoResumo[]): { destinatario: string; notas: { cte: string; nf: string }[] }[] {
+  const grupos = new Map<string, { cte: string; nf: string }[]>();
+  itens.forEach((x) => {
+    const notas = x.notasDetalhe?.length ? x.notasDetalhe : [{ cte: x.numeroCte, nf: x.notaFiscal, destinatario: x.destinatario }];
+    notas.forEach((n) => {
+      const dest = (n.destinatario || x.destinatario || 'Destinatário').trim();
+      const lista = grupos.get(dest) || [];
+      if (!lista.some((l) => l.cte === (n.cte || '') && l.nf === (n.nf || ''))) lista.push({ cte: n.cte || '—', nf: n.nf || '—' });
+      grupos.set(dest, lista);
+    });
+  });
+  return [...grupos.entries()].map(([destinatario, notas]) => ({ destinatario, notas }));
+}
+
+/** Assunto no padrão da equipe: "TDE - DESTINO A / DESTINO B - 05/11/2026" ou "CUSTO ADICIONAL - EMPRESA - data". */
+export function assuntoEmail(empresa: string, itens: CustoResumo[]): string {
+  const sigla = unicos(itens.map((x) => siglaDoCusto(x.tipo))).join(' / ');
+  const destinos = notasPorDestinatario(itens).map((g) => g.destinatario.split(/\s+/).slice(0, 3).join(' '));
+  const quem = destinos.length && destinos.length <= 3 ? destinos.join(' / ') : empresa;
+  return `${sigla} - ${quem} - ${dataDosCustos(itens)}`.toUpperCase();
+}
+
+/** Texto para o corpo do e-mail, no padrão que a equipe já usa. */
 export function textoResumoEmail(empresa: string, itens: CustoResumo[], envioId: string): string {
   const total = itens.reduce((s, x) => s + x.valor, 0);
-  const blocos = itens.map((x, k) => [`CUSTO ${k + 1}`, ...NO_TEXTO.map(([r, f]) => `${r}: ${f(x)}`)].join('\n'));
+  const custos = unicos(itens.map((x) => nomeDoCusto(x.tipo))).join(' / ');
+  const grupos = notasPorDestinatario(itens);
   return [
-    'Prezados,',
+    saudacao(),
     '',
-    `Solicitamos a autorização ${itens.length > 1 ? `dos ${itens.length} custos extras abaixo` : 'do custo extra abaixo'} (referência ${envioId}) — ${empresa}.`,
+    `Segue em anexo planilha de custo extra (${custos}) ${dataDosCustos(itens)}.`,
     '',
-    ...blocos.flatMap((b) => [b, '']),
-    `TOTAL: ${moeda(total)}`,
+    "CTE's/NF's relacionadas:",
     '',
-    `Por favor, respondam este e-mail informando se estão de acordo (S/N) com ${itens.length > 1 ? 'cada custo' : 'o custo'}. A planilha segue em anexo.`,
+    ...grupos.flatMap((g) => [`${g.destinatario.toUpperCase()}:`, ...g.notas.map((n) => `CT-e ${n.cte} — NF ${n.nf}`), '']),
+    `Valor total: ${moeda(total)}${itens.length > 1 ? ` (${itens.length} custos)` : ''} — referência ${envioId}.`,
+    '',
+    'Ficamos no aguardo da autorização.',
     '',
     'Atenciosamente,',
     `Financeiro — ${EMPRESA_REGULAMENTO.razaoSocial}`,
   ].join('\n');
+}
+
+/** Mesmo e-mail em HTML, com as tabelas "CT-E | NF" de cada destinatário (para colar no Gmail/Outlook). */
+export function htmlResumoEmail(empresa: string, itens: CustoResumo[], envioId: string, texto: string): string {
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const grupos = notasPorDestinatario(itens);
+  const td = 'border:1px solid #000;padding:3px 10px;text-align:center;font-family:Calibri,Arial,sans-serif;font-size:14px';
+  const tabelas = grupos
+    .map(
+      (g) =>
+        `<p style="color:#1f5aa6;margin:14px 0 6px">${esc(g.destinatario.toUpperCase())}:</p>` +
+        `<table style="border-collapse:collapse;min-width:420px"><tr><th style="${td};font-weight:bold">CT-E</th><th style="${td};font-weight:bold">NF</th></tr>` +
+        g.notas.map((n) => `<tr><td style="${td}">${esc(n.cte)}</td><td style="${td}">${esc(n.nf)}</td></tr>`).join('') +
+        '</table>'
+    )
+    .join('');
+  // O texto (editável) entra como está; a lista de CT-e/NF dele vira as tabelas.
+  const partes = texto.split("CTE's/NF's relacionadas:");
+  const antes = partes[0] || '';
+  const depois = partes.length > 1 ? partes[1].split(/\n(?=Valor total:)/).slice(1).join('\n') : '';
+  const paragrafos = (s: string) =>
+    s
+      .trim()
+      .split(/\n{2,}/)
+      .map((p) => `<p style="margin:0 0 12px">${esc(p).replace(/\n/g, '<br>')}</p>`)
+      .join('');
+  return `<div style="font-family:Arial,sans-serif;font-size:14px;color:#222">${paragrafos(antes)}${
+    partes.length > 1 ? `<p style="margin:0 0 6px">CTE's/NF's relacionadas:</p>${tabelas}<br>` : ''
+  }${paragrafos(depois)}</div>`;
 }
 
 function carregarImagem(src: string): Promise<HTMLImageElement> {

@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Check, Copy, Download, ImageIcon, Loader2, Mail, X } from 'lucide-react';
 import type { CustoExtra } from '../../utils/custosExtrasApi';
 import { baixarBlob } from '../../utils/downloadUtils';
-import { imagemResumoEmail, textoResumoEmail } from './resumoEmail';
+import { assuntoEmail, htmlResumoEmail, imagemResumoEmail, textoResumoEmail } from './resumoEmail';
 
 /** Imagem do resumo + texto pronto para o corpo do e-mail de validação. */
 export const EmailResumoModal: React.FC<{
   empresa: string;
-  itens: (CustoExtra & { uf?: string })[];
+  itens: (CustoExtra & { uf?: string; notasDetalhe?: { cte?: string; nf?: string; destinatario?: string }[] })[];
   envioId: string;
   email?: string;
   planilhaBaixada?: string;
@@ -16,6 +16,7 @@ export const EmailResumoModal: React.FC<{
   const [imagem, setImagem] = useState<Blob | null>(null);
   const [url, setUrl] = useState('');
   const [texto, setTexto] = useState(() => textoResumoEmail(empresa, itens, envioId));
+  const [assunto, setAssunto] = useState(() => assuntoEmail(empresa, itens));
   const [aviso, setAviso] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -61,7 +62,25 @@ export const EmailResumoModal: React.FC<{
     }
   };
   const abrirEmail = () => {
-    window.open(`mailto:${email || ''}?subject=${encodeURIComponent(`Validação de custos extras — ${empresa} (${envioId})`)}&body=${encodeURIComponent(texto)}`);
+    window.open(`mailto:${email || ''}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(texto)}`);
+  };
+  /** Copia o e-mail com as tabelas CT-E | NF (cola formatado no Gmail/Outlook). */
+  const copiarComTabelas = async () => {
+    const html = htmlResumoEmail(empresa, itens, envioId, texto);
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([texto], { type: 'text/plain' }) })]);
+      avisar('E-mail com tabelas copiado — cole (Ctrl+V) no corpo do e-mail.');
+    } catch {
+      await copiarTexto();
+    }
+  };
+  const copiarAssunto = async () => {
+    try {
+      await navigator.clipboard.writeText(assunto);
+      avisar('Assunto copiado.');
+    } catch {
+      setErro('Não consegui copiar o assunto — selecione e copie com Ctrl+C.');
+    }
   };
 
   const botao = 'px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 disabled:opacity-50';
@@ -109,11 +128,24 @@ export const EmailResumoModal: React.FC<{
           </div>
 
           <div>
+            <span className="text-xs font-bold text-slate-600 block mb-1">Assunto</span>
+            <div className="flex gap-2">
+              <input value={assunto} onChange={(e) => setAssunto(e.target.value)} className="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold" />
+              <button type="button" onClick={copiarAssunto} className={`${botao} border border-slate-200 text-slate-700 hover:bg-slate-50`}>
+                <Copy className="w-4 h-4" /> Copiar
+              </button>
+            </div>
+          </div>
+
+          <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <span className="text-xs font-bold text-slate-600">Texto do e-mail (pode editar)</span>
-              <div className="flex gap-2">
-                <button type="button" onClick={copiarTexto} className={`${botao} bg-[#C48229] hover:bg-[#92611F] text-white`}>
-                  <Copy className="w-4 h-4" /> Copiar texto
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={copiarComTabelas} className={`${botao} bg-[#C48229] hover:bg-[#92611F] text-white`} title="Copia o texto com as tabelas CT-E | NF de cada destinatário, como nos e-mails da equipe">
+                  <Copy className="w-4 h-4" /> Copiar com tabelas
+                </button>
+                <button type="button" onClick={copiarTexto} className={`${botao} border border-slate-200 text-slate-700 hover:bg-slate-50`}>
+                  <Copy className="w-4 h-4" /> Só o texto
                 </button>
                 <button type="button" onClick={abrirEmail} className={`${botao} bg-emerald-700 hover:bg-emerald-800 text-white`} title="Abre o programa de e-mail com o assunto e o texto (cole a imagem e anexe a planilha)">
                   <Mail className="w-4 h-4" /> Abrir e-mail

@@ -19,6 +19,7 @@ export const nomeArquivoValidacao = (empresa: string, envioId: string) =>
 export interface NotaDoFormulario {
   cte?: string;
   nf?: string;
+  destinatario?: string;
   volumes?: number;
   pesoKg?: number;
   valorNF?: number;
