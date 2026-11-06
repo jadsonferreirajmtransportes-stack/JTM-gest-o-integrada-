@@ -251,45 +251,77 @@ export async function gerarPlanilhaValidacao(empresa: string, itens: CustoDoForm
     rod.alignment = { horizontal: 'center', wrapText: true };
   }
 
+  /** Resumo na vertical (como o formulário da UNICARGO): rótulos na coluna A e um custo por coluna. */
   function resumo(ws: Folha) {
-    ws.columns = [{ width: 12 }, { width: 18 }, { width: 16 }, { width: 30 }, { width: 18 }, { width: 24 }, { width: 14 }, { width: 14 }, { width: 28 }];
-    cabecalho(ws, 'RESUMO DOS CUSTOS EXTRAS PARA AUTORIZAÇÃO', 9);
-    const titulos = ['DATA', 'NF', 'CT-E', 'DESTINATÁRIO', 'CIDADE', 'TIPO', 'VALOR (R$)', 'DE ACORDO? (S/N)', 'OBSERVAÇÃO DO CLIENTE'];
-    const cab = ws.getRow(7);
-    titulos.forEach((t, i) => {
-      const c = cab.getCell(i + 1);
-      c.value = t;
+    const n = itens.length;
+    const ultima = n + 1;
+    ws.columns = [{ width: 34 }, ...itens.map(() => ({ width: 30 }))];
+    cabecalho(ws, 'RESUMO DOS CUSTOS EXTRAS PARA AUTORIZAÇÃO', Math.max(ultima, 3));
+
+    // Total geral em destaque
+    const rt = ws.getCell(7, 1);
+    rt.value = 'TOTAL DOS CUSTOS:';
+    rt.font = fonte(true, 13);
+    rt.alignment = { horizontal: 'right', vertical: 'middle' };
+    const vt = ws.getCell(7, 2);
+    vt.value = itens.reduce((s, x) => s + x.valor, 0);
+    vt.numFmt = MOEDA;
+    vt.font = fonte(true, 13);
+    vt.fill = preencher('FFFFE066');
+    vt.border = borda;
+    ws.getRow(7).height = 22;
+
+    const linhas: [string, (x: CustoDoFormulario) => string | number | Date | null, { moeda?: boolean; data?: boolean; preencher?: boolean; alto?: boolean }?][] = [
+      ['DATA:', (x) => (x.dataOcorrencia ? new Date(Date.UTC(+x.dataOcorrencia.slice(0, 4), +x.dataOcorrencia.slice(5, 7) - 1, +x.dataOcorrencia.slice(8, 10), 12)) : null), { data: true }],
+      ['Nº DO CT-E:', (x) => x.numeroCte || ''],
+      ['Nº DA NOTA FISCAL:', (x) => x.notaFiscal || ''],
+      ['DESTINATÁRIO:', (x) => x.destinatario || ''],
+      ['CIDADE:', (x) => x.cidade || ''],
+      ['UF:', (x) => x.uf || ''],
+      ['TIPO DO CUSTO:', (x) => x.tipo],
+      ['MOTIVO / DETALHES:', (x) => x.descricao || '', { alto: true }],
+      ['VALOR:', (x) => x.valor, { moeda: true }],
+      ['DE ACORDO? (S/N):', () => '', { preencher: true }],
+      ['OBSERVAÇÃO DO CLIENTE:', () => '', { preencher: true, alto: true }],
+    ];
+
+    // Cabeçalho das colunas: Custo 1, Custo 2...
+    let r = 9;
+    const vazio = ws.getCell(r, 1);
+    vazio.border = borda;
+    itens.forEach((_, k) => {
+      const c = ws.getCell(r, k + 2);
+      c.value = `CUSTO ${k + 1}`;
       c.font = fonte(true, 10, BRANCO);
-      c.fill = preencher(i >= 7 ? BRONZE_ESCURO : BRONZE);
-      c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      c.fill = preencher(BRONZE);
+      c.alignment = { horizontal: 'center', vertical: 'middle' };
       c.border = borda;
     });
-    cab.height = 28;
-    itens.forEach((x, k) => {
-      const row = ws.getRow(8 + k);
-      [dataBr(x.dataOcorrencia), x.notaFiscal || '', x.numeroCte || '', x.destinatario || '', x.cidade || '', x.tipo, x.valor, '', ''].forEach((v, i) => {
-        const c = row.getCell(i + 1);
-        c.value = v;
-        c.font = fonte(false, 10);
+    ws.getRow(r).height = 20;
+    r += 1;
+    linhas.forEach(([rotulo, valor, op = {}]) => {
+      const l = ws.getCell(r, 1);
+      l.value = rotulo;
+      l.font = fonte(true, 10, rotulo.startsWith('DE ACORDO') || rotulo.startsWith('OBSERV') ? BRONZE_ESCURO : PRETO);
+      l.alignment = { horizontal: 'right', vertical: 'middle', wrapText: true };
+      l.border = borda;
+      itens.forEach((x, k) => {
+        const c = ws.getCell(r, k + 2);
+        c.value = valor(x);
+        c.font = fonte(rotulo === 'VALOR:', 10);
+        c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
         c.border = borda;
-        c.alignment = { vertical: 'middle', wrapText: i === 3 || i === 1 };
-        if (i === 6) c.numFmt = MOEDA;
-        if (i >= 7) c.fill = preencher(AREIA);
+        if (op.moeda) c.numFmt = MOEDA;
+        if (op.data) c.numFmt = 'dd/mm/yyyy';
+        if (op.preencher) c.fill = preencher(rotulo.startsWith('DE ACORDO') ? AMARELO : AREIA);
       });
+      if (op.alto) ws.getRow(r).height = 45;
+      r += 1;
     });
-    const lt = 8 + itens.length;
-    ws.mergeCells(lt, 1, lt, 6);
-    const rot = ws.getCell(lt, 1);
-    rot.value = 'TOTAL';
-    rot.font = fonte(true, 11, BRONZE_ESCURO);
-    rot.alignment = { horizontal: 'right' };
-    const tot = ws.getCell(lt, 7);
-    tot.value = itens.reduce((s, x) => s + x.valor, 0);
-    tot.numFmt = MOEDA;
-    tot.font = fonte(true, 11, BRONZE_ESCURO);
-    ws.mergeCells(lt + 2, 1, lt + 2, 9);
-    const obs = ws.getCell(lt + 2, 1);
-    obs.value = 'Cada custo tem o seu formulário completo nas abas seguintes.';
+    r += 1;
+    ws.mergeCells(r, 1, r, Math.max(ultima, 3));
+    const obs = ws.getCell(r, 1);
+    obs.value = 'Cada custo tem o seu formulário completo nas abas seguintes. Responda o e-mail com a planilha preenchida.';
     obs.font = fonte(false, 9, CINZA);
   }
 
