@@ -49,6 +49,7 @@ import { AliquotasTributosModal } from './AliquotasTributosModal';
 import { AliquotaTributo, aliquotaEm, getAliquotas, tributosDoValor } from '../../utils/tributosApi';
 import { gerarRelatorioFinanceiroPdf, gerarRelatorioFinanceiroXlsx } from './relatorioFinanceiro';
 import { baixarBlob } from '../../utils/downloadUtils';
+import { CalculadoraFlutuante } from '../Common/CalculadoraFlutuante';
 import { ROTULO_SITUACAO_NF, SituacaoEntregaNF, getDetalheBaixaNF, nfNormalizada } from '../../utils/baixasApi';
 
 /** Situação da entrega de um lançamento: Performance das baixas (pela NF) e o status do relatório
@@ -2529,6 +2530,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
         subtitulo={`Controle Financeiro — ${tituloSetor}: lançamentos de CT-e e faturas`}
         modalPadrao={modalPadrao}
       />
+      <CalculadoraFlutuante />
     </div>
   );
 };

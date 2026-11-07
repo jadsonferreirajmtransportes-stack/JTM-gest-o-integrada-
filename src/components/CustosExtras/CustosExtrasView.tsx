@@ -10,6 +10,7 @@ import { ModeloPlanilhaModal } from './ModeloPlanilhaModal';
 import { EmailResumoModal } from './EmailResumoModal';
 import { CalculadoraFreteModal } from '../Clients/CalculadoraFreteModal';
 import { TIPOS_CUSTO_EXTRA, pertenceAoFarmaAereo } from '../FarmaAereo/faturamentoAereoUtils';
+import { CalculadoraFlutuante } from '../Common/CalculadoraFlutuante';
 import { ImportFaturamentoAereoModal } from '../FarmaAereo/ImportFaturamentoAereoModal';
 
 const dataBr = (iso?: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—');
@@ -523,6 +524,7 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
           }}
         />
       )}
+      <CalculadoraFlutuante />
     </div>
   );
 };
