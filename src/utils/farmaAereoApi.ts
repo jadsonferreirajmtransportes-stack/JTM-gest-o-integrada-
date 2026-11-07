@@ -347,6 +347,7 @@ function rowToLancamento(r: any): LancamentoFaturamentoAereo {
     valorRecebido: r.valor_recebido === null ? undefined : Number(r.valor_recebido),
     confirmacaoPagamento: r.confirmacao_pagamento ?? false,
     dataConclusao: u(r.data_conclusao),
+    statusEntrega: u(r.status_entrega),
     nfEmitida: u(r.nf_emitida),
     faturaId: u(r.fatura_id),
     observacao: u(r.observacao),
@@ -388,6 +389,8 @@ export function lancamentoToRow(l: LancamentoFaturamentoAereo) {
     valor_recebido: n(l.valorRecebido),
     confirmacao_pagamento: l.confirmacaoPagamento ?? false,
     data_conclusao: n(l.dataConclusao),
+    // Só manda quando há (antes da migração 121 a coluna não existe).
+    ...(l.statusEntrega ? { status_entrega: l.statusEntrega } : {}),
     nf_emitida: l.nfEmitida ?? null,
     fatura_id: n(l.faturaId),
     observacao: n(l.observacao),

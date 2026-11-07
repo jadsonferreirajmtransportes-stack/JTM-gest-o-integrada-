@@ -72,7 +72,7 @@ interface FarmaRodoviarioViewProps {
   // (LancamentoFaturamentoAereo/FaturaAereo), separada pelo campo `modal`.
   lancamentosFaturamentoAereo?: LancamentoFaturamentoAereo[];
   faturasAereo?: FaturaAereo[];
-  onImportFaturamentoAereo?: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[]) => void;
+  onImportFaturamentoAereo?: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[], qtdAtualizados?: number) => void;
   onCreateFaturaAereo?: (fatura: FaturaAereo) => void;
   onUpdateFaturaAereo?: (fatura: FaturaAereo) => void;
   onDeleteFaturaAereo?: (id: string) => void;

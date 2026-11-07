@@ -5,7 +5,10 @@ import {
   readSpreadsheetFile,
   mapRowsToFaturamentoAereo,
   separarLancamentosNovosDeExistentes,
+  atualizacoesDosExistentes,
+  statusEntregaConcluida,
   ImportacaoFaturamentoAereoResultado,
+  LancamentoAtualizado,
 } from './faturamentoAereoUtils';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -16,7 +19,9 @@ interface ImportFaturamentoAereoModalProps {
   /** Lançamentos já cadastrados neste setor — usado pra não reimportar linhas que já existem
    *  (mesma NF/CT-e do mesmo cliente), evitando recriar duplicidades já apagadas manualmente. */
   lancamentosExistentes: LancamentoFaturamentoAereo[];
-  onConfirmImport: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[]) => void;
+  /** `lancamentos` = novos + os já existentes atualizados (mesmo id — a gravação é upsert);
+   *  `qtdAtualizados` diz quantos do fim da lista são atualizações. */
+  onConfirmImport: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[], qtdAtualizados?: number) => void;
   /** Título/legenda exibidos no cabeçalho — deixa o modal genérico entre Farma Aéreo e
    *  Farma Rodoviário (mesma estrutura de importação, só muda o setor). */
   titulo?: string;
@@ -41,6 +46,8 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
   const [isProcessing, setIsProcessing] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [resultado, setResultado] = useState<ImportacaoFaturamentoAereoResultado | null>(null);
+  // Reimportação (ex.: ao fechar a fatura, com o status atualizado): CT-es que já existem e mudaram.
+  const [atualizados, setAtualizados] = useState<LancamentoAtualizado[]>([]);
 
   if (!isOpen) return null;
 
@@ -48,6 +55,7 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
     setFileName('');
     setErro(null);
     setResultado(null);
+    setAtualizados([]);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,6 +64,7 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
     setFileName(file.name);
     setErro(null);
     setResultado(null);
+    setAtualizados([]);
     setIsProcessing(true);
     try {
       const rows = await readSpreadsheetFile(file);
@@ -75,19 +84,19 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
         mapped.lancamentos,
         lancamentosExistentes
       );
-      if (novos.length === 0) {
+      const { atualizados: mudaram, semMudanca } = atualizacoesDosExistentes(jaExistentes, lancamentosExistentes, clientes);
+      if (novos.length === 0 && mudaram.length === 0) {
         setErro(
-          `Todos os ${mapped.lancamentos.length} lançamento(s) dessa planilha já estão cadastrados no sistema (mesma Nota Fiscal ou CT-e do mesmo cliente) — nada novo pra importar.`
+          `Todos os ${mapped.lancamentos.length} lançamento(s) dessa planilha já estão cadastrados no sistema (mesma Nota Fiscal ou CT-e do mesmo cliente) e nada mudou — status da entrega e demais campos iguais.`
         );
         return;
       }
+      setAtualizados(mudaram);
       const idsFaturasNecessarias = new Set(novos.map((l) => l.faturaId).filter(Boolean));
       const faturasFiltradas = mapped.faturas.filter((f) => idsFaturasNecessarias.has(f.id));
       const avisos = [...mapped.avisos];
-      if (jaExistentes.length > 0) {
-        avisos.unshift(
-          `${jaExistentes.length} lançamento(s) ignorado(s) por já existirem no sistema (mesma Nota Fiscal — ou CT-e, quando a NF não está preenchida — do mesmo cliente). Evita recriar duplicidades já resolvidas.`
-        );
+      if (semMudanca > 0) {
+        avisos.unshift(`${semMudanca} lançamento(s) já existiam no sistema sem nada diferente — ficam como estão.`);
       }
       setResultado({ ...mapped, lancamentos: novos, faturas: faturasFiltradas, avisos });
     } catch (err: any) {
@@ -97,9 +106,14 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
     }
   };
 
+  const concluidosAgora = atualizados.filter((a) => a.concluiuAgora).length;
+  const pendentesNaPlanilha = resultado
+    ? [...resultado.lancamentos, ...atualizados.map((a) => a.depois)].filter((l) => statusEntregaConcluida(l.statusEntrega) === false).length
+    : 0;
+
   const handleConfirmar = () => {
     if (!resultado) return;
-    onConfirmImport(resultado.lancamentos, resultado.faturas);
+    onConfirmImport([...resultado.lancamentos, ...atualizados.map((a) => a.depois)], resultado.faturas, atualizados.length);
     handleReset();
     onClose();
   };
@@ -146,7 +160,14 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
                   <strong>Recomendadas:</strong> Destinatário, Nota Fiscal, CT-e, Data da Emissão,
                   Peso (KG), Volumes, Valor da Prestação, Custo Extra, Valor a Cobrar do Cliente,
                   Fatura Atrelada (nº fatura), Confirmação de Pagamento, Valor Recebido na Fatura,
-                  Data da Conclusão.
+                  Data da Conclusão, Status da entrega, Data da entrega.
+                </p>
+                <p className="text-slate-500">
+                  <strong>Reimportar atualiza:</strong> ao fechar a fatura, importe o relatório de novo com o
+                  status atualizado — os CT-es que já existem passam a ter o status e a data da entrega novos
+                  (pendente → entrega concluída). Nos CT-es ainda sem fatura, os outros dados do relatório
+                  (destinatário, cidade, peso, volumes, valores) também são atualizados. Custo extra, valor
+                  a cobrar digitado, pagamento e fatura nunca são alterados.
                 </p>
                 <p className="text-slate-500">
                   Se "Valor a Cobrar do Cliente" não vier preenchido, o sistema soma automaticamente
@@ -208,9 +229,20 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
                     Planilha processada: {fileName}
                   </p>
                   <p className="mt-1">
-                    {resultado.lancamentos.length} lançamento(s) de CT-e prontos para importar,
-                    agrupados em {resultado.faturas.length} nova(s) fatura(s).
+                    {resultado.lancamentos.length} lançamento(s) novo(s) de CT-e
+                    {resultado.faturas.length > 0 ? `, agrupados em ${resultado.faturas.length} nova(s) fatura(s)` : ''}.
                   </p>
+                  {atualizados.length > 0 && (
+                    <p className="mt-1">
+                      {atualizados.length} CT-e(s) já existente(s) serão atualizados
+                      {concluidosAgora > 0 && ` — ${concluidosAgora} passam a ficar com entrega concluída`}.
+                    </p>
+                  )}
+                  {pendentesNaPlanilha > 0 && (
+                    <p className="mt-1 text-amber-700">
+                      {pendentesNaPlanilha} CT-e(s) desta planilha ainda não estão com entrega concluída.
+                    </p>
+                  )}
                   {resultado.totalLinhasIgnoradas > 0 && (
                     <p className="mt-1 text-amber-700">
                       {resultado.totalLinhasIgnoradas} linha(s) ignorada(s) por não terem
@@ -232,6 +264,46 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
                 </div>
               )}
 
+              {atualizados.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 mb-2">
+                    Atualizações (primeiros {Math.min(8, atualizados.length)}):
+                  </p>
+                  <div className="border border-slate-200 rounded-xl overflow-x-auto max-h-64">
+                    <table className="w-full text-[11px]">
+                      <thead className="bg-slate-50 sticky top-0">
+                        <tr className="text-left text-slate-500">
+                          <th className="px-2.5 py-2">Cliente</th>
+                          <th className="px-2.5 py-2">Nota Fiscal</th>
+                          <th className="px-2.5 py-2">Status da entrega</th>
+                          <th className="px-2.5 py-2">O que muda</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {atualizados.slice(0, 8).map((a) => (
+                          <tr key={a.antes.id}>
+                            <td className="px-2.5 py-2 font-medium text-slate-700 max-w-[140px] truncate">{a.antes.clienteNome}</td>
+                            <td className="px-2.5 py-2 text-slate-600">{a.antes.notaFiscal || a.antes.numeroCte || '—'}</td>
+                            <td className="px-2.5 py-2 text-slate-600">
+                              {a.antes.statusEntrega !== a.depois.statusEntrega ? (
+                                <>
+                                  <span className="text-slate-400">{a.antes.statusEntrega || '—'}</span> →{' '}
+                                  <span className={a.concluiuAgora ? 'text-emerald-700 font-semibold' : ''}>{a.depois.statusEntrega}</span>
+                                </>
+                              ) : (
+                                a.depois.statusEntrega || '—'
+                              )}
+                            </td>
+                            <td className="px-2.5 py-2 text-slate-500">{a.campos.join(', ')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {resultado.lancamentos.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-slate-600 mb-2">
                   Prévia (primeiros {Math.min(8, resultado.lancamentos.length)} lançamentos):
@@ -244,6 +316,7 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
                         <th className="px-2.5 py-2">Nota Fiscal</th>
                         <th className="px-2.5 py-2">Data</th>
                         <th className="px-2.5 py-2 text-right">Valor a Cobrar</th>
+                        <th className="px-2.5 py-2">Status da entrega</th>
                         <th className="px-2.5 py-2">Pago?</th>
                       </tr>
                     </thead>
@@ -258,6 +331,7 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
                           <td className="px-2.5 py-2 text-right font-semibold text-slate-800">
                             {formatCurrency(l.valorACobrar)}
                           </td>
+                          <td className="px-2.5 py-2 text-slate-600">{l.statusEntrega || '—'}</td>
                           <td className="px-2.5 py-2">
                             {l.confirmacaoPagamento ? (
                               <span className="text-emerald-600 font-semibold">Sim</span>
@@ -271,6 +345,7 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
                   </table>
                 </div>
               </div>
+              )}
 
               <button
                 type="button"
@@ -301,7 +376,9 @@ export const ImportFaturamentoAereoModal: React.FC<ImportFaturamentoAereoModalPr
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>
               Confirmar Importação
-              {resultado ? ` (${resultado.lancamentos.length} lançamentos)` : ''}
+              {resultado
+                ? ` (${resultado.lancamentos.length} novo(s)${atualizados.length ? ` + ${atualizados.length} atualizado(s)` : ''})`
+                : ''}
             </span>
           </button>
         </div>

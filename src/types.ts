@@ -1264,6 +1264,9 @@ export interface LancamentoFaturamentoAereo {
   valorRecebido?: number;
   confirmacaoPagamento: boolean;
   dataConclusao?: string;
+  /** Status da entrega como veio no relatório importado (ex.: "ENTREGA CONCLUÍDA", "PENDENTE") —
+   *  reimportar o relatório atualiza (migração 121). Ver statusEntregaConcluida. */
+  statusEntrega?: string;
   nfEmitida?: boolean;
   /** Vínculo com a Fatura (FaturaAereo.id) que agrupa este lançamento. */
   faturaId?: string;

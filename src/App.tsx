@@ -2720,14 +2720,17 @@ export default function App() {
   // Controle Financeiro — Faturamento Farma Aéreo
   const handleImportFaturamentoAereo = async (
     lancamentos: LancamentoFaturamentoAereo[],
-    faturas: FaturaAereo[]
+    faturas: FaturaAereo[],
+    qtdAtualizados = 0
   ) => {
     try {
       await importFaturasAereo(faturas);
+      // Novos e atualizados juntos (upsert pelo id) — a reimportação do relatório atualiza o status da entrega.
       await importLancamentosFaturamentoAereo(lancamentos);
       await loadFarmaAereoData();
+      const novos = lancamentos.length - qtdAtualizados;
       showToast(
-        `Importação concluída: ${lancamentos.length} lançamento(s) e ${faturas.length} fatura(s) novas.`,
+        `Importação concluída: ${novos} lançamento(s) novo(s)${qtdAtualizados ? `, ${qtdAtualizados} atualizado(s)` : ''} e ${faturas.length} fatura(s) nova(s).`,
         'success'
       );
     } catch (err) {

@@ -366,6 +366,104 @@ export function separarLancamentosNovosDeExistentes(
   return { novos, jaExistentes };
 }
 
+/** O status da entrega do relatório diz que foi entregue? true = concluída, false = ainda não
+ *  (pendente, em rota, devolução...), undefined = sem status ou texto que não dá para saber. */
+export function statusEntregaConcluida(status?: unknown): boolean | undefined {
+  const s = normalizeKey(String(status ?? ''));
+  if (!s) return undefined;
+  if (/pendent|nao entreg|insucesso|devol|cancel|aguard|em rota|transit|reentreg|extravi|recus|ausente|fechad|em andamento|saiu para/.test(s)) return false;
+  if (/conclu|entregue|entrega realizada|finaliz|baixad|comprovad/.test(s)) return true;
+  return undefined;
+}
+
+/** Campos que a reimportação do relatório atualiza num CT-e que já existe. Status e data da entrega
+ *  valem sempre; os demais só enquanto o CT-e não está em fatura (o que já foi faturado não muda).
+ *  Nunca mexe em cliente, fatura, custo extra, valor a cobrar manual, pagamento nem observação. */
+const CAMPOS_ATUALIZAVEIS_SEM_FATURA: { campo: keyof LancamentoFaturamentoAereo; rotulo: string }[] = [
+  { campo: 'destinatario', rotulo: 'Destinatário' },
+  { campo: 'cnpjDestinatario', rotulo: 'CNPJ destinatário' },
+  { campo: 'estadoDestino', rotulo: 'UF destino' },
+  { campo: 'cidadeDestino', rotulo: 'Cidade destino' },
+  { campo: 'bairroDestino', rotulo: 'Bairro destino' },
+  { campo: 'remetenteLab', rotulo: 'Remetente' },
+  { campo: 'cnpjRemetente', rotulo: 'CNPJ remetente' },
+  { campo: 'estadoRemetente', rotulo: 'UF remetente' },
+  { campo: 'cidadeRemetente', rotulo: 'Cidade remetente' },
+  { campo: 'valorNF', rotulo: 'Valor da NF' },
+  { campo: 'valorPrestacao', rotulo: 'Valor da prestação' },
+  { campo: 'dataEmissao', rotulo: 'Emissão' },
+  { campo: 'numeroCte', rotulo: 'CT-e' },
+  { campo: 'ctrc', rotulo: 'CTRC' },
+  { campo: 'pesoKg', rotulo: 'Peso' },
+  { campo: 'pesoTaxado', rotulo: 'Peso taxado' },
+  { campo: 'volumes', rotulo: 'Volumes' },
+];
+
+export interface LancamentoAtualizado {
+  antes: LancamentoFaturamentoAereo;
+  depois: LancamentoFaturamentoAereo;
+  campos: string[];
+  /** Passou a constar como entrega concluída nesta importação. */
+  concluiuAgora: boolean;
+}
+
+/** Para a reimportação: cruza as linhas lidas com os CT-es que já existem (mesma chave de
+ *  separarLancamentosNovosDeExistentes) e devolve o CT-e existente com os campos atualizados. */
+export function atualizacoesDosExistentes(
+  jaExistentes: LancamentoFaturamentoAereo[],
+  lancamentosExistentes: LancamentoFaturamentoAereo[],
+  clientes: Cliente[]
+): { atualizados: LancamentoAtualizado[]; semMudanca: number } {
+  const porChave = new Map<string, LancamentoFaturamentoAereo>();
+  lancamentosExistentes.forEach((l) => {
+    const chave = chaveCorrespondenciaLancamento(l);
+    if (chave && !porChave.has(chave)) porChave.set(chave, l);
+  });
+  const vazio = (v: unknown) => v === undefined || v === null || v === '';
+  const atualizados: LancamentoAtualizado[] = [];
+  const jaVistos = new Set<string>();
+  let semMudanca = 0;
+  jaExistentes.forEach((lido) => {
+    const chave = chaveCorrespondenciaLancamento(lido);
+    const antes = chave ? porChave.get(chave) : undefined;
+    if (!antes || jaVistos.has(antes.id)) return;
+    jaVistos.add(antes.id);
+    const depois: LancamentoFaturamentoAereo = { ...antes };
+    const campos: string[] = [];
+    if (lido.statusEntrega && normalizeKey(lido.statusEntrega) !== normalizeKey(antes.statusEntrega || '')) {
+      depois.statusEntrega = lido.statusEntrega;
+      campos.push('Status da entrega');
+    }
+    if (lido.dataConclusao && lido.dataConclusao !== antes.dataConclusao) {
+      depois.dataConclusao = lido.dataConclusao;
+      campos.push('Data da entrega');
+    }
+    if (!antes.faturaId) {
+      CAMPOS_ATUALIZAVEIS_SEM_FATURA.forEach(({ campo, rotulo }) => {
+        const novo = lido[campo];
+        if (vazio(novo) || String(novo) === String(antes[campo] ?? '')) return;
+        (depois as any)[campo] = novo;
+        campos.push(rotulo);
+      });
+      if (campos.length && antes.valorACobrarManual === undefined) {
+        depois.valorACobrar = computeValorACobrar(depois, findClienteById(clientes, depois.clienteId, depois.clienteNome));
+      }
+    }
+    if (!campos.length) {
+      semMudanca++;
+      return;
+    }
+    depois.atualizadoEm = new Date().toISOString();
+    atualizados.push({
+      antes,
+      depois,
+      campos,
+      concluiuAgora: statusEntregaConcluida(depois.statusEntrega) === true && statusEntregaConcluida(antes.statusEntrega) !== true,
+    });
+  });
+  return { atualizados, semMudanca };
+}
+
 export interface ResumoFaturaAereo {
   valorTotalCobrado: number;
   valorPago: number;
@@ -1470,6 +1568,9 @@ const HEADER_ALIASES: Record<string, string[]> = {
   valorRecebido: ['valor recebido na fatura', 'valor recebido', 'valor pago'],
   confirmacaoPagamento: ['confirmacao de pagamento', 'confirmação de pagamento', 'pago', 'confirmação pagamento'],
   dataConclusao: ['data da conclusao', 'data da conclusão', 'data de pagamento', 'data conclusao', 'data conclusão'],
+  dataEntrega: ['data da entrega', 'data de entrega', 'data entrega', 'entregue em', 'data da baixa', 'data baixa'],
+  statusGeral: ['status'],
+  statusEntrega: ['status da entrega', 'status entrega', 'situacao', 'situação', 'situacao da entrega', 'situação da entrega', 'ultima ocorrencia', 'última ocorrência', 'ocorrencia', 'ocorrência'],
   nfEmitida: ['nf emitida'],
   numeroFatura: ['fatura atrelada', 'no fatura', 'nº fatura', 'numero da fatura', 'número da fatura', 'numero fatura'],
   periodo: ['periodo', 'período'],
@@ -1741,6 +1842,8 @@ export function mapRowsToFaturamentoAereo(
       );
     });
 
+    // "Situação"/"Status da entrega" vale mais que um "Status" solto (que no TMS costuma ser o do comprovante).
+    const statusDaLinha = String(row.statusEntrega || row.statusGeral || '').trim() || undefined;
     const numeroFatura = String(row.numeroFatura || '').trim();
     const periodo = String(row.periodo || '').trim();
 
@@ -1792,7 +1895,11 @@ export function mapRowsToFaturamentoAereo(
       valorACobrar,
       valorRecebido: parseNumberish(row.valorRecebido),
       confirmacaoPagamento: parseBooleanish(row.confirmacaoPagamento),
-      dataConclusao: parseDateish(row.dataConclusao),
+      // Sem "Data da Conclusão", usa a data da entrega do relatório — só quando o status diz que foi entregue.
+      dataConclusao:
+        parseDateish(row.dataConclusao) ??
+        (statusEntregaConcluida(statusDaLinha) !== false ? parseDateish(row.dataEntrega) : undefined),
+      statusEntrega: statusDaLinha,
       nfEmitida: row.nfEmitida ? parseBooleanish(row.nfEmitida) : undefined,
       faturaId,
       observacao: row.observacao || undefined,

@@ -31,7 +31,7 @@ interface Props {
   clientes: Cliente[];
   onUpdateLancamento: (l: LancamentoFaturamentoAereo) => Promise<void>;
   /** Mesmo importador do Controle Financeiro (relatório operacional de CT-es). */
-  onImportarRelatorio?: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[]) => Promise<void> | void;
+  onImportarRelatorio?: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[], qtdAtualizados?: number) => Promise<void> | void;
 }
 
 /** Custos extras: atrelar a uma nota, mandar para a empresa validar e lançar no CT-e quando aprovado. */
@@ -484,8 +484,8 @@ export const CustosExtrasView: React.FC<Props> = ({ currentUser, lancamentos, cl
           onClose={() => setImportarSetor(null)}
           clientes={clientes}
           lancamentosExistentes={lancamentos.filter((l) => pertenceAoFarmaAereo(l, clientes) === (importarSetor === 'aereo'))}
-          onConfirmImport={(ls, fs) => {
-            void onImportarRelatorio(ls, fs);
+          onConfirmImport={(ls, fs, qtdAtualizados) => {
+            void onImportarRelatorio(ls, fs, qtdAtualizados);
           }}
           titulo={`Importar relatório — ${importarSetor === 'aereo' ? 'Farma Aéreo' : 'Farma Rodoviário'} (Excel/XLS)`}
           subtitulo="Os CT-es entram no Controle Financeiro e ficam disponíveis para atrelar custos extras"

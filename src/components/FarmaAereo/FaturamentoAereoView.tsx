@@ -41,6 +41,7 @@ import {
   normalizeKey,
   ehModalRodoviario,
   tabelaFreteParaModal,
+  statusEntregaConcluida,
 } from './faturamentoAereoUtils';
 import { ImportFaturamentoAereoModal } from './ImportFaturamentoAereoModal';
 import { gerarFaturaPdf } from './faturaPdf';
@@ -50,15 +51,21 @@ import { gerarRelatorioFinanceiroPdf, gerarRelatorioFinanceiroXlsx } from './rel
 import { baixarBlob } from '../../utils/downloadUtils';
 import { ROTULO_SITUACAO_NF, SituacaoEntregaNF, getDetalheBaixaNF, nfNormalizada } from '../../utils/baixasApi';
 
-/** Situação da entrega (Performance das baixas) de um lançamento, pela NF. 'sem' = NF sem baixa importada. */
+/** Situação da entrega de um lançamento: Performance das baixas (pela NF) e o status do relatório
+ *  importado (reimportado ao fechar a fatura). Entregue em qualquer um dos dois = entregue.
+ *  'sem' = sem baixa e sem status no relatório. */
 function situacaoDoLancamento(l: LancamentoFaturamentoAereo, mapa?: Map<string, SituacaoEntregaNF>): SituacaoEntregaNF | 'sem' | undefined {
-  if (!mapa) return undefined;
-  const nfs = (l.notaFiscal || '').split(/[^\d]+/).map(nfNormalizada).filter(Boolean);
-  for (const nf of nfs) {
-    const s = mapa.get(nf);
-    if (s) return s;
+  const doRelatorio = statusEntregaConcluida(l.statusEntrega);
+  if (!mapa) return doRelatorio === undefined ? undefined : doRelatorio ? 'C' : 'P';
+  let daBaixa: SituacaoEntregaNF | undefined;
+  for (const nf of (l.notaFiscal || '').split(/[^\d]+/).map(nfNormalizada).filter(Boolean)) {
+    daBaixa = mapa.get(nf);
+    if (daBaixa) break;
   }
-  return 'sem';
+  if (daBaixa === 'C' || daBaixa === 'E' || daBaixa === 'T') return daBaixa;
+  if (doRelatorio) return 'C';
+  if (daBaixa) return daBaixa;
+  return doRelatorio === false ? 'P' : 'sem';
 }
 
 async function mostrarDetalheBaixa(nf?: string) {
@@ -83,7 +90,7 @@ interface FaturamentoAereoViewProps {
   lancamentos: LancamentoFaturamentoAereo[];
   faturas: FaturaAereo[];
   clientes: Cliente[];
-  onImport: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[]) => void;
+  onImport: (lancamentos: LancamentoFaturamentoAereo[], faturas: FaturaAereo[], qtdAtualizados?: number) => void;
   onCreateFatura: (fatura: FaturaAereo) => void;
   onUpdateFatura?: (fatura: FaturaAereo) => void;
   onDeleteFatura: (id: string) => void;
@@ -350,7 +357,7 @@ const LancamentoRow: React.FC<LancamentoRowProps> = ({
             type="button"
             onClick={() => mostrarDetalheBaixa((l.notaFiscal || '').split(/[^\d]+/).find(Boolean))}
             className={`block mt-0.5 px-1.5 py-px rounded-full border text-[9px] font-bold whitespace-nowrap ${situacaoEntrega === 'sem' ? 'bg-white text-slate-400 border-slate-200' : ROTULO_SITUACAO_NF[situacaoEntrega].cls}`}
-            title="Situação da entrega na Performance das baixas — clique para ver o motorista e a data"
+            title={`Situação da entrega na Performance das baixas${l.statusEntrega ? ` · no relatório importado: ${l.statusEntrega}` : ''} — clique para ver o motorista e a data`}
           >
             {situacaoEntrega === 'sem' ? 'Sem baixa' : ROTULO_SITUACAO_NF[situacaoEntrega].rotulo}
           </button>
@@ -984,7 +991,7 @@ export const FaturamentoAereoView: React.FC<FaturamentoAereoViewProps> = ({
 
   /** Antes de faturar: avisa se há NFs pendentes, sem comprovação, abonadas ou sem baixa. */
   const confirmarEntregasDaSelecao = (): boolean => {
-    if (!situacoesEntrega || selecionados.size === 0) return true;
+    if (selecionados.size === 0) return true;
     const cont = { P: 0, E: 0, A: 0, sem: 0 } as Record<string, number>;
     selecionados.forEach((id) => {
       const l = lancamentos.find((x) => x.id === id);
