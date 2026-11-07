@@ -366,14 +366,14 @@ export function separarLancamentosNovosDeExistentes(
   return { novos, jaExistentes };
 }
 
-/** O status da entrega do relatório diz que foi entregue? true = concluída, false = ainda não
- *  (pendente, em rota, devolução...), undefined = sem status ou texto que não dá para saber. */
+/** O status da entrega do relatório diz que foi entregue? true = concluída; false = qualquer outro
+ *  status (ex.: do "Status Atual" do relatório: NOTA AGENDADA, REDESPACHO, CANCELADO, ENTREGA
+ *  FRUSTRADA, NOTA RETIDA NA SEFAZ, PENDENTE); undefined = sem status. */
 export function statusEntregaConcluida(status?: unknown): boolean | undefined {
   const s = normalizeKey(String(status ?? ''));
   if (!s) return undefined;
-  if (/pendent|nao entreg|insucesso|devol|cancel|aguard|em rota|transit|reentreg|extravi|recus|ausente|fechad|em andamento|saiu para/.test(s)) return false;
-  if (/conclu|entregue|entrega realizada|finaliz|baixad|comprovad/.test(s)) return true;
-  return undefined;
+  if (/nao |pendent|frustr|insucesso|devol|cancel|aguard|agend|retid|redespach|em rota|transit|reentreg|extravi|recus|parcial/.test(s)) return false;
+  return /conclu|entregue|entrega realizada|finaliz|comprovad/.test(s);
 }
 
 /** Campos que a reimportação do relatório atualiza num CT-e que já existe. Status e data da entrega
@@ -1570,7 +1570,7 @@ const HEADER_ALIASES: Record<string, string[]> = {
   dataConclusao: ['data da conclusao', 'data da conclusão', 'data de pagamento', 'data conclusao', 'data conclusão'],
   dataEntrega: ['data da entrega', 'data de entrega', 'data entrega', 'entregue em', 'data da baixa', 'data baixa'],
   statusGeral: ['status'],
-  statusEntrega: ['status da entrega', 'status entrega', 'situacao', 'situação', 'situacao da entrega', 'situação da entrega', 'ultima ocorrencia', 'última ocorrência', 'ocorrencia', 'ocorrência'],
+  statusEntrega: ['status atual', 'status da entrega', 'status entrega', 'situacao', 'situação', 'situacao da entrega', 'situação da entrega', 'ultima ocorrencia', 'última ocorrência', 'ocorrencia', 'ocorrência'],
   nfEmitida: ['nf emitida'],
   numeroFatura: ['fatura atrelada', 'no fatura', 'nº fatura', 'numero da fatura', 'número da fatura', 'numero fatura'],
   periodo: ['periodo', 'período'],
