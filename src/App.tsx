@@ -3921,7 +3921,7 @@ export default function App() {
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'frequencia' && podeVerSecaoDp(currentUser, 'frequencia') && (
-            <FrequenciaView colaboradores={colaboradoresEquipeVisiveis} currentUser={currentUser} feriados={feriados} />
+            <FrequenciaView colaboradores={colaboradoresEquipeVisiveis} currentUser={currentUser} feriados={feriados} userRole={userRole} />
           )}
 
           {activeGlobalModule === 'dp' && activeSection === 'educacao' && podeVerSecaoDp(currentUser, 'educacao') && (

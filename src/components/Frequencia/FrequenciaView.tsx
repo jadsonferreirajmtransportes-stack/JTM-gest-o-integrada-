@@ -54,6 +54,7 @@ import { linkUnicoDe, montarLinkUnico } from '../../utils/linkUnico';
 import { buildWhatsAppLink } from '../../utils/birthdayUtils';
 import { baixarBlob } from '../../utils/downloadUtils';
 import { EnvioWhatsAppEmMassaModal, ItemEnvioWhatsApp } from '../Common/EnvioWhatsAppEmMassaModal';
+import { PreviaFolhaView } from './PreviaFolhaView';
 import { DocumentosAssinaturaView } from '../Contracheques/DocumentosAssinaturaView';
 import {
   DiaEspelho,
@@ -83,9 +84,11 @@ interface FrequenciaViewProps {
   currentUser?: UsuarioLogin;
   /** Feriados de Configurações → Feriados: o dia não conta como falta. */
   feriados?: FeriadoEmpresa[];
+  /** 'admin' vê a Prévia da folha (salários). */
+  userRole?: string;
 }
 
-type Aba = 'hoje' | 'espelho' | 'resumo' | 'assinaturas' | 'configurar';
+type Aba = 'hoje' | 'espelho' | 'resumo' | 'folha' | 'assinaturas' | 'configurar';
 
 const ESTILO_SITUACAO: Record<SituacaoDia, string> = {
   OK: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -129,7 +132,7 @@ const dataBr = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4
 /** DP → Controle de Frequência (CONTROLE INTERNO — o ponto oficial continua no sistema atual).
  *  Batidas pelo celular (?form=ponto), espelho mensal com ajustes auditáveis, justificativas,
  *  resumo com a regra de atrasos do Regulamento e espelho para assinatura do colaborador. */
-export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, currentUser, feriados = [] }) => {
+export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, currentUser, feriados = [], userRole }) => {
   const mapaFeriados = useMemo(() => new Map(feriados.filter((f) => f.tipo !== 'Ponto Facultativo').map((f) => [f.data, f.descricao] as [string, string])), [feriados]);
   const [aba, setAba] = useState<Aba>('hoje');
   const [mes, setMes] = useState(mesAtual());
@@ -461,6 +464,7 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
             ['hoje', 'Hoje'],
             ['espelho', 'Espelho do colaborador'],
             ['resumo', 'Resumo do mês'],
+            ...(userRole === 'admin' ? ([['folha', 'Prévia da folha']] as [Aba, string][]) : []),
             ['assinaturas', 'Assinaturas'],
             ['configurar', 'Jornadas, bases e links'],
           ] as [Aba, string][]
@@ -809,6 +813,25 @@ export const FrequenciaView: React.FC<FrequenciaViewProps> = ({ colaboradores, c
             </table>
           </div>
         </>
+      )}
+
+      {aba === 'folha' && userRole === 'admin' && (
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <SeletorMes mes={mes} onChange={setMes} carregando={carregandoMes} />
+          </div>
+          <PreviaFolhaView
+            colaboradores={colaboradores}
+            mes={mes}
+            espelhoDe={espelhoDe}
+            dias={diasDoMes(mes)}
+            batidas={batidas}
+            justificativas={justificativas}
+            feriados={mapaFeriados}
+            currentUser={currentUser}
+            carregandoMes={carregandoMes}
+          />
+        </div>
       )}
 
       {aba === 'assinaturas' && <DocumentosAssinaturaView categoria="ponto" colaboradores={colaboradores} currentUser={currentUser} compacto />}

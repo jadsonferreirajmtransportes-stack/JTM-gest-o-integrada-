@@ -556,7 +556,7 @@ export function formatDaysCountdown(days: number | null): { text: string; colorC
 // CCT 2026/2028 (SETCERN x SINTROCERN) CALCULATIONS
 // ==========================================
 
-export const SALARIO_MINIMO_NACIONAL = 1518.00;
+export const SALARIO_MINIMO_NACIONAL = 1621.00; // 2026
 export const VALOR_VA_CCT_DIA = 32.00; // Cláusula 15ª
 export const SUBSIDIO_SAUDE_CCT_MES = 189.50; // Cláusula 17ª
 export const CUIDADO_PESSOAL_CCT_MES = 47.90; // Cláusula 19ª
